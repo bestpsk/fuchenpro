@@ -170,6 +170,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 服务器监控页面 - 服务器运行状态实时展示
+ * @description 展示服务器CPU、内存、JVM、磁盘、操作系统等运行信息，支持自动刷新
+ */
 import { getServer } from '@/api/monitor/server'
 
 const server = ref({})

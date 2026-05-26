@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 系统参数配置模型，存储系统级别的键值对配置项
+ */
 class SysConfig extends Model
 {
     protected $table = 'sys_config';

@@ -2,20 +2,29 @@
 
 namespace app\common;
 
+/**
+ * 代码生成模板引擎
+ *
+ * 轻量级模板引擎，支持变量替换、条件判断(#if/#else/#end)、
+ * 循环遍历(#foreach/#end)和工具方法调用($tool.xxx)，
+ * 用于代码生成器将.vm模板文件渲染为PHP源代码
+ */
 class GenTemplateEngine
 {
-    private array $context = [];
+    private array $context = [];  // 模板变量上下文
 
     public function __construct(array $context = [])
     {
         $this->context = $context;
     }
 
+    // 设置模板上下文变量
     public function setContext(string $key, $value): void
     {
         $this->context[$key] = $value;
     }
 
+    // 渲染模板字符串，依次处理循环、条件、变量和方法调用
     public function render(string $template): string
     {
         $output = $template;
@@ -26,6 +35,7 @@ class GenTemplateEngine
         return $output;
     }
 
+    // 处理#foreach循环标签，遍历集合并为每个元素渲染循环体
     private function processForeach(string $template): string
     {
         $pattern = '/#foreach\s*\(\s*\$(\w+)\s+as\s+\$(\w+)\s*\)(.*?)#end/s';
@@ -56,6 +66,7 @@ class GenTemplateEngine
         return $template;
     }
 
+    // 处理#if/#elseif/#else/#end条件标签，根据条件表达式选择渲染分支
     private function processIf(string $template): string
     {
         $pattern = '/#if\s*\((.*?)\)(.*?)(#elseif\s*\((.*?)\)(.*?))*(#else(.*?))?#end/s';
@@ -83,6 +94,7 @@ class GenTemplateEngine
         return $template;
     }
 
+    // 求值条件表达式，支持变量判断、属性访问、比较运算和逻辑运算
     private function evaluateCondition(string $condition): bool
     {
         $condition = trim($condition);
@@ -129,6 +141,7 @@ class GenTemplateEngine
         return false;
     }
 
+    // 求值单个表达式，支持变量引用、字符串字面量、数字和布尔值
     private function evaluateExpression(string $expr)
     {
         $expr = trim($expr);
@@ -146,6 +159,7 @@ class GenTemplateEngine
         return $expr;
     }
 
+    // 替换模板中的变量引用（$var、$var.prop、${var.prop}格式）
     private function processVariables(string $template): string
     {
         $template = preg_replace_callback('/\$\{([^}]+)\}/', function ($matches) {
@@ -168,6 +182,7 @@ class GenTemplateEngine
         return $template;
     }
 
+    // 解析${expr}格式的点号分隔变量路径，逐层访问上下文数据
     private function resolveVariable(string $expr): string
     {
         $parts = explode('.', $expr);
@@ -185,6 +200,7 @@ class GenTemplateEngine
         return is_array($value) || is_object($value) ? json_encode($value) : (string)$value;
     }
 
+    // 解析$obj.prop格式的属性访问，从上下文中获取对象属性值
     private function resolveProperty(string $objName, string $propName): string
     {
         $obj = $this->context[$objName] ?? null;
@@ -199,6 +215,7 @@ class GenTemplateEngine
         return is_array($value) || is_object($value) ? json_encode($value) : (string)$value;
     }
 
+    // 处理$tool工具方法调用（firstLowerCase首字母小写、snakeCase蛇形命名、appendPrefix追加前缀）
     private function processMethodCalls(string $template): string
     {
         $template = preg_replace_callback('/\$tool\.firstLowerCase\(([^)]+)\)/', function ($matches) {
@@ -230,6 +247,7 @@ class GenTemplateEngine
         return $template;
     }
 
+    // 从文件读取模板内容并渲染，返回渲染结果字符串
     public static function renderFile(string $templatePath, array $context): string
     {
         if (!file_exists($templatePath)) {

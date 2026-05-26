@@ -18,43 +18,30 @@
 
     <view class="content-section">
       <view class="quick-actions">
-        <view class="action-item" @click="handleBuilding">
-          <view class="action-icon"><u-icon name="chat" size="20" color="#666" ></u-icon></view>
-          <text class="action-label">在线客服</text>
-        </view>
-        <view class="action-item" @click="handleBuilding">
-          <view class="action-icon"><u-icon name="edit-pen" size="20" color="#666" ></u-icon></view>
-          <text class="action-label">反馈社区</text>
-        </view>
-        <view class="action-item" @click="handleBuilding">
-          <view class="action-icon"><u-icon name="thumb-up" size="20" color="#666" ></u-icon></view>
-          <text class="action-label">点赞我们</text>
-        </view>
-        <view class="action-item" @click="handleAbout">
-          <view class="action-icon"><u-icon name="info-circle" size="20" color="#666" ></u-icon></view>
-          <text class="action-label">关于我们</text>
+        <view
+          v-for="(item, index) in actionList"
+          :key="'action-' + index"
+          class="action-item"
+          @click="handleActionClick(item)"
+        >
+          <view class="action-icon" :style="{ backgroundColor: item.bgColor || '#f5f5f5' }">
+            <u-icon :name="item.icon" size="20" :color="item.iconColor || '#666'" />
+          </view>
+          <text class="action-label">{{ item.title }}</text>
         </view>
       </view>
 
       <view class="menu-list">
-        <view class="menu-item" @click="handleToEditInfo">
-          <view class="menu-icon"><u-icon name="edit-pen" size="16" color="#3c96f3" ></u-icon></view>
-          <text class="menu-text">编辑资料</text>
-          <text class="menu-arrow">></text>
-        </view>
-        <view class="menu-item" @click="handleHelp">
-          <view class="menu-icon"><u-icon name="question-circle" size="16" color="#3c96f3" ></u-icon></view>
-          <text class="menu-text">常见问题</text>
-          <text class="menu-arrow">></text>
-        </view>
-        <view class="menu-item" @click="handleAbout">
-          <view class="menu-icon"><u-icon name="info-circle" size="16" color="#3c96f3" ></u-icon></view>
-          <text class="menu-text">关于我们</text>
-          <text class="menu-arrow">></text>
-        </view>
-        <view class="menu-item" @click="handleToSetting">
-          <view class="menu-icon"><u-icon name="setting" size="16" color="#3c96f3" ></u-icon></view>
-          <text class="menu-text">应用设置</text>
+        <view
+          v-for="(item, index) in menuList"
+          :key="'menu-' + index"
+          class="menu-item"
+          @click="handleMenuClick(item)"
+        >
+          <view class="menu-icon" :style="{ backgroundColor: item.bgColor || '#e8f2ff' }">
+            <u-icon :name="item.icon" size="16" :color="item.iconColor || '#3c96f3'" />
+          </view>
+          <text class="menu-text">{{ item.title }}</text>
           <text class="menu-arrow">></text>
         </view>
       </view>
@@ -63,50 +50,50 @@
 </template>
 
 <script setup>
-/**
- * @description 个人中心页 - 用户信息总览
- * @description 展示用户头像、名称，提供个人信息查看/编辑、设置、帮助等功能入口
- */
 import { computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 
 const userStore = useUserStore()
-/** 从store获取用户名称 */
+
 const name = computed(() => userStore.name)
-/** 从store获取用户头像地址 */
 const avatar = computed(() => userStore.avatar)
 
-/** 跳转个人信息查看页 */
+const actionList = [
+  { title: '在线客服', icon: 'chat', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
+  { title: '反馈社区', icon: 'edit-pen', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
+  { title: '点赞我们', icon: 'thumb-up', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
+  { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#666', bgColor: '#f5f5f5' }
+]
+
+const menuList = [
+  { title: '编辑资料', icon: 'edit-pen', path: '/pages/mine/info/edit', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
+  { title: '常见问题', icon: 'question-circle', path: '/pages/mine/help/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
+  { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
+  { title: '应用设置', icon: 'setting', path: '/pages/mine/setting/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' }
+]
+
 function handleToInfo() {
   uni.navigateTo({ url: '/pages/mine/info/index' })
 }
-/** 跳转个人信息编辑页 */
-function handleToEditInfo() {
-  uni.navigateTo({ url: '/pages/mine/info/edit' })
-}
-/** 跳转应用设置页 */
-function handleToSetting() {
-  uni.navigateTo({ url: '/pages/mine/setting/index' })
-}
-/** 未登录时跳转登录页 */
 function handleToLogin() {
   uni.reLaunch({ url: '/pages/login' })
 }
-/** 跳转修改头像页 */
 function handleToAvatar() {
   uni.navigateTo({ url: '/pages/mine/avatar/index' })
 }
-/** 跳转常见问题页 */
-function handleHelp() {
-  uni.navigateTo({ url: '/pages/mine/help/index' })
+function handleActionClick(item) {
+  if (item.path) {
+    uni.navigateTo({ url: item.path })
+  } else {
+    uni.showToast({ title: '模块建设中~', icon: 'none' })
+  }
 }
-/** 跳转关于我们页 */
-function handleAbout() {
-  uni.navigateTo({ url: '/pages/mine/about/index' })
-}
-/** 建设中模块提示 */
-function handleBuilding() {
-  uni.showToast({ title: '模块建设中~', icon: 'none' })
+function handleMenuClick(item) {
+  if (item.path) {
+    uni.navigateTo({ url: item.path })
+  } else {
+    uni.showToast({ title: '模块建设中~', icon: 'none' })
+  }
 }
 </script>
 
@@ -196,16 +183,9 @@ page {
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background-color: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  text {
-    font-size: 32rpx;
-    font-weight: 600;
-    color: #666;
-  }
 }
 
 .action-label {
@@ -239,17 +219,10 @@ page {
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background-color: #e8f2ff;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 20rpx;
-
-  text {
-    font-size: 24rpx;
-    font-weight: 600;
-    color: #3c96f3;
-  }
 }
 
 .menu-text {

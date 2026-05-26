@@ -239,6 +239,10 @@
 </template>
 
 <script setup name="Job">
+/**
+ * @description 定时任务页面 - 任务CRUD/Cron表达式/执行/暂停
+ * @description 提供定时任务增删改查、Cron表达式配置、立即执行、暂停/恢复、任务日志查看等功能
+ */
 import Crontab from '@/components/Crontab'
 import JobDetail from './detail'
 import { listJob, getJob, delJob, addJob, updateJob, runJob, changeJobStatus } from "@/api/monitor/job"

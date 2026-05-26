@@ -69,5 +69,4 @@ ALTER TABLE IF EXISTS `biz_store` ADD COLUMN IF NOT EXISTS `annual_performance` 
 ALTER TABLE IF EXISTS `biz_store` ADD COLUMN IF NOT EXISTS `regular_customers` int DEFAULT 0 COMMENT '常来顾客数' AFTER `annual_performance`;
 ALTER TABLE IF EXISTS `biz_store` ADD COLUMN IF NOT EXISTS `creator_name` varchar(50) DEFAULT NULL COMMENT '创建人' AFTER `regular_customers`;
 
--- 6. 将sys_user表的nick_name字段重命名为real_name
-ALTER TABLE `sys_user` CHANGE COLUMN `nick_name` `real_name` varchar(30) DEFAULT '' COMMENT '用户姓名';
+

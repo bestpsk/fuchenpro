@@ -126,6 +126,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 用户详情页面 - 查看用户完整信息
+ * @description 展示用户基本信息、角色信息、部门信息等完整详情
+ */
 import { getUser } from '@/api/system/user'
 
 const visible = ref(false)

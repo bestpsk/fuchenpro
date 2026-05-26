@@ -265,7 +265,7 @@
           <el-col :span="12">
             <el-form-item label="员工" prop="userIds" v-if="activeTab === 'employee'">
               <el-select v-model="form.userIds" multiple filterable collapse-tags collapse-tags-tooltip placeholder="请选择员工" style="width: 100%">
-                <el-option v-for="user in userList" :key="user.userId" :label="user.realName || user.userName" :value="user.userId" />
+                <el-option v-for="user in userList" :key="user.userId" :label="user.nickName || user.userName" :value="user.userId" />
               </el-select>
             </el-form-item>
             <el-form-item label="企业" prop="enterpriseId" v-else>
@@ -282,7 +282,7 @@
             </el-form-item>
             <el-form-item label="员工" prop="userIds" v-else>
               <el-select v-model="form.userIds" multiple filterable collapse-tags collapse-tags-tooltip placeholder="请选择员工" style="width: 100%">
-                <el-option v-for="user in userList" :key="user.userId" :label="user.realName || user.userName" :value="user.userId" />
+                <el-option v-for="user in userList" :key="user.userId" :label="user.nickName || user.userName" :value="user.userId" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -375,6 +375,11 @@
 </template>
 
 <script setup name="Schedule">
+/**
+ * @description 行程管理页面 - 员工下店排班/甘特图/拖拽排班/休息日配置
+ * @description 提供按月查看员工/企业排班甘特图、拖拽选择日期批量添加行程、
+ * 行程编辑/删除、员工排班配置（是否可排班/休息日设置）等功能
+ */
 import { listSchedule, getSchedule, getEmployeeSchedule, getEnterpriseSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule } from "@/api/business/schedule"
 import { listUser } from "@/api/system/user"
 import { listEnterprise, searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
@@ -726,7 +731,7 @@ function submitForm() {
       for (let d = startDate; d <= endDate; d.setDate(d.getDate() + 1)) {
         userIds.forEach(userId => {
           const user = userList.value.find(u => u.userId === userId)
-          scheduleList.push({ userId: userId, userName: user?.realName || user?.userName || form.value.userName, enterpriseId: form.value.enterpriseId, enterpriseName: form.value.enterpriseName, scheduleDate: d.toISOString().slice(0, 10), purpose: form.value.purpose, status: form.value.status, remark: form.value.remark })
+          scheduleList.push({ userId: userId, userName: user?.nickName || user?.userName || form.value.userName, enterpriseId: form.value.enterpriseId, enterpriseName: form.value.enterpriseName, scheduleDate: d.toISOString().slice(0, 10), purpose: form.value.purpose, status: form.value.status, remark: form.value.remark })
         })
       }
 

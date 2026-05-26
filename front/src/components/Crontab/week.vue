@@ -69,6 +69,10 @@
 </template>
 
 <script setup>
+/**
+ * @description Cron周配置 - 周级别的Cron表达式配置
+ * @description 提供周级别的Cron表达式配置：指定值/范围值/循环值/不指定/第几周等模式
+ */
 const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {

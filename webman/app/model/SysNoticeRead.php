@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 通知已读记录模型，记录用户阅读公告的时间
+ */
 class SysNoticeRead extends Model
 {
     protected $table = 'sys_notice_read';

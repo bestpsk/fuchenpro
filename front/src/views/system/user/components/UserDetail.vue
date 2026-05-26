@@ -75,6 +75,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 员工详情组件 - 员工扩展信息编辑
+ * @description 编辑员工的扩展详情信息（如入职日期、合同信息等），支持新增和修改
+ */
 import { getUserDetail, addUserDetail, updateUserDetail } from "@/api/system/user"
 
 const props = defineProps({

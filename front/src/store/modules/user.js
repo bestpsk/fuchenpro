@@ -19,7 +19,9 @@ const useUserStore = defineStore(
       token: getToken(),    // JWT认证令牌，从Cookie初始化
       id: '',               // 用户ID
       name: '',             // 用户名（登录账号）
-      realName: '',         // 用户真实姓名
+      nickName: '',         // 用户昵称
+      deptId: '',           // 部门ID
+      deptName: '',         // 部门名称
       avatar: '',           // 用户头像URL
       roles: [],            // 用户角色列表，用于权限判断
       permissions: []       // 用户权限标识列表，用于按钮级权限控制
@@ -70,19 +72,21 @@ const useUserStore = defineStore(
             }
             this.id = user.userId
             this.name = user.userName
-            this.realName = user.realName
+            this.nickName = user.nickName
+            this.deptId = user.deptId || ''
+            this.deptName = user.deptName || ''
             this.avatar = avatar
             // 缓存密码强度类型，用于修改密码时的规则校验
             cache.session.set('pwrChrtype', res.pwdChrtype)
             // 初始密码安全提示：首次登录未修改密码时提醒用户修改
             if(res.isDefaultModifyPwd) {
-              ElMessageBox.confirm('您的密码还是初始密码，请修改密码！',  '安全提示', {  confirmButtonText: '确定',  cancelButtonText: '取消',  type: 'warning' }).then(() => {
+              ElMessageBox.confirm('您的密码还是初始密码，请修改密码！',  '安全提示', {  confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }).then(() => {
                 router.push({ name: 'Profile', params: { activeTab: 'resetPwd' } })
               }).catch(() => {})
             }
             // 密码过期提示：密码超过有效期时提醒用户尽快修改
             if(!res.isDefaultModifyPwd && res.isPasswordExpired) {
-              ElMessageBox.confirm('您的密码已过期，请尽快修改密码！',  '安全提示', {  confirmButtonText: '确定',  cancelButtonText: '取消',  type: 'warning' }).then(() => {
+              ElMessageBox.confirm('您的密码已过期，请尽快修改密码！',  '安全提示', {  confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }).then(() => {
                 router.push({ name: 'Profile', params: { activeTab: 'resetPwd' } })
               }).catch(() => {})
             }

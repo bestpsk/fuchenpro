@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 供应商模型，存储供应商联系信息及合作状态
+ */
 class BizSupplier extends Model
 {
     protected $table = 'biz_supplier';

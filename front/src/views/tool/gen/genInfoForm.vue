@@ -256,6 +256,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 生成信息表单 - 代码生成选项配置
+ * @description 配置生成模板、前端/后端包路径、菜单配置、子表关联等生成选项
+ */
 import { listMenu } from "@/api/system/menu"
 
 const subColumns = ref([])

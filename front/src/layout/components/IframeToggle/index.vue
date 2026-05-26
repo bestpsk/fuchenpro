@@ -9,6 +9,10 @@
 </template>
 
 <script setup>
+/**
+ * @description iframe切换组件 - 多iframe页签切换
+ * @description 管理多个iframe内嵌页面的显示和隐藏切换
+ */
 import InnerLink from "../InnerLink/index"
 import useTagsViewStore from "@/store/modules/tagsView"
 

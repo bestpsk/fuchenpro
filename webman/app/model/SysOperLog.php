@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 操作日志模型，记录用户操作的业务类型、请求参数、响应结果及耗时
+ */
 class SysOperLog extends Model
 {
     protected $table = 'sys_oper_log';

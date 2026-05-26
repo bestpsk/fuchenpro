@@ -6,8 +6,15 @@ use support\Request;
 use app\service\SysMenuService;
 use app\common\AjaxResult;
 
+/**
+ * 菜单管理控制器
+ *
+ * 负责菜单的增删改查、菜单树下拉选择、角色菜单树、
+ * 菜单排序更新等功能，存在子菜单时不允许删除
+ */
 class SysMenuController
 {
+    // 查询菜单列表，管理员返回全部菜单，普通用户返回有权限的菜单
     public function list(Request $request)
     {
         $service = new SysMenuService();
@@ -17,6 +24,7 @@ class SysMenuController
         return AjaxResult::success($menus);
     }
 
+    // 根据ID获取菜单详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -29,12 +37,14 @@ class SysMenuController
         return AjaxResult::success($menu);
     }
 
+    // 获取菜单树下拉选择数据（用于新增/编辑菜单时选择上级菜单）
     public function treeselect(Request $request)
     {
         $service = new SysMenuService();
         return AjaxResult::success($service->treeselect());
     }
 
+    // 获取角色菜单树（含角色已勾选的菜单ID列表），用于角色菜单授权
     public function roleMenuTreeselect(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -43,6 +53,7 @@ class SysMenuController
         return AjaxResult::success($service->roleMenuTreeselect($roleId));
     }
 
+    // 新增菜单
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -52,6 +63,7 @@ class SysMenuController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改菜单信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -61,6 +73,7 @@ class SysMenuController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量更新菜单排序
     public function updateSort(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -84,10 +97,10 @@ class SysMenuController
         return AjaxResult::success();
     }
 
+    // 删除菜单，存在子菜单时不允许删除
     public function remove(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $menuId = intval(end($parts));
+        $menuId = intval($request->input('menuId', 0));
         $service = new SysMenuService();
         $result = $service->deleteMenuById($menuId);
         if (!$result) {

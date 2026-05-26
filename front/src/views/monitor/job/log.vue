@@ -138,6 +138,10 @@
 </template>
 
 <script setup name="JobLog">
+/**
+ * @description 任务日志页面 - 定时任务执行日志查询
+ * @description 查询定时任务的执行日志，支持按任务名/组名/状态/日期范围筛选
+ */
 import JobDetail from './detail'
 import { getJob } from "@/api/monitor/job"
 import { listJobLog, delJobLog, cleanJobLog } from "@/api/monitor/jobLog"

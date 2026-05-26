@@ -5,6 +5,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 版权信息组件 - 底部版权声明
+ * @description 显示系统底部版权信息和备案号
+ */
 import useSettingsStore from '@/store/modules/settings'
 
 const settingsStore = useSettingsStore()

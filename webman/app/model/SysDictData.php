@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 字典数据模型，存储字典类型下的具体键值对数据
+ */
 class SysDictData extends Model
 {
     protected $table = 'sys_dict_data';

@@ -7,8 +7,12 @@ use app\model\SysDictData;
 use support\Redis;
 use app\common\Constants;
 
+/**
+ * 字典类型服务层，处理字典类型的增删改查和缓存管理
+ */
 class SysDictTypeService
 {
+    // 按条件分页查询字典类型列表
     public function selectDictTypeList($params = [])
     {
         $query = SysDictType::query();
@@ -28,10 +32,14 @@ class SysDictTypeService
         return $query->orderBy('dict_id', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询字典类型详情
+
     public function selectDictTypeById($dictId)
     {
         return SysDictType::find($dictId);
     }
+
+    // 新增字典类型
 
     public function insertDictType($data)
     {
@@ -40,6 +48,8 @@ class SysDictTypeService
         self::resetDictCache();
         return $result;
     }
+
+    // 更新字典类型信息
 
     public function updateDictType($data)
     {
@@ -52,6 +62,8 @@ class SysDictTypeService
         self::resetDictCache();
         return $result;
     }
+
+    // 批量删除字典类型
 
     public function deleteDictTypeByIds($dictIds)
     {

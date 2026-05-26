@@ -8,8 +8,14 @@ use app\model\BizOrderItem;
 use app\model\BizOperationRecord;
 use app\model\BizRepaymentRecord;
 
+/**
+ * 客户档案服务层
+ *
+ * 处理客户档案的查询、新增、删除，以及从销售订单/操作记录/还款记录自动生成档案
+ */
 class BizCustomerArchiveService
 {
+    // 按条件分页查询客户档案列表，支持按客户、来源类型、日期范围筛选
     public function selectArchiveList($params = [])
     {
         $query = BizCustomerArchive::query();
@@ -24,6 +30,7 @@ class BizCustomerArchiveService
         return $query->orderBy('archive_date', 'desc')->orderBy('archive_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 手动新增客户档案，自动将plan_items和photos数组转为JSON
     public function insertArchive($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
@@ -37,11 +44,13 @@ class BizCustomerArchiveService
         return BizCustomerArchive::create($data);
     }
 
+    // 根据ID批量删除客户档案
     public function deleteArchiveByIds($archiveIds)
     {
         return BizCustomerArchive::whereIn('archive_id', $archiveIds)->delete();
     }
 
+    // 从销售订单自动生成客户档案（source_type='0'），提取订单明细作为plan_items
     public function insertArchiveFromOrder($order)
     {
         if (!$order) return null;
@@ -86,6 +95,7 @@ class BizCustomerArchiveService
         return BizCustomerArchive::create($data);
     }
 
+    // 从操作记录自动生成或合并客户档案（source_type='1'），同客户同天同操作人的记录合并，累加金额和照片
     public function insertArchiveFromOperation($record)
     {
         if (!$record) return null;
@@ -191,6 +201,7 @@ class BizCustomerArchiveService
         return BizCustomerArchive::create($data);
     }
 
+    // 从还款记录自动生成客户档案（source_type='2'），已存在则跳过
     public function insertArchiveFromRepayment($repayment)
     {
         if (!$repayment) return null;

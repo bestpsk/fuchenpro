@@ -22,7 +22,7 @@
       </view>
 
       <view class="welcome-text">
-        <text>{{ greeting }}，开启美好的一天！</text>
+        <text>{{ greeting }}，{{ welcomeSlogan }}！</text>
       </view>
     </view>
 
@@ -38,14 +38,17 @@
  * @description 首页头部导航组件 - 用户信息与快捷操作
  * @description 展示用户头像、昵称、问候语，提供个人信息、消息中心、设置三个快捷入口
  */
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
+import { listNoticeTop } from '@/api/system/notice'
+import { getConfigKey, getWelcomeSlogan } from '@/api/system/config'
 import QuickMenu from './QuickMenu.vue'
 
 const userStore = useUserStore()
 
 const statusBarHeight = ref(44)
-const messageCount = ref(3)
+const messageCount = ref(0)
+const welcomeSlogan = ref('开启美好的一天')
 
 /** 用户信息：头像（默认占位图）、昵称（默认"用户"）、角色 */
 const userInfo = computed(() => ({
@@ -68,20 +71,43 @@ uni.getSystemInfoSync({
   }
 })
 
-/** 跳转个人信息页 */
+function loadUnreadCount() {
+  listNoticeTop().then(res => {
+    messageCount.value = res.data?.unreadCount ?? res.unreadCount ?? 0
+  }).catch(() => {})
+}
+
+onMounted(() => {
+  loadUnreadCount()
+  loadWelcomeSlogan()
+  uni.$on('welcomeSloganChanged', () => loadWelcomeSlogan())
+})
+
+function loadWelcomeSlogan() {
+  const cached = uni.getStorageSync('welcome_slogan')
+  if (cached) welcomeSlogan.value = cached
+  getWelcomeSlogan().then(res => {
+    const slogan = res.data || ''
+    if (slogan) {
+      welcomeSlogan.value = slogan
+      uni.setStorageSync('welcome_slogan', slogan)
+    }
+  }).catch(() => {})
+}
+
 function handleUserInfo() {
   uni.navigateTo({ url: '/pages/mine/info/index' })
 }
 
-/** 消息中心（建设中） */
 function handleMessage() {
-  uni.showToast({ title: '消息中心开发中', icon: 'none' })
+  uni.navigateTo({ url: '/pages/system/notice/index' })
 }
 
-/** 跳转应用设置页 */
 function handleSetting() {
   uni.navigateTo({ url: '/pages/mine/setting/index' })
 }
+
+defineExpose({ loadUnreadCount })
 </script>
 
 <style lang="scss" scoped>

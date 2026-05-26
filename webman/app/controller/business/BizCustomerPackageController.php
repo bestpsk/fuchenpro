@@ -7,8 +7,15 @@ use app\service\BizCustomerPackageService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 客户套餐控制器
+ *
+ * 负责客户已购套餐的查询，包括套餐列表、套餐详情、
+ * 按客户ID查询其名下所有套餐（含使用状态筛选）
+ */
 class BizCustomerPackageController
 {
+    // 分页查询客户套餐列表，支持按客户、状态等条件筛选
     public function list(Request $request)
     {
         $service = new BizCustomerPackageService();
@@ -17,6 +24,7 @@ class BizCustomerPackageController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据套餐ID获取套餐详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +35,7 @@ class BizCustomerPackageController
         return AjaxResult::success($package);
     }
 
+    // 根据客户ID查询其名下所有套餐，可按状态筛选（0=未使用 1=使用中 2=已用完）
     public function getByCustomer(Request $request)
     {
         $customerId = $request->input('customerId');

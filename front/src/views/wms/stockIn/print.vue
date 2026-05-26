@@ -89,6 +89,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 入库单打印页面 - 入库单据打印预览
+ * @description 展示入库单的打印预览，包含入库单号、供应商、产品明细等信息
+ */
 const props = defineProps({
   data: {
     type: Object,

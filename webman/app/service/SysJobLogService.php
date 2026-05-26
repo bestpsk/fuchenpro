@@ -4,8 +4,12 @@ namespace app\service;
 
 use app\model\SysJobLog;
 
+/**
+ * 任务执行日志服务层，处理任务日志的查询和清理
+ */
 class SysJobLogService
 {
+    // 按条件分页查询定时任务日志列表
     public function selectJobLogList($params = [])
     {
         $query = SysJobLog::query();
@@ -28,10 +32,14 @@ class SysJobLogService
         return $query->orderBy('job_log_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 批量删除定时任务日志
+
     public function deleteJobLogByIds($jobLogIds)
     {
         return SysJobLog::whereIn('job_log_id', $jobLogIds)->delete();
     }
+
+    // 清空定时任务日志
 
     public function cleanJobLog()
     {

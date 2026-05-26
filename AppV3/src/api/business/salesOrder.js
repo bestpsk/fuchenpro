@@ -67,3 +67,7 @@ export function enterpriseAudit(orderId) {
 export function financeAudit(orderId) {
   return request({ url: '/business/sales/financeAudit', method: 'post', data: { orderId } })
 }
+
+export function cancelOrder(orderId) {
+  return request({ url: '/business/sales/cancel', method: 'post', data: { orderId } })
+}

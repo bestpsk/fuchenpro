@@ -54,9 +54,13 @@
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column label="关联部门" align="center" min-width="100">
+      <el-table-column label="关联部门" align="center" min-width="150">
         <template #default="scope">
-          {{ scope.row.configType === 2 ? (scope.row.dept?.deptName || '-') : '-' }}
+          <template v-if="scope.row.configType === 2">
+            <span v-if="scope.row.deptIds">{{ getDeptNames(scope.row.deptIds) }}</span>
+            <span v-else>-</span>
+          </template>
+          <span v-else>-</span>
         </template>
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status" min-width="80">
@@ -96,8 +100,8 @@
             <el-option v-for="user in userOptions" :key="user.userId" :label="user.nickName || user.userName" :value="user.userId" />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="form.configType === 2" label="关联部门" prop="deptId">
-          <el-tree-select v-model="form.deptId" :data="deptOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择部门" check-strictly style="width: 100%" />
+        <el-form-item v-if="form.configType === 2" label="关联部门" prop="deptIds">
+          <el-tree-select v-model="form.deptIds" :data="deptOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择部门" multiple :render-after-expand="false" show-checkbox check-strictly collapse-tags collapse-tags-tooltip style="width: 100%" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -182,11 +186,11 @@ function handleSelectionChange(selection) {
 }
 
 function reset() {
-  form.value = { configId: undefined, configName: undefined, ruleId: undefined, configType: 1, userIds: [], deptId: undefined, status: "0", remark: undefined }
+  form.value = { configId: undefined, configName: undefined, ruleId: undefined, configType: 1, userIds: [], deptIds: [], status: "0", remark: undefined }
   proxy.resetForm("configRef")
 }
 
-function handleConfigTypeChange() { form.value.userIds = []; form.value.deptId = undefined }
+function handleConfigTypeChange() { form.value.userIds = []; form.value.deptIds = [] }
 
 function getUserNames(userIds) {
   if (!userIds) return '-'
@@ -194,6 +198,27 @@ function getUserNames(userIds) {
   const names = ids.map(id => {
     const user = userOptions.value.find(u => u.userId === id)
     return user ? (user.nickName || user.userName) : id
+  })
+  return names.join(', ')
+}
+
+function findDeptById(tree, id) {
+  for (const node of tree) {
+    if (node.id === id) return node
+    if (node.children) {
+      const found = findDeptById(node.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+function getDeptNames(deptIds) {
+  if (!deptIds) return '-'
+  const ids = deptIds.split(',').map(id => parseInt(id))
+  const names = ids.map(id => {
+    const dept = findDeptById(deptOptions.value, id)
+    return dept ? dept.label : id
   })
   return names.join(', ')
 }
@@ -207,6 +232,9 @@ function handleUpdate(row) {
     form.value = response.data
     if (form.value.userIds && typeof form.value.userIds === 'string') {
       form.value.userIds = form.value.userIds.split(',').map(id => parseInt(id))
+    }
+    if (form.value.deptIds && typeof form.value.deptIds === 'string') {
+      form.value.deptIds = form.value.deptIds.split(',').map(id => parseInt(id))
     }
     open.value = true
     title.value = "修改考勤配置"

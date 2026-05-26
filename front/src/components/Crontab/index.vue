@@ -125,6 +125,10 @@
 </template>
 
 <script setup>
+/**
+ * @description Cron表达式组件 - 可视化Cron表达式编辑器
+ * @description 提供秒/分/时/日/月/周/年的可视化配置，实时预览Cron表达式和最近5次执行时间
+ */
 import CrontabSecond from "./second.vue"
 import CrontabMin from "./min.vue"
 import CrontabHour from "./hour.vue"

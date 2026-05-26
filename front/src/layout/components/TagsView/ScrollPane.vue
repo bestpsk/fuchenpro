@@ -10,6 +10,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 滚动面板 - 标签页横向滚动容器
+ * @description 当标签页超出容器宽度时，支持左右滚动和鼠标滚轮滚动
+ */
 import useTagsViewStore from '@/store/modules/tagsView'
 
 const tagAndTagSpacing = ref(4)

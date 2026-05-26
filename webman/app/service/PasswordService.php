@@ -5,6 +5,9 @@ namespace app\service;
 use support\Redis;
 use app\common\Constants;
 
+/**
+ * 密码服务层，负责密码加密、验证和密码错误锁定策略
+ */
 class PasswordService
 {
     public static function encrypt($password)

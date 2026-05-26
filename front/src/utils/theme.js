@@ -1,4 +1,8 @@
-// 处理主题样式
+/**
+ * @description 主题切换工具 - Element Plus主题色动态修改
+ * @description 通过修改CSS变量实现主题色切换，提取Element Plus样式中的颜色值，
+ * 使用color库进行颜色混合和变亮/变暗处理
+ */
 export function handleThemeStyle(theme) {
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   const primary = isDark ? softenPrimaryForDark(theme) : theme

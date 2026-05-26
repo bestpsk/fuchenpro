@@ -1,6 +1,11 @@
 import { pinyin } from 'pinyin-pro'
 
 /**
+ * @description 拼音转换工具 - 中文转拼音首字母
+ * @description 将中文字符串转换为拼音首字母缩写，用于搜索和排序
+ */
+
+/**
  * 获取中文词组的拼音首字母
  * @param {string} chinese - 中文词组
  * @returns {string} 拼音首字母大写

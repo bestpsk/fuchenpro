@@ -23,6 +23,10 @@
 </template>
 
 <script setup>
+/**
+ * @description Excel导入弹窗 - Excel文件上传与数据导入
+ * @description 提供Excel文件上传、预览、数据导入功能，支持下载导入模板
+ */
 import { getToken } from '@/utils/auth'
 
 const { proxy } = getCurrentInstance()

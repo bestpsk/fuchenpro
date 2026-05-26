@@ -125,6 +125,10 @@
 </template>
 
 <script setup name="Logininfor">
+/**
+ * @description 登录日志页面 - 登录记录查询与账户解锁
+ * @description 查询用户登录日志，支持按用户名/IP地址/状态/日期范围筛选，可解锁被锁定的账户
+ */
 import { list, delLogininfor, cleanLogininfor, unlockLogininfor } from "@/api/monitor/logininfor"
 
 const { proxy } = getCurrentInstance()

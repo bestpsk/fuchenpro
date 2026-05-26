@@ -185,6 +185,10 @@
 </template>
 
 <script setup name="JobDetail">
+/**
+ * @description 任务详情组件 - 展示定时任务执行详情
+ * @description 展示任务执行的时间、耗时、结果等详细信息
+ */
 const props = defineProps({
   visible: { type: Boolean, default: false },
   row: { type: Object, default: () => ({}) },

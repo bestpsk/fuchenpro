@@ -21,6 +21,10 @@
   </div>
 </template>
 <script setup>
+/**
+ * @description 图标选择弹窗 - Element Plus图标选择器
+ * @description 弹窗展示所有Element Plus图标，支持搜索和选择
+ */
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { watch } from 'vue'
 

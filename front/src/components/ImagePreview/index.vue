@@ -15,6 +15,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 图片预览组件 - 图片缩略图与全屏预览
+ * @description 展示图片缩略图，点击可全屏预览，支持外链和本地路径
+ */
 import { isExternal } from "@/utils/validate"
 
 const props = defineProps({

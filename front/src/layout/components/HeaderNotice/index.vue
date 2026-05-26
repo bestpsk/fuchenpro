@@ -38,6 +38,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 通知消息组件 - 导航栏通知铃铛
+ * @description 展示未读通知列表，支持点击查看详情、标记已读、全部已读等操作
+ */
 import NoticeDetailView from './DetailView'
 import { listNoticeTop, markNoticeRead, markNoticeReadAll } from '@/api/system/notice'
 
@@ -53,8 +57,11 @@ const { proxy } = getCurrentInstance()
 function loadNoticeTop() {
   noticeLoading.value = true
   listNoticeTop().then(res => {
-    noticeList.value = res.data || []
-    unreadCount.value = res.unreadCount !== undefined ? res.unreadCount : noticeList.value.filter(n => !n.isRead).length
+    const list = Array.isArray(res.data?.list) ? res.data.list
+               : Array.isArray(res.list) ? res.list
+               : (Array.isArray(res.data) ? res.data : [])
+    noticeList.value = list
+    unreadCount.value = res.data?.unreadCount ?? res.unreadCount ?? list.filter(n => !n.isRead).length
   }).finally(() => {
     noticeLoading.value = false
   })

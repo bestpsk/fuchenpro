@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\SysJob;
 use app\model\SysJobLog;
 
+/**
+ * 定时任务服务层，处理定时任务的增删改查、状态变更和立即执行
+ */
 class SysJobService
 {
+    // 按条件分页查询定时任务列表
     public function selectJobList($params = [])
     {
         $query = SysJob::query();
@@ -29,10 +33,14 @@ class SysJobService
         return $query->orderBy('job_id', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询定时任务详情
+
     public function selectJobById($jobId)
     {
         return SysJob::find($jobId);
     }
+
+    // 新增定时任务
 
     public function insertJob($data)
     {
@@ -40,16 +48,22 @@ class SysJobService
         return SysJob::create($data);
     }
 
+    // 更新定时任务信息
+
     public function updateJob($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return SysJob::where('job_id', $data['job_id'])->update($data);
     }
 
+    // 批量删除定时任务
+
     public function deleteJobByIds($jobIds)
     {
         return SysJob::whereIn('job_id', $jobIds)->delete();
     }
+
+    // 修改定时任务状态（启用/停用）
 
     public function changeStatus($jobId, $status)
     {

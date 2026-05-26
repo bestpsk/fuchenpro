@@ -7,8 +7,14 @@ use app\service\BizSupplierService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 供应商管理控制器
+ *
+ * 负责供应商的增删改查和模糊搜索功能
+ */
 class BizSupplierController
 {
+    // 分页查询供应商列表
     public function list(Request $request)
     {
         $service = new BizSupplierService();
@@ -17,6 +23,7 @@ class BizSupplierController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取供应商详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +34,7 @@ class BizSupplierController
         return AjaxResult::success($supplier);
     }
 
+    // 模糊搜索供应商，用于下拉选择框
     public function search(Request $request)
     {
         $keyword = $request->input('keyword', '');
@@ -35,6 +43,7 @@ class BizSupplierController
         return AjaxResult::success($list);
     }
 
+    // 新增供应商
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -44,6 +53,7 @@ class BizSupplierController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改供应商信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -53,9 +63,13 @@ class BizSupplierController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除供应商
     public function remove(Request $request)
     {
-        $supplierIds = explode(',', $request->input('supplierIds', ''));
+        $supplierIds = $request->input('supplierIds', '');
+        if (!is_array($supplierIds)) {
+            $supplierIds = explode(',', $supplierIds);
+        }
         $supplierIds = array_map('intval', array_filter($supplierIds));
         $service = new BizSupplierService();
         $result = $service->deleteSupplierByIds($supplierIds);

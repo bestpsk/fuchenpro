@@ -1,6 +1,12 @@
+/**
+ * @description 渲染器 - 表单设计器运行时组件渲染
+ * @description 使用Vue3的render函数动态渲染表单设计器中的组件，
+ * 根据组件配置自动生成对应的Element Plus组件VNode，处理属性映射、子组件和插槽
+ */
 import { defineComponent, h } from 'vue'
 import { makeMap } from '@/utils/index'
 
+/** HTML合法属性名集合，用于区分组件props和DOM属性 */
 const isAttr = makeMap(
   'accept,accept-charset,accesskey,action,align,alt,async,autocomplete,' +
   'autofocus,autoplay,autosave,bgcolor,border,buffered,challenge,charset,' +
@@ -16,16 +22,20 @@ const isAttr = makeMap(
   'spellcheck,src,srcdoc,srclang,srcset,start,step,style,summary,tabindex,' +
   'target,title,type,usemap,value,width,wrap' + 'prefix-icon'
 )
+/** 不应作为props传递的配置字段 */
 const isNotProps = makeMap(
   'layout,prepend,regList,tag,document,changeTag,defaultValue'
 )
 
+/** 构建组件的v-model双向绑定 */
 function useVModel(props, emit) {
   return {
     modelValue: props.defaultValue,
     'onUpdate:modelValue': (val) => emit('update:modelValue', val),
   }
 }
+
+/** 各组件的子内容生成器（如选项、按钮文字等） */
 const componentChild = {
   'el-button': {
     default(h, conf, key) {
@@ -63,15 +73,9 @@ const componentChild = {
   'el-upload': {
     'list-type': (h, conf, key) => {
       const option = {}
-      // if (conf.showTip) {
-      //   tip = h('div', {
-      //     class: "el-upload__tip"
-      //   }, () => '只能上传不超过' + conf.fileSize + conf.sizeUnit + '的' + conf.accept + '文件')
-      // }
       if (conf['list-type'] === 'picture-card') {
         return h(resolveComponent('el-icon'), option, () => h(resolveComponent('Plus')))
       } else {
-        // option.size = "small"
         option.type = "primary"
         option.icon = "Upload"
         return h(resolveComponent('el-button'), option, () => conf.buttonText)
@@ -80,6 +84,8 @@ const componentChild = {
 
   }
 }
+
+/** 各组件的插槽内容生成器 */
 const componentSlot = {
   'el-upload': {
     'tip': (h, conf, key) => {
@@ -93,7 +99,7 @@ const componentSlot = {
 }
 export default defineComponent({
 
-  // 使用 render 函数
+  /** 使用render函数动态渲染组件，根据conf配置生成对应的Element Plus组件 */
   render() {
     const dataObject = {
       attrs: {},
@@ -122,6 +128,7 @@ export default defineComponent({
         }
       })
     }
+    /** 将组件配置中的属性分类到attrs/props中 */
     Object.keys(confClone).forEach(key => {
       const val = confClone[key]
       if (dataObject[key]) {
@@ -148,6 +155,7 @@ export default defineComponent({
       , slot ?? null)
   },
   props: {
+    /** 组件配置对象，包含标签类型、属性、选项等 */
     conf: {
       type: Object,
       required: true,

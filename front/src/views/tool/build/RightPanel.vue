@@ -464,6 +464,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 右侧属性面板 - 表单组件属性编辑
+ * @description 编辑选中表单组件的属性配置，包括基本属性、校验规则、样式等
+ */
 import draggable from "vuedraggable/dist/vuedraggable.common"
 import { isNumberStr } from '@/utils/index'
 import IconsDialog from './IconsDialog'

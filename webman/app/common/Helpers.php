@@ -2,13 +2,20 @@
 
 namespace app\common;
 
+/**
+ * 通用辅助函数集合
+ *
+ * 提供命名风格转换等通用工具方法，主要用于数据输出时的键名格式化
+ */
 class Helpers
 {
+    // 将单个蛇形命名键名转换为驼峰命名
     public static function toCamelCase($key)
     {
         return lcfirst(str_replace('_', '', ucwords($key, '_')));
     }
 
+    // 递归将数组中所有键名从蛇形命名转换为驼峰命名
     public static function arrayKeysToCamelCase($array)
     {
         $result = [];
@@ -23,6 +30,7 @@ class Helpers
         return $result;
     }
 
+    // 将用户数据（含关联的部门、角色、岗位）的键名统一转换为驼峰命名
     public static function userToCamelCase($userData)
     {
         $user = self::arrayKeysToCamelCase($userData);

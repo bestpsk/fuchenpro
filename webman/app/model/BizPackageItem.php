@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 套餐项目模型，记录套餐中每个产品的单价、次数及已用/剩余数量
+ */
 class BizPackageItem extends Model
 {
     protected $table = 'biz_package_item';

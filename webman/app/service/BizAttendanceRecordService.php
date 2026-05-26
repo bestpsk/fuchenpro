@@ -6,8 +6,12 @@ use app\model\BizAttendanceRecord;
 use app\model\BizAttendanceRule;
 use app\model\SysUser;
 
+/**
+ * 考勤记录服务层，处理考勤打卡（内勤/外勤）、上下班判断、迟到早退计算和月度统计
+ */
 class BizAttendanceRecordService
 {
+    // 按条件分页查询考勤日记录列表
     public function selectRecordList($params = [])
     {
         $query = BizAttendanceRecord::query();
@@ -32,6 +36,8 @@ class BizAttendanceRecordService
         $pageSize = intval($params['pageSize'] ?? 10);
         return $query->orderBy('attendance_date', 'desc')->orderBy('record_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
+
+    // 根据ID查询考勤日记录详情，含打卡明细
 
     public function selectRecordById($recordId)
     {
@@ -214,6 +220,8 @@ class BizAttendanceRecordService
             ->orderBy('clock_time', 'asc')
             ->get();
     }
+
+    // 员工打卡，更新考勤日记录并创建打卡明细
 
     public function clockIn($data)
     {

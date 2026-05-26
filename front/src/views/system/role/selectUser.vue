@@ -61,6 +61,10 @@
 </template>
 
 <script setup name="SelectUser">
+/**
+ * @description 用户选择弹窗 - 为角色批量添加未授权用户
+ * @description 查询未分配该角色的用户列表，支持多选后批量授权
+ */
 import { authUserSelectAll, unallocatedUserList } from "@/api/system/role"
 
 const props = defineProps({

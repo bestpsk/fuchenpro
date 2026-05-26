@@ -24,6 +24,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 图标选择组件 - SVG图标搜索与选择
+ * @description 展示所有SVG图标，支持关键词搜索和点击选择
+ */
 import icons from './requireIcons'
 
 const props = defineProps({

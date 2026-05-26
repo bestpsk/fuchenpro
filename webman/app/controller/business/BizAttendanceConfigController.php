@@ -7,6 +7,11 @@ use app\service\BizAttendanceConfigService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 考勤配置控制器
+ *
+ * 负责考勤配置的增删改查，以及获取当前登录用户的考勤规则
+ */
 class BizAttendanceConfigController
 {
     protected $configService;
@@ -16,6 +21,7 @@ class BizAttendanceConfigController
         $this->configService = new BizAttendanceConfigService();
     }
 
+    // 分页查询考勤配置列表
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->get());
@@ -23,6 +29,7 @@ class BizAttendanceConfigController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取考勤配置详情
     public function info(Request $request, $configId)
     {
         $config = $this->configService->selectConfigById($configId);
@@ -32,6 +39,7 @@ class BizAttendanceConfigController
         return AjaxResult::success($config);
     }
 
+    // 新增考勤配置
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -44,6 +52,7 @@ class BizAttendanceConfigController
         return AjaxResult::error('新增失败');
     }
 
+    // 修改考勤配置
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -56,9 +65,14 @@ class BizAttendanceConfigController
         return AjaxResult::error('修改失败');
     }
 
+    // 批量删除考勤配置
     public function remove(Request $request)
     {
-        $configIds = $request->post('configIds');
+        $configIds = $request->input('configIds', '');
+        if (!is_array($configIds)) {
+            $configIds = explode(',', $configIds);
+        }
+        $configIds = array_map('intval', array_filter($configIds));
         if (empty($configIds)) {
             return AjaxResult::error('请选择要删除的配置');
         }
@@ -70,6 +84,7 @@ class BizAttendanceConfigController
         return AjaxResult::error('删除失败');
     }
 
+    // 获取当前登录用户的考勤规则（根据用户关联的配置计算）
     public function getUserRule(Request $request)
     {
         $userId = $request->loginUser->userId;

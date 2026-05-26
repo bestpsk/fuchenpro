@@ -4,8 +4,12 @@ namespace app\service;
 
 use app\model\SysDept;
 
+/**
+ * 部门服务层，处理部门的增删改查和树形结构构建
+ */
 class SysDeptService
 {
+    // 按条件查询部门列表（树形）
     public function selectDeptList($params = [])
     {
         $query = SysDept::where('del_flag', '0');
@@ -21,10 +25,14 @@ class SysDeptService
         return $query->get();
     }
 
+    // 根据ID查询部门详情
+
     public function selectDeptById($deptId)
     {
         return SysDept::where('del_flag', '0')->find($deptId);
     }
+
+    // 新增部门，计算祖级列表
 
     public function insertDept($data)
     {
@@ -39,6 +47,8 @@ class SysDeptService
         return SysDept::create($data);
     }
 
+    // 更新部门信息
+
     public function updateDept($data)
     {
         $deptId = $data['dept_id'];
@@ -49,6 +59,8 @@ class SysDeptService
         $data['update_time'] = date('Y-m-d H:i:s');
         return SysDept::where('dept_id', $deptId)->update($data);
     }
+
+    // 删除部门，校验是否存在子部门或用户
 
     public function deleteDeptById($deptId)
     {
@@ -81,6 +93,8 @@ class SysDeptService
         }
         return $result;
     }
+
+    // 构建部门树形结构
 
     public function buildDeptTree($depts, $parentId)
     {

@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\BizEnterprise;
 use app\model\BizPlan;
 
+/**
+ * 企业服务层，处理企业的增删改查、搜索和状态变更，支持拼音自动生成
+ */
 class BizEnterpriseService
 {
+    // 按条件分页查询企业列表，附加方案数量
     public function selectEnterpriseList($params = [])
     {
         $query = BizEnterprise::query();
@@ -47,10 +51,14 @@ class BizEnterpriseService
         return $result;
     }
 
+    // 根据ID查询企业详情
+
     public function selectEnterpriseById($enterpriseId)
     {
         return BizEnterprise::find($enterpriseId);
     }
+
+    // 新增企业，自动生成拼音
 
     public function insertEnterprise($data)
     {
@@ -60,6 +68,8 @@ class BizEnterpriseService
         }
         return BizEnterprise::create($data);
     }
+
+    // 更新企业信息，同步更新关联门店的企业名称
 
     public function updateEnterprise($data)
     {
@@ -138,6 +148,8 @@ class BizEnterpriseService
         
         return '';
     }
+
+    // 批量删除企业，同时删除关联门店、方案、客户
 
     public function deleteEnterpriseByIds($enterpriseIds)
     {

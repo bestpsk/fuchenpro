@@ -82,6 +82,10 @@
 </template>
 
 <script setup name="WmsInventory">
+/**
+ * @description 库存管理页面 - 库存查询与预警
+ * @description 查询产品库存数量，支持库存预警列表查看（低于安全库存的产品）
+ */
 import { listInventory } from "@/api/wms/inventory"
 
 const { proxy } = getCurrentInstance()

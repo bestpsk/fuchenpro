@@ -5,8 +5,8 @@
     </view>
     <swiper class="notice-swiper" vertical autoplay circular interval="3000" duration="500">
       <swiper-item v-for="(item, index) in noticeList" :key="index">
-        <view class="notice-item">
-          <text class="notice-type">[{{ item.type }}]</text>
+        <view class="notice-item" @click="handleNoticeClick(item)">
+          <text class="notice-type">[{{ item.typeLabel }}]</text>
           <text class="notice-content">{{ item.content }}</text>
         </view>
       </swiper-item>
@@ -18,23 +18,40 @@
 </template>
 
 <script setup>
-/**
- * @description 首页通知栏组件 - 滚动公告展示
- * @description 滚动展示通知、公告、提醒等消息，点击右侧可查看更多消息
- */
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { listNoticeTop, markNoticeRead } from '@/api/system/notice'
 
-/** 默认通知列表数据 */
-const noticeList = ref([
-  { type: '通知', content: '您有一条新的订单待处理，请及时查看' },
-  { type: '公告', content: '系统将于今晚22:00进行维护升级，请提前保存数据' },
-  { type: '提醒', content: '今日有3位顾客预约，请提前做好准备' }
-])
+const typeMap = { '1': '通知', '2': '公告' }
 
-/** 查看更多通知（建设中） */
-function handleMoreNotice() {
-  uni.showToast({ title: '查看更多消息', icon: 'none' })
+const noticeList = ref([])
+
+function loadNotices() {
+  listNoticeTop().then(res => {
+    const list = Array.isArray(res.data?.list) ? res.data.list
+               : Array.isArray(res.list) ? res.list
+               : (Array.isArray(res.data) ? res.data : [])
+    noticeList.value = list.map(item => ({
+      ...item,
+      typeLabel: typeMap[item.noticeType] || '消息',
+      content: item.noticeTitle
+    }))
+  }).catch(() => {})
 }
+
+function handleNoticeClick(item) {
+  if (!item.isRead) {
+    markNoticeRead(item.noticeId).catch(() => {})
+  }
+  uni.navigateTo({ url: `/pages/system/notice/detail?noticeId=${item.noticeId}` })
+}
+
+function handleMoreNotice() {
+  uni.navigateTo({ url: '/pages/system/notice/index' })
+}
+
+onMounted(() => loadNotices())
+
+defineExpose({ loadNotices })
 </script>
 
 <style lang="scss" scoped>

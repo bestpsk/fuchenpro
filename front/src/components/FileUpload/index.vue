@@ -41,6 +41,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 文件上传组件 - 多文件上传与管理
+ * @description 支持多文件上传、文件列表展示、预览、删除，自动携带Token认证
+ */
 import { getToken } from "@/utils/auth"
 import Sortable from 'sortablejs'
 

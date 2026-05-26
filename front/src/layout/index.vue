@@ -14,6 +14,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 布局主框架 - 侧边栏/导航栏/标签页/内容区组合
+ * @description 根据主题设置组合侧边栏、导航栏、标签页和内容区，支持暗黑侧边栏和顶部导航模式
+ */
 import { useWindowSize } from '@vueuse/core'
 import Sidebar from './components/Sidebar/index.vue'
 import { AppMain, Navbar, Settings, TagsView } from './components'

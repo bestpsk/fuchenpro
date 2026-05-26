@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 岗位模型，存储岗位编码、名称及排序
+ */
 class SysPost extends Model
 {
     protected $table = 'sys_post';

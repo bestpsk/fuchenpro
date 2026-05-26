@@ -8,7 +8,7 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="order-scroll" :style="{ height: scrollHeight }">
+    <view class="list-wrapper">
       <view v-if="orderList.length > 0" class="list-content">
         <view
           v-for="(item, index) in orderList"
@@ -17,7 +17,8 @@
           @click="handleOrderClick(item)"
         >
           <view class="order-left">
-            <u-avatar :src="item.avatar" size="64" />
+            <u-avatar v-if="item.avatar && item.avatar !== '/static/images/profile.jpg'" :src="item.avatar" size="64" mode="aspectFill" />
+            <u-avatar v-else :text="item.name ? item.name.charAt(0) : ''" size="64" bg-color="#3D6DF7" color="#fff" fontSize="24" />
             <view class="customer-info">
               <view class="customer-name">
                 <text class="name-text">{{ item.name }}</text>
@@ -27,6 +28,10 @@
                 :type="getStatusType(item.status)"
                 style="margin-left: 8rpx; vertical-align: middle; font-size:x-small;  padding: 0 10rpx;"
               />
+              </view>
+              <view v-if="item.operatorName" class="customer-operator-row">
+                <u-icon name="man" size="12" color="#86909C" style="margin-right: 4rpx;" />
+                <text class="customer-operator">{{ item.operatorName }}</text>
               </view>
               <view v-if="item.store" class="customer-store-row">
                 <u-icon name="home" size="12" color="#86909C" style="margin-right: 4rpx;" />
@@ -52,7 +57,7 @@
         <u-icon name="file-text" size="80" color="#e5e5e5" />
         <text class="empty-text">暂无订单数据</text>
       </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
 
@@ -70,11 +75,6 @@ const props = defineProps({
     type: Array,
     default: () => []
   }
-})
-
-/** 动态计算滚动区域高度，基于列表项数量，最大600rpx */
-const scrollHeight = computed(() => {
-  return `${Math.min(props.list.length * 160 + 40, 600)}rpx`
 })
 
 /** 订单列表，优先使用props传入数据 */
@@ -113,9 +113,9 @@ function handleOrderClick(item) {
   })
 }
 
-/** "查看全部"按钮，切换到工作台Tab页 */
+/** "查看全部"按钮，跳转到订单管理列表 */
 function handleMore() {
-  uni.switchTab({ url: '/pages/work/index' })
+  uni.navigateTo({ url: '/pages/business/order/index' })
 }
 </script>
 
@@ -151,7 +151,7 @@ function handleMore() {
   }
 }
 
-.order-scroll { border-radius: 12rpx; }
+.list-wrapper { border-radius: 12rpx; }
 
 .list-content {
   display: flex;
@@ -196,7 +196,14 @@ function handleMore() {
         margin-top: 4rpx;
       }
 
+      .customer-operator-row {
+        display: flex;
+        align-items: center;
+        margin-top: 4rpx;
+      }
+
       .customer-store { font-size: 23rpx; color: #86909C; }
+      .customer-operator { font-size: 23rpx; color: #86909C; }
     }
   }
 

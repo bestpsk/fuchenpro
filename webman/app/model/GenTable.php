@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 代码生成-表模型，存储代码生成所需的数据库表元信息
+ */
 class GenTable extends Model
 {
     protected $table = 'gen_table';
@@ -17,6 +20,7 @@ class GenTable extends Model
         'gen_path', 'options', 'create_by', 'create_time', 'update_by', 'update_time', 'remark'
     ];
 
+    // 关联表下的所有列配置
     public function columns()
     {
         return $this->hasMany(GenTableColumn::class, 'table_id', 'table_id');

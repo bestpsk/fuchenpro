@@ -15,7 +15,7 @@ class BizAttendanceConfig extends Model
         'rule_id',
         'config_type',
         'user_ids',
-        'dept_id',
+        'dept_ids',
         'status',
         'remark',
         'create_by',
@@ -27,11 +27,6 @@ class BizAttendanceConfig extends Model
     public function rule()
     {
         return $this->belongsTo(BizAttendanceRule::class, 'rule_id', 'rule_id');
-    }
-
-    public function dept()
-    {
-        return $this->belongsTo(SysDept::class, 'dept_id', 'dept_id');
     }
 
     public function getUserIdsArrayAttribute()
@@ -49,5 +44,22 @@ class BizAttendanceConfig extends Model
             return [];
         }
         return SysUser::whereIn('user_id', $userIds)->get();
+    }
+
+    public function getDeptIdsArrayAttribute()
+    {
+        if (empty($this->dept_ids)) {
+            return [];
+        }
+        return array_map('intval', array_filter(explode(',', $this->dept_ids)));
+    }
+
+    public function getDeptsAttribute()
+    {
+        $ids = $this->dept_ids_array;
+        if (empty($ids)) {
+            return [];
+        }
+        return SysDept::whereIn('dept_id', $ids)->get();
     }
 }

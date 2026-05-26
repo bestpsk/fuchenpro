@@ -1,6 +1,7 @@
- /**
- * v-hasRole 角色权限处理
- * Copyright (c) 2019 ruoyi
+/**
+ * @description 角色权限指令 - 根据角色标识控制元素显示
+ * @description 使用方式：v-hasRole="['admin']"
+ * 当用户不拥有指定角色时，直接移除DOM元素；admin角色拥有全部权限
  */
 import useUserStore from '@/store/modules/user'
 

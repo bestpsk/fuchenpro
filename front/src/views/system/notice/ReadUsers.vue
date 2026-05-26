@@ -46,6 +46,10 @@
 </template>
 
 <script setup name="ReadUsers">
+/**
+ * @description 已读用户列表 - 查看公告的已读人员
+ * @description 弹窗展示已阅读指定公告的用户列表
+ */
 import { Search } from "@element-plus/icons-vue"
 import { listNoticeReadUsers } from "@/api/system/notice"
 

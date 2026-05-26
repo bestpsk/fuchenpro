@@ -40,6 +40,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 右侧工具栏 - 搜索显隐/刷新/列设置
+ * @description 提供搜索框显隐切换、页面刷新、表格列显隐设置等功能
+ */
 import cache from '@/plugins/cache'
 
 const props = defineProps({

@@ -6,8 +6,12 @@ use support\Redis;
 use app\common\Constants;
 use app\common\LoginUser;
 
+/**
+ * 在线用户服务层，查询在线用户列表和强制下线
+ */
 class SysUserOnlineService
 {
+    // 查询在线用户列表
     public function selectOnlineList($params = [])
     {
         $redis = Redis::connection();
@@ -47,6 +51,8 @@ class SysUserOnlineService
 
         return $onlineList;
     }
+
+    // 强制下线用户
 
     public function forceLogout($tokenId)
     {

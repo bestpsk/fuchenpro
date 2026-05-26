@@ -4,8 +4,12 @@ namespace app\service;
 
 use app\model\SysDept;
 
+/**
+ * 数据权限服务层，根据用户角色的数据权限范围自动为查询添加过滤条件
+ */
 class DataScopeService
 {
+    // 将数据权限条件应用到查询构建器
     public static function applyDataScope($query, $loginUser, $deptAlias = 'd', $userAlias = 'u')
     {
         if ($loginUser->isAdmin()) {

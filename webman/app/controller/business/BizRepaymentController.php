@@ -7,8 +7,15 @@ use app\service\BizRepaymentService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 还款管理控制器
+ *
+ * 负责客户还款记录的查询、新增、审核和取消等功能，
+ * 还款关联客户套餐，支持自动审核和手动审核两种模式
+ */
 class BizRepaymentController
 {
+    // 分页查询还款记录列表
     public function list(Request $request)
     {
         $service = new BizRepaymentService();
@@ -17,6 +24,7 @@ class BizRepaymentController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取还款记录详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -29,6 +37,7 @@ class BizRepaymentController
         return AjaxResult::success($record);
     }
 
+    // 查询指定客户的欠款套餐列表（用于还款时选择套餐）
     public function owedPackages(Request $request)
     {
         $customerId = $request->get('customerId') ?? $request->get('customer_id');
@@ -40,6 +49,7 @@ class BizRepaymentController
         return AjaxResult::success($list);
     }
 
+    // 新增还款记录，支持自动审核模式，需指定客户、套餐和还款金额
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -56,7 +66,7 @@ class BizRepaymentController
         
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $data['creator_user_id'] = $request->loginUser->user->user_id ?? 0;
-        $data['creator_user_name'] = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        $data['creator_user_name'] = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         
         $service = new BizRepaymentService();
         
@@ -70,6 +80,7 @@ class BizRepaymentController
         }
     }
 
+    // 审核还款记录，审核通过后更新套餐还款状态
     public function audit(Request $request)
     {
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');
@@ -77,7 +88,7 @@ class BizRepaymentController
             return AjaxResult::error('还款ID不能为空');
         }
         
-        $auditBy = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizRepaymentService();
         
         try {
@@ -92,6 +103,7 @@ class BizRepaymentController
         }
     }
 
+    // 取消还款记录，仅未审核的记录可取消
     public function cancel(Request $request)
     {
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');

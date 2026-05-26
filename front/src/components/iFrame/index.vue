@@ -9,6 +9,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 内嵌框架组件 - iframe页面嵌入与自适应
+ * @description 将外部URL通过iframe嵌入，支持自适应高度和loading状态
+ */
 const props = defineProps({
   src: {
     type: String,

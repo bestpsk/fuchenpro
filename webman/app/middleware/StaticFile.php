@@ -19,11 +19,14 @@ use Webman\Http\Response;
 use Webman\Http\Request;
 
 /**
- * Class StaticFile
+ * 静态文件中间件
+ *
+ * 禁止访问以点号开头的隐藏文件（如.htaccess），防止敏感配置泄露
  * @package app\middleware
  */
 class StaticFile implements MiddlewareInterface
 {
+    // 处理静态文件请求，拦截隐藏文件访问并返回403
     public function process(Request $request, callable $handler): Response
     {
         // Access to files beginning with. Is prohibited

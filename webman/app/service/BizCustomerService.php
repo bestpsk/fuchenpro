@@ -8,8 +8,14 @@ use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\model\BizOperationRecord;
 
+/**
+ * 客户服务层
+ *
+ * 处理客户的增删改查和搜索（含成交状态和套餐耗尽判断）
+ */
 class BizCustomerService
 {
+    // 按条件分页查询客户列表，支持按企业、门店、姓名、电话、标签、状态筛选
     public function selectCustomerList($params = [])
     {
         $query = BizCustomer::query();
@@ -24,11 +30,13 @@ class BizCustomerService
         return $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询客户信息
     public function selectCustomerById($customerId)
     {
         return BizCustomer::find($customerId);
     }
 
+    // 搜索客户，附加成交状态、消费金额、套餐耗尽情况和平均满意度
     public function searchCustomer($keyword, $enterpriseId, $storeId = null, $hasDeal = null, $satisfaction = null)
     {
         $query = BizCustomer::query();
@@ -94,18 +102,21 @@ class BizCustomerService
         return collect($result);
     }
 
+    // 新增客户，自动设置创建时间
     public function insertCustomer($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
         return BizCustomer::create($data);
     }
 
+    // 更新客户信息，自动设置更新时间
     public function updateCustomer($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return BizCustomer::where('customer_id', $data['customer_id'])->update($data);
     }
 
+    // 根据ID批量删除客户
     public function deleteCustomerByIds($customerIds)
     {
         return BizCustomer::whereIn('customer_id', $customerIds)->delete();

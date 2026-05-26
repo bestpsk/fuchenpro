@@ -38,3 +38,10 @@ export function getTodayStats() {
     method: 'get'
   })
 }
+
+export function getBannerList() {
+  return request({
+    url: '/app/banner/list',
+    method: 'get'
+  })
+}

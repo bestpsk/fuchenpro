@@ -145,6 +145,10 @@
 </template>
 
 <script setup name="Post">
+/**
+ * @description 岗位管理页面 - 岗位增删改查
+ * @description 提供岗位列表查询、新增、修改、删除、导出等功能
+ */
 import { listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post"
 
 const { proxy } = getCurrentInstance()

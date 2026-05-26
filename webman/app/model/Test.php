@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 测试模型，用于开发调试
+ */
 class Test extends Model
 {
     /**

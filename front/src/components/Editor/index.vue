@@ -27,6 +27,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 富文本编辑器 - 基于Quill的WYSIWYG编辑器
+ * @description 封装Quill富文本编辑器，支持图片上传、自定义工具栏、内容双向绑定
+ */
 import axios from 'axios'
 import { QuillEditor } from "@vueup/vue-quill"
 import "@vueup/vue-quill/dist/vue-quill.snow.css"

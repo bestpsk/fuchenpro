@@ -17,6 +17,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 重置密码组件 - 用户自行修改密码
+ * @description 需输入旧密码验证身份，新密码需符合强度规则，支持密码可见性切换
+ */
 import { usePasswordRule } from "@/utils/passwordRule"
 import { updateUserPwd } from "@/api/system/user"
 

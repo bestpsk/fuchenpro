@@ -1,6 +1,6 @@
 /**
- * 密码强度规则
- * 根据参数 chrtype 动态生成校验规则
+ * @description 密码规则校验 - 密码强度与格式验证
+ * @description 根据参数chrtype动态生成密码校验规则，支持任意字符/纯数字/纯字母/字母+数字/字母+数字+特殊字符
  *
  * chrtype 说明：
  *   0 - 任意字符（默认）
@@ -12,10 +12,10 @@
 
 import cache from '@/plugins/cache'
 
-// 密码限制类型
+/** 密码限制类型（从会话缓存读取，默认0-任意字符） */
 const pwdChrType = ref(cache.session.get('pwrChrtype') || '0')
 
-// 各类型对应的正则、错误提示
+/** 各类型对应的正则表达式和错误提示 */
 const PWD_RULES = {
   '0': { pattern: /^[^<>"'|\\]+$/, message: '密码不能包含非法字符：< > " \' \\ |' },
   '1': { pattern: /^[0-9]+$/, message: '密码只能为数字（0-9）' },
@@ -25,7 +25,7 @@ const PWD_RULES = {
 }
 
 export function usePasswordRule() {
-  // 默认密码校验
+  /** 默认密码校验规则（必填+长度+格式） */
   const pwdValidator = computed(() => {
     const rule = PWD_RULES[pwdChrType.value] || PWD_RULES['0']
     return [
@@ -34,7 +34,7 @@ export function usePasswordRule() {
       { pattern: rule.pattern, message: rule.message, trigger: 'blur' }
     ]
   })
-  // 校验prompt的inputValidator函数
+  /** prompt弹窗的密码校验函数（返回错误字符串或undefined） */
   const pwdPromptValidator = (value) => {
     const rule = PWD_RULES['0']
     if (!value || value.length < 6 || value.length > 20) {
@@ -44,7 +44,7 @@ export function usePasswordRule() {
       return rule.message
     }
   }
-  // 个人中心密码校验
+  /** 个人中心修改密码校验规则 */
   const infoPwdValidator = computed(() => {
     const rule = PWD_RULES[pwdChrType.value] || PWD_RULES['0']
     return [
@@ -53,7 +53,7 @@ export function usePasswordRule() {
       { pattern: rule.pattern, message: rule.message, trigger: 'blur' }
     ]
   })
-  // 注册页面密码校验
+  /** 注册页面密码校验规则（固定使用最严格规则） */
   const registerPwdValidator = computed(() => {
     const rule = PWD_RULES['0']
     return [

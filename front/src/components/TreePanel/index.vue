@@ -72,6 +72,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 树形面板组件 - 通用树形数据展示与选择
+ * @description 提供树形数据展示、节点搜索、单选/多选、展开/折叠等功能
+ */
 const props = defineProps({
   // 树形数据
   treeData: {

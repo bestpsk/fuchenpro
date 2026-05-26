@@ -266,6 +266,10 @@
 </template>
 
 <script setup name="WmsStockOut">
+/**
+ * @description 出库管理页面 - 出库单CRUD与确认/取消确认
+ * @description 提供出库单增删改查、确认出库（扣减库存）、取消确认出库（归还库存）等功能
+ */
 import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, confirmStockOutById, cancelConfirmStockOut } from "@/api/wms/stockOut"
 import { ElMessageBox } from 'element-plus'
 import { searchProduct } from "@/api/wms/product"

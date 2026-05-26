@@ -7,8 +7,12 @@ use app\model\BizStockCheckItem;
 use app\model\BizInventory;
 use app\model\BizProduct;
 
+/**
+ * 库存盘点服务层，处理盘点单的增删改查和确认，确认时按差异自动调整库存
+ */
 class BizStockCheckService
 {
+    // 按条件分页查询盘点单列表
     public function selectStockCheckList($params = [])
     {
         $query = BizStockCheck::query();
@@ -28,6 +32,8 @@ class BizStockCheckService
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('stock_check_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
+
+    // 根据ID查询盘点单详情，含明细列表
 
     public function selectStockCheckById($stockCheckId)
     {
@@ -57,6 +63,8 @@ class BizStockCheckService
         return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
+    // 新增盘点单，生成盘点编号并创建明细
+
     public function insertStockCheck($data)
     {
         $items = $data['items'] ?? [];
@@ -81,6 +89,8 @@ class BizStockCheckService
         }
         return $stockCheck;
     }
+
+    // 更新盘点单信息
 
     public function updateStockCheck($data)
     {
@@ -113,6 +123,8 @@ class BizStockCheckService
         }
         return true;
     }
+
+    // 批量删除盘点单
 
     public function deleteStockCheckByIds($stockCheckIds)
     {

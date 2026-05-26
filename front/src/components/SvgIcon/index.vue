@@ -5,6 +5,10 @@
 </template>
 
 <script>
+/**
+ * @description SVG图标组件 - 渲染SVG图标或外部图标URL
+ * @description 支持渲染本地SVG图标（通过icon名）和外部URL图标，自动添加图标样式
+ */
 export default defineComponent({
   props: {
     iconClass: {

@@ -8,8 +8,16 @@ use Webman\Http\Response;
 use app\model\SysOperLog;
 use app\common\LoginUser;
 
+/**
+ * 操作日志中间件
+ *
+ * 自动记录POST/PUT/DELETE请求的操作日志到sys_oper_log表，
+ * 包括操作人、请求路径、请求参数、响应结果、耗时、IP地址和地理位置等信息。
+ * GET请求和未登录请求不记录日志
+ */
 class LogMiddleware implements MiddlewareInterface
 {
+    // 处理请求并记录操作日志，仅记录已登录用户的POST/PUT/DELETE操作
     public function process(Request $request, callable $handler): Response
     {
         $startTime = microtime(true);
@@ -61,6 +69,7 @@ class LogMiddleware implements MiddlewareInterface
         return $response;
     }
 
+    // 根据请求路径匹配操作模块标题（如/system/user → 用户管理）
     private function getTitle($path)
     {
         $titles = [
@@ -89,6 +98,7 @@ class LogMiddleware implements MiddlewareInterface
         return '系统操作';
     }
 
+    // 将HTTP请求方法映射为业务操作类型（POST=新增 PUT=修改 DELETE=删除）
     private function getBusinessType($method)
     {
         return match ($method) {

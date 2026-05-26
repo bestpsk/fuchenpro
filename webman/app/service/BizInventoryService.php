@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\BizInventory;
 use app\model\BizProduct;
 
+/**
+ * 库存服务层，处理库存查询和库存预警，库存数据由入库/出库确认时自动更新
+ */
 class BizInventoryService
 {
+    // 按条件分页查询库存列表，关联产品信息
     public function selectInventoryList($params = [])
     {
         $query = BizInventory::query()->with('product');

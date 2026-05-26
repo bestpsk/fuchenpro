@@ -5,8 +5,12 @@ namespace app\service;
 use support\Redis;
 use app\common\Constants;
 
+/**
+ * 验证码服务层，负责数学运算验证码的生成和校验
+ */
 class CaptchaService
 {
+    // 获取验证码，生成数学运算图片并存入Redis
     public static function getCaptcha()
     {
         $captchaEnabled = SysConfigService::selectCaptchaEnabled();

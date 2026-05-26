@@ -124,6 +124,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 布局设置面板 - 主题色/暗黑侧边栏/固定头部/标签页等配置
+ * @description 提供主题颜色选择、暗黑侧边栏、固定头部、标签页显示、动态标题等布局设置
+ */
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'

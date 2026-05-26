@@ -25,6 +25,10 @@
   </el-col>
 </template>
 <script setup name="DraggableItem">
+/**
+ * @description 拖拽组件 - 表单设计器中的可拖拽组件包装
+ * @description 包装表单设计器中的组件，支持拖拽排序和嵌套容器
+ */
 import draggable from "vuedraggable/dist/vuedraggable.common"
 import render from '@/utils/generator/render'
 

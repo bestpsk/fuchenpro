@@ -83,7 +83,13 @@
          </el-table-column>
          <el-table-column label="状态" align="center" prop="status" width="100">
             <template #default="scope">
-               <dict-tag :options="sys_notice_status" :value="scope.row.status" />
+               <el-switch
+                  v-model="scope.row.status"
+                  :active-value="'0'"
+                  :inactive-value="'1'"
+                  @change="handleStatusChange(scope.row)"
+                  v-hasPermi="['system:notice:edit']"
+               />
             </template>
          </el-table-column>
          <el-table-column label="创建者" align="center" prop="createBy" width="100" />
@@ -161,6 +167,10 @@
 </template>
 
 <script setup name="Notice">
+/**
+ * @description 通知公告页面 - 公告增删改查与已读查看
+ * @description 提供公告增删改查、公告详情查看、已读用户列表查看等功能
+ */
 import NoticeDetailView from "@/layout/components/HeaderNotice/DetailView"
 import ReadUsersDialog from "./ReadUsers"
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice"
@@ -284,6 +294,17 @@ function submitForm() {
 /** 查看公告详情 */
 function handleViewData(row) {
   proxy.$refs["noticeViewRef"].open(row)
+}
+
+function handleStatusChange(row) {
+  let text = row.status === "0" ? "启用" : "关闭"
+  proxy.$modal.confirm('确认' + text + '公告"' + row.noticeTitle + '"？').then(() => {
+    return updateNotice({ noticeId: row.noticeId, status: row.status })
+  }).then(() => {
+    proxy.$modal.msgSuccess(text + "成功")
+  }).catch(() => {
+    row.status = row.status === "0" ? "1" : "0"
+  })
 }
 
 /** 查看已读用户 */

@@ -6,6 +6,9 @@ use app\model\HrSalaryType;
 use app\model\HrUserSalary;
 use app\model\HrSalaryTier;
 
+/**
+ * 薪资管理服务层，处理用户薪资的增删改查和薪资层级配置
+ */
 class HrUserSalaryService
 {
     public function selectSalaryTypeList($params = [])

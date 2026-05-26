@@ -33,6 +33,10 @@
     </el-form>
 </template>
 <script setup>
+/**
+ * @description Cron分配置 - 分钟级别的Cron表达式配置
+ * @description 提供分钟级别的Cron表达式配置：指定值/范围值/循环值/不指定等模式
+ */
 const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {

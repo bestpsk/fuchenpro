@@ -11,6 +11,10 @@
 </template>
 
 <script setup>
+/**
+ * @description Cron结果展示 - 显示Cron表达式和最近执行时间
+ * @description 展示生成的Cron表达式字符串和最近5次执行时间预览
+ */
 const props = defineProps({
     ex: {
         type: String,

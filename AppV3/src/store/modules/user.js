@@ -97,6 +97,8 @@ export const useUserStore = defineStore('user', {
       this.permissions = []
       removeToken()
       storage.clean()
+      const { useMenuStore } = await import('./menu')
+      useMenuStore().clearCache()
     }
   }
 })

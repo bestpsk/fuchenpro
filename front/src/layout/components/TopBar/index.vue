@@ -12,6 +12,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 顶部栏 - 顶部导航模式下的菜单栏
+ * @description 在顶部导航模式下渲染一级菜单项，配合TopNav使用
+ */
 import SidebarItem from '../Sidebar/SidebarItem'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'

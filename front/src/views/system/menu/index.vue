@@ -306,6 +306,11 @@
 </template>
 
 <script setup name="Menu">
+/**
+ * @description 菜单管理页面 - 菜单/权限按钮增删改查与排序
+ * @description 提供菜单和按钮的增删改查、图标选择、路由配置、权限标识设置、
+ * 批量保存排序等功能
+ */
 import { addMenu, delMenu, getMenu, listMenu, updateMenu, updateMenuSort } from "@/api/system/menu"
 import SvgIcon from "@/components/SvgIcon"
 import IconSelect from "@/components/IconSelect"

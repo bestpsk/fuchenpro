@@ -10,6 +10,9 @@ use app\model\BizInventory;
 use app\model\BizProduct;
 use support\Db;
 
+/**
+ * 仓储报表服务层，提供入库汇总、出库汇总、库存收发存和产品流水明细等报表查询
+ */
 class BizWmsReportService
 {
     public function stockInSummary($params = [])

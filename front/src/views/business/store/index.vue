@@ -208,7 +208,7 @@
                 <el-option
                   v-for="item in userOptions"
                   :key="item.userId"
-                  :label="item.realName || item.nickName || item.userName"
+                  :label="item.nickName || item.nickName || item.userName"
                   :value="item.userId"
                 />
               </el-select>
@@ -252,6 +252,10 @@
 </template>
 
 <script setup name="Store">
+/**
+ * @description 门店管理页面 - 门店CRUD与企业/用户关联
+ * @description 提供门店增删改查、所属企业选择、服务人员分配、营业时间设置等功能
+ */
 import { listStore, getStore, delStore, addStore, updateStore } from "@/api/business/store"
 import { searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
 import { listUser } from "@/api/system/user"
@@ -385,7 +389,7 @@ function handleEnterpriseChange(val) {
 function handleUserChange(val) {
   const user = userOptions.value.find(item => item.userId === val)
   if (user) {
-    form.value.serverUserName = user.realName || user.nickName || user.userName
+    form.value.serverUserName = user.nickName || user.nickName || user.userName
   }
 }
 
@@ -393,7 +397,7 @@ function handleAdd() {
   reset()
   loadEnterpriseList()
   loadUserList()
-  form.value.creatorName = userStore.realName || userStore.name || ''
+  form.value.creatorName = userStore.nickName || userStore.name || ''
   open.value = true
   title.value = "添加门店"
 }

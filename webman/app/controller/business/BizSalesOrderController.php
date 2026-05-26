@@ -7,8 +7,15 @@ use app\service\BizSalesOrderService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 销售订单控制器
+ *
+ * 负责销售订单的增删改查、企业审核和财务审核等功能，
+ * 订单创建时自动关联客户套餐并生成操作记录
+ */
 class BizSalesOrderController
 {
+    // 分页查询销售订单列表，支持按客户、企业、门店、状态等条件筛选
     public function list(Request $request)
     {
         $service = new BizSalesOrderService();
@@ -17,6 +24,7 @@ class BizSalesOrderController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取订单详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +35,7 @@ class BizSalesOrderController
         return AjaxResult::success($order);
     }
 
+    // 新增销售订单，包含订单明细项，自动填充创建人信息并记录错误日志
     public function add(Request $request)
     {
         try {
@@ -35,7 +44,7 @@ class BizSalesOrderController
             unset($data['items']);
             $data['create_by'] = $request->loginUser->user->user_name ?? '';
             $data['creator_user_id'] = $request->loginUser->user->user_id ?? 0;
-            $data['creator_user_name'] = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+            $data['creator_user_name'] = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
             $service = new BizSalesOrderService();
             $result = $service->insertOrder($data, $items);
             return AjaxResult::toAjax($result ? 1 : 0);
@@ -52,6 +61,7 @@ class BizSalesOrderController
         }
     }
 
+    // 修改销售订单及明细项，自动填充更新人信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -63,6 +73,7 @@ class BizSalesOrderController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除销售订单
     public function remove(Request $request)
     {
         $orderIds = $request->input('orderIds');
@@ -77,21 +88,32 @@ class BizSalesOrderController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 企业审核销售订单
     public function enterpriseAudit(Request $request)
     {
         $orderId = $request->post('orderId');
-        $auditBy = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
         $result = $service->enterpriseAudit($orderId, $auditBy);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 财务审核销售订单
     public function financeAudit(Request $request)
     {
         $orderId = $request->post('orderId');
-        $auditBy = $request->loginUser->user->real_name ?? $request->loginUser->user->user_name ?? '';
+        $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
         $result = $service->financeAudit($orderId, $auditBy);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    public function cancel(Request $request)
+    {
+        $orderId = $request->post('orderId');
+        $service = new BizSalesOrderService();
+        $result = $service->cancelOrder($orderId);
+        if (!$result) return AjaxResult::error('取消失败，仅待确认订单可取消');
+        return AjaxResult::success('取消成功');
     }
 }

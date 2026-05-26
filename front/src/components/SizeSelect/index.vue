@@ -16,6 +16,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 尺寸选择组件 - 全局组件尺寸切换
+ * @description 切换Element Plus组件的全局尺寸（默认/小/大）
+ */
 import useAppStore from "@/store/modules/app"
 
 const appStore = useAppStore()

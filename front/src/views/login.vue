@@ -65,19 +65,27 @@
 </template>
 
 <script setup>
+/**
+ * @description 登录页面 - 用户身份认证与验证码校验
+ * @description 提供账号密码登录、验证码校验、记住密码（Cookie加密存储）、
+ * 登录后跳转原页面等功能，支持暗黑模式
+ */
 import { getCodeImg } from "@/api/login"
 import Cookies from "js-cookie"
 import { encrypt, decrypt } from "@/utils/jsencrypt"
 import useUserStore from '@/store/modules/user'
 import defaultSettings from '@/settings'
 
+/** 应用标题（读取环境变量） */
 const title = import.meta.env.VITE_APP_TITLE
+/** 底部版权信息 */
 const footerContent = defaultSettings.footerContent
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 const { proxy } = getCurrentInstance()
 
+/** 登录表单数据（账号/密码/记住我/验证码/UUID） */
 const loginForm = ref({
   username: "admin",
   password: "admin123",
@@ -86,40 +94,43 @@ const loginForm = ref({
   uuid: ""
 })
 
+/** 表单校验规则 */
 const loginRules = {
   username: [{ required: true, trigger: "blur", message: "请输入您的账号" }],
   password: [{ required: true, trigger: "blur", message: "请输入您的密码" }],
   code: [{ required: true, trigger: "change", message: "请输入验证码" }]
 }
 
+/** 验证码图片Base64 */
 const codeUrl = ref("")
+/** 登录按钮加载状态 */
 const loading = ref(false)
-// 验证码开关
+/** 是否启用验证码 */
 const captchaEnabled = ref(true)
-// 注册开关
+/** 是否开放注册功能 */
 const register = ref(false)
+/** 登录后重定向地址 */
 const redirect = ref(undefined)
 
+/** 监听路由变化，获取重定向地址 */
 watch(route, (newRoute) => {
     redirect.value = newRoute.query && newRoute.query.redirect
 }, { immediate: true })
 
+/** 登录处理：表单校验 → 记住密码Cookie → 调用登录接口 → 跳转目标页 */
 function handleLogin() {
   proxy.$refs.loginRef.validate(valid => {
     if (valid) {
       loading.value = true
-      // 勾选了需要记住密码设置在 cookie 中设置记住用户名和密码
       if (loginForm.value.rememberMe) {
         Cookies.set("username", loginForm.value.username, { expires: 30 })
         Cookies.set("password", encrypt(loginForm.value.password), { expires: 30 })
         Cookies.set("rememberMe", loginForm.value.rememberMe, { expires: 30 })
       } else {
-        // 否则移除
         Cookies.remove("username")
         Cookies.remove("password")
         Cookies.remove("rememberMe")
       }
-      // 调用action的登录方法
       userStore.login(loginForm.value).then(() => {
         const query = route.query
         const otherQueryParams = Object.keys(query).reduce((acc, cur) => {
@@ -131,7 +142,6 @@ function handleLogin() {
         router.push({ path: redirect.value || "/", query: otherQueryParams })
       }).catch(() => {
         loading.value = false
-        // 重新获取验证码
         if (captchaEnabled.value) {
           getCode()
         }
@@ -140,6 +150,7 @@ function handleLogin() {
   })
 }
 
+/** 获取验证码图片，更新Base64和UUID */
 function getCode() {
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
@@ -150,6 +161,7 @@ function getCode() {
   })
 }
 
+/** 从Cookie读取记住的账号密码（RSA解密） */
 function getCookie() {
   const username = Cookies.get("username")
   const password = Cookies.get("password")

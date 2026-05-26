@@ -5,10 +5,19 @@ namespace app\service;
 use app\model\BizOperationRecord;
 use app\model\BizPackageItem;
 use app\model\BizCustomerPackage;
+use app\model\BizSalesOrder;
+use app\model\BizOrderItem;
 use app\service\BizCustomerArchiveService;
 
+/**
+ * 操作记录服务层
+ *
+ * 处理操作记录的核心业务逻辑，包括列表查询、新增记录（含套餐扣减和档案写入）、
+ * 批量删除、详情查询（含批次聚合和企业/门店名称回填）
+ */
 class BizOperationRecordService
 {
+    // 按条件分页查询操作记录列表，关联客户套餐表获取套餐名称
     public function selectRecordList($params = [])
     {
         $query = BizOperationRecord::query();
@@ -30,6 +39,7 @@ class BizOperationRecordService
         return $query->orderBy('record_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 新增操作记录：自动生成批次号，套餐消费时扣减套餐项目次数并检查套餐是否用完，非套餐消费时清空套餐关联字段，最后写入客户档案
     public function insertRecord($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
@@ -78,7 +88,29 @@ class BizOperationRecordService
             $data['consume_amount'] = 0;
         }
 
+        if (empty($data['enterprise_id']) || empty($data['enterprise_name']) || empty($data['store_id']) || empty($data['store_name'])) {
+            if (!empty($data['customer_id'])) {
+                $customer = \app\model\BizCustomer::find($data['customer_id']);
+                if ($customer) {
+                    if (empty($data['enterprise_id'])) $data['enterprise_id'] = $customer->enterprise_id;
+                    if (empty($data['enterprise_name'])) $data['enterprise_name'] = $customer->enterprise_name ?? '';
+                    if (empty($data['store_id'])) $data['store_id'] = $customer->store_id;
+                    if (empty($data['store_name'])) $data['store_name'] = $customer->store_name ?? '';
+                }
+            }
+        }
+
         $record = BizOperationRecord::create($data);
+
+        try {
+            $this->createOperationOrder($record, $data);
+        } catch (\Exception $e) {
+            \support\Log::error('创建操作订单失败: ' . $e->getMessage(), [
+                'record_id' => $record->record_id ?? 'unknown',
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+        }
 
         try {
             $archiveService = new BizCustomerArchiveService();
@@ -100,16 +132,19 @@ class BizOperationRecordService
         return $record;
     }
 
+    // 根据ID批量删除操作记录
     public function deleteRecordByIds($recordIds)
     {
         return BizOperationRecord::whereIn('record_id', $recordIds)->delete();
     }
 
+    // 根据ID获取操作记录基本信息
     public function getRecordById($id)
     {
         return BizOperationRecord::find($id);
     }
 
+    // 获取操作记录详情，聚合同一批次的所有操作项目，并回填企业名称和门店名称
     public function getRecordDetailById($id)
     {
         $record = BizOperationRecord::find($id);
@@ -160,5 +195,90 @@ class BizOperationRecordService
             'total_amount' => $batchRecords->sum('consume_amount') + $batchRecords->sum('trial_price'),
             'item_count' => $batchRecords->count()
         ];
+    }
+
+    private function createOperationOrder($record, $data)
+    {
+        $orderNo = $this->generateOperationOrderNo();
+        $amount = floatval($record->consume_amount ?? 0) + floatval($record->trial_price ?? 0);
+
+        $enterpriseName = $record->enterprise_name ?? '';
+        $storeName = $record->store_name ?? '';
+
+        if (empty($enterpriseName) || empty($storeName)) {
+            if (!empty($record->package_id)) {
+                $pkg = \app\model\BizCustomerPackage::where('package_id', $record->package_id)->first();
+                if ($pkg) {
+                    if (empty($enterpriseName)) $enterpriseName = $pkg->enterprise_name ?? '';
+                    if (empty($storeName)) $storeName = $pkg->store_name ?? '';
+                    if (empty($storeName) && !empty($pkg->order_id)) {
+                        $order = \app\model\BizSalesOrder::find($pkg->order_id);
+                        if ($order) {
+                            if (empty($enterpriseName)) $enterpriseName = $order->enterprise_name ?? '';
+                            $storeName = $order->store_name ?? '';
+                        }
+                    }
+                }
+            }
+            if ((empty($enterpriseName) || empty($storeName)) && !empty($record->customer_id)) {
+                $customer = \app\model\BizCustomer::find($record->customer_id);
+                if ($customer) {
+                    if (empty($enterpriseName)) $enterpriseName = $customer->enterprise_name ?? '';
+                    if (empty($storeName)) $storeName = $customer->store_name ?? '';
+                }
+            }
+        }
+
+        $order = BizSalesOrder::create([
+            'order_no' => $orderNo,
+            'customer_id' => $record->customer_id,
+            'customer_name' => $record->customer_name ?? '',
+            'enterprise_id' => $record->enterprise_id ?? null,
+            'enterprise_name' => $enterpriseName,
+            'store_id' => $record->store_id ?? null,
+            'store_name' => $storeName,
+            'deal_amount' => $amount,
+            'paid_amount' => 0,
+            'owed_amount' => 0,
+            'order_status' => '1',
+            'source_type' => '1',
+            'operation_batch_id' => $record->operation_batch_id,
+            'package_name' => $record->product_name ?? '',
+            'enterprise_audit_status' => '1',
+            'finance_audit_status' => '1',
+            'creator_user_id' => $record->operator_user_id ?? null,
+            'creator_user_name' => $record->operator_user_name ?? '',
+            'create_by' => $record->operator_user_name ?? '',
+            'create_time' => date('Y-m-d H:i:s'),
+            'remark' => '[操作订单] ' . ($record->operation_type === '1' ? '体验操作' : '持卡操作')
+        ]);
+
+        if ($order && !empty($record->product_name)) {
+            $consumeAmount = floatval($record->consume_amount ?? 0);
+            $trialPrice = floatval($record->trial_price ?? 0);
+            $itemDealAmount = $consumeAmount + $trialPrice;
+            $quantity = intval($record->operation_quantity ?? 1);
+            BizOrderItem::create([
+                'order_id' => $order->order_id,
+                'product_name' => $record->product_name,
+                'quantity' => $quantity,
+                'deal_amount' => $itemDealAmount,
+                'paid_amount' => 0,
+                'unit_price' => $quantity > 0 ? round($itemDealAmount / $quantity, 2) : 0,
+                'owed_amount' => $itemDealAmount,
+                'create_time' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $order;
+    }
+
+    private function generateOperationOrderNo()
+    {
+        $date = date('Ymd');
+        $lastOrder = BizSalesOrder::where('order_no', 'like', 'OP' . $date . '%')
+            ->orderBy('order_id', 'desc')->first();
+        $seq = $lastOrder ? intval(substr($lastOrder->order_no, -4)) + 1 : 1;
+        return 'OP' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 }

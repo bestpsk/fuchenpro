@@ -176,6 +176,10 @@
 </template>
 
 <script setup name="Data">
+/**
+ * @description 字典数据页面 - 字典项增删改查
+ * @description 管理指定字典类型下的字典数据项，支持增删改查、按类型查询等操作
+ */
 import useDictStore from '@/store/modules/dict'
 import { optionselect as getDictOptionselect, getType } from "@/api/system/dict/type"
 import { listData, getData, delData, addData, updateData } from "@/api/system/dict/data"

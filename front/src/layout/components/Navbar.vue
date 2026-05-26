@@ -41,7 +41,7 @@
       <el-dropdown @command="handleCommand" class="avatar-container right-menu-item hover-effect" trigger="hover">
         <div class="avatar-wrapper">
           <img :src="userStore.avatar" class="user-avatar" />
-          <span class="user-nickname"> {{ userStore.realName }} </span>
+          <span class="user-nickname"> {{ userStore.nickName }} </span>
         </div>
         <template #dropdown>
           <el-dropdown-menu>
@@ -65,6 +65,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 导航栏 - 顶部工具栏（折叠/面包屑/搜索/通知/全屏/设置/用户菜单）
+ * @description 包含侧边栏折叠按钮、面包屑、头部搜索、通知消息、全屏切换、布局设置、用户下拉菜单等
+ */
 import { ElMessageBox } from 'element-plus'
 import Breadcrumb from '@/components/Breadcrumb'
 import TopNav from './TopNav'

@@ -28,6 +28,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 菜单项组件 - 递归渲染菜单树
+ * @description 递归渲染多级菜单，支持图标、标题、子菜单折叠、外链跳转等
+ */
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link'
 import { getNormalPath } from '@/utils/ruoyi'

@@ -26,6 +26,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 404页面不存在 - 页面未找到提示
+ * @description 当用户访问不存在的路由时展示404提示，支持返回首页
+ */
 let message = computed(() => {
   return '找不到网页！'
 })

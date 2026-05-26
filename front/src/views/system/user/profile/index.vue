@@ -63,6 +63,10 @@
 </template>
 
 <script setup name="Profile">
+/**
+ * @description 个人中心页面 - 用户个人信息总览
+ * @description 展示用户头像、基本信息编辑、密码修改等个人设置功能
+ */
 import userAvatar from "./userAvatar"
 import userInfo from "./userInfo"
 import resetPwd from "./resetPwd"

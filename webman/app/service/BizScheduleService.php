@@ -7,8 +7,12 @@ use app\model\SysUser;
 use app\model\BizEnterprise;
 use support\Db;
 
+/**
+ * 行程安排服务层，处理排班的增删改查、日历视图、员工和企业维度统计
+ */
 class BizScheduleService
 {
+    // 按条件分页查询日程列表
     public function selectScheduleList($params = [])
     {
         $query = BizSchedule::query();
@@ -45,7 +49,7 @@ class BizScheduleService
         foreach ($result->items() as $item) {
             $user = SysUser::find($item->user_id);
             if ($user) {
-                $item->user_name = $user->real_name ?? $user->user_name;
+                $item->user_name = $user->nick_name ?? $user->user_name;
                 $postInfo = Db::table('sys_user_post as up')
                     ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
                     ->where('up.user_id', $user->user_id)
@@ -56,6 +60,8 @@ class BizScheduleService
 
         return $result;
     }
+
+    // 根据ID查询日程详情
 
     public function selectScheduleById($scheduleId)
     {
@@ -98,6 +104,8 @@ class BizScheduleService
         return $query->pluck('schedule_date')->toArray();
     }
 
+    // 新增日程
+
     public function insertSchedule($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
@@ -117,11 +125,15 @@ class BizScheduleService
         return BizSchedule::insert($insertData);
     }
 
+    // 更新日程信息
+
     public function updateSchedule($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return BizSchedule::where('schedule_id', $data['schedule_id'])->update($data);
     }
+
+    // 批量删除日程
 
     public function deleteScheduleByIds($scheduleIds)
     {
@@ -173,7 +185,7 @@ class BizScheduleService
             
             $result[] = [
                 'user_id' => $user->user_id,
-                'user_name' => $user->real_name ?? $user->user_name,
+                'user_name' => $user->nick_name ?? $user->user_name,
                 'post_name' => $postInfo->post_name ?? '',
                 'schedules' => $scheduleMap
             ];
@@ -213,7 +225,7 @@ class BizScheduleService
         foreach ($schedules as $schedule) {
             $user = SysUser::find($schedule->user_id);
             if ($user) {
-                $schedule->user_name = $user->real_name ?? $user->user_name;
+                $schedule->user_name = $user->nick_name ?? $user->user_name;
             }
         }
         

@@ -425,7 +425,7 @@ async function onBeforePhoto(e) {
     try {
       const res = await upload({ url: '/common/upload', name: 'file', filePath: e.url })
       const url = res.url || res.fileName
-      form.beforePhoto.push({ url: e.url, name: url })
+      form.beforePhoto.push({ url: url, name: url })
     } catch (err) {
       uni.showToast({ title: '上传失败', icon: 'none' })
     }
@@ -438,7 +438,7 @@ async function onAfterPhoto(e) {
     try {
       const res = await upload({ url: '/common/upload', name: 'file', filePath: e.url })
       const url = res.url || res.fileName
-      form.afterPhoto.push({ url: e.url, name: url })
+      form.afterPhoto.push({ url: url, name: url })
     } catch (err) {
       uni.showToast({ title: '上传失败', icon: 'none' })
     }

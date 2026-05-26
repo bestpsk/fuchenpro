@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\BizStore;
 use app\model\BizEnterprise;
 
+/**
+ * 门店服务层，处理门店的增删改查和搜索，自动关联企业名称
+ */
 class BizStoreService
 {
+    // 按条件分页查询门店列表
     public function selectStoreList($params = [])
     {
         $query = BizStore::query();
@@ -32,10 +36,14 @@ class BizStoreService
         return $query->orderBy('store_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询门店详情
+
     public function selectStoreById($storeId)
     {
         return BizStore::find($storeId);
     }
+
+    // 新增门店
 
     public function insertStore($data)
     {
@@ -48,6 +56,8 @@ class BizStoreService
         }
         return BizStore::create($data);
     }
+
+    // 更新门店信息
 
     public function updateStore($data)
     {
@@ -81,6 +91,8 @@ class BizStoreService
                     ->limit(50)
                     ->get();
     }
+
+    // 批量删除门店
 
     public function deleteStoreByIds($storeIds)
     {

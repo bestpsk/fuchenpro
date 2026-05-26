@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 操作记录模型，记录客户消费/体验操作，含套餐扣减和前后对比照片
+ */
 class BizOperationRecord extends Model
 {
     protected $table = 'biz_operation_record';

@@ -8,8 +8,15 @@ use app\service\BizAttendanceRecordService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 考勤打卡控制器
+ *
+ * 负责员工考勤打卡（上班/下班）、今日打卡记录查询、
+ * 月度考勤统计、考勤记录管理和考勤规则管理等功能
+ */
 class BizAttendanceController
 {
+    // 获取当前用户今日考勤记录
     public function todayRecord(Request $request)
     {
         $userId = $request->loginUser->user->user_id;
@@ -18,12 +25,13 @@ class BizAttendanceController
         return AjaxResult::success($record);
     }
 
+    // 通用打卡接口（上班或下班）
     public function clock(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = convert_to_snake_case($request->post());
+        $data = $request->post();
         $data['user_id'] = $user->user_id;
-        $data['user_name'] = $user->real_name ?? $user->user_name;
+        $data['user_name'] = $user->nick_name ?? $user->user_name;
 
         $service = new BizAttendanceRecordService();
         $result = $service->clock($data);
@@ -35,6 +43,7 @@ class BizAttendanceController
         return AjaxResult::success('打卡成功', $result);
     }
 
+    // 获取当前用户今日打卡流水列表
     public function todayClockList(Request $request)
     {
         $userId = $request->loginUser->user->user_id;
@@ -43,6 +52,7 @@ class BizAttendanceController
         return AjaxResult::success($list);
     }
 
+    // 根据考勤记录ID查询打卡流水
     public function clockList(Request $request)
     {
         $recordId = $request->get('record_id');
@@ -57,12 +67,13 @@ class BizAttendanceController
         return AjaxResult::success($clocks);
     }
 
+    // 上班打卡
     public function clockIn(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = convert_to_snake_case($request->post());
+        $data = $request->post();
         $data['user_id'] = $user->user_id;
-        $data['user_name'] = $user->real_name ?? $user->user_name;
+        $data['user_name'] = $user->nick_name ?? $user->user_name;
 
         $service = new BizAttendanceRecordService();
         $result = $service->clockIn($data);
@@ -74,12 +85,13 @@ class BizAttendanceController
         return AjaxResult::success('打卡成功', $result);
     }
 
+    // 下班打卡
     public function clockOut(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = convert_to_snake_case($request->post());
+        $data = $request->post();
         $data['user_id'] = $user->user_id;
-        $data['user_name'] = $user->real_name ?? $user->user_name;
+        $data['user_name'] = $user->nick_name ?? $user->user_name;
 
         $service = new BizAttendanceRecordService();
         $result = $service->clockOut($data);
@@ -91,6 +103,7 @@ class BizAttendanceController
         return AjaxResult::success('打卡成功', $result);
     }
 
+    // 获取指定月份的考勤统计数据（出勤天数、迟到次数等）
     public function monthStats(Request $request)
     {
         $userId = $request->input('user_id', $request->loginUser->user->user_id);
@@ -101,14 +114,16 @@ class BizAttendanceController
         return AjaxResult::success($stats);
     }
 
+    // 分页查询考勤记录列表（管理端）
     public function recordList(Request $request)
     {
         $service = new BizAttendanceRecordService();
-        $params = convert_to_snake_case($request->all());
+        $params = $request->all();
         $result = $service->selectRecordList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取考勤记录详情
     public function recordInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -121,14 +136,16 @@ class BizAttendanceController
         return AjaxResult::success($record);
     }
 
+    // 分页查询考勤规则列表
     public function ruleList(Request $request)
     {
         $service = new BizAttendanceRuleService();
-        $params = convert_to_snake_case($request->all());
+        $params = $request->all();
         $result = $service->selectRuleList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取考勤规则详情
     public function ruleInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -141,28 +158,33 @@ class BizAttendanceController
         return AjaxResult::success($rule);
     }
 
+    // 新增考勤规则
     public function addRule(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
+        $data = $request->post();
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizAttendanceRuleService();
         $result = $service->insertRule($data);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改考勤规则
     public function editRule(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
+        $data = $request->post();
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizAttendanceRuleService();
         $result = $service->updateRule($data);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除考勤规则
     public function removeRule(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $ruleIds = explode(',', end($parts));
+        $ruleIds = $request->input('ruleIds', '');
+        if (!is_array($ruleIds)) {
+            $ruleIds = explode(',', $ruleIds);
+        }
         $ruleIds = array_map('intval', array_filter($ruleIds));
         $service = new BizAttendanceRuleService();
         $result = $service->deleteRuleByIds($ruleIds);

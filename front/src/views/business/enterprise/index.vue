@@ -61,15 +61,15 @@
       </el-table-column>
       <el-table-column label="方案数量" align="center" min-width="70">
         <template #default="scope">
-          <el-button link type="primary" @click="handleViewPlans(scope.row)">{{ scope.row.planCount || 0 }}</el-button>
+          <el-button link type="primary" @click.stop="handleViewPlans(scope.row)">{{ scope.row.planCount || 0 }}</el-button>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleViewPlans(scope.row)">方案</el-button>
-          <el-button link type="primary" icon="Plus" @click="handleAddPlan(scope.row)" v-hasPermi="['business:plan:add']">开方案</el-button>
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['business:enterprise:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['business:enterprise:remove']">删除</el-button>
+          <el-button link type="primary" icon="View" @click.stop="handleViewPlans(scope.row)">方案</el-button>
+          <el-button link type="primary" icon="Plus" @click.stop="handleAddPlan(scope.row)" v-hasPermi="['business:plan:add']">开方案</el-button>
+          <el-button link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['business:enterprise:edit']">修改</el-button>
+          <el-button link type="primary" icon="Delete" @click.stop="handleDelete(scope.row)" v-hasPermi="['business:enterprise:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -437,8 +437,10 @@
               <el-input-number v-model="scope.row.discountPrice" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
             </template>
           </el-table-column>
-          <el-table-column label="总金额" width="90" align="right">
-            <template #default="scope">{{ scope.row.amount }}</template>
+          <el-table-column label="总金额" width="120" align="right">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.amount" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentAmountChange(scope.$index)" style="width: 100%" />
+            </template>
           </el-table-column>
           <el-table-column label="操作" width="60" align="center">
             <template #default="scope">
@@ -495,6 +497,11 @@
 </template>
 
 <script setup name="Enterprise">
+/**
+ * @description 企业管理页面 - 企业CRUD/方案管理/出货单创建
+ * @description 提供企业增删改查、状态切换、方案开立/编辑/审核、出货单创建等功能，
+ * 支持按企业名称/老板/电话/类型/级别/状态筛选
+ */
 import { listEnterprise, getEnterprise, delEnterprise, addEnterprise, updateEnterprise, changeEnterpriseStatus } from "@/api/business/enterprise"
 import { listPlan, getPlan, addPlan, updatePlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
 import { addShipment } from "@/api/business/shipment"
@@ -846,14 +853,18 @@ function handleCreateShipment(row) {
       enterpriseName: plan.enterprise?.enterpriseName || '',
       contactPerson: plan.enterprise?.bossName || '', contactPhone: plan.enterprise?.phone || '',
       shippingAddress: plan.enterprise?.address || '', remainingAmount: plan.remainingAmount, remark: undefined,
-      items: (plan.items || []).filter(item => item.remainingQuantity > 0).map(item => ({
-        planItemId: item.itemId, productId: item.productId, productName: item.productName,
-        supplierId: item.supplierId, supplierName: item.supplierName, unitType: item.unitType,
-        packQty: item.packQty, quantity: item.remainingQuantity, maxQuantity: item.remainingQuantity,
-        spec: item.spec, salePrice: item.salePrice, discountPrice: item.salePrice,
-        amount: (parseFloat(item.salePrice) || 0) * item.remainingQuantity,
-        unitLabel: item.unitType === '1' ? '' : '', specLabel: item.spec || ''
-      }))
+      items: (plan.items || []).filter(item => item.remainingQuantity > 0).map(item => {
+        const unitMap = { '1': '箱', '2': '件', '3': '套', '4': '罐', '5': '盒', '6': '袋', '7': '包' }
+        const specMap = { '1': '支', '2': '瓶', '3': '件', '4': '套', '5': '片', '6': '个' }
+        return {
+          planItemId: item.itemId, productId: item.productId, productName: item.productName,
+          supplierId: item.supplierId, supplierName: item.supplierName, unitType: item.unitType,
+          packQty: item.packQty, quantity: item.remainingQuantity, maxQuantity: item.remainingQuantity,
+          spec: item.spec, salePrice: item.salePrice, discountPrice: item.salePrice,
+          amount: (parseFloat(item.salePrice) || 0) * item.remainingQuantity,
+          unitLabel: unitMap[item.product?.unit] || '', specLabel: specMap[item.product?.spec] || ''
+        }
+      })
     }
     shipmentOpen.value = true
   })
@@ -862,6 +873,14 @@ function handleCreateShipment(row) {
 function onShipmentItemChange(index) {
   const item = shipmentForm.value.items[index]
   item.amount = (parseFloat(item.discountPrice) || 0) * (parseInt(item.quantity) || 0)
+}
+
+function onShipmentAmountChange(index) {
+  const item = shipmentForm.value.items[index]
+  const qty = parseInt(item.quantity) || 0
+  if (qty > 0) {
+    item.discountPrice = Math.round((parseFloat(item.amount) / qty) * 100) / 100
+  }
 }
 
 function removeShipmentItem(index) { shipmentForm.value.items.splice(index, 1) }

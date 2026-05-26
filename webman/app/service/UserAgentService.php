@@ -2,6 +2,9 @@
 
 namespace app\service;
 
+/**
+ * 用户代理解析服务层，从User-Agent字符串中解析浏览器和操作系统信息
+ */
 class UserAgentService
 {
     public static function getBrowser($ua)

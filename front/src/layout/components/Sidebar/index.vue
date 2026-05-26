@@ -25,6 +25,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 侧边栏 - 左侧菜单导航
+ * @description 渲染系统菜单树，支持折叠/展开，包含Logo和菜单项
+ */
 import Logo from './Logo'
 import SidebarItem from './SidebarItem'
 import variables from '@/assets/styles/variables.module.scss'

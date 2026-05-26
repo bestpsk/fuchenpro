@@ -5,6 +5,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 链接组件 - 内链路由与外链跳转
+ * @description 根据URL判断是内链（router-link）还是外链（a标签新窗口打开）
+ */
 import { isExternal } from '@/utils/validate'
 
 const props = defineProps({

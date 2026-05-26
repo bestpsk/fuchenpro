@@ -1,7 +1,8 @@
 /**
-* v-copyText 复制文本内容
-* Copyright (c) 2022 ruoyi
-*/
+ * @description 复制文本指令 - 点击元素复制文本到剪贴板
+ * @description 使用方式：v-copyText="要复制的文本" 或 v-copyText:callback="回调函数"
+ * 通过创建隐藏textarea并调用document.execCommand('copy')实现复制
+ */
 export default {
   beforeMount(el, { value, arg }) {
     if (arg === "callback") {
@@ -20,19 +21,19 @@ export default {
   }
 }
 
+/** 将文本复制到剪贴板，通过创建临时textarea并执行copy命令实现 */
 function copyTextToClipboard(input, { target = document.body } = {}) {
   const element = document.createElement('textarea')
   const previouslyFocusedElement = document.activeElement
 
   element.value = input
 
-  // Prevent keyboard from showing on mobile
   element.setAttribute('readonly', '')
 
   element.style.contain = 'strict'
   element.style.position = 'absolute'
   element.style.left = '-9999px'
-  element.style.fontSize = '12pt' // Prevent zooming on iOS
+  element.style.fontSize = '12pt'
 
   const selection = document.getSelection()
   const originalRange = selection.rangeCount > 0 && selection.getRangeAt(0)
@@ -40,7 +41,6 @@ function copyTextToClipboard(input, { target = document.body } = {}) {
   target.append(element)
   element.select()
 
-  // Explicit selection workaround for iOS
   element.selectionStart = 0
   element.selectionEnd = input.length
 
@@ -56,7 +56,6 @@ function copyTextToClipboard(input, { target = document.body } = {}) {
     selection.addRange(originalRange)
   }
 
-  // Get the focus back on the previously focused element, if any
   if (previouslyFocusedElement) {
     previouslyFocusedElement.focus()
   }

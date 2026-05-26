@@ -42,19 +42,26 @@
 
     <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="orderList.length > 0" class="card-list">
-        <view v-for="item in orderList" :key="item.orderId" class="order-card" @click="goDetail(item)">
+        <view v-for="item in orderList" :key="item.order_id || item.orderId" class="order-card" @click="goDetail(item)">
           <view class="card-header">
-            <text class="order-no">{{ item.orderNo || ('ORD' + item.orderId) }}</text>
-            <view class="status-tag" :class="'status-' + item.status">{{ getOrderStatusName(item.status) }}</view>
+            <view class="header-left">
+              <text class="order-no">{{ displayOrderNo(item) }}</text>
+              <u-tag :text="getSourceTypeLabel(item)" size="mini" :type="getSourceTagType(item)" />
+            </view>
+            <view class="status-tag" :class="'status-' + (item.order_status ?? item.orderStatus ?? item.status)">{{ getOrderStatusName(item.order_status ?? item.orderStatus ?? item.status) }}</view>
           </view>
           <view class="card-body">
             <view class="info-row">
-              <view class="info-item"><text class="label">客户</text><text class="value">{{ item.customerName || '-' }}</text></view>
-              <view class="info-item"><text class="label">门店</text><text class="value">{{ item.storeName || '-' }}</text></view>
+              <view class="info-item"><text class="label">客户</text><text class="value">{{ item.customer_name || item.customerName || '-' }}</text></view>
+              <view class="info-item"><text class="label">门店</text><text class="value">{{ getStoreDisplay(item) }}</text></view>
             </view>
             <view class="info-row">
-              <view class="info-item"><text class="label">金额</text><text class="value amount">¥{{ item.totalAmount || '0.00' }}</text></view>
-              <view class="info-item"><text class="label">时间</text><text class="value">{{ formatTime(item.createTime) }}</text></view>
+              <view class="info-item"><text class="label">门店管理</text><text class="value">{{ item.store_dealer || item.storeDealer || '-' }}</text></view>
+              <view class="info-item"><text class="label">开单员工</text><text class="value">{{ item.creator_user_name || item.creatorUserName || '-' }}</text></view>
+            </view>
+            <view class="info-row">
+              <view class="info-item"><text class="label">金额</text><text class="value amount">¥{{ getDisplayAmount(item) }}</text></view>
+              <view class="info-item"><text class="label">时间</text><text class="value">{{ formatTime(item.create_time || item.createTime) }}</text></view>
             </view>
           </view>
         </view>
@@ -66,14 +73,11 @@
 </template>
 
 <script setup>
-/**
- * @description 订单列表页 - 销售订单管理
- * @description 展示订单列表，支持按订单编号/客户名搜索、按订单状态筛选
- * （待审核/企业已审/财务已审/已完成/已取消），点击跳转订单详情
- */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listSalesOrder } from '@/api/business/salesOrder'
+import { useDictStore } from '@/store/modules/dict'
 
+const dictStore = useDictStore()
 const orderList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
@@ -88,20 +92,56 @@ const hasActiveFilters = computed(() => queryParams.status !== '' && queryParams
 const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '' })
 
 const orderStatusOptions = ref([
-  { label: '待审核', value: '0' },
+  { label: '待确认', value: '0' },
   { label: '企业已审', value: '1' },
   { label: '财务已审', value: '2' },
-  { label: '已完成', value: '3' },
   { label: '已取消', value: '4' }
 ])
 
-/** 订单状态编码映射为中文名称（0-待审核/1-企业已审/2-财务已审/3-已完成/4-已取消） */
+function displayOrderNo(item) {
+  const no = item.order_no || item.orderNo
+  if (no) return no
+  const id = item.order_id || item.orderId
+  if (!id) return '-'
+  return 'SO' + String(id).padStart(8, '0')
+}
+
+function getSourceTypeLabel(item) {
+  const source = String(item.source_type || item.sourceType || '0')
+  return dictStore.getDictLabel('biz_source_type', source)
+}
+
+function getSourceTagType(item) {
+  const source = String(item.source_type || item.sourceType || '0')
+  return dictStore.getDictTagType('biz_source_type', source)
+}
+
 function getOrderStatusName(status) {
-  const item = orderStatusOptions.value.find(s => s.value === String(status))
+  const s = String(status === null || status === undefined ? '' : status)
+  const item = orderStatusOptions.value.find(opt => opt.value === s)
   return item ? item.label : '未知'
 }
 
-function formatTime(time) { if (!time) return ''; return time.substring(0, 10) }
+function formatTime(time) {
+  if (!time) return ''
+  return time.substring(0, 10)
+}
+
+function getStoreDisplay(item) {
+  const enterprise = item.enterprise_name || item.enterpriseName || ''
+  const store = item.store_name || item.storeName || ''
+  if (enterprise && store) return `${enterprise}·${store}`
+  if (store) return store
+  return '-'
+}
+
+function getDisplayAmount(item) {
+  const sourceType = item.source_type || item.sourceType
+  if (sourceType === '2') {
+    return Number(item.paid_amount || item.paidAmount || 0).toFixed(2)
+  }
+  return Number(item.deal_amount || item.dealAmount || 0).toFixed(2)
+}
 
 async function getList(isRefresh = false) {
   if (loading.value) return
@@ -131,13 +171,19 @@ function resetFilter() { queryParams.status = '' }
 function confirmFilter() { showFilter.value = false; getList(true) }
 function clearFilter(field) { queryParams[field] = ''; getList(true) }
 
-/** 跳转订单详情页 */
 function goDetail(item) {
-  uni.navigateTo({ url: `/pages/business/order/detail?id=${item.orderId}` })
+  const sourceType = String(item.source_type || item.sourceType || '0')
+  const id = item.order_id || item.orderId
+  if (sourceType === '1') {
+    const customerId = item.customer_id || item.customerId || ''
+    uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${customerId}` })
+  } else {
+    uni.navigateTo({ url: `/pages/business/order/detail?id=${id}` })
+  }
 }
 
 function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 180 }
-onMounted(() => { calcScrollHeight(); getList(true) })
+onMounted(() => { calcScrollHeight(); dictStore.loadDict('biz_source_type'); getList(true) })
 </script>
 
 <style lang="scss" scoped>
@@ -178,12 +224,14 @@ page { background-color: #F5F7FA; }
   &:active { transform: scale(0.98); opacity: 0.9; }
 }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.order-no { font-size: 28rpx; font-weight: 600; color: #1D2129; }
-.status-tag { padding: 6rpx 16rpx; border-radius: 6rpx; font-size: 22rpx; font-weight: 500;
+
+.header-left { display: flex; align-items: center; gap: 12rpx; flex: 1; min-width: 0;
+  .order-no { font-size: 28rpx; font-weight: 600; color: #1D2129; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.status-tag { padding: 6rpx 16rpx; border-radius: 6rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
   &.status-0 { background: #FFF7E8; color: #FF7D00; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-2 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-3 { background: #E8FFEA; color: #00B42A; }
+  &.status-2 { background: #E8FFEA; color: #00B42A; }
   &.status-4 { background: #F2F3F5; color: #86909C; }
 }
 

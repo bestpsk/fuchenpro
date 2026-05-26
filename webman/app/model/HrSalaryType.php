@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 薪资类型模型，定义薪资类型的编码、名称及计算公式
+ */
 class HrSalaryType extends Model
 {
     protected $table = 'hr_salary_type';
@@ -20,6 +23,7 @@ class HrSalaryType extends Model
         'update_time' => 'datetime',
     ];
 
+    // 关联该类型下的所有用户薪资配置
     public function userSalaries()
     {
         return $this->hasMany(HrUserSalary::class, 'type_id', 'type_id');

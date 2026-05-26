@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 员工排班配置模型，定义员工是否可排班及休息日
+ */
 class BizEmployeeConfig extends Model
 {
     protected $table = 'biz_employee_config';

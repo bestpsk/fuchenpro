@@ -7,8 +7,14 @@ use app\service\BizProductService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 货品管理控制器
+ *
+ * 负责仓储货品的增删改查和模糊搜索功能
+ */
 class BizProductController
 {
+    // 分页查询货品列表
     public function list(Request $request)
     {
         $service = new BizProductService();
@@ -17,6 +23,7 @@ class BizProductController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取货品详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +34,7 @@ class BizProductController
         return AjaxResult::success($product);
     }
 
+    // 模糊搜索货品，用于下拉选择框
     public function search(Request $request)
     {
         $keyword = $request->input('keyword', '');
@@ -35,6 +43,7 @@ class BizProductController
         return AjaxResult::success($list);
     }
 
+    // 新增货品
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -44,6 +53,7 @@ class BizProductController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改货品信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -53,9 +63,13 @@ class BizProductController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除货品
     public function remove(Request $request)
     {
-        $productIds = explode(',', $request->input('productIds', ''));
+        $productIds = $request->input('productIds', '');
+        if (!is_array($productIds)) {
+            $productIds = explode(',', $productIds);
+        }
         $productIds = array_map('intval', array_filter($productIds));
         $service = new BizProductService();
         $result = $service->deleteProductByIds($productIds);

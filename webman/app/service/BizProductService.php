@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\BizProduct;
 use app\model\BizInventory;
 
+/**
+ * 货品服务层，处理货品的增删改查和搜索，新增货品时自动创建库存记录
+ */
 class BizProductService
 {
+    // 按条件分页查询产品列表
     public function selectProductList($params = [])
     {
         $query = BizProduct::with('supplier');
@@ -38,10 +42,14 @@ class BizProductService
         return $result;
     }
 
+    // 根据ID查询产品详情
+
     public function selectProductById($productId)
     {
         return BizProduct::find($productId);
     }
+
+    // 搜索产品，返回简化列表供下拉选择
 
     public function searchProduct($keyword = '')
     {
@@ -61,6 +69,8 @@ class BizProductService
         return $products;
     }
 
+    // 新增产品
+
     public function insertProduct($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
@@ -74,6 +84,8 @@ class BizProductService
         return $product;
     }
 
+    // 更新产品信息
+
     public function updateProduct($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
@@ -86,6 +98,8 @@ class BizProductService
         }
         return $result;
     }
+
+    // 批量删除产品
 
     public function deleteProductByIds($productIds)
     {

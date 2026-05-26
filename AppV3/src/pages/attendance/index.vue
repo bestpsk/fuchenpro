@@ -16,7 +16,7 @@
       </view>
     </view>
 
-    <view class="location-card" v-if="clockType === '0'" :class="{ 'loc-card-success': !locationError && location.address && !isCoordinateOnly(location.address), 'loc-card-loading': locationLoading, 'loc-card-error': locationError }">
+    <view class="location-card" v-if="clockType === '0' || clockType === '1'" :class="{ 'loc-card-success': !locationError && location.address && !isCoordinateOnly(location.address), 'loc-card-loading': locationLoading, 'loc-card-error': locationError, 'loc-card-outside': clockType === '1' }">
       <view v-if="locationLoading" class="location-info">
         <view class="loading-dots">
           <view class="dot"></view>
@@ -26,18 +26,22 @@
         <text class="location-text location-unknown">正在获取位置...</text>
       </view>
 
-      <view v-else-if="!locationError && location.address && location.address !== '定位失败' && !isCoordinateOnly(location.address)" class="location-success">
-        <view class="loc-indicator"></view>
+      <view v-else-if="!locationError && location.address && location.address !== '定位失败' && !isCoordinateOnly(location.address)" class="location-success" :class="{ 'location-outside': clockType === '1' }">
+        <view class="loc-indicator" :class="{ 'loc-indicator-outside': clockType === '1' }"></view>
         <view class="loc-main">
-          <u-icon name="map-fill" size="20" color="#52c41a" />
+          <u-icon name="map-fill" size="20" :color="clockType === '1' ? '#3D6DF7' : '#52c41a'" />
           <view class="loc-detail">
             <text class="loc-address">{{ formatShortAddress(location.address, location.poi) }}</text>
           </view>
         </view>
         <view class="loc-coord-row">
-          <text class="loc-distance">
+          <text class="loc-distance" v-if="clockType === '0' && formatDistance(distanceToWorkplace)">
             <u-icon name="navigation" size="12" color="#52c41a" />
-            {{ formatDistance(distanceToWorkplace) ? `距考勤点${formatDistance(distanceToWorkplace)}` : '' }}
+            距考勤点{{ formatDistance(distanceToWorkplace) }}
+          </text>
+          <text class="loc-distance loc-outside-hint" v-if="clockType === '1'">
+            <u-icon name="checkmark-circle" size="12" color="#3D6DF7" />
+            已获取当前位置
           </text>
           <view class="loc-refresh" @click="getLocation">
             <u-icon name="reload" size="13" color="#86909C" />
@@ -227,14 +231,14 @@ const showPhotoArea = computed(() => {
   return true
 })
 
-/** 是否可打卡：坐班需有定位或手动地址，外勤需有事由和照片 */
+/** 是否可打卡：坐班需有定位或手动地址，外勤需有事由、照片和定位（或手动地址） */
 const canClock = computed(() => {
   if (clockType.value === '0') {
     return !!(location.value.latitude || manualAddress.value.trim())
   }
 
   if (clockType.value === '1') {
-    return !!(outsideReason.value.trim() && photoUploadedUrl.value)
+    return !!(outsideReason.value.trim() && photoUploadedUrl.value && (location.value.latitude || manualAddress.value.trim()))
   }
 
   return false
@@ -608,6 +612,10 @@ async function handleClock() {
   }
 
   if (clockType.value === '1') {
+    if (!location.value.latitude && !manualAddress.value.trim()) {
+      uni.showToast({ title: '请先获取定位或手动输入地址', icon: 'none' })
+      return
+    }
     if (!outsideReason.value.trim()) {
       uni.showToast({ title: '请填写外勤事由', icon: 'none' })
       return
@@ -703,7 +711,9 @@ function handleClockClick() {
         duration: 2000
       })
     } else if (clockType.value === '1') {
-      if (!outsideReason.value.trim()) {
+      if (!location.value.latitude && !manualAddress.value.trim()) {
+        uni.showToast({ title: '请先获取定位或手动输入地址', icon: 'none' })
+      } else if (!outsideReason.value.trim()) {
         uni.showToast({ title: '请填写外勤事由', icon: 'none' })
       } else if (!photoUploadedUrl.value) {
         uni.showToast({ title: '外勤打卡必须拍照', icon: 'none' })
@@ -860,6 +870,11 @@ page {
     border-color: rgba(245, 34, 45, 0.15);
     box-shadow: 0 8rpx 32rpx rgba(245, 34, 45, 0.08);
   }
+
+  &.loc-card-outside.loc-card-success {
+    border-color: rgba(61, 109, 247, 0.15);
+    box-shadow: 0 8rpx 32rpx rgba(61, 109, 247, 0.1);
+  }
 }
 
 .location-info {
@@ -937,6 +952,14 @@ page {
   animation: pulse-bar 1.5s ease-in-out infinite;
 }
 
+.loc-indicator-outside {
+  background: linear-gradient(180deg, #3D6DF7, #5B8FF9);
+}
+
+.location-outside {
+  border-left-color: #3D6DF7 !important;
+}
+
 .loc-main {
   display: flex;
   align-items: flex-start;
@@ -997,6 +1020,10 @@ page {
   font-size: 22rpx;
   color: #52c41a;
   font-weight: 500;
+}
+
+.loc-outside-hint {
+  color: #3D6DF7;
 }
 
 .loc-coord-row {
@@ -1143,6 +1170,7 @@ page {
   padding: 24rpx;
   margin-bottom: 20rpx;
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
 }
 
 .outside-label {
@@ -1154,13 +1182,24 @@ page {
 
 .outside-input {
   width: 100%;
-  height: 160rpx;
+  height: 100rpx;
+  box-sizing: border-box;
   background: #F7F8FA;
   border-radius: 14rpx;
   padding: 20rpx;
   font-size: 26rpx;
   color: #1D2129;
   line-height: 1.5;
+
+  :deep(.uni-textarea-wrapper) {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  :deep(.uni-textarea-textarea) {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
 }
 
 .clock-section {

@@ -7,8 +7,15 @@ use app\service\BizStockOutService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 出库管理控制器
+ *
+ * 负责出库单的增删改查、确认出库和取消确认等功能，
+ * 确认出库时自动扣减库存数量，已确认的出库单不可修改或删除
+ */
 class BizStockOutController
 {
+    // 分页查询出库单列表
     public function list(Request $request)
     {
         $service = new BizStockOutService();
@@ -17,6 +24,7 @@ class BizStockOutController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取出库单详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,10 +35,11 @@ class BizStockOutController
         return AjaxResult::success($stockOut);
     }
 
+    // 新增出库单，含出库明细项，自动填充操作人信息
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
-        $realName = trim($request->loginUser->user->real_name ?? '');
+        $realName = trim($request->loginUser->user->nick_name ?? '');
         $userName = trim($request->loginUser->user->user_name ?? '');
         $data['create_by'] = $realName ?: $userName;
         if (isset($data['items'])) {
@@ -41,6 +50,7 @@ class BizStockOutController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改出库单及明细项，已确认的出库单不可修改
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -54,9 +64,13 @@ class BizStockOutController
         return AjaxResult::success();
     }
 
+    // 批量删除出库单，已确认的出库单不可删除
     public function remove(Request $request)
     {
-        $stockOutIds = explode(',', $request->input('stockOutIds', ''));
+        $stockOutIds = $request->input('stockOutIds', '');
+        if (!is_array($stockOutIds)) {
+            $stockOutIds = explode(',', $stockOutIds);
+        }
         $stockOutIds = array_map('intval', array_filter($stockOutIds));
         $service = new BizStockOutService();
         $result = $service->deleteStockOutByIds($stockOutIds);
@@ -64,6 +78,7 @@ class BizStockOutController
         return AjaxResult::success();
     }
 
+    // 确认出库，从库存中扣减出库数量
     public function confirm(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -74,6 +89,7 @@ class BizStockOutController
         return AjaxResult::success($result['msg']);
     }
 
+    // 取消确认出库，将已扣减的数量归还库存
     public function cancelConfirm(Request $request)
     {
         $parts = explode('/', $request->path());

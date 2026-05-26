@@ -104,6 +104,10 @@
 </template>
 
 <script setup name="EnterpriseShipment">
+/**
+ * @description 企业发货页面 - 出货单审核与发货管理
+ * @description 查看企业出货单列表，支持审核、发货、确认收货等操作
+ */
 import { listShipment, getShipment, auditShipment, shipShipment, confirmReceipt } from "@/api/business/shipment"
 
 const { proxy } = getCurrentInstance()

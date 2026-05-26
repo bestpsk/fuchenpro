@@ -31,6 +31,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 基本信息表单 - 代码生成基本配置
+ * @description 配置生成代码的基本信息：表名、模块名、包路径、业务名、功能名等
+ */
 defineProps({
   info: {
     type: Object,

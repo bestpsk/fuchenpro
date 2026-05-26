@@ -142,6 +142,10 @@
 </template>
 
 <script setup name="WmsReport">
+/**
+ * @description 仓储报表页面 - 入库/出库/周转/流水统计
+ * @description 提供入库汇总、出库汇总、库存周转率、产品出入库流水等统计报表
+ */
 import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow } from "@/api/wms/report"
 import { searchProduct } from "@/api/wms/product"
 

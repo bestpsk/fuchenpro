@@ -21,6 +21,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 代码类型弹窗 - 选择代码生成类型
+ * @description 选择代码生成的文件类型（如vue文件、js文件等）
+ */
 const open = defineModel()
 const props = defineProps({
   showFileName: Boolean

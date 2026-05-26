@@ -7,8 +7,15 @@ use app\service\SysRoleService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 角色管理控制器
+ *
+ * 负责角色的增删改查、数据权限设置、状态变更、
+ * 角色下拉选择、已分配/未分配用户管理、批量授权和部门树查询等功能
+ */
 class SysRoleController
 {
+    // 分页查询角色列表
     public function list(Request $request)
     {
         $service = new SysRoleService();
@@ -17,6 +24,7 @@ class SysRoleController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取角色详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -29,6 +37,7 @@ class SysRoleController
         return AjaxResult::success('', $role);
     }
 
+    // 新增角色，校验角色名称和权限字符唯一性
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -44,6 +53,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改角色信息，校验唯一性并刷新在线用户权限缓存
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -63,6 +73,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除角色，不允许删除超级管理员角色(ID=1)
     public function remove(Request $request)
     {
         $roleIds = explode(',', $request->input('roleIds', ''));
@@ -75,6 +86,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 设置角色数据权限范围（全部/自定义/本部门/本部门及以下/仅本人）
     public function dataScope(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -87,6 +99,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 变更角色状态（启用/停用）
     public function changeStatus(Request $request)
     {
         $roleId = $request->post('roleId');
@@ -96,12 +109,14 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 获取所有角色列表（下拉选择用）
     public function optionselect(Request $request)
     {
         $service = new SysRoleService();
         return AjaxResult::success($service->selectAllRoles());
     }
 
+    // 分页查询已分配该角色的用户列表
     public function allocatedList(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -117,6 +132,7 @@ class SysRoleController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 分页查询未分配该角色的用户列表
     public function unallocatedList(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -132,6 +148,7 @@ class SysRoleController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 取消单个用户的角色授权
     public function cancelAuthUser(Request $request)
     {
         $userId = $request->post('userId');
@@ -141,6 +158,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量取消用户的角色授权
     public function cancelAuthUserAll(Request $request)
     {
         $roleId = $request->post('roleId');
@@ -153,6 +171,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量给用户授权指定角色
     public function selectAuthUserAll(Request $request)
     {
         $roleId = $request->post('roleId');
@@ -165,6 +184,7 @@ class SysRoleController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 获取部门树（含角色已勾选的部门ID列表），用于数据权限设置
     public function deptTree(Request $request)
     {
         $parts = explode('/', $request->path());

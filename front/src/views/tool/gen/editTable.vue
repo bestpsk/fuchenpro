@@ -122,6 +122,10 @@
 </template>
 
 <script setup name="GenEdit">
+/**
+ * @description 编辑表页面 - 代码生成配置编辑
+ * @description 编辑代码生成配置，包含基本信息、字段信息、生成信息三个Tab页
+ */
 import { getGenTable, updateGenTable } from "@/api/tool/gen"
 import { optionselect as getDictOptionselect } from "@/api/system/dict/type"
 import basicInfoForm from "./basicInfoForm"

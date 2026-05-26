@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 出库单模型，记录出库类型、目标企业、总数量及审核状态
+ */
 class BizStockOut extends Model
 {
     protected $table = 'biz_stock_out';
@@ -18,6 +21,7 @@ class BizStockOut extends Model
         'create_by', 'create_time', 'update_by', 'update_time'
     ];
 
+    // 关联出库单下的所有产品明细
     public function items()
     {
         return $this->hasMany(BizStockOutItem::class, 'stock_out_id', 'stock_out_id');

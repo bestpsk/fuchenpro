@@ -13,6 +13,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 创建表弹窗 - 通过SQL语句创建表并导入代码生成器
+ * @description 输入建表SQL语句，提交后自动创建表并导入到代码生成器
+ */
 import { createTable } from "@/api/tool/gen"
 
 const visible = ref(false)

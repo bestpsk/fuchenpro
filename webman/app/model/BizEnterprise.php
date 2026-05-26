@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 企业模型，存储企业基本信息、合作状态及服务人员
+ */
 class BizEnterprise extends Model
 {
     protected $table = 'biz_enterprise';
@@ -18,6 +21,7 @@ class BizEnterprise extends Model
         'update_by', 'update_time'
     ];
 
+    // 关联企业下的所有方案
     public function plans()
     {
         return $this->hasMany(BizPlan::class, 'enterprise_id', 'enterprise_id');

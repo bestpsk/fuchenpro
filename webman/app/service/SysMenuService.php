@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\SysMenu;
 use app\common\Constants;
 
+/**
+ * 菜单服务层，处理菜单的增删改查、菜单树构建和前端路由生成
+ */
 class SysMenuService
 {
+    // 按条件查询菜单列表（树形）
     public function selectMenuList($params = [], $userId = null)
     {
         $query = SysMenu::where('status', '0');
@@ -57,10 +61,14 @@ class SysMenuService
         return $this->getChildPerms($menus, 0);
     }
 
+    // 根据ID查询菜单详情
+
     public function selectMenuById($menuId)
     {
         return SysMenu::find($menuId);
     }
+
+    // 新增菜单
 
     public function insertMenu($data)
     {
@@ -68,11 +76,15 @@ class SysMenuService
         return SysMenu::create($data);
     }
 
+    // 更新菜单信息
+
     public function updateMenu($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return SysMenu::where('menu_id', $data['menu_id'])->update($data);
     }
+
+    // 删除菜单，校验是否存在子菜单或角色关联
 
     public function deleteMenuById($menuId)
     {

@@ -1,7 +1,12 @@
+/**
+ * @description 用户管理接口 - 用户CRUD/个人信息/角色授权/薪资配置
+ * @description 提供用户增删改查、密码重置、状态变更、个人资料维护、头像上传、
+ * 角色授权管理、部门树查询、员工详情维护、薪资配置等接口
+ */
 import request from '@/utils/request'
 import { parseStrEmpty } from "@/utils/ruoyi";
 
-// 查询用户列表
+/** 查询用户列表，支持分页查询 */
 export function listUser(query) {
   return request({
     url: '/system/user/list',
@@ -10,7 +15,7 @@ export function listUser(query) {
   })
 }
 
-// 查询用户详细
+/** 根据用户ID获取用户详细信息（空ID时获取新增表单默认值） */
 export function getUser(userId) {
   return request({
     url: '/system/user/' + parseStrEmpty(userId),
@@ -18,7 +23,7 @@ export function getUser(userId) {
   })
 }
 
-// 新增用户
+/** 新增用户 */
 export function addUser(data) {
   return request({
     url: '/system/user',
@@ -27,7 +32,7 @@ export function addUser(data) {
   })
 }
 
-// 修改用户
+/** 修改用户信息 */
 export function updateUser(data) {
   return request({
     url: '/system/user',
@@ -36,15 +41,16 @@ export function updateUser(data) {
   })
 }
 
-// 删除用户
+/** 根据用户ID删除用户 */
 export function delUser(userId) {
   return request({
-    url: '/system/user/' + userId,
-    method: 'delete'
+    url: '/system/user',
+    method: 'delete',
+    params: { userId }
   })
 }
 
-// 用户密码重置
+/** 管理员重置指定用户的密码 */
 export function resetUserPwd(userId, password) {
   const data = {
     userId,
@@ -57,7 +63,7 @@ export function resetUserPwd(userId, password) {
   })
 }
 
-// 用户状态修改
+/** 切换用户启用/停用状态 */
 export function changeUserStatus(userId, status) {
   const data = {
     userId,
@@ -70,7 +76,7 @@ export function changeUserStatus(userId, status) {
   })
 }
 
-// 查询用户个人信息
+/** 获取当前登录用户的个人信息 */
 export function getUserProfile() {
   return request({
     url: '/system/user/profile',
@@ -78,7 +84,7 @@ export function getUserProfile() {
   })
 }
 
-// 修改用户个人信息
+/** 修改当前登录用户的个人信息 */
 export function updateUserProfile(data) {
   return request({
     url: '/system/user/profile',
@@ -87,7 +93,7 @@ export function updateUserProfile(data) {
   })
 }
 
-// 用户密码重置
+/** 用户自行修改密码（需验证旧密码） */
 export function updateUserPwd(oldPassword, newPassword) {
   const data = {
     oldPassword,
@@ -100,7 +106,7 @@ export function updateUserPwd(oldPassword, newPassword) {
   })
 }
 
-// 用户头像上传
+/** 上传用户头像 */
 export function uploadAvatar(data) {
   return request({
     url: '/system/user/profile/avatar',
@@ -110,7 +116,7 @@ export function uploadAvatar(data) {
   })
 }
 
-// 查询授权角色
+/** 查询用户已授权的角色信息 */
 export function getAuthRole(userId) {
   return request({
     url: '/system/user/authRole/' + userId,
@@ -118,7 +124,7 @@ export function getAuthRole(userId) {
   })
 }
 
-// 保存授权角色
+/** 保存用户的角色授权关系 */
 export function updateAuthRole(data) {
   return request({
     url: '/system/user/authRole',
@@ -127,7 +133,7 @@ export function updateAuthRole(data) {
   })
 }
 
-// 查询部门下拉树结构
+/** 查询部门下拉树结构（用于用户管理左侧部门筛选） */
 export function deptTreeSelect() {
   return request({
     url: '/system/user/deptTree',
@@ -135,7 +141,7 @@ export function deptTreeSelect() {
   })
 }
 
-// 查询员工详情
+/** 根据用户ID查询员工扩展详情（含关联业务信息） */
 export function getUserDetail(userId) {
   return request({
     url: '/system/user/detail/' + userId,
@@ -143,7 +149,7 @@ export function getUserDetail(userId) {
   })
 }
 
-// 新增员工详情
+/** 新增员工扩展详情 */
 export function addUserDetail(data) {
   return request({
     url: '/system/user/detail',
@@ -152,7 +158,7 @@ export function addUserDetail(data) {
   })
 }
 
-// 修改员工详情
+/** 修改员工扩展详情 */
 export function updateUserDetail(data) {
   return request({
     url: '/system/user/detail',
@@ -161,7 +167,7 @@ export function updateUserDetail(data) {
   })
 }
 
-// 查询薪资类型列表
+/** 查询薪资类型列表（如月薪/日薪/提成等） */
 export function listSalaryType() {
   return request({
     url: '/hr/salary/type/list',
@@ -169,7 +175,7 @@ export function listSalaryType() {
   })
 }
 
-// 查询用户薪资配置列表
+/** 根据用户ID查询其薪资配置列表 */
 export function listUserSalary(userId) {
   return request({
     url: '/hr/salary/user/' + userId,
@@ -177,7 +183,7 @@ export function listUserSalary(userId) {
   })
 }
 
-// 查询薪资配置详细
+/** 根据薪资ID获取薪资配置详细信息 */
 export function getSalary(salaryId) {
   return request({
     url: '/hr/salary/' + salaryId,
@@ -185,7 +191,7 @@ export function getSalary(salaryId) {
   })
 }
 
-// 新增薪资配置
+/** 新增用户薪资配置 */
 export function addSalary(data) {
   return request({
     url: '/hr/salary',
@@ -194,7 +200,7 @@ export function addSalary(data) {
   })
 }
 
-// 修改薪资配置
+/** 修改用户薪资配置 */
 export function updateSalary(data) {
   return request({
     url: '/hr/salary',
@@ -203,10 +209,11 @@ export function updateSalary(data) {
   })
 }
 
-// 删除薪资配置
+/** 根据薪资ID删除薪资配置 */
 export function delSalary(salaryIds) {
   return request({
-    url: '/hr/salary/' + salaryIds,
-    method: 'delete'
+    url: '/hr/salary',
+    method: 'delete',
+    params: { salaryIds }
   })
 }

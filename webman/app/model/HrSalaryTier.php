@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 薪资阶梯模型，定义薪资的阶梯等级、金额范围及提成比例
+ */
 class HrSalaryTier extends Model
 {
     protected $table = 'hr_salary_tier';
@@ -21,6 +24,7 @@ class HrSalaryTier extends Model
         'create_time' => 'datetime',
     ];
 
+    // 关联所属用户薪资配置
     public function userSalary()
     {
         return $this->belongsTo(HrUserSalary::class, 'salary_id', 'salary_id');

@@ -7,8 +7,15 @@ use support\Redis;
 use app\service\RedisService;
 use app\common\AjaxResult;
 
+/**
+ * 缓存监控控制器
+ *
+ * 负责Redis缓存信息的查看（服务器信息、命令统计）、
+ * 缓存键名浏览、缓存值查看、按命名空间/键/全部清除缓存等功能
+ */
 class CacheController
 {
+    // 获取Redis服务器信息，包括内存使用、连接数、命令执行统计等
     public function getInfo(Request $request)
     {
         $redis = Redis::connection();
@@ -64,6 +71,7 @@ class CacheController
         ]);
     }
 
+    // 将嵌套的Redis info数据展平为一维关联数组
     private function flattenInfo(array $nestedInfo): array
     {
         $flatInfo = [];
@@ -83,11 +91,13 @@ class CacheController
         return $flatInfo;
     }
 
+    // 驼峰命名转蛇形命名
     private function camelToSnake(string $str): string
     {
         return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $str));
     }
 
+    // 获取所有缓存键名列表（按命名空间前缀分组）
     public function getNames(Request $request)
     {
         $redis = Redis::connection();
@@ -114,6 +124,7 @@ class CacheController
         ]);
     }
 
+    // 根据缓存命名空间前缀获取该命名空间下的所有键名
     public function getKeys(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -125,6 +136,7 @@ class CacheController
         ]);
     }
 
+    // 根据缓存命名空间和键名获取缓存值
     public function getValue(Request $request)
     {
         $pathParts = explode('/', $request->path());
@@ -145,10 +157,10 @@ class CacheController
         ]);
     }
 
+    // 清除指定命名空间下的所有缓存键
     public function clearCacheName(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $cacheName = end($parts);
+        $cacheName = $request->input('cacheName', '');
         $redis = Redis::connection();
         $keys = $redis->keys($cacheName . '*');
         foreach ($keys as $key) {
@@ -157,15 +169,16 @@ class CacheController
         return AjaxResult::success();
     }
 
+    // 清除指定缓存键
     public function clearCacheKey(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $cacheKey = end($parts);
+        $cacheKey = $request->input('cacheKey', '');
         $redis = Redis::connection();
         $redis->del($cacheKey);
         return AjaxResult::success();
     }
 
+    // 清空当前Redis数据库的所有缓存
     public function clearCacheAll(Request $request)
     {
         $redis = Redis::connection();

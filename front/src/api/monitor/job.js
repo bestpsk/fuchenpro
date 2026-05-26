@@ -1,6 +1,10 @@
+/**
+ * @description 定时任务调度接口 - 任务CRUD与执行控制
+ * @description 提供定时任务增删改查、任务状态修改（暂停/恢复）、立即执行一次等接口
+ */
 import request from '@/utils/request'
 
-// 查询定时任务调度列表
+/** 查询定时任务列表 */
 export function listJob(query) {
   return request({
     url: '/monitor/job/list',
@@ -9,7 +13,7 @@ export function listJob(query) {
   })
 }
 
-// 查询定时任务调度详细
+/** 根据任务ID查询定时任务详情 */
 export function getJob(jobId) {
   return request({
     url: '/monitor/job/' + jobId,
@@ -17,7 +21,7 @@ export function getJob(jobId) {
   })
 }
 
-// 新增定时任务调度
+/** 新增定时任务 */
 export function addJob(data) {
   return request({
     url: '/monitor/job',
@@ -26,7 +30,7 @@ export function addJob(data) {
   })
 }
 
-// 修改定时任务调度
+/** 修改定时任务 */
 export function updateJob(data) {
   return request({
     url: '/monitor/job',
@@ -35,15 +39,16 @@ export function updateJob(data) {
   })
 }
 
-// 删除定时任务调度
+/** 删除定时任务 */
 export function delJob(jobId) {
   return request({
-    url: '/monitor/job/' + jobId,
-    method: 'delete'
+    url: '/monitor/job',
+    method: 'delete',
+    params: { jobId }
   })
 }
 
-// 任务状态修改
+/** 修改定时任务状态（0-正常/1-暂停） */
 export function changeJobStatus(jobId, status) {
   const data = {
     jobId,
@@ -56,8 +61,7 @@ export function changeJobStatus(jobId, status) {
   })
 }
 
-
-// 定时任务立即执行一次
+/** 定时任务立即执行一次 */
 export function runJob(jobId, jobGroup) {
   const data = {
     jobId,

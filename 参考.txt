@@ -1,0 +1,50 @@
+vue3前端
+// 引入axios
+import axios from 'axios'
+
+// 1. 删除单条（最常用）
+const deleteItem = async () => {
+  const res = await axios.delete('/api/goods/del', {
+    // DELETE 用 params 传参（拼接在URL后：?id=1）
+    params: {
+      id: 1 
+    }
+  })
+  console.log(res.data)
+}
+
+// 2. 批量删除（传递数组）
+const deleteBatch = async () => {
+  const res = await axios.delete('/api/goods/batchDel', {
+    params: {
+      ids: [1,2,3] // 数组自动转 ?ids[]=1&ids[]=2&ids[]=3
+    }
+  })
+}
+
+webman后端
+<?php
+use support\Request;
+
+// 路由：config/route.php
+Route::delete('/api/goods/del', [\app\controller\Goods::class, 'del']);
+Route::delete('/api/goods/batchDel', [\app\controller\Goods::class, 'batchDel']);
+
+// 控制器：app/controller/Goods.php
+class Goods
+{
+    // 接收单条删除
+    public function del(Request $request)
+    {
+        // 直接用 input() 接收！
+        $id = $request->input('id');
+        return json(['code' => 200, 'msg' => '删除成功', 'id' => $id]);
+    }
+
+    // 接收批量删除（数组）
+    public function batchDel(Request $request)
+    {
+        $ids = $request->input('ids'); // 直接获取数组 [1,2,3]
+        return json(['code' => 200, 'msg' => '批量删除成功', 'ids' => $ids]);
+    }
+}

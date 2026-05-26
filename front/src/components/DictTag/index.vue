@@ -25,6 +25,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 字典标签组件 - 根据字典值显示对应标签样式
+ * @description 将字典值转换为带样式的标签展示，未匹配的值显示为默认标签
+ */
 // 记录未匹配的项
 const unmatchArray = ref([])
 

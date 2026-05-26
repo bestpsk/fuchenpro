@@ -96,6 +96,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 表单设计器页面 - 拖拽式表单设计与代码生成
+ * @description 提供可视化拖拽设计表单、右侧属性编辑、代码预览与导出功能
+ */
 import draggable from "vuedraggable/dist/vuedraggable.common"
 import ClipboardJS from 'clipboard'
 import beautifier from 'js-beautify'

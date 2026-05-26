@@ -181,6 +181,10 @@
 </template>
 
 <script setup name="Dict">
+/**
+ * @description 字典类型页面 - 字典类型增删改查与缓存管理
+ * @description 提供字典类型增删改查、刷新缓存、抽屉查看字典数据等功能
+ */
 import DictDataDrawer from './detail'
 import useDictStore from '@/store/modules/dict'
 import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type"

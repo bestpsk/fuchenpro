@@ -58,6 +58,10 @@
 </template>
 
 <script setup name="Online">
+/**
+ * @description 在线用户页面 - 查看并强制下线在线用户
+ * @description 展示当前在线用户列表，支持按用户名/IP地址筛选，可强制下线指定用户
+ */
 import { forceLogout, list as initData } from "@/api/monitor/online"
 
 const { proxy } = getCurrentInstance()

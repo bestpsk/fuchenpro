@@ -65,6 +65,10 @@
 </template>
 
 <script setup name="Cache">
+/**
+ * @description 缓存监控页面 - Redis缓存信息与图表展示
+ * @description 展示Redis缓存的基本信息、命令统计图表、内存使用情况等
+ */
 import { getCache } from '@/api/monitor/cache'
 import * as echarts from 'echarts'
 

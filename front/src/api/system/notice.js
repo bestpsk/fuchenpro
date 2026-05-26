@@ -1,6 +1,10 @@
+/**
+ * @description 通知公告接口 - 公告增删改查与已读管理
+ * @description 提供公告列表查询、详情获取、新增、修改、删除、首页公告、已读标记、已读用户查询等接口
+ */
 import request from '@/utils/request'
 
-// 查询公告列表
+/** 查询公告列表 */
 export function listNotice(query) {
   return request({
     url: '/system/notice/list',
@@ -9,7 +13,7 @@ export function listNotice(query) {
   })
 }
 
-// 查询公告详细
+/** 根据公告ID查询公告详情 */
 export function getNotice(noticeId) {
   return request({
     url: '/system/notice/' + noticeId,
@@ -17,7 +21,7 @@ export function getNotice(noticeId) {
   })
 }
 
-// 新增公告
+/** 新增公告 */
 export function addNotice(data) {
   return request({
     url: '/system/notice',
@@ -26,7 +30,7 @@ export function addNotice(data) {
   })
 }
 
-// 修改公告
+/** 修改公告 */
 export function updateNotice(data) {
   return request({
     url: '/system/notice',
@@ -35,15 +39,16 @@ export function updateNotice(data) {
   })
 }
 
-// 删除公告
-export function delNotice(noticeId) {
+/** 删除公告 */
+export function delNotice(noticeIds) {
   return request({
-    url: '/system/notice/' + noticeId,
-    method: 'delete'
+    url: '/system/notice',
+    method: 'delete',
+    params: { noticeIds }
   })
 }
 
-// 首页顶部公告列表（带已读状态）
+/** 首页顶部公告列表（带已读状态） */
 export function listNoticeTop() {
   return request({
     url: '/system/notice/listTop',
@@ -51,16 +56,16 @@ export function listNoticeTop() {
   })
 }
 
-// 标记公告已读
+/** 标记指定公告为已读 */
 export function markNoticeRead(noticeId) {
   return request({
     url: '/system/notice/markRead',
     method: 'post',
-    params: { noticeId }
+    data: { noticeId }
   })
 }
 
-// 批量标记已读
+/** 批量标记公告为已读 */
 export function markNoticeReadAll(ids) {
   return request({
     url: '/system/notice/markReadAll',
@@ -69,7 +74,7 @@ export function markNoticeReadAll(ids) {
   })
 }
 
-// 查询公告已读用户列表
+/** 查询公告已读用户列表 */
 export function listNoticeReadUsers(query) {
   return request({
     url: '/system/notice/readUsers/list',

@@ -175,6 +175,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 薪资配置组件 - 用户薪资项增删改查
+ * @description 管理用户的薪资配置列表，支持按薪资类型添加/编辑/删除薪资项
+ */
 import { listSalaryType, listUserSalary, addSalary, updateSalary, delSalary } from "@/api/system/user"
 import { QuestionFilled } from '@element-plus/icons-vue'
 

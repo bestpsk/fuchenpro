@@ -2,8 +2,14 @@
   <view class="statistics-card">
     <view class="card-header">
       <text class="card-title">数据概览</text>
-      <view class="refresh-btn" @click="handleRefresh">
-        <u-icon name="reload" size="16" color="#86909C" />
+      <view class="header-actions">
+        <view class="refresh-btn" @click="handleRefresh">
+          <u-icon name="reload" size="16" color="#86909C" />
+        </view>
+        <view class="more-btn" @click="handleMore">
+          <text class="more-text">更多</text>
+          <u-icon name="arrow-right" size="12" color="#86909C" />
+        </view>
       </view>
     </view>
 
@@ -24,33 +30,37 @@
 </template>
 
 <script setup>
-/**
- * @description 首页统计卡片组件 - 业务数据概览
- * @description 展示咨询客数、成交客数、成交金额、成交项次的今日/月度数据，
- * 支持通过props传入自定义数据，未传入时使用默认统计
- */
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
-  /** 统计数据数组，每项包含label/todayValue/monthValue */
   data: {
     type: Array,
     default: () => []
   }
 })
 
+const emit = defineEmits(['refresh'])
+
 const defaultStats = [
-  { label: '咨询客数', todayValue: '128', monthValue: '1,256' },
-  { label: '成交客数', todayValue: '36', monthValue: '386' },
-  { label: '成交金额', todayValue: '¥12.8k', monthValue: '¥128.5k' },
-  { label: '成交项次', todayValue: '89', monthValue: '892' }
-])
+  { label: '成交客数', todayValue: '0', monthValue: '0' },
+  { label: '成交金额', todayValue: '¥0', monthValue: '¥0' },
+  { label: '操作客数', todayValue: '0', monthValue: '0' }
+]
 
 const statsList = ref(props.data.length > 0 ? props.data : defaultStats)
 
-/** 刷新统计数据（预留） */
+watch(() => props.data, (val) => {
+  if (val && val.length > 0) {
+    statsList.value = val
+  }
+}, { deep: true })
+
 function handleRefresh() {
-  uni.showToast({ title: '数据已刷新', icon: 'none' })
+  emit('refresh')
+}
+
+function handleMore() {
+  uni.navigateTo({ url: '/pages/statistics/index' })
 }
 </script>
 
@@ -74,6 +84,12 @@ function handleRefresh() {
     color: #1D2129;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+  }
+
   .refresh-btn {
     width: 52rpx;
     height: 52rpx;
@@ -84,6 +100,23 @@ function handleRefresh() {
 
     &:active {
       background: #F5F7FA;
+    }
+  }
+
+  .more-btn {
+    display: flex;
+    align-items: center;
+    gap: 4rpx;
+    padding: 8rpx 12rpx;
+    border-radius: 24rpx;
+
+    &:active {
+      background: #F5F7FA;
+    }
+
+    .more-text {
+      font-size: 24rpx;
+      color: #86909C;
     }
   }
 }

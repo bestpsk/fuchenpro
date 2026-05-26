@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 还款记录模型，记录客户套餐/订单的还款信息及审核状态
+ */
 class BizRepaymentRecord extends Model
 {
     protected $table = 'biz_repayment_record';
@@ -24,16 +27,19 @@ class BizRepaymentRecord extends Model
         'audit_by', 'audit_time'
     ];
 
+    // 关联对应的客户
     public function customer()
     {
         return $this->belongsTo(BizCustomer::class, 'customer_id', 'customer_id');
     }
 
+    // 关联对应的客户套餐
     public function package()
     {
         return $this->belongsTo(BizCustomerPackage::class, 'package_id', 'package_id');
     }
 
+    // 关联对应的销售订单
     public function order()
     {
         return $this->belongsTo(BizSalesOrder::class, 'order_id', 'order_id');

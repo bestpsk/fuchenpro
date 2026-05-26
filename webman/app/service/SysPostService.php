@@ -4,8 +4,12 @@ namespace app\service;
 
 use app\model\SysPost;
 
+/**
+ * 岗位服务层，处理岗位的增删改查
+ */
 class SysPostService
 {
+    // 按条件分页查询岗位列表
     public function selectPostList($params = [])
     {
         $query = SysPost::query();
@@ -25,15 +29,21 @@ class SysPostService
         return $query->orderBy('post_sort', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询岗位详情
+
     public function selectPostById($postId)
     {
         return SysPost::find($postId);
     }
 
+    // 查询所有岗位
+
     public function selectPostAll()
     {
         return SysPost::where('status', '0')->orderBy('post_sort', 'asc')->get();
     }
+
+    // 新增岗位
 
     public function insertPost($data)
     {
@@ -41,11 +51,15 @@ class SysPostService
         return SysPost::create($data);
     }
 
+    // 更新岗位信息
+
     public function updatePost($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return SysPost::where('post_id', $data['post_id'])->update($data);
     }
+
+    // 批量删除岗位
 
     public function deletePostByIds($postIds)
     {

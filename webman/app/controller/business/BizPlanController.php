@@ -7,6 +7,12 @@ use app\service\BizPlanService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 方案管理控制器
+ *
+ * 负责方案的增删改查、提交审核、审核通过/驳回、状态变更等功能，
+ * 已审核的方案不可修改或删除
+ */
 class BizPlanController
 {
     protected $planService;
@@ -16,6 +22,7 @@ class BizPlanController
         $this->planService = new BizPlanService();
     }
 
+    // 分页查询企业维度的方案列表
     public function enterpriseList(Request $request)
     {
         $params = convert_to_snake_case($request->all());
@@ -23,6 +30,7 @@ class BizPlanController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 分页查询方案列表，支持按企业、门店、状态等条件筛选
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->all());
@@ -30,6 +38,7 @@ class BizPlanController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取方案详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -39,6 +48,7 @@ class BizPlanController
         return AjaxResult::success($plan);
     }
 
+    // 新增方案，含方案明细项
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -50,6 +60,7 @@ class BizPlanController
         return AjaxResult::success($result, '新增成功');
     }
 
+    // 修改方案信息，已审核的方案不可修改
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -61,10 +72,13 @@ class BizPlanController
         return AjaxResult::success(null, '修改成功');
     }
 
+    // 批量删除方案，已审核的方案不可删除
     public function remove(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $planIds = explode(',', end($parts));
+        $planIds = $request->input('planIds', '');
+        if (!is_array($planIds)) {
+            $planIds = explode(',', $planIds);
+        }
         $planIds = array_map('intval', array_filter($planIds));
         $result = $this->planService->deletePlanByIds($planIds);
         if (!$result) {
@@ -73,6 +87,7 @@ class BizPlanController
         return AjaxResult::success(null, '删除成功');
     }
 
+    // 提交方案审核
     public function submitAudit(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -85,6 +100,7 @@ class BizPlanController
         return AjaxResult::success(null, '提交审核成功');
     }
 
+    // 审核方案（通过或驳回）
     public function audit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -96,6 +112,7 @@ class BizPlanController
         return AjaxResult::success(null, '审核成功');
     }
 
+    // 变更方案状态
     public function changeStatus(Request $request)
     {
         $data = convert_to_snake_case($request->post());

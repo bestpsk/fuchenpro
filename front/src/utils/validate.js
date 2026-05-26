@@ -67,6 +67,7 @@ export function validURL(url) {
  * @param {string} str
  * @returns {Boolean}
  */
+/** 小写字母校验 */
 export function validLowerCase(str) {
   const reg = /^[a-z]+$/
   return reg.test(str)
@@ -94,9 +95,16 @@ export function validAlphabets(str) {
  * @param {string} email
  * @returns {Boolean}
  */
+/** 邮箱格式校验 */
 export function validEmail(email) {
   const reg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   return reg.test(email)
+}
+
+/** 身份证号格式校验（15位/18位） */
+export function isIdCard(str) {
+  const reg = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/
+  return reg.test(str)
 }
 
 /**

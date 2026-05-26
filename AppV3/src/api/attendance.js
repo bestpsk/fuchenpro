@@ -92,3 +92,27 @@ export function uploadAttendancePhoto(data) {
 export function getUserAttendanceRule() {
   return request({ url: '/business/attendance/config/userRule', method: 'get' })
 }
+
+export function listAttendanceConfig(params) {
+  return request({ url: '/business/attendance/config/list', method: 'get', params })
+}
+
+export function getAttendanceConfig(configId) {
+  return request({ url: '/business/attendance/config/' + configId, method: 'get' })
+}
+
+export function addAttendanceConfig(data) {
+  return request({ url: '/business/attendance/config', method: 'post', data })
+}
+
+export function updateAttendanceConfig(data) {
+  return request({ url: '/business/attendance/config', method: 'put', data })
+}
+
+export function delAttendanceConfig(configIds) {
+  return request({ url: '/business/attendance/config', method: 'delete', params: { configIds } })
+}
+
+export function listAttendanceRule(params) {
+  return request({ url: '/business/attendance/rule/list', method: 'get', params })
+}

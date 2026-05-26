@@ -5,8 +5,14 @@ namespace app\service;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 
+/**
+ * 客户套餐服务层
+ *
+ * 处理客户已购套餐的查询
+ */
 class BizCustomerPackageService
 {
+    // 按条件分页查询客户套餐列表，关联查询套餐明细
     public function selectPackageList($params = [])
     {
         $query = BizCustomerPackage::query();
@@ -19,11 +25,13 @@ class BizCustomerPackageService
         return $query->with('items')->orderBy('package_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询套餐及明细
     public function selectPackageById($packageId)
     {
         return BizCustomerPackage::with('items')->find($packageId);
     }
 
+    // 查询指定客户的所有套餐，可按状态筛选（0=未使用 1=使用中 2=已用完）
     public function selectPackagesByCustomer($customerId, $status = null)
     {
         $query = BizCustomerPackage::query();

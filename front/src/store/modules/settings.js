@@ -1,3 +1,8 @@
+/**
+ * @description 布局设置状态管理 - 主题与布局偏好
+ * @description 管理主题色、侧边栏主题、导航模式、标签页配置、暗黑模式等布局设置，
+ * 支持localStorage持久化用户自定义配置
+ */
 import defaultSettings from '@/settings'
 import { useDark, useToggle } from '@vueuse/core'
 import { useDynamicTitle } from '@/utils/dynamicTitle'
@@ -31,19 +36,19 @@ const useSettingsStore = defineStore(
       isDark: isDark.value
     }),
     actions: {
-      // 修改布局设置
+      /** 修改指定布局设置项，key为state中的属性名 */
       changeSetting(data) {
         const { key, value } = data
         if (this.hasOwnProperty(key)) {
           this[key] = value
         }
       },
-      // 设置网页标题
+      /** 设置网页标题并触发动态标题更新 */
       setTitle(title) {
         this.title = title
         useDynamicTitle()
       },
-      // 切换暗黑模式
+      /** 切换暗黑/明亮模式，同步更新主题样式变量 */
       toggleTheme() {
         this.isDark = !this.isDark
         toggleDark()

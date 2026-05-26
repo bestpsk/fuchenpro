@@ -10,8 +10,12 @@ use app\model\BizPackageItem;
 use app\service\BizCustomerArchiveService;
 use support\Db;
 
+/**
+ * 还款服务层，处理还款记录的增删改查、审核和取消，自动更新套餐欠款金额
+ */
 class BizRepaymentService
 {
+    // 按条件分页查询还款记录列表
     public function selectRepaymentList($params = [])
     {
         $query = BizRepaymentRecord::query();
@@ -63,10 +67,14 @@ class BizRepaymentService
             ->get();
     }
 
+    // 根据ID查询还款记录详情
+
     public function selectRepaymentById($repaymentId)
     {
         return BizRepaymentRecord::find($repaymentId);
     }
+
+    // 新增还款记录，生成还款编号
 
     public function insertRepayment($data, $autoAudit = false)
     {
@@ -120,11 +128,11 @@ class BizRepaymentService
             'enterprise_name' => $data['enterprise_name'] ?? '',
             'store_id' => $data['store_id'] ?? null,
             'store_name' => $data['store_name'] ?? '',
-            'total_amount' => $repaymentAmount,
-            'deal_amount' => $repaymentAmount,
+            'deal_amount' => 0,
             'paid_amount' => $repaymentAmount,
             'owed_amount' => 0,
-            'order_status' => '3',
+            'order_status' => '2',
+            'source_type' => '2',
             'package_name' => '还款-' . ($data['package_name'] ?? ''),
             'enterprise_audit_status' => '1',
             'finance_audit_status' => '1',
@@ -144,10 +152,10 @@ class BizRepaymentService
             'order_id' => $order->order_id,
             'product_name' => '还款-' . ($data['package_name'] ?? '欠款'),
             'quantity' => 1,
-            'plan_price' => $repaymentAmount,
-            'is_deal' => 1,
             'deal_amount' => $repaymentAmount,
             'paid_amount' => $repaymentAmount,
+            'unit_price' => $repaymentAmount,
+            'owed_amount' => 0,
             'customer_feedback' => '',
             'remark' => '支付方式: ' . ($data['payment_method'] ?? '-'),
             'create_time' => date('Y-m-d H:i:s')
@@ -161,6 +169,8 @@ class BizRepaymentService
         $data['update_time'] = date('Y-m-d H:i:s');
         return BizRepaymentRecord::where('repayment_id', $data['repayment_id'])->update($data);
     }
+
+    // 审核还款记录
 
     public function auditRepayment($repaymentId, $auditBy)
     {

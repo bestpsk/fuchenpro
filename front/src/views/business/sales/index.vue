@@ -47,8 +47,11 @@
             <div v-for="item in customerList" :key="item.customerId" :class="['customer-item', currentCustomerId === item.customerId ? 'active' : '']" @click="handleSelectCustomer(item)">
               <div class="customer-header">
                 <div class="customer-name-row">
-                  <span style="margin-right: 4px; color: #909399; font-size: 14px">👤</span>
+                  <el-avatar :size="28" :src="item.avatar || undefined" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '13px' }">
+                    {{ item.customerName ? item.customerName.charAt(0) : '' }}
+                  </el-avatar>
                   <span class="customer-name">{{ item.customerName }}</span>
+                  <el-button link type="primary" icon="Edit" size="small" @click.stop="handleEditCustomer(item)" style="margin-left: 4px" />
                 </div>
                 <div class="customer-tags">
                   <el-tag v-if="item.allExhausted" type="info" size="small">已用完</el-tag>
@@ -96,6 +99,13 @@
                     <el-input v-model="scope.row.productName" placeholder="品项名称" />
                   </template>
                 </el-table-column>
+                <el-table-column label="付款方式" width="120">
+                  <template #default="scope">
+                    <el-select v-model="scope.row.paymentMethod" size="small" @change="onItemPaymentMethodChange(scope.$index)" style="width: 100%">
+                      <el-option v-for="dict in biz_payment_method" :key="dict.value" :label="dict.label" :value="dict.value" />
+                    </el-select>
+                  </template>
+                </el-table-column>
                 <el-table-column label="次数" width="100">
                   <template #default="scope">
                     <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right"  style="width: 100%" />
@@ -103,7 +113,7 @@
                 </el-table-column>
                 <el-table-column label="成交金额" width="140">
                   <template #default="scope">
-                    <el-input-number v-model="scope.row.dealAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" />
+                    <el-input-number v-model="scope.row.dealAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
                 <el-table-column label="单次价" width="100" align="center">
@@ -113,7 +123,7 @@
                 </el-table-column>
                 <el-table-column label="实付金额" width="140">
                   <template #default="scope">
-                    <el-input-number v-model="scope.row.paidAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" />
+                    <el-input-number v-model="scope.row.paidAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
                 <el-table-column label="欠款金额" width="100" align="center">
@@ -165,7 +175,7 @@
                           <div class="pkg-title-row">
                             <el-icon style="margin-right: 4px; vertical-align: middle; color: #909399"><Wallet /></el-icon>
                             <span class="package-group-name">{{ pkg.packageName }}</span>
-                            <el-tag :type="pkg.status === '2' ? 'info' : 'success'" size="small" style="margin-left: 6px">{{ pkg.status === '2' ? '已用完' : '已成交' }}</el-tag>
+                            <el-tag :type="pkg.status === '2' ? 'info' : 'success'" size="small" style="margin-left: 6px">{{ pkg.status === '2' ? '已用完' : '使用中' }}</el-tag>
                             <span class="amount-inline">¥{{ Number(pkg.totalAmount || 0).toFixed(2) }}</span>
                             <span class="amount-inline paid">实付¥{{ Number(pkg.paidAmount || 0).toFixed(2) }}</span>
                             <span class="amount-inline owed" v-if="Number(pkg.owedAmount || 0) > 0">欠款¥{{ Number(pkg.owedAmount || 0).toFixed(2) }}</span>
@@ -219,7 +229,7 @@
                     <el-col :span="12">
                       <el-form-item label="操作人">
                         <el-select v-model="operationForm.operatorUserId" filterable @change="handleOperatorChange" style="width: 100%">
-                          <el-option v-for="u in userOptions" :key="u.userId" :label="u.real_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
+                          <el-option v-for="u in userOptions" :key="u.userId" :label="u.nick_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
                         </el-select>
                       </el-form-item>
                     </el-col>
@@ -281,7 +291,7 @@
                     <el-col :span="12">
                       <el-form-item label="操作人">
                         <el-select v-model="trialForm.operatorUserId" filterable @change="handleTrialOperatorChange" style="width: 100%">
-                          <el-option v-for="u in userOptions" :key="u.userId" :label="u.real_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
+                          <el-option v-for="u in userOptions" :key="u.userId" :label="u.nick_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
                         </el-select>
                       </el-form-item>
                     </el-col>
@@ -441,12 +451,8 @@
             <el-tab-pane label="开单记录" name="orderRecord">
               <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
                 <el-date-picker v-model="orderRecordDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" size="small" style="width: 200px" />
-                <el-select v-model="orderRecordDealStatus" placeholder="是否成交" clearable size="small" style="width: 120px">
-                  <el-option label="已成交" value="1" />
-                  <el-option label="未成交" value="0" />
-                </el-select>
                 <el-select v-model="orderRecordCreatorUserId" placeholder="销售人" clearable filterable size="small" style="width: 140px">
-                  <el-option v-for="u in userOptions" :key="u.userId" :label="u.real_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
+                  <el-option v-for="u in userOptions" :key="u.userId" :label="u.nick_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
                 </el-select>
                 <el-button type="primary" size="small" @click="loadOrderRecords">查询</el-button>
               </div>
@@ -475,6 +481,12 @@
                 <el-table-column label="欠款金额" min-width="110" align="right">
                   <template #default="scope">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</template>
                 </el-table-column>
+                <el-table-column label="付款方式" min-width="90" align="center">
+                  <template #default="scope">
+                    <dict-tag v-if="scope.row.paymentMethod" :options="biz_payment_method" :value="scope.row.paymentMethod" size="small" />
+                    <span v-else>-</span>
+                  </template>
+                </el-table-column>
                 <el-table-column label="门店成交人" prop="storeDealer" min-width="100" show-overflow-tooltip />
                 <el-table-column label="成交员工" prop="creatorUserName" min-width="100" show-overflow-tooltip />
                 <el-table-column label="备注" prop="remark" min-width="120" show-overflow-tooltip />
@@ -487,7 +499,7 @@
                 <el-date-picker v-model="operationRecordDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" size="small" style="width: 200px" />
                 <el-input v-model="operationRecordProductName" placeholder="操作品项" clearable size="small" style="width: 120px" />
                 <el-select v-model="operationRecordOperatorUserId" placeholder="操作人" clearable filterable size="small" style="width: 120px">
-                  <el-option v-for="u in userOptions" :key="u.userId" :label="u.real_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
+                  <el-option v-for="u in userOptions" :key="u.userId" :label="u.nick_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
                 </el-select>
                 <el-select v-model="operationRecordSatisfaction" placeholder="满意度" clearable size="small" style="width: 100px">
                   <el-option v-for="i in 5" :key="i" :label="i + '星'" :value="i" />
@@ -577,8 +589,8 @@
               <el-row :gutter="16">
                 <el-col :span="12">
                   <el-form-item label="操作人">
-                    <el-select v-model="archiveForm.operatorUserId" filterable @change="(userId) => { const user = userOptions.find(u => u.userId === userId); if (user) archiveForm.operatorUserName = user.real_name || user.nickName || user.userName || '' }" style="width: 100%">
-                      <el-option v-for="u in userOptions" :key="u.userId" :label="u.real_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
+                    <el-select v-model="archiveForm.operatorUserId" filterable @change="(userId) => { const user = userOptions.find(u => u.userId === userId); if (user) archiveForm.operatorUserName = user.nick_name || user.nickName || user.userName || '' }" style="width: 100%">
+                      <el-option v-for="u in userOptions" :key="u.userId" :label="u.nick_name || u.nickName || u.userName || '未设置姓名'" :value="u.userId" />
                     </el-select>
                   </el-form-item>
                 </el-col>
@@ -634,6 +646,22 @@
 
     <el-dialog :title="customerDialogTitle" v-model="customerDialogVisible" width="500px" append-to-body>
       <el-form ref="customerFormRef" :model="customerForm" :rules="customerRules" label-width="80px">
+        <el-form-item label="头像">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <el-avatar :size="56" :src="customerForm.avatar || undefined" :style="{ background: customerForm.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '22px' }">
+              {{ customerForm.customerName ? customerForm.customerName.charAt(0) : '' }}
+            </el-avatar>
+            <el-upload
+              action="#"
+              :auto-upload="false"
+              :show-file-list="false"
+              :on-change="handleCustomerAvatarChange"
+              accept="image/*"
+            >
+              <el-button size="small" type="primary" plain>选择图片</el-button>
+            </el-upload>
+          </div>
+        </el-form-item>
         <el-form-item label="客户姓名" prop="customerName">
           <el-input v-model="customerForm.customerName" placeholder="请输入客户姓名" />
         </el-form-item>
@@ -649,7 +677,6 @@
               <el-radio-group v-model="customerForm.gender">
                 <el-radio value="0">男</el-radio>
                 <el-radio value="1">女</el-radio>
-                <el-radio value="2">未知</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -701,9 +728,14 @@
 </template>
 
 <script setup name="Sales">
+/**
+ * @description 销售开单页面 - 客户选择/开单/持卡操作/体验操作/还款/档案管理
+ * @description 核心业务页面，提供企业→门店→客户三级联动选择、销售开单、
+ * 持卡操作（消耗套餐品项）、体验操作（非套餐品项）、还款管理、客户档案管理等功能
+ */
 import { searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
 import { searchStore, addStore } from "@/api/business/store"
-import { searchCustomer, addCustomer } from "@/api/business/customer"
+import { searchCustomer, addCustomer, updateCustomer, getCustomer, uploadCustomerAvatar } from "@/api/business/customer"
 import { addSalesOrder, listSalesOrder } from "@/api/business/salesOrder"
 import { getPackageByCustomer } from "@/api/business/customerPackage"
 import { addOperation, listOperation } from "@/api/business/operationRecord"
@@ -714,7 +746,7 @@ import useUserStore from '@/store/modules/user'
 
 const userStore = useUserStore()
 const { proxy } = getCurrentInstance()
-const { biz_customer_tag, biz_archive_type } = useDict("biz_customer_tag", "biz_archive_type")
+const { biz_customer_tag, biz_archive_type, biz_payment_method } = useDict("biz_customer_tag", "biz_archive_type", "biz_payment_method")
 
 const currentEnterpriseId = ref(null)
 const currentStoreId = ref(null)
@@ -741,7 +773,6 @@ const orderRecordList = ref([])
 const operationRecordList = ref([])
 const orderRecordDateRange = ref([])
 const operationRecordDateRange = ref([])
-const orderRecordDealStatus = ref('')
 const orderRecordCreatorUserId = ref(null)
 const operationRecordProductName = ref('')
 const operationRecordOperatorUserId = ref(null)
@@ -791,7 +822,7 @@ const filteredPackageList = computed(() => {
 })
 
 function getOrderStatusName(status) {
-  const map = { '0': '未成交', '1': '已成交', '2': '已用完', '3': '还款', '4': '已取消' }
+  const map = { '0': '待确认', '1': '企业已审', '2': '财务已审', '4': '已取消' }
   return map[status] || '未知'
 }
 
@@ -816,11 +847,18 @@ onMounted(() => {
   loadEnterpriseList()
   loadUserList()
   operationForm.value.operatorUserId = userStore.id
-  operationForm.value.operatorUserName = userStore.realName || ''
+  operationForm.value.operatorUserName = userStore.nickName || ''
 })
 
 function loadEnterpriseList() {
-  searchEnterpriseApi('').then(res => { enterpriseOptions.value = res.data || [] })
+  searchEnterpriseApi('').then(res => {
+    enterpriseOptions.value = res.data || []
+    const savedEnterpriseId = sessionStorage.getItem('sales_enterpriseId')
+    if (savedEnterpriseId) {
+      currentEnterpriseId.value = Number(savedEnterpriseId)
+      loadStoreList(savedEnterpriseId)
+    }
+  })
 }
 
 function loadUserList() {
@@ -833,18 +871,36 @@ function handleEnterpriseChange(val) {
   currentCustomer.value = null
   currentCustomerId.value = null
   customerList.value = []
-  if (val) loadStoreList(val)
+  if (val) {
+    loadStoreList(val)
+    sessionStorage.setItem('sales_enterpriseId', val)
+  } else {
+    sessionStorage.removeItem('sales_enterpriseId')
+  }
+  sessionStorage.removeItem('sales_storeId')
 }
 
 function loadStoreList(enterpriseId) {
-  searchStore('', enterpriseId).then(res => { storeOptions.value = res.data || [] })
+  searchStore('', enterpriseId).then(res => {
+    storeOptions.value = res.data || []
+    const savedStoreId = sessionStorage.getItem('sales_storeId')
+    if (savedStoreId && storeOptions.value.length > 0) {
+      currentStoreId.value = Number(savedStoreId)
+      loadCustomerList()
+    }
+  })
 }
 
 function handleStoreChange() {
   currentCustomer.value = null
   currentCustomerId.value = null
   customerList.value = []
-  if (currentStoreId.value) loadCustomerList()
+  if (currentStoreId.value) {
+    loadCustomerList()
+    sessionStorage.setItem('sales_storeId', currentStoreId.value)
+  } else {
+    sessionStorage.removeItem('sales_storeId')
+  }
 }
 
 function loadCustomerList() {
@@ -877,8 +933,15 @@ function handleSelectCustomer(item) {
 
 function addOrderItemRow() {
   orderItems.value.push({
-    productName: '', quantity: 1, dealAmount: 0, paidAmount: 0
+    productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash'
   })
+}
+
+function onItemPaymentMethodChange(index) {
+  if (orderItems.value[index].paymentMethod === 'gift') {
+    orderItems.value[index].dealAmount = 0
+    orderItems.value[index].paidAmount = 0
+  }
 }
 
 function submitOrder() {
@@ -895,7 +958,7 @@ function submitOrder() {
     enterpriseName: ent?.enterpriseName,
     storeId: currentStoreId.value,
     storeName: store?.storeName,
-    orderStatus: '1',
+    orderStatus: '0',
     packageName: orderPackageName.value,
     storeDealer: orderStoreDealer.value,
     customerFeedback: '',
@@ -926,7 +989,7 @@ function resetOperationForm() {
   operationForm.value = {
     operationDate: new Date().toISOString().slice(0, 10),
     operatorUserId: userStore.id,
-    operatorUserName: userStore.realName || '',
+    operatorUserName: userStore.nickName || '',
     satisfaction: 5, customerFeedback: '', beforePhoto: '', afterPhoto: '', remark: ''
   }
 }
@@ -958,7 +1021,7 @@ function calcItemConsumeAmount(index) {
 
 function handleOperatorChange(userId) {
   const user = userOptions.value.find(u => u.userId === userId)
-  if (user) operationForm.value.operatorUserName = user.real_name || user.nickName || user.userName || ''
+  if (user) operationForm.value.operatorUserName = user.nick_name || user.nickName || user.userName || ''
 }
 
 function showTrialOperation() {
@@ -966,7 +1029,7 @@ function showTrialOperation() {
     productName: '', operationQuantity: 1, trialPrice: 0,
     operationDate: new Date().toISOString().slice(0, 10),
     operatorUserId: userStore.id,
-    operatorUserName: userStore.realName || '',
+    operatorUserName: userStore.nickName || '',
     satisfaction: 5, customerFeedback: '', beforePhoto: '', afterPhoto: '', remark: ''
   }
   showTrialForm.value = true
@@ -977,7 +1040,7 @@ function showTrialOperation() {
 
 function handleTrialOperatorChange(userId) {
   const user = userOptions.value.find(u => u.userId === userId)
-  if (user) trialForm.value.operatorUserName = user.real_name || user.nickName || user.userName || ''
+  if (user) trialForm.value.operatorUserName = user.nick_name || user.nickName || user.userName || ''
 }
 
 function submitOperation(operationType) {
@@ -1058,9 +1121,6 @@ function loadOrderRecords() {
     params.startDate = orderRecordDateRange.value[0]
     params.endDate = orderRecordDateRange.value[1]
   }
-  if (orderRecordDealStatus.value) {
-    params.orderStatus = orderRecordDealStatus.value
-  }
   if (orderRecordCreatorUserId.value) {
     params.creatorUserId = orderRecordCreatorUserId.value
   }
@@ -1084,46 +1144,26 @@ function loadOperationRecords() {
     params.satisfaction = operationRecordSatisfaction.value
   }
   listOperation(params).then(res => {
-    console.log('[操作记录] API返回数据:', res)
-    console.log('[操作记录] rows字段:', res.rows)
-    if (res.rows && res.rows.length > 0) {
-      console.log('[操作记录] 第一条数据示例:', res.rows[0])
-      console.log('[操作记录] satisfaction类型:', typeof res.rows[0].satisfaction, '值:', res.rows[0].satisfaction)
-      console.log('[操作记录] operatorUserId:', res.rows[0].operatorUserId)
-      console.log('[操作记录] operatorUserName:', res.rows[0].operatorUserName)
-    }
     operationRecordList.value = res.rows || []
   })
 }
 
 function getOperatorRealName(row) {
-  console.log('[操作人] row数据:', row)
-  
-  // 尝试多种可能的字段名（兼容不同命名规范）
   const userId = row.operatorUserId || row.operator_id || row.userId || row.user_id
   const userName = row.operatorUserName || row.operator_name || row.userName || row.user_name || row.createBy
-  
-  console.log('[操作人] 解析结果 - userId:', userId, 'userName:', userName)
-  console.log('[操作人] userOptions长度:', userOptions.value.length)
-  
-  // 优先使用后端直接返回的操作人姓名（如果存在且有效）
+
   if (userName && userName !== '-' && userName !== 'null' && userName !== 'undefined') {
-    console.log('[操作人] 使用后端返回的姓名:', userName)
     return userName
   }
-  
-  // 如果有用户ID，尝试从 userOptions 中查找
+
   if (userId) {
     const user = userOptions.value.find(u => u.userId === userId || u.id === userId)
-    console.log('[操作人] 查找到的用户:', user)
     if (user) {
-      const name = user.real_name || user.nickName || user.userName || user.nick_name
-      console.log('[操作人] 从userOptions获取的姓名:', name)
+      const name = user.nick_name || user.nickName || user.userName || user.nick_name
       return name || '-'
     }
   }
-  
-  // 如果都找不到，返回 userName 或 '-'
+
   return userName || '-'
 }
 
@@ -1282,7 +1322,7 @@ function handleAddArchive() {
     amount: 0,
     satisfaction: 5,
     operatorUserId: userStore.id,
-    operatorUserName: userStore.realName || '',
+    operatorUserName: userStore.nickName || '',
     photos: '',
     customerFeedback: '',
     remark: ''
@@ -1321,9 +1361,40 @@ function handleDeleteArchive(row) {
 }
 
 function handleAddCustomer() {
-  customerForm.value = { customerName: '', phone: '', wechat: '', gender: '2', age: null, tag: '', remark: '' }
+  customerForm.value = { customerName: '', phone: '', wechat: '', gender: '0', age: null, tag: '', remark: '', avatar: '', avatarFile: null }
   customerDialogTitle.value = '新增客户'
   customerDialogVisible.value = true
+}
+
+async function handleEditCustomer(item) {
+  try {
+    const res = await getCustomer(item.customerId)
+    const data = res.data || res
+    customerForm.value = {
+      customerId: data.customerId || data.customer_id,
+      customerName: data.customerName || data.customer_name || '',
+      phone: data.phone || '',
+      wechat: data.wechat || '',
+      gender: String(data.gender ?? '0'),
+      age: data.age || null,
+      tag: data.tag || '',
+      remark: data.remark || '',
+      avatar: data.avatar || '',
+      avatarFile: null
+    }
+    customerDialogTitle.value = '编辑客户'
+    customerDialogVisible.value = true
+  } catch (e) {
+    console.error('加载客户详情失败:', e)
+    proxy.$modal.msgError('加载客户信息失败')
+  }
+}
+
+function handleCustomerAvatarChange(file) {
+  if (file && file.raw) {
+    customerForm.value.avatarFile = file.raw
+    customerForm.value.avatar = URL.createObjectURL(file.raw)
+  }
 }
 
 function submitCustomerForm() {
@@ -1338,12 +1409,24 @@ function submitCustomerForm() {
         storeId: currentStoreId.value,
         storeName: store?.storeName
       }
-      addCustomer(data).then(res => {
-        proxy.$modal.msgSuccess('新增成功')
+      delete data.avatarFile
+      if (data.avatar && (data.avatar.startsWith('blob:') || data.avatar.startsWith('data:'))) {
+        delete data.avatar
+      }
+      const isEdit = !!customerForm.value.customerId
+      const apiCall = isEdit ? updateCustomer(data) : addCustomer(data)
+      apiCall.then(async res => {
+        const customerId = isEdit ? customerForm.value.customerId : (res?.data?.customerId || res?.data?.customer_id)
+        if (customerId && customerForm.value.avatarFile) {
+          await uploadCustomerAvatar(customerId, customerForm.value.avatarFile)
+        }
+        proxy.$modal.msgSuccess(isEdit ? '修改成功' : '新增成功')
         customerDialogVisible.value = false
         loadCustomerList()
-        if (res.data && res.data.customerId) {
+        if (!isEdit && res.data && res.data.customerId) {
           handleSelectCustomer({ customerId: res.data.customerId, ...data })
+        } else if (isEdit && currentCustomerId.value === customerForm.value.customerId) {
+          handleSelectCustomer({ ...currentCustomer.value, ...data })
         }
       })
     }

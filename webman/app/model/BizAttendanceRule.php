@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 考勤规则模型，定义上下班时间、迟到阈值、工作地点坐标及允许距离
+ */
 class BizAttendanceRule extends Model
 {
     protected $table = 'biz_attendance_rule';

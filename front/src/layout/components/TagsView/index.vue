@@ -69,6 +69,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 标签页组件 - 多页签导航与右键菜单
+ * @description 展示已打开的页面标签，支持右键菜单（刷新/关闭/关闭其他/关闭全部）
+ */
 import ScrollPane from './ScrollPane'
 import { getNormalPath } from '@/utils/ruoyi'
 import useTagsViewStore from '@/store/modules/tagsView'

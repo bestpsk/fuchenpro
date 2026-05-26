@@ -103,6 +103,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 出库单打印页面 - 出库单据打印预览
+ * @description 展示出库单的打印预览，包含出库单号、客户、产品明细等信息
+ */
 const props = defineProps({
   data: {
     type: Object,

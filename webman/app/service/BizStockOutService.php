@@ -9,8 +9,12 @@ use app\model\BizProduct;
 use app\model\SysUser;
 use app\model\BizEnterprise;
 
+/**
+ * 出库服务层，处理出库单的增删改查和确认，确认时校验库存并扣减
+ */
 class BizStockOutService
 {
+    // 按条件分页查询出库单列表
     public function selectStockOutList($params = [])
     {
         $query = BizStockOut::query();
@@ -49,6 +53,8 @@ class BizStockOutService
         
         return $list;
     }
+
+    // 根据ID查询出库单详情，含明细列表
 
     public function selectStockOutById($stockOutId)
     {
@@ -114,6 +120,8 @@ class BizStockOutService
         return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
+    // 新增出库单，生成出库编号并扣减库存
+
     public function insertStockOut($data)
     {
         $items = $data['items'] ?? [];
@@ -167,6 +175,8 @@ class BizStockOutService
         return $stockOut;
     }
 
+    // 更新出库单信息
+
     public function updateStockOut($data)
     {
         $stockOutId = $data['stock_out_id'] ?? 0;
@@ -211,6 +221,8 @@ class BizStockOutService
         }
         return true;
     }
+
+    // 批量删除出库单
 
     public function deleteStockOutByIds($stockOutIds)
     {

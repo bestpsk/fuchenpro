@@ -51,7 +51,7 @@
               <a class="link-type" style="cursor:pointer" @click="handleViewData(scope.row)">{{ scope.row.userName }}</a>
             </template>
          </el-table-column>
-          <el-table-column label="用户姓名" align="center" key="realName" prop="realName" v-if="columns.realName.visible" :show-overflow-tooltip="true" />
+          <el-table-column label="用户姓名" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
           <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
           <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
           <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
@@ -97,8 +97,8 @@
           <el-form :model="form" :rules="rules" ref="userRef" label-width="80px">
             <el-row>
               <el-col :span="12">
-                <el-form-item label="用户姓名" prop="realName">
-                  <el-input v-model="form.realName" placeholder="请输入用户姓名" maxlength="30" />
+                <el-form-item label="用户姓名" prop="nickName">
+                  <el-input v-model="form.nickName" placeholder="请输入用户姓名" maxlength="30" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
@@ -260,6 +260,11 @@
 </template>
 
 <script setup name="User">
+/**
+ * @description 用户管理页面 - 用户CRUD/角色分配/薪资配置/员工详情
+ * @description 提供用户增删改查、密码重置、状态切换、角色分配、部门树筛选、
+ * 员工扩展详情维护、薪资配置、导入导出等功能
+ */
 import TreePanel from "@/components/TreePanel"
 import ExcelImportDialog from "@/components/ExcelImportDialog"
 import UserViewDrawer from "./view"
@@ -293,7 +298,7 @@ const activeTab = ref("basic")
 const columns = ref({
   userId: { label: '用户编号', visible: true },
   userName: { label: '用户名称', visible: true },
-  realName: { label: '用户姓名', visible: true },
+  nickName: { label: '用户姓名', visible: true },
   deptName: { label: '部门', visible: true },
   phonenumber: { label: '手机号码', visible: true },
   status: { label: '状态', visible: true },
@@ -312,7 +317,7 @@ const data = reactive({
   },
   rules: {
     userName: [{ required: true, message: "用户名称不能为空", trigger: "blur" }, { min: 2, max: 20, message: "用户名称长度必须介于 2 和 20 之间", trigger: "blur" }],
-    realName: [{ required: true, message: "用户姓名不能为空", trigger: "blur" }],
+    nickName: [{ required: true, message: "用户姓名不能为空", trigger: "blur" }],
     email: [{ type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] }],
     phonenumber: [{ pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/, message: "请输入正确的手机号码", trigger: "blur" }]
   }
@@ -459,7 +464,7 @@ function reset() {
     userId: undefined,
     deptId: undefined,
     userName: undefined,
-    realName: undefined,
+    nickName: undefined,
     password: undefined,
     phonenumber: undefined,
     email: undefined,

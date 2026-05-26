@@ -137,6 +137,10 @@
 </template>
 
 <script setup name="WmsStockCheck">
+/**
+ * @description 盘点管理页面 - 盘点单CRUD与确认/加载库存
+ * @description 提供盘点单增删改查、确认盘点（差异调整到库存）、加载当前库存数据等功能
+ */
 import { listStockCheck, getStockCheck, delStockCheck, addStockCheck, updateStockCheck, confirmStockCheck, loadInventoryData } from "@/api/wms/stockCheck"
 
 const { proxy } = getCurrentInstance()

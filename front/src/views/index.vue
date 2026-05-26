@@ -1,5 +1,32 @@
 <template>
   <div class="app-container home">
+    <el-card v-if="noticeList.length > 0" class="notice-card" shadow="hover">
+      <div class="notice-bar">
+        <div class="notice-bar-left">
+          <el-icon :size="18" color="#E6A23C"><Bell /></el-icon>
+          <span class="notice-bar-label">通知公告</span>
+        </div>
+        <div class="notice-bar-content">
+          <el-carousel v-if="noticeList.length > 1" height="32px" direction="vertical" :autoplay="true" :interval="3000" indicator-position="none">
+            <el-carousel-item v-for="item in noticeList" :key="item.noticeId">
+              <div class="notice-item" @click="previewNotice(item)">
+                <el-tag size="small" :type="item.noticeType === '1' ? 'warning' : 'success'" class="notice-tag">{{ item.noticeType === '1' ? '通知' : '公告' }}</el-tag>
+                <span class="notice-item-title" :class="{ 'is-read': item.isRead }">{{ item.noticeTitle }}</span>
+              </div>
+            </el-carousel-item>
+          </el-carousel>
+          <div v-else class="notice-item" @click="previewNotice(noticeList[0])">
+            <el-tag size="small" :type="noticeList[0].noticeType === '1' ? 'warning' : 'success'" class="notice-tag">{{ noticeList[0].noticeType === '1' ? '通知' : '公告' }}</el-tag>
+            <span class="notice-item-title" :class="{ 'is-read': noticeList[0].isRead }">{{ noticeList[0].noticeTitle }}</span>
+          </div>
+        </div>
+        <div class="notice-bar-right">
+          <el-badge v-if="unreadCount > 0" :value="unreadCount" :max="99" class="notice-badge" />
+          <el-button link type="primary" @click="goNoticePage">更多</el-button>
+        </div>
+      </div>
+    </el-card>
+
     <el-row :gutter="20">
       <el-col :sm="24" :lg="12" style="padding-left: 20px">
         <h2>若依后台管理框架</h2>
@@ -1126,18 +1153,103 @@
         </el-card>
       </el-col>
     </el-row>
+
+    <notice-detail-view ref="noticeViewRef" />
   </div>
 </template>
 
 <script setup name="Index">
+import { listNoticeTop, markNoticeRead } from '@/api/system/notice'
+import NoticeDetailView from '@/layout/components/HeaderNotice/DetailView'
+
 const version = ref('3.9.2')
+const noticeList = ref([])
+const unreadCount = ref(0)
+const { proxy } = getCurrentInstance()
+
+function loadNoticeTop() {
+  listNoticeTop().then(res => {
+    const list = Array.isArray(res.data?.list) ? res.data.list
+               : Array.isArray(res.list) ? res.list
+               : (Array.isArray(res.data) ? res.data : [])
+    noticeList.value = list
+    unreadCount.value = res.data?.unreadCount ?? res.unreadCount ?? list.filter(n => !n.isRead).length
+  })
+}
+
+function previewNotice(item) {
+  if (!item.isRead) {
+    markNoticeRead(item.noticeId).catch(() => {})
+    const idx = noticeList.value.indexOf(item)
+    if (idx !== -1) noticeList.value[idx] = { ...item, isRead: true }
+    unreadCount.value = Math.max(0, unreadCount.value - 1)
+  }
+  proxy.$refs["noticeViewRef"]?.open(item.noticeId)
+}
+
+function goNoticePage() {
+  proxy.$router.push('/system/notice')
+}
 
 function goTarget(url) {
   window.open(url, '__blank')
 }
+
+onMounted(() => loadNoticeTop())
 </script>
 
 <style scoped lang="scss">
+.notice-card {
+  margin-bottom: 20px;
+  :deep(.el-card__body) { padding: 0; }
+}
+.notice-bar {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 16px;
+}
+.notice-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.notice-bar-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+.notice-bar-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.notice-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  cursor: pointer;
+  &:hover .notice-item-title { color: var(--el-color-primary); }
+}
+.notice-tag { flex-shrink: 0; }
+.notice-item-title {
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  &.is-read { color: #999; opacity: 0.7; }
+}
+.notice-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.notice-badge { :deep(.el-badge__content) { top: -2px; } }
+
 .home {
   blockquote {
     padding: 10px 20px;

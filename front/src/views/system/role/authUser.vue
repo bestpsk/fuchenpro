@@ -92,6 +92,10 @@
 </template>
 
 <script setup name="AuthUser">
+/**
+ * @description 已分配用户页面 - 查看角色下的用户并管理授权
+ * @description 展示已分配该角色的用户列表，支持取消授权、批量添加用户授权
+ */
 import selectUser from "./selectUser"
 import { allocatedUserList, authUserCancel, authUserCancelAll } from "@/api/system/role"
 

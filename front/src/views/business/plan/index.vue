@@ -295,8 +295,10 @@
               <el-input-number v-model="scope.row.discountPrice" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
             </template>
           </el-table-column>
-          <el-table-column label="总金额" width="90" align="right">
-            <template #default="scope">{{ scope.row.amount }}</template>
+          <el-table-column label="总金额" width="120" align="right">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.amount" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentAmountChange(scope.$index)" style="width: 100%" />
+            </template>
           </el-table-column>
           <el-table-column label="操作" width="60" align="center">
             <template #default="scope">
@@ -325,6 +327,11 @@
 </template>
 
 <script setup name="Plan">
+/**
+ * @description 方案管理页面（企业维度）- 按企业查看/开方案/审核/出货
+ * @description 以企业为维度展示方案列表，提供方案开立（含品项明细/单位切换/金额计算）、
+ * 方案审核/提交/状态切换、出货单创建等功能
+ */
 import { listEnterprise, listPlan, getPlan, addPlan, updatePlan, delPlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
 import { addShipment } from "@/api/business/shipment"
 import { listProduct } from "@/api/wms/product"
@@ -561,23 +568,27 @@ function handleCreateShipment(row) {
       shippingAddress: plan.enterprise?.address || '',
       remainingAmount: plan.remainingAmount,
       remark: undefined,
-      items: (plan.items || []).filter(item => item.remainingQuantity > 0).map(item => ({
-        planItemId: item.itemId,
-        productId: item.productId,
-        productName: item.productName,
-        supplierId: item.supplierId,
-        supplierName: item.supplierName,
-        unitType: item.unitType,
-        packQty: item.packQty,
-        quantity: item.remainingQuantity,
-        maxQuantity: item.remainingQuantity,
-        spec: item.spec,
-        salePrice: item.salePrice,
-        discountPrice: item.salePrice,
-        amount: (parseFloat(item.salePrice) || 0) * item.remainingQuantity,
-        unitLabel: item.unitType === '1' ? '' : '',
-        specLabel: item.spec || ''
-      }))
+      items: (plan.items || []).filter(item => item.remainingQuantity > 0).map(item => {
+        const unitMap = { '1': '箱', '2': '件', '3': '套', '4': '罐', '5': '盒', '6': '袋', '7': '包' }
+        const specMap = { '1': '支', '2': '瓶', '3': '件', '4': '套', '5': '片', '6': '个' }
+        return {
+          planItemId: item.itemId,
+          productId: item.productId,
+          productName: item.productName,
+          supplierId: item.supplierId,
+          supplierName: item.supplierName,
+          unitType: item.unitType,
+          packQty: item.packQty,
+          quantity: item.remainingQuantity,
+          maxQuantity: item.remainingQuantity,
+          spec: item.spec,
+          salePrice: item.salePrice,
+          discountPrice: item.salePrice,
+          amount: (parseFloat(item.salePrice) || 0) * item.remainingQuantity,
+          unitLabel: unitMap[item.product?.unit] || '',
+          specLabel: specMap[item.product?.spec] || ''
+        }
+      })
     }
     shipmentOpen.value = true
   })
@@ -586,6 +597,14 @@ function handleCreateShipment(row) {
 function onShipmentItemChange(index) {
   const item = shipmentForm.value.items[index]
   item.amount = (parseFloat(item.discountPrice) || 0) * (parseInt(item.quantity) || 0)
+}
+
+function onShipmentAmountChange(index) {
+  const item = shipmentForm.value.items[index]
+  const qty = parseInt(item.quantity) || 0
+  if (qty > 0) {
+    item.discountPrice = Math.round((parseFloat(item.amount) / qty) * 100) / 100
+  }
 }
 
 function removeShipmentItem(index) { shipmentForm.value.items.splice(index, 1) }

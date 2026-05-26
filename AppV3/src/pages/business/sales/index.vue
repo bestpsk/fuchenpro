@@ -67,11 +67,14 @@
       <view v-if="customerList.length > 0" class="card-list">
         <view v-for="item in customerList" :key="item.customerId" class="customer-card" @click="goCustomerDetail(item)">
           <view class="card-header">
-            <view class="customer-name">
-              <u-icon :name="item.gender === '1' ? 'woman' : 'man'" :size="18" :color="item.gender === '1' ? '#FF6B9D' : '#3D6DF7'"></u-icon>
-              <text class="name-text">{{ item.customerName }}</text>
-              <text class="gender-text" :class="item.gender === '1' ? 'female' : 'male'">{{ item.gender === '1' ? '女' : '男' }}</text>
-              <text class="age-text" v-if="item.age">{{ item.age }}岁</text>
+            <u-avatar v-if="item.avatar" :src="getAvatarUrl(item.avatar)" size="40" mode="aspectFill" />
+            <u-avatar v-else :text="item.customerName ? item.customerName.charAt(0) : ''" size="40" :bg-color="item.gender === '1' ? '#FF6B9D' : '#3D6DF7'" color="#fff" fontSize="18" />
+            <view class="customer-info-area">
+              <view class="customer-name">
+                <text class="name-text">{{ item.customerName }}</text>
+                <text class="gender-text" :class="item.gender === '1' ? 'female' : 'male'">{{ item.gender === '1' ? '女' : '男' }}</text>
+                <text class="age-text" v-if="item.age">{{ item.age }}岁</text>
+              </view>
             </view>
           </view>
           <view class="card-body">
@@ -114,6 +117,19 @@
 
         <!-- 表单内容 -->
         <scroll-view scroll-y class="form-scroll">
+          <!-- 头像 -->
+          <view class="form-item avatar-form-item">
+            <view class="form-label">头像</view>
+            <view class="avatar-upload-area" @click="chooseCustomerAvatar">
+              <u-avatar v-if="customerAvatarPreview" :src="customerAvatarPreview" size="64" mode="aspectFill" />
+              <u-avatar v-else :text="customerForm.customerName ? customerForm.customerName.charAt(0) : '头'" size="64" :bg-color="customerForm.gender === '1' ? '#FF6B9D' : '#3D6DF7'" color="#fff" fontSize="28" />
+              <view class="avatar-upload-hint">
+                <u-icon name="camera" size="16" color="#86909C"></u-icon>
+                <text>点击上传</text>
+              </view>
+            </view>
+          </view>
+
           <!-- 姓名 -->
           <view class="form-item">
             <view class="form-label">姓名 <text class="required">*</text></view>
@@ -203,6 +219,8 @@
  * 提供客户搜索、新增客户弹窗、开单/操作/档案快捷跳转功能
  */
 import { ref, computed, onMounted, reactive } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import config from '@/config'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
@@ -211,6 +229,12 @@ import { searchCustomer, addCustomer } from '@/api/business/customer'
 const STORAGE_KEYS = {
   enterprise: 'sales_selected_enterprise',
   store: 'sales_selected_store'
+}
+
+function getAvatarUrl(avatar) {
+  if (!avatar || avatar === '') return ''
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar
+  return config.baseUrl + avatar
 }
 
 /** 将当前选中的企业和门店信息保存到本地存储，刷新后可恢复 */
@@ -291,6 +315,7 @@ const storeSearchKeyword = ref('')
 const scrollHeight = ref(600)
 
 const showAddCustomerPopup = ref(false)
+const customerAvatarPreview = ref('')
 /** 新增客户表单数据 */
 const customerForm = reactive({
   customerName: '',
@@ -385,7 +410,7 @@ function onCustomerSearch() {
 
 /** 跳转客户详情（订单页，不带storeId则只查看） */
 function goCustomerDetail(item) {
-  uni.navigateTo({ url: `/pages/business/sales/order?customerId=${item.customerId}&storeName=${currentStoreName.value}&enterpriseName=${currentEnterpriseName.value}` })
+  uni.navigateTo({ url: `/pages/business/customer/detail?id=${item.customerId}` })
 }
 
 /** 跳转客户开单页，携带门店信息 */
@@ -422,6 +447,7 @@ function resetCustomerForm() {
   customerForm.age = ''
   customerForm.tag = ''
   customerForm.remark = ''
+  customerAvatarPreview.value = ''
   formErrors.customerName = false
 }
 
@@ -431,6 +457,39 @@ function validateCustomerForm() {
   formErrors.customerName = !customerForm.customerName.trim()
   if (formErrors.customerName) isValid = false
   return isValid
+}
+
+function chooseCustomerAvatar() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album', 'camera'],
+    success: (res) => {
+      customerAvatarPreview.value = res.tempFilePaths[0]
+    }
+  })
+}
+
+async function uploadCustomerAvatar(customerId, tempFilePath) {
+  const baseUrl = '/prod-api'
+  const token = uni.getStorageSync('App-Token')
+  return new Promise((resolve) => {
+    uni.uploadFile({
+      url: baseUrl + '/business/customer/avatar',
+      filePath: tempFilePath,
+      name: 'avatarfile',
+      formData: { customer_id: customerId },
+      header: { 'Authorization': 'Bearer ' + token },
+      success: (res) => {
+        try {
+          const data = JSON.parse(res.data)
+          if (data.code === 200) resolve(data)
+          else resolve(null)
+        } catch { resolve(null) }
+      },
+      fail: () => resolve(null)
+    })
+  })
 }
 
 /** 提交新增客户，校验通过后组装数据（含可选的性别/年龄/标签/备注）调用接口，成功后刷新列表 */
@@ -453,7 +512,13 @@ async function submitAddCustomer() {
     if (customerForm.tag.trim()) data.tag = customerForm.tag.trim()
     if (customerForm.remark.trim()) data.remark = customerForm.remark.trim()
 
-    await addCustomer(data)
+    const res = await addCustomer(data)
+    const newCustomerId = res?.customerId || res?.data?.customerId || res?.data?.customer_id
+
+    if (newCustomerId && customerAvatarPreview.value) {
+      await uploadCustomerAvatar(newCustomerId, customerAvatarPreview.value)
+    }
+
     uni.showToast({ title: '新增成功', icon: 'success' })
     closeAddCustomerPopup()
     loadCustomerList()
@@ -483,6 +548,10 @@ onMounted(async () => {
   await loadEnterpriseOptions()
   loadSelectionFromStorage()
 })
+
+onShow(() => {
+  if (currentStoreId.value) loadCustomerList()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -505,7 +574,8 @@ page { background-color: #F5F7FA; }
 .customer-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   &:active { transform: scale(0.98); opacity: 0.9; }
 }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.card-header { display: flex; align-items: center; gap: 16rpx; margin-bottom: 16rpx; }
+.customer-info-area { flex: 1; }
 .customer-name { display: flex; align-items: center; gap: 12rpx;
   .name-text { font-size: 30rpx; font-weight: 600; color: #1D2129; }
 }
@@ -591,6 +661,28 @@ page { background-color: #F5F7FA; }
   &:last-child {
     margin-bottom: 0;
   }
+}
+
+.avatar-form-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  position: relative;
+}
+
+.avatar-upload-hint {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  font-size: 22rpx;
+  color: #86909C;
 }
 
 .form-label {

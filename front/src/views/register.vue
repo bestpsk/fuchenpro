@@ -76,17 +76,26 @@
 </template>
 
 <script setup>
+/**
+ * @description 注册页面 - 新用户账号注册
+ * @description 提供账号密码注册、确认密码校验、密码强度规则校验、
+ * 验证码校验、注册成功后跳转登录页等功能
+ */
 import { ElMessageBox } from "element-plus"
 import { getCodeImg, register } from "@/api/login"
 import defaultSettings from '@/settings'
 import { usePasswordRule } from "@/utils/passwordRule"
 
+/** 应用标题（读取环境变量） */
 const title = import.meta.env.VITE_APP_TITLE
+/** 底部版权信息 */
 const footerContent = defaultSettings.footerContent
 const router = useRouter()
 const { proxy } = getCurrentInstance()
+/** 密码强度校验器 */
 const { registerPwdValidator } = usePasswordRule()
 
+/** 注册表单数据（账号/密码/确认密码/验证码/UUID） */
 const registerForm = ref({
   username: "",
   password: "",
@@ -95,6 +104,7 @@ const registerForm = ref({
   uuid: ""
 })
 
+/** 确认密码一致性校验 */
 const equalToPassword = (rule, value, callback) => {
   if (registerForm.value.password !== value) {
     callback(new Error("两次输入的密码不一致"))
@@ -103,6 +113,7 @@ const equalToPassword = (rule, value, callback) => {
   }
 }
 
+/** 表单校验规则 */
 const registerRules = {
   username: [
     { required: true, trigger: "blur", message: "请输入您的账号" },
@@ -115,10 +126,14 @@ const registerRules = {
   code: [{ required: true, trigger: "change", message: "请输入验证码" }]
 }
 
+/** 验证码图片Base64 */
 const codeUrl = ref("")
+/** 注册按钮加载状态 */
 const loading = ref(false)
+/** 是否启用验证码 */
 const captchaEnabled = ref(true)
 
+/** 注册处理：表单校验 → 调用注册接口 → 弹窗提示 → 跳转登录页 */
 function handleRegister() {
   proxy.$refs.registerRef.validate(valid => {
     if (valid) {
@@ -141,6 +156,7 @@ function handleRegister() {
   })
 }
 
+/** 获取验证码图片，更新Base64和UUID */
 function getCode() {
   getCodeImg().then(res => {
     captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled

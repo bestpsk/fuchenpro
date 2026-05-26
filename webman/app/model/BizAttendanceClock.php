@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 考勤打卡记录模型，记录员工每次打卡的时间、类型、位置及照片
+ */
 class BizAttendanceClock extends Model
 {
     protected $table = 'biz_attendance_clock';
@@ -31,6 +34,7 @@ class BizAttendanceClock extends Model
         'longitude' => 'decimal:7',
     ];
 
+    // 关联所属考勤日记录
     public function record()
     {
         return $this->belongsTo(BizAttendanceRecord::class, 'record_id', 'record_id');

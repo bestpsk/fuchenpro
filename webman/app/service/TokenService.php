@@ -8,6 +8,9 @@ use app\common\LoginUser;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+/**
+ * JWT令牌服务层，负责令牌的创建、解析、验证、刷新和销毁，以及在线用户权限缓存刷新
+ */
 class TokenService
 {
     protected $secret;
@@ -18,6 +21,8 @@ class TokenService
         $this->secret = Constants::JWT_SECRET;
         $this->expire = Constants::TOKEN_EXPIRE;
     }
+
+    // 创建JWT令牌，存入Redis并返回
 
     public function createToken(LoginUser $loginUser)
     {
@@ -62,6 +67,8 @@ class TokenService
         }
     }
 
+    // 验证JWT令牌，从Redis检查是否有效
+
     public function verifyToken(LoginUser $loginUser)
     {
         $expireTime = $loginUser->expireTime;
@@ -71,6 +78,8 @@ class TokenService
         }
     }
 
+    // 刷新JWT令牌
+
     public function refreshToken(LoginUser $loginUser)
     {
         $loginUser->loginTime = intval(microtime(true) * 1000);
@@ -79,6 +88,8 @@ class TokenService
         $redis = Redis::connection();
         $redis->setex($userKey, $this->expire * 60, json_encode($loginUser->toArray()));
     }
+
+    // 移除JWT令牌（登出）
 
     public function removeToken($uuid)
     {

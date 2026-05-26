@@ -153,6 +153,10 @@
 </template>
 
 <script setup name="Operlog">
+/**
+ * @description 操作日志页面 - 操作记录查询与详情查看
+ * @description 查询系统操作日志，支持按模块/操作人/状态/日期范围筛选，可查看操作详情
+ */
 import OperlogDetail from './detail'
 import { list, delOperlog, cleanOperlog } from "@/api/monitor/operlog"
 

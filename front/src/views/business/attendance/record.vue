@@ -124,6 +124,11 @@
 </template>
 
 <script setup name="AttendanceRecord">
+/**
+ * @description 考勤记录页面 - 考勤打卡记录查询与详情查看
+ * @description 提供考勤记录列表查询（支持员工名/状态/日期范围筛选）、
+ * 打卡详情查看（含打卡时间线展示）
+ */
 import { listAttendanceRecord, getAttendanceRecord, getClockListByRecordId } from "@/api/business/attendance"
 
 const { proxy } = getCurrentInstance()

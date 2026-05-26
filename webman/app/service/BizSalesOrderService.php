@@ -8,8 +8,12 @@ use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\service\BizCustomerArchiveService;
 
+/**
+ * 销售订单服务层，处理订单的增删改查、审核、自动生成客户套餐和写入客户档案
+ */
 class BizSalesOrderService
 {
+    // 按条件分页查询销售订单列表
     public function selectOrderList($params = [])
     {
         $query = BizSalesOrder::query();
@@ -26,8 +30,11 @@ class BizSalesOrderService
         if (!empty($params['end_date'])) $query->where('create_time', '<=', $params['end_date'] . ' 23:59:59');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
-        return $query->with('items')->orderBy('order_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        $result = $query->with('items')->orderBy('order_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        return $result;
     }
+
+    // 根据ID查询销售订单详情，含明细列表
 
     public function selectOrderById($orderId)
     {
@@ -42,6 +49,8 @@ class BizSalesOrderService
         return 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
+    // 新增销售订单，生成订单编号并创建明细
+
     public function insertOrder($data, $items = [])
     {
         $data['order_no'] = $this->generateOrderNo();
@@ -51,9 +60,20 @@ class BizSalesOrderService
 
         $dealAmount = 0;
         $paidAmount = 0;
+        $paymentMethodCount = [];
 
         $convertedItems = [];
         foreach ($items as $item) {
+            $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
+
+            if ($itemPaymentMethod === 'gift') {
+                $item['price'] = 0;
+                $item['deal_amount'] = 0;
+                $item['paid_amount'] = 0;
+                $item['paidAmount'] = 0;
+                $item['dealPrice'] = 0;
+            }
+
             $quantity = intval($item['count'] ?? $item['quantity'] ?? 1);
             $itemDealAmount = floatval($item['price'] ?? $item['deal_amount'] ?? $item['dealPrice'] ?? 0);
             $itemPaidAmount = floatval($item['paid_amount'] ?? $item['paidAmount'] ?? 0);
@@ -67,6 +87,7 @@ class BizSalesOrderService
                 'paid_amount' => $itemPaidAmount,
                 'unit_price' => $unitPrice,
                 'owed_amount' => $itemOwedAmount,
+                'payment_method' => $itemPaymentMethod,
                 'remark' => $item['remark'] ?? null,
                 'create_time' => date('Y-m-d H:i:s')
             ];
@@ -74,14 +95,20 @@ class BizSalesOrderService
 
             $dealAmount += $itemDealAmount;
             $paidAmount += $itemPaidAmount;
+            $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
         }
 
         $data['deal_amount'] = $dealAmount;
         $data['paid_amount'] = $paidAmount;
         $data['owed_amount'] = $dealAmount - $paidAmount;
 
+        if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
+            arsort($paymentMethodCount);
+            $data['payment_method'] = array_key_first($paymentMethodCount);
+        }
+
         if (!isset($data['order_status'])) {
-            $data['order_status'] = '1';
+            $data['order_status'] = '0';
         }
 
         $order = BizSalesOrder::create($data);
@@ -105,19 +132,37 @@ class BizSalesOrderService
         return $order;
     }
 
+    // 更新销售订单信息
+
     public function updateOrder($data, $items = [])
     {
         $data['update_time'] = date('Y-m-d H:i:s');
+
         if (!empty($items)) {
             $dealAmount = 0;
             $paidAmount = 0;
-            foreach ($items as $item) {
-                $dealAmount += $item['deal_amount'] ?? 0;
-                $paidAmount += $item['paid_amount'] ?? 0;
+            $paymentMethodCount = [];
+            foreach ($items as &$item) {
+                $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
+                if ($itemPaymentMethod === 'gift') {
+                    $item['deal_amount'] = 0;
+                    $item['paid_amount'] = 0;
+                    $item['owed_amount'] = 0;
+                    $item['unit_price'] = 0;
+                }
+                $item['payment_method'] = $itemPaymentMethod;
+                $dealAmount += floatval($item['deal_amount'] ?? 0);
+                $paidAmount += floatval($item['paid_amount'] ?? 0);
+                $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
             }
+            unset($item);
             $data['deal_amount'] = $dealAmount;
             $data['paid_amount'] = $paidAmount;
             $data['owed_amount'] = $dealAmount - $paidAmount;
+            if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
+                arsort($paymentMethodCount);
+                $data['payment_method'] = array_key_first($paymentMethodCount);
+            }
         }
 
         $result = BizSalesOrder::where('order_id', $data['order_id'])->update($data);
@@ -134,27 +179,49 @@ class BizSalesOrderService
         return $result;
     }
 
+    // 批量删除销售订单
+
     public function deleteOrderByIds($orderIds)
     {
         BizOrderItem::whereIn('order_id', $orderIds)->delete();
         return BizSalesOrder::whereIn('order_id', $orderIds)->delete();
     }
 
+    // 企业审核订单
+
     public function enterpriseAudit($orderId, $auditBy)
     {
         return BizSalesOrder::where('order_id', $orderId)->update([
             'enterprise_audit_status' => '1',
             'enterprise_audit_by' => $auditBy,
-            'enterprise_audit_time' => date('Y-m-d H:i:s')
+            'enterprise_audit_time' => date('Y-m-d H:i:s'),
+            'order_status' => '1'
         ]);
     }
 
+    // 财务审核订单
+
     public function financeAudit($orderId, $auditBy)
     {
+        $order = BizSalesOrder::find($orderId);
+        if (!$order) return false;
+        if ($order->enterprise_audit_status !== '1') return false;
         return BizSalesOrder::where('order_id', $orderId)->update([
             'finance_audit_status' => '1',
             'finance_audit_by' => $auditBy,
-            'finance_audit_time' => date('Y-m-d H:i:s')
+            'finance_audit_time' => date('Y-m-d H:i:s'),
+            'order_status' => '2'
+        ]);
+    }
+
+    public function cancelOrder($orderId)
+    {
+        $order = BizSalesOrder::find($orderId);
+        if (!$order) return false;
+        if ($order->order_status !== '0') return false;
+        return BizSalesOrder::where('order_id', $orderId)->update([
+            'order_status' => '4',
+            'update_time' => date('Y-m-d H:i:s')
         ]);
     }
 
@@ -178,7 +245,9 @@ class BizSalesOrderService
             'order_id' => $order->order_id,
             'order_no' => $order->order_no,
             'enterprise_id' => $order->enterprise_id,
+            'enterprise_name' => $order->enterprise_name ?? '',
             'store_id' => $order->store_id,
+            'store_name' => $order->store_name ?? '',
             'package_name' => $packageName,
             'total_amount' => $order->deal_amount,
             'paid_amount' => $paidAmount,
@@ -199,6 +268,7 @@ class BizSalesOrderService
                 'package_id' => $package->package_id,
                 'product_name' => $item['product_name'],
                 'unit_price' => $unitPrice,
+                'plan_price' => floatval($item['plan_price'] ?? $dealPrice),
                 'deal_price' => $dealPrice,
                 'paid_amount' => $itemPaidAmount,
                 'owed_amount' => $itemOwedAmount,

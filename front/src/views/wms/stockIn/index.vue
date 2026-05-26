@@ -251,6 +251,10 @@
 </template>
 
 <script setup name="WmsStockIn">
+/**
+ * @description 入库管理页面 - 入库单CRUD与确认/取消确认
+ * @description 提供入库单增删改查、确认入库（计入库存）、取消确认入库（扣减库存）等功能
+ */
 import { listStockIn, getStockIn, delStockIn, addStockIn, updateStockIn, confirmStockIn, confirmStockInById, cancelConfirmStockIn } from "@/api/wms/stockIn"
 import { searchSupplier } from "@/api/wms/supplier"
 import { searchProduct, getProduct } from "@/api/wms/product"

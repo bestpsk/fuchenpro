@@ -10,6 +10,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 面包屑组件 - 根据路由自动生成导航路径
+ * @description 根据当前路由自动生成面包屑导航，支持点击跳转和首页图标
+ */
 import usePermissionStore from '@/store/modules/permission'
 
 const route = useRoute()

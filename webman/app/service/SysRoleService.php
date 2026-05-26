@@ -8,8 +8,12 @@ use app\model\SysRoleDept;
 use app\model\SysUserRole;
 use app\common\Constants;
 
+/**
+ * 角色服务层，处理角色的增删改查、数据权限设置和用户授权管理
+ */
 class SysRoleService
 {
+    // 按条件分页查询角色列表
     public function selectRoleList($params = [])
     {
         $query = SysRole::where('del_flag', '0');
@@ -40,6 +44,8 @@ class SysRoleService
         return $query->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询角色详情
+
     public function selectRoleById($roleId)
     {
         return SysRole::where('del_flag', '0')->find($roleId);
@@ -49,6 +55,8 @@ class SysRoleService
     {
         return SysRole::where('del_flag', '0')->where('status', '0')->orderBy('role_sort')->get();
     }
+
+    // 新增角色，同时关联菜单和部门
 
     public function insertRole($data)
     {
@@ -62,6 +70,8 @@ class SysRoleService
 
         return $role;
     }
+
+    // 更新角色信息，同时更新菜单和部门关联
 
     public function updateRole($data)
     {
@@ -79,6 +89,8 @@ class SysRoleService
 
         return $result;
     }
+
+    // 批量删除角色
 
     public function deleteRoleByIds($roleIds)
     {

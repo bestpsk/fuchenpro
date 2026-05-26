@@ -7,8 +7,14 @@ use app\service\SysPostService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 岗位管理控制器
+ *
+ * 负责岗位的增删改查功能
+ */
 class SysPostController
 {
+    // 分页查询岗位列表
     public function list(Request $request)
     {
         $service = new SysPostService();
@@ -17,6 +23,7 @@ class SysPostController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取岗位详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +34,7 @@ class SysPostController
         return AjaxResult::success($post);
     }
 
+    // 新增岗位
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -36,6 +44,7 @@ class SysPostController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改岗位信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -45,6 +54,7 @@ class SysPostController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除岗位
     public function remove(Request $request)
     {
         $postIds = explode(',', $request->input('postIds', ''));

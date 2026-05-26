@@ -46,6 +46,10 @@
 </template>
 
 <script setup name="AuthRole">
+/**
+ * @description 角色分配页面 - 为用户分配/取消角色
+ * @description 展示用户当前角色列表，支持勾选角色并保存授权关系
+ */
 import { getAuthRole, updateAuthRole } from "@/api/system/user"
 
 const route = useRoute()

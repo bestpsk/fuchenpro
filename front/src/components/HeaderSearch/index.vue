@@ -77,6 +77,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 头部搜索 - 全局菜单搜索
+ * @description 基于Fuse.js的模糊搜索，支持搜索系统菜单并快速跳转
+ */
 import Fuse from 'fuse.js'
 import { getNormalPath } from '@/utils/ruoyi'
 import { isHttp } from '@/utils/validate'

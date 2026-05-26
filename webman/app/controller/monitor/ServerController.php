@@ -5,15 +5,24 @@ namespace app\controller\monitor;
 use support\Request;
 use app\common\AjaxResult;
 
+/**
+ * 服务器状态监控控制器
+ *
+ * 获取服务器运行状态信息，包括CPU使用率、内存使用率、
+ * Webman运行信息（版本、PHP版本、运行时长、内存占用）、
+ * 操作系统信息和磁盘文件系统信息，兼容Linux和Windows系统
+ */
 class ServerController
 {
     private static $startTime = null;
 
+    // 设置服务启动时间（由框架启动时调用）
     public static function setStartTime($time)
     {
         self::$startTime = $time;
     }
 
+    // 获取服务器综合状态信息（CPU、内存、Webman、系统、磁盘）
     public function getInfo(Request $request)
     {
         return AjaxResult::success('', [
@@ -27,6 +36,7 @@ class ServerController
         ]);
     }
 
+    // 获取CPU使用率信息（核心数、用户态占用、内核态占用、空闲率）
     private function getCpuInfo()
     {
         $cpuNum = function_exists('swoole_cpu_num') ? swoole_cpu_num() : 1;
@@ -69,6 +79,7 @@ class ServerController
         ];
     }
 
+    // 读取Linux /proc/stat获取CPU时间片统计
     private function getCpuStat()
     {
         $stat = @file_get_contents('/proc/stat');
@@ -94,6 +105,7 @@ class ServerController
         ];
     }
 
+    // 通过WMIC获取Windows系统CPU使用率
     private function getWindowsCpuUsage()
     {
         $output = [];
@@ -106,6 +118,7 @@ class ServerController
         return 0;
     }
 
+    // 获取物理内存使用信息（总量、已用、空闲、使用率）
     private function getMemInfo()
     {
         $memInfo = [];
@@ -166,6 +179,7 @@ class ServerController
         return $memInfo;
     }
 
+    // 获取Webman运行信息（版本、PHP版本、启动时间、运行时长、内存占用）
     private function getWebmanInfo()
     {
         $composerPath = base_path() . '/composer.json';
@@ -200,6 +214,7 @@ class ServerController
         ];
     }
 
+    // 将秒数格式化为"X天X小时X分钟X秒"的运行时长
     private function formatRunTime($seconds)
     {
         $days = floor($seconds / 86400);
@@ -222,6 +237,7 @@ class ServerController
         return implode('', $result);
     }
 
+    // 获取操作系统基本信息（主机名、OS、架构、IP、工作目录）
     private function getSysInfo()
     {
         return [
@@ -233,6 +249,7 @@ class ServerController
         ];
     }
 
+    // 获取服务器非回环IP地址
     private function getServerIp()
     {
         $ip = gethostbyname(gethostname());
@@ -261,6 +278,7 @@ class ServerController
         return $ip ?: '127.0.0.1';
     }
 
+    // 获取磁盘文件系统信息（挂载点、类型、容量、使用率）
     private function getSysFiles()
     {
         $sysFiles = [];
@@ -331,6 +349,7 @@ class ServerController
         return $sysFiles;
     }
 
+    // 将字节数格式化为人类可读的文件大小（B/KB/MB/GB/TB）
     private function formatFileSize($size)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];

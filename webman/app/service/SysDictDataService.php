@@ -4,8 +4,12 @@ namespace app\service;
 
 use app\model\SysDictData;
 
+/**
+ * 字典数据服务层，处理字典数据的增删改查和缓存管理
+ */
 class SysDictDataService
 {
+    // 按条件分页查询字典数据列表
     public function selectDictDataList($params = [])
     {
         $query = SysDictData::query();
@@ -25,10 +29,14 @@ class SysDictDataService
         return $query->orderBy('dict_sort', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询字典数据详情
+
     public function selectDictDataById($dictCode)
     {
         return SysDictData::find($dictCode);
     }
+
+    // 新增字典数据
 
     public function insertDictData($data)
     {
@@ -38,6 +46,8 @@ class SysDictDataService
         return $result;
     }
 
+    // 更新字典数据信息
+
     public function updateDictData($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
@@ -45,6 +55,8 @@ class SysDictDataService
         SysDictTypeService::resetDictCache();
         return $result;
     }
+
+    // 批量删除字典数据
 
     public function deleteDictDataByIds($dictCodes)
     {

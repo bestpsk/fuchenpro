@@ -18,8 +18,15 @@ use app\common\LoginUser;
 use app\common\Helpers;
 use app\model\SysUser;
 
+/**
+ * 系统登录认证控制器
+ *
+ * 负责用户登录验证（含验证码校验、IP黑名单检查、密码错误锁定）、
+ * 令牌生成与销毁、获取当前登录用户信息及路由菜单、锁屏解锁等功能
+ */
 class SysLoginController
 {
+    // 用户登录：校验验证码、IP黑名单、用户状态和密码，生成JWT令牌并记录登录日志
     public function login(Request $request)
     {
         $username = $request->post('username', '');
@@ -92,6 +99,7 @@ class SysLoginController
         return AjaxResult::success('操作成功', ['token' => $token]);
     }
 
+    // 用户登出：从Redis中删除登录令牌
     public function logout(Request $request)
     {
         $tokenService = new TokenService();
@@ -102,6 +110,7 @@ class SysLoginController
         return AjaxResult::success('退出成功');
     }
 
+    // 获取当前登录用户信息，包括用户数据、角色列表、权限列表和密码策略状态
     public function getInfo(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -143,6 +152,14 @@ class SysLoginController
         unset($userData['password']);
         $userData = Helpers::userToCamelCase($userData);
 
+        // 添加部门名称
+        if (!empty($userData['deptId'])) {
+            $dept = \app\model\SysDept::find($userData['deptId']);
+            $userData['deptName'] = $dept ? $dept->dept_name : '';
+        } else {
+            $userData['deptName'] = '';
+        }
+
         return AjaxResult::success('', [
             'user' => $userData,
             'roles' => array_values($roles),
@@ -153,6 +170,7 @@ class SysLoginController
         ]);
     }
 
+    // 获取当前登录用户的路由菜单树，用于前端动态路由渲染
     public function getRouters(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -167,6 +185,7 @@ class SysLoginController
         return json(['code' => 200, 'msg' => '', 'data' => $routers]);
     }
 
+    // 锁屏解锁：验证当前登录用户密码是否正确
     public function unlockscreen(Request $request)
     {
         $password = $request->post('password', '');
@@ -183,6 +202,7 @@ class SysLoginController
         return AjaxResult::success();
     }
 
+    // 记录登录日志（用户名、IP地址、浏览器、操作系统、登录结果）
     private function recordLogininfor($username, $success, $msg)
     {
         try {

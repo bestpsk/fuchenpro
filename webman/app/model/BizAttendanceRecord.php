@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 考勤日记录模型，存储员工每日考勤汇总（上下班时间、状态、打卡次数等）
+ */
 class BizAttendanceRecord extends Model
 {
     protected $table = 'biz_attendance_record';

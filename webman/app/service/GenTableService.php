@@ -10,6 +10,9 @@ use app\model\GenTableColumn;
 use support\Db;
 use ZipArchive;
 
+/**
+ * 代码生成服务层，处理数据库表导入、代码生成配置、模板渲染和代码下载
+ */
 class GenTableService
 {
     public function selectGenTableList($params = [])
@@ -193,6 +196,8 @@ class GenTableService
         return true;
     }
 
+    // 预览生成的代码
+
     public function previewCode($tableId)
     {
         $table = GenTable::with('columns')->find($tableId);
@@ -215,6 +220,8 @@ class GenTableService
         }
         return $result;
     }
+
+    // 生成代码并下载
 
     public function generateCode($tableName)
     {

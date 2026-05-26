@@ -5,6 +5,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 全屏切换组件 - 浏览器全屏模式切换
+ * @description 点击图标切换浏览器全屏/窗口模式
+ */
 import { useFullscreen } from '@vueuse/core'
 
 const { isFullscreen, toggle } = useFullscreen()

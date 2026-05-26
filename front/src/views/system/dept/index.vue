@@ -154,6 +154,11 @@
 </template>
 
 <script setup name="Dept">
+/**
+ * @description 部门管理页面 - 部门树形结构增删改查与排序
+ * @description 提供部门增删改查、上级部门选择（排除自身及子部门）、
+ * 批量保存排序等功能
+ */
 import { listDept, getDept, delDept, addDept, updateDept, updateDeptSort, listDeptExcludeChild } from "@/api/system/dept"
 
 const { proxy } = getCurrentInstance()

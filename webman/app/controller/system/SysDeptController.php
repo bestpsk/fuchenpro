@@ -6,8 +6,15 @@ use support\Request;
 use app\service\SysDeptService;
 use app\common\AjaxResult;
 
+/**
+ * 部门管理控制器
+ *
+ * 负责部门的增删改查、部门树下拉选择、排序更新等功能，
+ * 存在下级部门或关联用户时不允许删除
+ */
 class SysDeptController
 {
+    // 查询部门列表（树形结构）
     public function list(Request $request)
     {
         $service = new SysDeptService();
@@ -16,6 +23,7 @@ class SysDeptController
         return AjaxResult::success($depts);
     }
 
+    // 查询排除指定部门及其子部门的部门列表（用于修改上级部门时排除自身）
     public function excludeChild(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -24,6 +32,7 @@ class SysDeptController
         return AjaxResult::success($service->excludeChildDeptList($deptId));
     }
 
+    // 根据ID获取部门详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -36,6 +45,7 @@ class SysDeptController
         return AjaxResult::success($dept);
     }
 
+    // 新增部门
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -45,6 +55,7 @@ class SysDeptController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改部门信息
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -54,6 +65,7 @@ class SysDeptController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量更新部门排序
     public function updateSort(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -68,10 +80,10 @@ class SysDeptController
         return AjaxResult::success();
     }
 
+    // 删除部门，存在下级部门或关联用户时不允许删除
     public function remove(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $deptId = intval(end($parts));
+        $deptId = intval($request->input('deptId', 0));
         $service = new SysDeptService();
         $result = $service->deleteDeptById($deptId);
         if (!$result) {
@@ -80,6 +92,7 @@ class SysDeptController
         return AjaxResult::success();
     }
 
+    // 获取部门树下拉选择数据
     public function treeselect(Request $request)
     {
         $service = new SysDeptService();

@@ -59,6 +59,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 头像上传组件 - 用户头像裁剪与上传
+ * @description 支持选择图片后裁剪预览，上传至服务器并更新用户头像
+ */
 import "vue-cropper/dist/index.css"
 import { VueCropper } from "vue-cropper"
 import { uploadAvatar } from "@/api/system/user"

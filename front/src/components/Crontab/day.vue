@@ -52,6 +52,10 @@
     </el-form>
 </template>
 <script setup>
+/**
+ * @description Cron日配置 - 日级别的Cron表达式配置
+ * @description 提供日级别的Cron表达式配置：指定值/范围值/循环值/不指定/月末等模式
+ */
 const emit = defineEmits(['update'])
 const props = defineProps({
     cron: {

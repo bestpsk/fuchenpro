@@ -112,6 +112,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 操作日志详情组件 - 展示操作请求与响应信息
+ * @description 展示操作日志的请求参数、响应结果等详细信息
+ */
 const props = defineProps({
   visible: { type: Boolean, default: false },
   row: { type: Object, default: () => ({}) }

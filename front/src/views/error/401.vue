@@ -26,6 +26,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 401无权限页面 - 无访问权限提示
+ * @description 当用户访问无权限的页面时展示401提示，支持返回首页
+ */
 import errImage from "@/assets/401_images/401.gif"
 
 let { proxy } = getCurrentInstance()

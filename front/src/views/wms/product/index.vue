@@ -206,6 +206,10 @@
 </template>
 
 <script setup name="WmsProduct">
+/**
+ * @description 产品管理页面 - 产品CRUD与搜索
+ * @description 提供产品增删改查、关键词搜索等功能
+ */
 import { listProduct, getProduct, delProduct, addProduct, updateProduct } from "@/api/wms/product"
 import { searchSupplier } from "@/api/wms/supplier"
 import { generateProductCode } from "@/utils/pinyin"

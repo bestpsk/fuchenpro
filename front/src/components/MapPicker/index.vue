@@ -29,6 +29,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 地图选点组件 - 高德地图位置选择器
+ * @description 基于高德地图实现位置选择，支持搜索地址、点击地图获取经纬度和地址
+ */
 import { ref, reactive } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
 

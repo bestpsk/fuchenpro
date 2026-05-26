@@ -15,6 +15,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 折叠按钮 - 侧边栏展开/折叠切换
+ * @description 点击图标切换侧边栏的展开和折叠状态
+ */
 defineProps({
   isActive: {
     type: Boolean,

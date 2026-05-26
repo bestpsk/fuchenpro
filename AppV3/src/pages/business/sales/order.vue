@@ -53,12 +53,22 @@
                 <input class="form-input" type="text" v-model="item.productName" placeholder="品项名称" />
               </view>
               <view class="form-row">
+                <text class="form-label">付款方式</text>
+                <view class="item-payment-methods">
+                  <view v-for="method in orderPaymentMethods" :key="method.value"
+                    class="method-tag" :class="{ active: item.paymentMethod === method.value }"
+                    @click="selectItemPaymentMethod(index, method.value)">
+                    <text>{{ method.label }}</text>
+                  </view>
+                </view>
+              </view>
+              <view class="form-row">
                 <text class="form-label">次数</text>
                 <input class="form-input" type="number" v-model="item.quantity" placeholder="1" @input="calcItemAuto(index)" />
               </view>
               <view class="form-row">
                 <text class="form-label">成交金额</text>
-                <input class="form-input" type="digit" v-model="item.dealAmount" placeholder="0.00" @input="calcItemAuto(index)" />
+                <input class="form-input" type="digit" v-model="item.dealAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="item.paymentMethod === 'gift'" />
               </view>
               <view class="form-row readonly">
                 <text class="form-label">单次价</text>
@@ -66,7 +76,7 @@
               </view>
               <view class="form-row">
                 <text class="form-label">实付金额</text>
-                <input class="form-input" type="digit" v-model="item.paidAmount" placeholder="0.00" @input="calcItemAuto(index)" />
+                <input class="form-input" type="digit" v-model="item.paidAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="item.paymentMethod === 'gift'" />
               </view>
               <view class="form-row readonly">
                 <text class="form-label">欠款金额</text>
@@ -102,9 +112,9 @@
         <view class="dealer-section">
           <view class="section-title-row">
             <u-icon name="account" size="16" color="#3D6DF7"></u-icon>
-            <text class="section-label">门店成交人</text>
+            <text class="section-label">门店管理</text>
           </view>
-          <input class="dealer-input" type="text" v-model="orderStoreDealer" placeholder="请输入门店成交人（选填）" />
+          <input class="dealer-input" type="text" v-model="orderStoreDealer" placeholder="请输入门店管理（选填）" />
         </view>
 
         <view class="remark-section">
@@ -154,6 +164,10 @@
               <view class="rc-amount-group" v-if="Number(item.owedAmount || 0) > 0">
                 <text class="rc-amt-label">欠款</text>
                 <text class="rc-amt-owed">¥{{ Number(item.owedAmount || 0).toFixed(2) }}</text>
+              </view>
+              <view class="rc-amount-group" v-if="item.paymentMethod">
+                <text class="rc-amt-label">付款</text>
+                <text class="rc-amt-method">{{ getPaymentMethodName(item.paymentMethod) }}</text>
               </view>
             </view>
 
@@ -331,7 +345,7 @@ function calcItemAuto(index) {
 
 /** 添加一个空白品项行 */
 function addOrderItemRow() {
-  orderItems.value.push({ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 })
+  orderItems.value.push({ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash' })
 }
 
 /** 删除指定品项行 */
@@ -347,6 +361,21 @@ const paymentMethods = ref([
   { label: '银行卡', value: 'bank' }
 ])
 const selectedPaymentMethod = ref('cash')
+
+const orderPaymentMethods = ref([
+  { label: '现金', value: 'cash' },
+  { label: '划卡', value: 'card' },
+  { label: '置换', value: 'exchange' },
+  { label: '赠送', value: 'gift' }
+])
+
+function selectItemPaymentMethod(index, value) {
+  orderItems.value[index].paymentMethod = value
+  if (value === 'gift') {
+    orderItems.value[index].dealAmount = 0
+    orderItems.value[index].paidAmount = 0
+  }
+}
 
 const showRepayPopup = ref(false)
 const selectedPackage = ref(null)
@@ -490,7 +519,7 @@ async function submitOrder() {
       storeName: storeName.value,
       enterpriseId: customerInfo.value?.enterpriseId || '',
       enterpriseName: enterpriseName.value,
-      orderStatus: '1',
+      orderStatus: '0',
       packageName: orderPackageName.value,
       storeDealer: orderStoreDealer.value,
       remark: orderRemark.value,
@@ -523,8 +552,13 @@ async function submitOrder() {
 
 /** 订单状态码映射为中文名称 */
 function getOrderStatusName(status) {
-  const map = { '0': '未成交', '1': '已成交', '2': '已用完', '3': '还款', '4': '已取消' }
+  const map = { '0': '待确认', '1': '企业已审', '2': '财务已审', '4': '已取消' }
   return map[status] || '未知'
+}
+
+function getPaymentMethodName(method) {
+  const map = { cash: '现金', card: '划卡', exchange: '置换', gift: '赠送' }
+  return map[method] || method || '-'
 }
 
 /** 格式化时间为YYYY-MM-DD HH:mm */
@@ -596,6 +630,8 @@ page { background-color: #F5F6F8; }
 
 .dealer-section { background: #fff; border-radius: 10rpx; padding: 16rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
 .dealer-input { width: 100%; height: 60rpx; background: #F7F8FA; border-radius: 8rpx; padding: 0 18rpx; font-size: 27rpx; color: #1D2129; box-sizing: border-box; }
+.payment-section { background: #fff; border-radius: 10rpx; padding: 16rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
+.item-payment-methods { display: flex; flex-wrap: wrap; gap: 10rpx; flex: 1; }
 .remark-section { background: #fff; border-radius: 10rpx; padding: 16rpx 20rpx; margin-bottom: 14rpx; border: 1rpx solid #EDEEF2; }
 .submit-bar { margin-top: 16rpx; padding-bottom: env(safe-area-inset-bottom); }
 
@@ -613,10 +649,9 @@ page { background-color: #F5F6F8; }
 .rc-no { font-size: 26rpx; font-weight: 600; color: #1D2129; letter-spacing: 0.5rpx; }
 .rc-status { font-size: 20rpx; padding: 4rpx 14rpx; border-radius: 20rpx; font-weight: 500;
   &.st-0 { background: #FFF7E8; color: #FF7D00; }
-  &.st-1 { background: #E8FFEA; color: #00B42A; }
-  &.st-2 { background: #F2F3F5; color: #86909C; }
-  &.st-3 { background: #EEF2FF; color: #3D6DF7; }
-  &.st-4 { background: #F2F3F5; color: #C9CDD4; }
+  &.st-1 { background: #E8F0FE; color: #3D6DF7; }
+  &.st-2 { background: #E8FFEA; color: #00B42A; }
+  &.st-4 { background: #F2F3F5; color: #86909C; }
 }
 
 .rc-items { display: flex; flex-direction: column; gap: 10rpx; margin-bottom: 4rpx; }
@@ -633,6 +668,7 @@ page { background-color: #F5F6F8; }
 .rc-amt-deal { font-size: 28rpx; font-weight: 700; color: #FF6B35; }
 .rc-amt-paid { font-size: 28rpx; font-weight: 700; color: #00B42A; }
 .rc-amt-owed { font-size: 26rpx; font-weight: 700; color: #F53F3F; }
+.rc-amt-method { font-size: 24rpx; font-weight: 500; color: #3D6DF7; background: #E8F0FE; padding: 2rpx 12rpx; border-radius: 6rpx; }
 
 .rc-footer { display: flex; justify-content: space-between; align-items: center; }
 .rc-meta-row { display: flex; align-items: center; gap: 8rpx; }

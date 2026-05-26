@@ -53,6 +53,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 通知详情组件 - 查看通知公告完整内容
+ * @description 弹窗展示通知公告的完整内容，支持标记已读
+ */
 import { getNotice } from '@/api/system/notice'
 
 const visible = ref(false)

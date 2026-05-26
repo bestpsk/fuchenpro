@@ -7,8 +7,14 @@ use app\service\HrUserSalaryService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 薪资管理控制器
+ *
+ * 负责用户薪资的增删改查，支持按用户查询薪资列表和薪资类型列表查询
+ */
 class HrUserSalaryController
 {
+    // 查询薪资类型列表
     public function typeList(Request $request)
     {
         $service = new HrUserSalaryService();
@@ -17,6 +23,7 @@ class HrUserSalaryController
         return AjaxResult::success($list);
     }
 
+    // 根据用户ID查询其薪资记录列表
     public function listByUser(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -26,6 +33,7 @@ class HrUserSalaryController
         return AjaxResult::success($list);
     }
 
+    // 根据ID获取薪资记录详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -35,6 +43,7 @@ class HrUserSalaryController
         return AjaxResult::success($salary);
     }
 
+    // 新增用户薪资记录
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -44,6 +53,7 @@ class HrUserSalaryController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改用户薪资记录
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -53,6 +63,7 @@ class HrUserSalaryController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除用户薪资记录
     public function remove(Request $request)
     {
         $parts = explode('/', $request->path());

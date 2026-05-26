@@ -8,8 +8,12 @@ use app\model\SysUserPost;
 use app\common\LoginUser;
 use app\common\Constants;
 
+/**
+ * 系统用户服务层，处理用户的增删改查、密码管理、唯一性校验和导入导出
+ */
 class SysUserService
 {
+    // 按条件分页查询用户列表
     public function selectUserList($params = [])
     {
         $query = SysUser::with(['dept', 'roles']);
@@ -58,6 +62,8 @@ class SysUserService
         return $query->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询用户详情
+
     public function selectUserById($userId)
     {
         return SysUser::with(['dept', 'roles', 'posts'])->where('del_flag', '0')->find($userId);
@@ -67,6 +73,8 @@ class SysUserService
     {
         return SysUser::with(['dept', 'roles'])->where('user_name', $userName)->where('del_flag', '0')->first();
     }
+
+    // 新增用户，加密密码并关联角色和岗位
 
     public function insertUser($data)
     {
@@ -90,6 +98,8 @@ class SysUserService
 
         return $user;
     }
+
+    // 更新用户信息，同时更新角色和岗位关联
 
     public function updateUser($data)
     {
@@ -116,6 +126,8 @@ class SysUserService
         return SysUser::where('user_id', $userId)->update($data);
     }
 
+    // 批量删除用户
+
     public function deleteUserByIds($userIds)
     {
         if (in_array(1, $userIds)) {
@@ -126,6 +138,8 @@ class SysUserService
         return SysUser::whereIn('user_id', $userIds)->update(['del_flag' => '2']);
     }
 
+    // 重置用户密码
+
     public function resetPwd($userId, $password)
     {
         return SysUser::where('user_id', $userId)->update([
@@ -134,6 +148,8 @@ class SysUserService
             'update_time' => date('Y-m-d H:i:s'),
         ]);
     }
+
+    // 修改用户状态（启用/停用）
 
     public function changeStatus($userId, $status)
     {
@@ -227,7 +243,7 @@ class SysUserService
                     $initPwd = SysConfigService::selectConfigByKey('sys.user.initPassword');
                     $user['password'] = PasswordService::encrypt($initPwd ?: '123456');
                     $user['create_by'] = $operName;
-                    $user['real_name'] = $user['real_name'] ?? $userName;
+                    $user['nick_name'] = $user['nick_name'] ?? $userName;
                     $user['status'] = $user['status'] ?? '0';
                     $user['del_flag'] = '0';
                     $this->insertUser($user);

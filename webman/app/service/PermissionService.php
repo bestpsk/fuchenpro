@@ -5,6 +5,9 @@ namespace app\service;
 use app\common\Constants;
 use app\common\LoginUser;
 
+/**
+ * 权限服务层，提供用户权限和角色的判断方法
+ */
 class PermissionService
 {
     public static function hasPermi(LoginUser $loginUser, $permission)

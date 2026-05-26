@@ -47,6 +47,7 @@ import { ref, onMounted } from 'vue'
 import { getCodeImg } from '@/api/login'
 import { getToken } from '@/utils/auth'
 import { useUserStore } from '@/store/modules/user'
+import { useMenuStore } from '@/store/modules/menu'
 
 const userStore = useUserStore()
 const globalConfig = ref(getApp().globalData.config)
@@ -120,6 +121,8 @@ async function pwdLogin() {
     await userStore.loginAction(loginForm.value)
     uni.hideLoading()
     await userStore.getInfoAction()
+    const menuStore = useMenuStore()
+    await menuStore.loadMenus()
     uni.reLaunch({ url: '/pages/index' })
   } catch {
     uni.hideLoading()

@@ -105,6 +105,10 @@
 </template>
 
 <script setup name="WmsSupplier">
+/**
+ * @description 供应商管理页面 - 供应商CRUD与搜索
+ * @description 提供供应商增删改查、关键词搜索等功能
+ */
 import { listSupplier, getSupplier, delSupplier, addSupplier, updateSupplier } from "@/api/wms/supplier"
 
 const { proxy } = getCurrentInstance()

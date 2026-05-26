@@ -1,7 +1,7 @@
 <template>
   <view class="work-container">
-    <view class="swiper-section">
-      <swiper class="swiper" :indicator-dots="true" :autoplay="true" :interval="3000" :duration="500" circular>
+    <view class="swiper-section" v-if="bannerList.length > 0">
+      <swiper class="swiper" :indicator-dots="bannerList.length > 1" :autoplay="true" :interval="3000" :duration="500" circular>
         <swiper-item v-for="(item, index) in bannerList" :key="index">
           <image :src="item.image" mode="aspectFill" class="banner-img" @click="clickBannerItem(item)" />
         </swiper-item>
@@ -30,56 +30,30 @@
         <text class="card-title">常用功能</text>
       </view>
       <view class="quick-grid">
-        <view class="quick-item" @click="goToPage('/pages/mine/info/index')">
-          <view class="quick-icon"><u-icon name="account-fill" size="18" color="#3D6DF7" /></view>
-          <text class="quick-text">个人信息</text>
-        </view>
-        <view class="quick-item" @click="goToPage('/pages/mine/pwd/index')">
-          <view class="quick-icon"><u-icon name="lock-fill" size="18" color="#3D6DF7" /></view>
-          <text class="quick-text">修改密码</text>
-        </view>
-        <view class="quick-item" @click="goToPage('/pages/mine/setting/index')">
-          <view class="quick-icon"><u-icon name="setting" size="18" color="#3D6DF7" /></view>
-          <text class="quick-text">应用设置</text>
-        </view>
-        <view class="quick-item" @click="handleGridClick({ title: '日志查询', path: '' })">
-          <view class="quick-icon"><u-icon name="file-text" size="18" color="#3D6DF7" /></view>
-          <text class="quick-text">日志查询</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="grid-card">
-      <view class="card-header">
-        <text class="card-title">业务管理</text>
-      </view>
-      <view class="divider"></view>
-      <view v-if="filteredBusinessList.length > 0" class="grid-body">
-        <view class="grid-row">
-          <view v-for="(item, index) in filteredBusinessList" :key="'biz-' + index" class="grid-item" @click="handleGridClick(item)">
-            <view class="icon-wrapper biz-icon">
-              <u-icon :name="item.icon" size="22" color="#fff" />
-            </view>
-            <text class="grid-text">{{ item.title }}</text>
+        <view
+          v-for="(item, index) in quickDisplayList"
+          :key="'q-' + index"
+          class="quick-item"
+          @click="handleGridClick(item)"
+        >
+          <view class="quick-icon" :style="{ backgroundColor: item.bgColor || '#E8F0FE' }">
+            <u-icon :name="item.icon" size="18" :color="item.iconColor || '#3D6DF7'" />
           </view>
+          <text class="quick-text">{{ item.title }}</text>
         </view>
-      </view>
-      <view v-else class="empty-state">
-        <u-icon name="search" size="40" color="#C9CDD4" />
-        <text class="empty-text">未找到相关功能</text>
       </view>
     </view>
 
-    <view class="grid-card">
+    <view v-for="group in menuGroups" :key="group.groupKey" class="grid-card">
       <view class="card-header">
-        <text class="card-title">系统管理</text>
+        <text class="card-title">{{ group.groupName }}</text>
       </view>
       <view class="divider"></view>
-      <view v-if="filteredGridList.length > 0" class="grid-body">
+      <view v-if="getFilteredItems(group.items).length > 0" class="grid-body">
         <view class="grid-row">
-          <view v-for="(item, index) in filteredGridList" :key="index" class="grid-item" @click="handleGridClick(item)">
-            <view class="icon-wrapper">
-              <u-icon :name="item.icon" size="22" color="#fff" />
+          <view v-for="item in getFilteredItems(group.items)" :key="item.id" class="grid-item" @click="handleGridClick(item)">
+            <view class="icon-wrapper" :style="{ backgroundColor: item.bgColor || '#3D6DF7' }">
+              <u-icon :name="item.icon" size="22" :color="item.iconColor || '#fff'" />
             </view>
             <text class="grid-text">{{ item.title }}</text>
           </view>
@@ -94,71 +68,84 @@
 </template>
 
 <script setup>
-/**
- * @description 工作台页 - 业务功能入口
- * @description 展示轮播图、搜索框、常用功能和业务管理模块，支持按关键词搜索功能
- */
 import { ref, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { useMenuStore } from '@/store/modules/menu'
+import { getBannerList as fetchBannerList } from '@/api/home'
+import config from '@/config'
 
+const BASE_URL = config.baseUrl || ''
+
+const menuStore = useMenuStore()
 const searchKeyword = ref('')
 
-const bannerList = ref([
-  { image: '/static/images/banner/banner01.jpg' },
-  { image: '/static/images/banner/banner02.jpg' },
-  { image: '/static/images/banner/banner03.jpg' }
-])
-
-const businessList = ref([
-  { icon: 'home-fill', title: '企业管理', path: '/pages/business/enterprise/index' },
-  { icon: 'shop', title: '门店管理', path: '/pages/business/store/index' },
-  { icon: 'calendar', title: '行程安排', path: '/pages/business/schedule/index' },
-  { icon: 'edit-pen', title: '销售开单', path: '/pages/business/sales/index' },
-  { icon: 'grid', title: '项目操作', path: '/pages/business/operation/index' },
-  { icon: 'list', title: '订单管理', path: '/pages/business/order/index' }
-])
-
-const gridList = ref([
-  { icon: 'account', title: '用户管理', path: '' },
-  { icon: 'man-add', title: '角色管理', path: '' },
-  { icon: 'list', title: '菜单管理', path: '' },
-  { icon: 'home', title: '部门管理', path: '' },
-  { icon: 'bookmark', title: '岗位管理', path: '' },
-  { icon: 'file-text', title: '字典管理', path: '' },
-  { icon: 'setting', title: '参数设置', path: '' },
-  { icon: 'chat', title: '通知公告', path: '' }
-])
-
-/** 根据搜索关键词过滤业务管理模块列表 */
-const filteredBusinessList = computed(() => {
-  if (!searchKeyword.value.trim()) return businessList.value
-  const keyword = searchKeyword.value.trim().toLowerCase()
-  return businessList.value.filter(item => item.title.toLowerCase().includes(keyword))
+onShow(() => {
+  if (!menuStore.loaded) {
+    menuStore.loadMenus()
+  }
 })
 
-/** 根据搜索关键词过滤系统管理模块列表 */
-const filteredGridList = computed(() => {
-  if (!searchKeyword.value.trim()) return gridList.value
-  const keyword = searchKeyword.value.trim().toLowerCase()
-  return gridList.value.filter(item => item.title.toLowerCase().includes(keyword))
-})
+const defaultBanners = [
+  { image: '/static/images/banner/banner01.jpg', title: '', linkUrl: '' },
+  { image: '/static/images/banner/banner02.jpg', title: '', linkUrl: '' },
+  { image: '/static/images/banner/banner03.jpg', title: '', linkUrl: '' }
+]
 
-/** Banner图点击处理（预留扩展） */
-function clickBannerItem(item) {
-  console.info('Banner clicked:', item)
+const bannerList = ref([])
+
+async function loadBanners() {
+  try {
+    const res = await fetchBannerList()
+    const list = res.data || []
+    if (list.length > 0) {
+      bannerList.value = list.map(item => ({
+        ...item,
+        image: item.image && !item.image.startsWith('http') ? BASE_URL + item.image : item.image
+      }))
+    } else {
+      bannerList.value = defaultBanners
+    }
+  } catch (e) {
+    console.warn('获取轮播图失败，使用默认图片', e)
+    bannerList.value = defaultBanners
+  }
 }
 
-/** 功能模块点击处理，已配置路径的跳转对应页面，未配置的显示建设中提示 */
+loadBanners()
+
+const quickDisplayList = computed(() => {
+  return menuStore.quickMenus.slice(0, 5)
+})
+
+const menuGroups = computed(() => {
+  if (!menuStore.menus || Object.keys(menuStore.menus).length === 0) return []
+  return Object.values(menuStore.menus).filter(g => g && g.groupKey && g.groupKey !== 'quick' && g.groupKey !== 'mine_action' && g.groupKey !== 'mine_menu' && g.items && g.items.length > 0)
+})
+
+function getFilteredItems(items) {
+  if (!items) return []
+  if (!searchKeyword.value.trim()) return items
+  const keyword = searchKeyword.value.trim().toLowerCase()
+  return items.filter(item => item.title.toLowerCase().includes(keyword))
+}
+
+function clickBannerItem(item) {
+  if (item.linkUrl) {
+    if (item.linkUrl.startsWith('/pages/')) {
+      uni.navigateTo({ url: item.linkUrl })
+    } else if (item.linkUrl.startsWith('http')) {
+      uni.navigateTo({ url: `/pages/webview/index?url=${encodeURIComponent(item.linkUrl)}` })
+    }
+  }
+}
+
 function handleGridClick(item) {
+  menuStore.recordMenuClick(item.id)
   if (item.path) {
     uni.navigateTo({ url: item.path })
   } else {
     uni.showToast({ title: `${item.title}模块建设中~`, icon: 'none' })
   }
-}
-
-/** 通用页面跳转 */
-function goToPage(url) {
-  uni.navigateTo({ url })
 }
 </script>
 
@@ -264,7 +251,6 @@ page {
     width: 72rpx;
     height: 72rpx;
     border-radius: 50%;
-    background: #E8F0FE;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -284,6 +270,7 @@ page {
   border-radius: 20rpx;
   padding: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
+  margin-bottom: 20rpx;
 }
 
 .divider {
@@ -321,16 +308,11 @@ page {
   width: 90rpx;
   height: 90rpx;
   border-radius: 50%;
-  background-color: #3D6DF7;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14rpx;
   transition: all 0.2s ease;
-
-  &.biz-icon {
-    background-color: #FF6B35;
-  }
 
   &:active {
     opacity: 0.8;

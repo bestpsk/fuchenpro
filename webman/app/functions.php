@@ -1,5 +1,6 @@
 <?php
 
+// 递归将数组的键名从驼峰转为蛇形命名，支持嵌套数组和索引数组
 if (!function_exists('convert_to_snake_case')) {
     function convert_to_snake_case($data)
     {
@@ -22,6 +23,7 @@ if (!function_exists('convert_to_snake_case')) {
     }
 }
 
+// 将驼峰命名字符串转为蛇形命名（如 userName → user_name）
 if (!function_exists('to_snake_case')) {
     function to_snake_case($key)
     {
@@ -29,6 +31,7 @@ if (!function_exists('to_snake_case')) {
     }
 }
 
+// 判断数组是否为关联数组（键名不是从0开始的连续整数）
 if (!function_exists('is_associative_array')) {
     function is_associative_array($arr)
     {

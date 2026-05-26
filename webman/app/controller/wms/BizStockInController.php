@@ -7,8 +7,15 @@ use app\service\BizStockInService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 入库管理控制器
+ *
+ * 负责入库单的增删改查、确认入库和取消确认等功能，
+ * 确认入库时自动更新库存数量，已确认的入库单不可修改或删除
+ */
 class BizStockInController
 {
+    // 分页查询入库单列表
     public function list(Request $request)
     {
         $service = new BizStockInService();
@@ -17,6 +24,7 @@ class BizStockInController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取入库单详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,11 +35,12 @@ class BizStockInController
         return AjaxResult::success($stockIn);
     }
 
+    // 新增入库单，含入库明细项，自动填充操作人信息
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser->user;
-        $realName = trim($loginUser->real_name ?? '');
+        $realName = trim($loginUser->nick_name ?? '');
         $userName = trim($loginUser->user_name ?? '');
         $data['create_by'] = $realName ?: $userName;
         $data['operator_id'] = $request->loginUser->userId ?? 0;
@@ -44,6 +53,7 @@ class BizStockInController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改入库单及明细项，已确认的入库单不可修改
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -57,9 +67,13 @@ class BizStockInController
         return AjaxResult::success();
     }
 
+    // 批量删除入库单，已确认的入库单不可删除
     public function remove(Request $request)
     {
-        $stockInIds = explode(',', $request->input('stockInIds', ''));
+        $stockInIds = $request->input('stockInIds', '');
+        if (!is_array($stockInIds)) {
+            $stockInIds = explode(',', $stockInIds);
+        }
         $stockInIds = array_map('intval', array_filter($stockInIds));
         $service = new BizStockInService();
         $result = $service->deleteStockInByIds($stockInIds);
@@ -67,6 +81,7 @@ class BizStockInController
         return AjaxResult::success();
     }
 
+    // 确认入库，将入库数量累加到库存表
     public function confirm(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -77,6 +92,7 @@ class BizStockInController
         return AjaxResult::success($result['msg']);
     }
 
+    // 取消确认入库，从库存中扣减已入库数量
     public function cancelConfirm(Request $request)
     {
         $parts = explode('/', $request->path());

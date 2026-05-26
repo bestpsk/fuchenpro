@@ -33,6 +33,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 顶部导航 - 顶部菜单模式的一级菜单渲染
+ * @description 在顶部导航模式下渲染一级菜单，点击后侧边栏显示对应子菜单
+ */
 import { constantRoutes } from "@/router"
 import { isHttp } from '@/utils/validate'
 import useAppStore from '@/store/modules/app'

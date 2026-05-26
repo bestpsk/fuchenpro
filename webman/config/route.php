@@ -12,6 +12,8 @@ Route::post('/unlockscreen', [app\controller\SysLoginController::class, 'unlocks
 Route::post('/common/upload', [app\controller\CommonController::class, 'upload']);
 Route::get('/common/download', [app\controller\CommonController::class, 'downloads']);
 
+Route::get('/home/stats', [app\controller\AppHomeController::class, 'stats']);
+
 Route::get('/system/user/list', [app\controller\system\SysUserController::class, 'list']);
 Route::post('/system/user/export', [app\controller\system\SysUserController::class, 'export']);
 Route::post('/system/user/importData', [app\controller\system\SysUserController::class, 'importData']);
@@ -27,7 +29,7 @@ Route::put('/system/user/authRole', [app\controller\system\SysUserController::cl
 Route::get('/system/user/authRole/{userId}', [app\controller\system\SysUserController::class, 'authRole']);
 Route::post('/system/user', [app\controller\system\SysUserController::class, 'add']);
 Route::put('/system/user', [app\controller\system\SysUserController::class, 'edit']);
-Route::delete('/system/user/{userIds}', [app\controller\system\SysUserController::class, 'remove']);
+Route::delete('/system/user', [app\controller\system\SysUserController::class, 'remove']);
 Route::get('/system/user/', [app\controller\system\SysUserController::class, 'getInfo']);
 Route::get('/system/user/{userId}', [app\controller\system\SysUserController::class, 'getInfo']);
 
@@ -43,7 +45,7 @@ Route::put('/system/role/changeStatus', [app\controller\system\SysRoleController
 Route::get('/system/role/deptTree/{roleId}', [app\controller\system\SysRoleController::class, 'deptTree']);
 Route::post('/system/role', [app\controller\system\SysRoleController::class, 'add']);
 Route::put('/system/role', [app\controller\system\SysRoleController::class, 'edit']);
-Route::delete('/system/role/{roleIds}', [app\controller\system\SysRoleController::class, 'remove']);
+Route::delete('/system/role', [app\controller\system\SysRoleController::class, 'remove']);
 Route::get('/system/role/{roleId}', [app\controller\system\SysRoleController::class, 'getInfo']);
 
 Route::get('/system/menu/list', [app\controller\system\SysMenuController::class, 'list']);
@@ -52,7 +54,7 @@ Route::put('/system/menu/updateSort', [app\controller\system\SysMenuController::
 Route::get('/system/menu/roleMenuTreeselect/{roleId}', [app\controller\system\SysMenuController::class, 'roleMenuTreeselect']);
 Route::post('/system/menu', [app\controller\system\SysMenuController::class, 'add']);
 Route::put('/system/menu', [app\controller\system\SysMenuController::class, 'edit']);
-Route::delete('/system/menu/{menuId}', [app\controller\system\SysMenuController::class, 'remove']);
+Route::delete('/system/menu', [app\controller\system\SysMenuController::class, 'remove']);
 Route::get('/system/menu/{menuId}', [app\controller\system\SysMenuController::class, 'getInfo']);
 
 Route::get('/system/dept/list/exclude/{deptId}', [app\controller\system\SysDeptController::class, 'excludeChild']);
@@ -61,13 +63,13 @@ Route::get('/system/dept/treeselect', [app\controller\system\SysDeptController::
 Route::put('/system/dept/updateSort', [app\controller\system\SysDeptController::class, 'updateSort']);
 Route::post('/system/dept', [app\controller\system\SysDeptController::class, 'add']);
 Route::put('/system/dept', [app\controller\system\SysDeptController::class, 'edit']);
-Route::delete('/system/dept/{deptId}', [app\controller\system\SysDeptController::class, 'remove']);
+Route::delete('/system/dept', [app\controller\system\SysDeptController::class, 'remove']);
 Route::get('/system/dept/{deptId}', [app\controller\system\SysDeptController::class, 'getInfo']);
 
 Route::get('/system/post/list', [app\controller\system\SysPostController::class, 'list']);
 Route::post('/system/post', [app\controller\system\SysPostController::class, 'add']);
 Route::put('/system/post', [app\controller\system\SysPostController::class, 'edit']);
-Route::delete('/system/post/{postIds}', [app\controller\system\SysPostController::class, 'remove']);
+Route::delete('/system/post', [app\controller\system\SysPostController::class, 'remove']);
 Route::get('/system/post/{postId}', [app\controller\system\SysPostController::class, 'getInfo']);
 
 Route::get('/system/dict/type/list', [app\controller\system\SysDictTypeController::class, 'list']);
@@ -75,14 +77,14 @@ Route::get('/system/dict/type/optionselect', [app\controller\system\SysDictTypeC
 Route::delete('/system/dict/type/refreshCache', [app\controller\system\SysDictTypeController::class, 'refreshCache']);
 Route::post('/system/dict/type', [app\controller\system\SysDictTypeController::class, 'add']);
 Route::put('/system/dict/type', [app\controller\system\SysDictTypeController::class, 'edit']);
-Route::delete('/system/dict/type/{dictIds}', [app\controller\system\SysDictTypeController::class, 'remove']);
+Route::delete('/system/dict/type', [app\controller\system\SysDictTypeController::class, 'remove']);
 Route::get('/system/dict/type/{dictId}', [app\controller\system\SysDictTypeController::class, 'getInfo']);
 
 Route::get('/system/dict/data/list', [app\controller\system\SysDictDataController::class, 'list']);
 Route::get('/system/dict/data/type/{dictType}', [app\controller\system\SysDictDataController::class, 'dictType']);
 Route::post('/system/dict/data', [app\controller\system\SysDictDataController::class, 'add']);
 Route::put('/system/dict/data', [app\controller\system\SysDictDataController::class, 'edit']);
-Route::delete('/system/dict/data/{dictCodes}', [app\controller\system\SysDictDataController::class, 'remove']);
+Route::delete('/system/dict/data', [app\controller\system\SysDictDataController::class, 'remove']);
 Route::get('/system/dict/data/{dictCode}', [app\controller\system\SysDictDataController::class, 'getInfo']);
 
 Route::get('/system/config/list', [app\controller\system\SysConfigController::class, 'list']);
@@ -90,7 +92,7 @@ Route::get('/system/config/configKey/{configKey}', [app\controller\system\SysCon
 Route::delete('/system/config/refreshCache', [app\controller\system\SysConfigController::class, 'refreshCache']);
 Route::post('/system/config', [app\controller\system\SysConfigController::class, 'add']);
 Route::put('/system/config', [app\controller\system\SysConfigController::class, 'edit']);
-Route::delete('/system/config/{configIds}', [app\controller\system\SysConfigController::class, 'remove']);
+Route::delete('/system/config', [app\controller\system\SysConfigController::class, 'remove']);
 Route::get('/system/config/{configId}', [app\controller\system\SysConfigController::class, 'getInfo']);
 
 Route::get('/system/notice/list', [app\controller\system\SysNoticeController::class, 'list']);
@@ -100,40 +102,47 @@ Route::post('/system/notice/markReadAll', [app\controller\system\SysNoticeContro
 Route::get('/system/notice/readUsers/list', [app\controller\system\SysNoticeController::class, 'readUsersList']);
 Route::post('/system/notice', [app\controller\system\SysNoticeController::class, 'add']);
 Route::put('/system/notice', [app\controller\system\SysNoticeController::class, 'edit']);
-Route::delete('/system/notice/{noticeIds}', [app\controller\system\SysNoticeController::class, 'remove']);
+Route::delete('/system/notice', [app\controller\system\SysNoticeController::class, 'remove']);
 Route::get('/system/notice/{noticeId}', [app\controller\system\SysNoticeController::class, 'getInfo']);
 
+Route::get('/system/banner/list', [app\controller\system\SysBannerController::class, 'list']);
+Route::get('/system/banner/{bannerId}', [app\controller\system\SysBannerController::class, 'getInfo']);
+Route::post('/system/banner', [app\controller\system\SysBannerController::class, 'add']);
+Route::put('/system/banner', [app\controller\system\SysBannerController::class, 'edit']);
+Route::delete('/system/banner', [app\controller\system\SysBannerController::class, 'remove']);
+Route::get('/app/banner/list', [app\controller\system\SysBannerController::class, 'appList']);
+
 Route::get('/monitor/online/list', [app\controller\monitor\SysUserOnlineController::class, 'list']);
-Route::delete('/monitor/online/{tokenId}', [app\controller\monitor\SysUserOnlineController::class, 'forceLogout']);
+Route::delete('/monitor/online', [app\controller\monitor\SysUserOnlineController::class, 'forceLogout']);
 
 Route::get('/monitor/operlog/list', [app\controller\monitor\SysOperlogController::class, 'list']);
 Route::delete('/monitor/operlog/clean', [app\controller\monitor\SysOperlogController::class, 'clean']);
-Route::delete('/monitor/operlog/{operIds}', [app\controller\monitor\SysOperlogController::class, 'remove']);
+Route::delete('/monitor/operlog', [app\controller\monitor\SysOperlogController::class, 'remove']);
 
 Route::get('/monitor/logininfor/list', [app\controller\monitor\SysLogininforController::class, 'list']);
 Route::get('/monitor/logininfor/unlock/{userName}', [app\controller\monitor\SysLogininforController::class, 'unlock']);
 Route::delete('/monitor/logininfor/clean', [app\controller\monitor\SysLogininforController::class, 'clean']);
-Route::delete('/monitor/logininfor/{infoIds}', [app\controller\monitor\SysLogininforController::class, 'remove']);
+Route::delete('/monitor/logininfor', [app\controller\monitor\SysLogininforController::class, 'remove']);
 
 Route::get('/monitor/job/list', [app\controller\monitor\SysJobController::class, 'list']);
 Route::put('/monitor/job/changeStatus', [app\controller\monitor\SysJobController::class, 'changeStatus']);
 Route::put('/monitor/job/run', [app\controller\monitor\SysJobController::class, 'run']);
 Route::post('/monitor/job', [app\controller\monitor\SysJobController::class, 'add']);
 Route::put('/monitor/job', [app\controller\monitor\SysJobController::class, 'edit']);
-Route::delete('/monitor/job/{jobIds}', [app\controller\monitor\SysJobController::class, 'remove']);
+Route::delete('/monitor/job', [app\controller\monitor\SysJobController::class, 'remove']);
 Route::get('/monitor/job/{jobId}', [app\controller\monitor\SysJobController::class, 'getInfo']);
 
 Route::get('/monitor/jobLog/list', [app\controller\monitor\SysJobLogController::class, 'list']);
 Route::delete('/monitor/jobLog/clean', [app\controller\monitor\SysJobLogController::class, 'clean']);
-Route::delete('/monitor/jobLog/{jobLogIds}', [app\controller\monitor\SysJobLogController::class, 'remove']);
+Route::delete('/monitor/jobLog', [app\controller\monitor\SysJobLogController::class, 'remove']);
 
 Route::get('/monitor/server', [app\controller\monitor\ServerController::class, 'getInfo']);
 Route::get('/monitor/cache', [app\controller\monitor\CacheController::class, 'getInfo']);
 Route::get('/monitor/cache/getNames', [app\controller\monitor\CacheController::class, 'getNames']);
 Route::get('/monitor/cache/getKeys/{cacheName}', [app\controller\monitor\CacheController::class, 'getKeys']);
 Route::get('/monitor/cache/getValue/{cacheName}/{cacheKey}', [app\controller\monitor\CacheController::class, 'getValue']);
-Route::delete('/monitor/cache/clearCacheName/{cacheName}', [app\controller\monitor\CacheController::class, 'clearCacheName']);
-Route::delete('/monitor/cache/clearCacheKey/{cacheKey}', [app\controller\monitor\CacheController::class, 'clearCacheKey']);
+Route::delete('/monitor/cache/clearCacheName', [app\controller\monitor\CacheController::class, 'clearCacheName']);
+Route::delete('/monitor/cache/clearCacheKey', [app\controller\monitor\CacheController::class, 'clearCacheKey']);
 Route::delete('/monitor/cache/clearCacheAll', [app\controller\monitor\CacheController::class, 'clearCacheAll']);
 
 Route::get('/tool/gen/list', [app\controller\tool\GenController::class, 'list']);
@@ -144,7 +153,7 @@ Route::get('/tool/gen/preview/{tableId}', [app\controller\tool\GenController::cl
 Route::get('/tool/gen/synchDb/{tableName}', [app\controller\tool\GenController::class, 'synchDb']);
 Route::get('/tool/gen/download/{tableName}', [app\controller\tool\GenController::class, 'download']);
 Route::get('/tool/gen/batchGenCode', [app\controller\tool\GenController::class, 'batchGenCode']);
-Route::delete('/tool/gen/{tableIds}', [app\controller\tool\GenController::class, 'remove']);
+Route::delete('/tool/gen', [app\controller\tool\GenController::class, 'remove']);
 Route::get('/tool/gen/{tableId}', [app\controller\tool\GenController::class, 'getInfo']);
 
 Route::get('/business/enterprise/list', [app\controller\business\BizEnterpriseController::class, 'list']);
@@ -152,30 +161,32 @@ Route::get('/business/enterprise/search', [app\controller\business\BizEnterprise
 Route::put('/business/enterprise/status', [app\controller\business\BizEnterpriseController::class, 'changeStatus']);
 Route::post('/business/enterprise', [app\controller\business\BizEnterpriseController::class, 'add']);
 Route::put('/business/enterprise', [app\controller\business\BizEnterpriseController::class, 'edit']);
-Route::delete('/business/enterprise/{enterpriseIds}', [app\controller\business\BizEnterpriseController::class, 'remove']);
+Route::delete('/business/enterprise', [app\controller\business\BizEnterpriseController::class, 'remove']);
 Route::get('/business/enterprise/{enterpriseId}', [app\controller\business\BizEnterpriseController::class, 'getInfo']);
 
 Route::get('/business/store/list', [app\controller\business\BizStoreController::class, 'list']);
 Route::get('/business/store/search', [app\controller\business\BizStoreController::class, 'search']);
 Route::post('/business/store', [app\controller\business\BizStoreController::class, 'add']);
 Route::put('/business/store', [app\controller\business\BizStoreController::class, 'edit']);
-Route::delete('/business/store/{storeIds}', [app\controller\business\BizStoreController::class, 'remove']);
+Route::delete('/business/store', [app\controller\business\BizStoreController::class, 'remove']);
 Route::get('/business/store/{storeId}', [app\controller\business\BizStoreController::class, 'getInfo']);
 
 Route::get('/business/customer/list', [app\controller\business\BizCustomerController::class, 'list']);
 Route::get('/business/customer/search', [app\controller\business\BizCustomerController::class, 'search']);
+Route::post('/business/customer/avatar', [app\controller\business\BizCustomerController::class, 'avatar']);
 Route::post('/business/customer', [app\controller\business\BizCustomerController::class, 'add']);
 Route::put('/business/customer', [app\controller\business\BizCustomerController::class, 'edit']);
-Route::delete('/business/customer/{customerIds}', [app\controller\business\BizCustomerController::class, 'remove']);
+Route::delete('/business/customer', [app\controller\business\BizCustomerController::class, 'remove']);
 Route::get('/business/customer/{customerId}', [app\controller\business\BizCustomerController::class, 'getInfo']);
 
 Route::get('/business/sales/list', [app\controller\business\BizSalesOrderController::class, 'list']);
 Route::post('/business/sales', [app\controller\business\BizSalesOrderController::class, 'add']);
 Route::put('/business/sales', [app\controller\business\BizSalesOrderController::class, 'edit']);
-Route::delete('/business/sales/{orderIds}', [app\controller\business\BizSalesOrderController::class, 'remove']);
+Route::delete('/business/sales', [app\controller\business\BizSalesOrderController::class, 'remove']);
 Route::get('/business/sales/{orderId}', [app\controller\business\BizSalesOrderController::class, 'getInfo']);
 Route::post('/business/sales/enterpriseAudit', [app\controller\business\BizSalesOrderController::class, 'enterpriseAudit']);
 Route::post('/business/sales/financeAudit', [app\controller\business\BizSalesOrderController::class, 'financeAudit']);
+Route::post('/business/sales/cancel', [app\controller\business\BizSalesOrderController::class, 'cancel']);
 
 Route::get('/business/package/list', [app\controller\business\BizCustomerPackageController::class, 'list']);
 Route::get('/business/package/byCustomer', [app\controller\business\BizCustomerPackageController::class, 'getByCustomer']);
@@ -183,7 +194,7 @@ Route::get('/business/package/{packageId}', [app\controller\business\BizCustomer
 
 Route::get('/business/operation/list', [app\controller\business\BizOperationRecordController::class, 'list']);
 Route::post('/business/operation', [app\controller\business\BizOperationRecordController::class, 'add']);
-Route::delete('/business/operation/{recordIds}', [app\controller\business\BizOperationRecordController::class, 'remove']);
+Route::delete('/business/operation', [app\controller\business\BizOperationRecordController::class, 'remove']);
 // 操作记录 - 获取详情
 Route::get('/business/operation/{id}', [app\controller\business\BizOperationRecordController::class, 'getInfo']);
 
@@ -196,7 +207,7 @@ Route::get('/business/repayment/{repaymentId}', [app\controller\business\BizRepa
 
 Route::get('/business/archive/list', [app\controller\business\BizCustomerArchiveController::class, 'list']);
 Route::post('/business/archive/add', [app\controller\business\BizCustomerArchiveController::class, 'add']);
-Route::delete('/business/archive/{archiveIds}', [app\controller\business\BizCustomerArchiveController::class, 'remove']);
+Route::delete('/business/archive', [app\controller\business\BizCustomerArchiveController::class, 'remove']);
 
 Route::get('/business/plan/enterpriseList', [app\controller\business\BizPlanController::class, 'enterpriseList']);
 Route::get('/business/plan/list', [app\controller\business\BizPlanController::class, 'list']);
@@ -205,7 +216,7 @@ Route::put('/business/plan/audit', [app\controller\business\BizPlanController::c
 Route::put('/business/plan/changeStatus', [app\controller\business\BizPlanController::class, 'changeStatus']);
 Route::post('/business/plan', [app\controller\business\BizPlanController::class, 'add']);
 Route::put('/business/plan', [app\controller\business\BizPlanController::class, 'edit']);
-Route::delete('/business/plan/{planIds}', [app\controller\business\BizPlanController::class, 'remove']);
+Route::delete('/business/plan', [app\controller\business\BizPlanController::class, 'remove']);
 Route::get('/business/plan/{planId}', [app\controller\business\BizPlanController::class, 'getInfo']);
 
 Route::get('/business/shipment/list', [app\controller\business\BizShipmentController::class, 'list']);
@@ -214,7 +225,7 @@ Route::put('/business/shipment/ship', [app\controller\business\BizShipmentContro
 Route::put('/business/shipment/confirmReceipt/{shipmentId}', [app\controller\business\BizShipmentController::class, 'confirmReceipt']);
 Route::post('/business/shipment', [app\controller\business\BizShipmentController::class, 'add']);
 Route::put('/business/shipment', [app\controller\business\BizShipmentController::class, 'edit']);
-Route::delete('/business/shipment/{shipmentIds}', [app\controller\business\BizShipmentController::class, 'remove']);
+Route::delete('/business/shipment', [app\controller\business\BizShipmentController::class, 'remove']);
 Route::get('/business/shipment/{shipmentId}', [app\controller\business\BizShipmentController::class, 'getInfo']);
 
 Route::get('/business/schedule/list', [app\controller\business\BizScheduleController::class, 'list']);
@@ -225,7 +236,7 @@ Route::get('/business/schedule/enterprise', [app\controller\business\BizSchedule
 Route::post('/business/schedule', [app\controller\business\BizScheduleController::class, 'add']);
 Route::post('/business/schedule/batch', [app\controller\business\BizScheduleController::class, 'addBatch']);
 Route::put('/business/schedule', [app\controller\business\BizScheduleController::class, 'edit']);
-Route::delete('/business/schedule/{scheduleIds}', [app\controller\business\BizScheduleController::class, 'remove']);
+Route::delete('/business/schedule', [app\controller\business\BizScheduleController::class, 'remove']);
 Route::get('/business/schedule/{scheduleId}', [app\controller\business\BizScheduleController::class, 'getInfo']);
 
 Route::get('/business/employeeConfig/list', [app\controller\business\BizEmployeeConfigController::class, 'list']);
@@ -235,7 +246,7 @@ Route::put('/business/employeeConfig', [app\controller\business\BizEmployeeConfi
 Route::put('/business/employeeConfig/updateSchedulable', [app\controller\business\BizEmployeeConfigController::class, 'updateSchedulable']);
 Route::post('/business/employeeConfig/saveRestDates', [app\controller\business\BizEmployeeConfigController::class, 'saveRestDates']);
 Route::get('/business/employeeConfig/getRestDates', [app\controller\business\BizEmployeeConfigController::class, 'getRestDates']);
-Route::delete('/business/employeeConfig/{configIds}', [app\controller\business\BizEmployeeConfigController::class, 'remove']);
+Route::delete('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'remove']);
 Route::get('/business/employeeConfig/{configId}', [app\controller\business\BizEmployeeConfigController::class, 'getInfo']);
 
 Route::get('/business/attendance/todayRecord', [app\controller\business\BizAttendanceController::class, 'todayRecord']);
@@ -250,7 +261,7 @@ Route::get('/business/attendance/record/{recordId}', [app\controller\business\Bi
 Route::get('/business/attendance/rule/list', [app\controller\business\BizAttendanceController::class, 'ruleList']);
 Route::post('/business/attendance/rule', [app\controller\business\BizAttendanceController::class, 'addRule']);
 Route::put('/business/attendance/rule', [app\controller\business\BizAttendanceController::class, 'editRule']);
-Route::delete('/business/attendance/rule/{ruleIds}', [app\controller\business\BizAttendanceController::class, 'removeRule']);
+Route::delete('/business/attendance/rule', [app\controller\business\BizAttendanceController::class, 'removeRule']);
 Route::get('/business/attendance/rule/{ruleId}', [app\controller\business\BizAttendanceController::class, 'ruleInfo']);
 
 Route::get('/business/attendance/config/list', [app\controller\business\BizAttendanceConfigController::class, 'list']);
@@ -260,6 +271,17 @@ Route::post('/business/attendance/config', [app\controller\business\BizAttendanc
 Route::put('/business/attendance/config', [app\controller\business\BizAttendanceConfigController::class, 'edit']);
 Route::delete('/business/attendance/config', [app\controller\business\BizAttendanceConfigController::class, 'remove']);
 
+Route::get('/system/appMenu/list', [app\controller\system\AppMenuConfigController::class, 'list']);
+Route::get('/system/appMenu/grouped', [app\controller\system\AppMenuConfigController::class, 'grouped']);
+Route::put('/system/appMenu/updateSort', [app\controller\system\AppMenuConfigController::class, 'updateSort']);
+Route::put('/system/appMenu/changeStatus', [app\controller\system\AppMenuConfigController::class, 'changeStatus']);
+Route::post('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'add']);
+Route::put('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'edit']);
+Route::delete('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'remove']);
+Route::get('/system/appMenu/{id}', [app\controller\system\AppMenuConfigController::class, 'getInfo']);
+
+Route::get('/system/user/detail/welcomeSlogan', [app\controller\system\SysUserDetailController::class, 'getWelcomeSlogan']);
+Route::put('/system/user/detail/welcomeSlogan', [app\controller\system\SysUserDetailController::class, 'setWelcomeSlogan']);
 Route::get('/system/user/detail/{userId}', [app\controller\system\SysUserDetailController::class, 'getInfo']);
 Route::post('/system/user/detail', [app\controller\system\SysUserDetailController::class, 'add']);
 Route::put('/system/user/detail', [app\controller\system\SysUserDetailController::class, 'edit']);
@@ -269,7 +291,7 @@ Route::get('/hr/salary/user/{userId}', [app\controller\system\HrUserSalaryContro
 Route::get('/hr/salary/{salaryId}', [app\controller\system\HrUserSalaryController::class, 'getInfo']);
 Route::post('/hr/salary', [app\controller\system\HrUserSalaryController::class, 'add']);
 Route::put('/hr/salary', [app\controller\system\HrUserSalaryController::class, 'edit']);
-Route::delete('/hr/salary/{salaryIds}', [app\controller\system\HrUserSalaryController::class, 'remove']);
+Route::delete('/hr/salary', [app\controller\system\HrUserSalaryController::class, 'remove']);
 
 // =============================================
 // 进销存管理模块路由
@@ -280,7 +302,7 @@ Route::get('/wms/supplier/list', [app\controller\wms\BizSupplierController::clas
 Route::get('/wms/supplier/search', [app\controller\wms\BizSupplierController::class, 'search']);
 Route::post('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'add']);
 Route::put('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'edit']);
-Route::delete('/wms/supplier/{supplierIds}', [app\controller\wms\BizSupplierController::class, 'remove']);
+Route::delete('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'remove']);
 Route::get('/wms/supplier/{supplierId}', [app\controller\wms\BizSupplierController::class, 'getInfo']);
 
 // 货品管理
@@ -288,7 +310,7 @@ Route::get('/wms/product/list', [app\controller\wms\BizProductController::class,
 Route::get('/wms/product/search', [app\controller\wms\BizProductController::class, 'search']);
 Route::post('/wms/product', [app\controller\wms\BizProductController::class, 'add']);
 Route::put('/wms/product', [app\controller\wms\BizProductController::class, 'edit']);
-Route::delete('/wms/product/{productIds}', [app\controller\wms\BizProductController::class, 'remove']);
+Route::delete('/wms/product', [app\controller\wms\BizProductController::class, 'remove']);
 Route::get('/wms/product/{productId}', [app\controller\wms\BizProductController::class, 'getInfo']);
 
 // 入库管理
@@ -297,7 +319,7 @@ Route::put('/wms/stockIn/confirm/{id}', [app\controller\wms\BizStockInController
 Route::put('/wms/stockIn/cancelConfirm/{id}', [app\controller\wms\BizStockInController::class, 'cancelConfirm']);
 Route::post('/wms/stockIn', [app\controller\wms\BizStockInController::class, 'add']);
 Route::put('/wms/stockIn', [app\controller\wms\BizStockInController::class, 'edit']);
-Route::delete('/wms/stockIn/{stockInIds}', [app\controller\wms\BizStockInController::class, 'remove']);
+Route::delete('/wms/stockIn', [app\controller\wms\BizStockInController::class, 'remove']);
 Route::get('/wms/stockIn/{stockInId}', [app\controller\wms\BizStockInController::class, 'getInfo']);
 
 // 出库管理
@@ -306,7 +328,7 @@ Route::put('/wms/stockOut/confirm/{id}', [app\controller\wms\BizStockOutControll
 Route::put('/wms/stockOut/cancelConfirm/{id}', [app\controller\wms\BizStockOutController::class, 'cancelConfirm']);
 Route::post('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'add']);
 Route::put('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'edit']);
-Route::delete('/wms/stockOut/{stockOutIds}', [app\controller\wms\BizStockOutController::class, 'remove']);
+Route::delete('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'remove']);
 Route::get('/wms/stockOut/{stockOutId}', [app\controller\wms\BizStockOutController::class, 'getInfo']);
 
 // 库存查看
@@ -320,7 +342,7 @@ Route::get('/wms/stockCheck/loadInventory', [app\controller\wms\BizStockCheckCon
 Route::put('/wms/stockCheck/confirm/{id}', [app\controller\wms\BizStockCheckController::class, 'confirm']);
 Route::post('/wms/stockCheck', [app\controller\wms\BizStockCheckController::class, 'add']);
 Route::put('/wms/stockCheck', [app\controller\wms\BizStockCheckController::class, 'edit']);
-Route::delete('/wms/stockCheck/{stockCheckIds}', [app\controller\wms\BizStockCheckController::class, 'remove']);
+Route::delete('/wms/stockCheck', [app\controller\wms\BizStockCheckController::class, 'remove']);
 Route::get('/wms/stockCheck/{stockCheckId}', [app\controller\wms\BizStockCheckController::class, 'getInfo']);
 
 // 进销存报表
@@ -328,6 +350,31 @@ Route::get('/wms/report/stockInSummary', [app\controller\wms\BizWmsReportControl
 Route::get('/wms/report/stockOutSummary', [app\controller\wms\BizWmsReportController::class, 'stockOutSummary']);
 Route::get('/wms/report/inventoryTurnover', [app\controller\wms\BizWmsReportController::class, 'inventoryTurnover']);
 Route::get('/wms/report/productFlow', [app\controller\wms\BizWmsReportController::class, 'productFlow']);
+
+// =============================================
+// 财务管理模块路由
+// =============================================
+
+// 方案审核
+Route::get('/finance/planAudit/list', [app\controller\finance\FinPlanAuditController::class, 'list']);
+Route::post('/finance/planAudit/audit', [app\controller\finance\FinPlanAuditController::class, 'audit']);
+Route::get('/finance/planAudit/{id}', [app\controller\finance\FinPlanAuditController::class, 'info']);
+
+// 报销管理
+Route::get('/finance/reimbursement/list', [app\controller\finance\FinReimbursementController::class, 'list']);
+Route::post('/finance/reimbursement', [app\controller\finance\FinReimbursementController::class, 'add']);
+Route::put('/finance/reimbursement', [app\controller\finance\FinReimbursementController::class, 'edit']);
+Route::delete('/finance/reimbursement', [app\controller\finance\FinReimbursementController::class, 'remove']);
+Route::get('/finance/reimbursement/{id}', [app\controller\finance\FinReimbursementController::class, 'info']);
+Route::post('/finance/reimbursement/audit', [app\controller\finance\FinReimbursementController::class, 'audit']);
+Route::post('/finance/reimbursement/pay', [app\controller\finance\FinReimbursementController::class, 'pay']);
+
+// 报销统计
+Route::get('/finance/reimbursement/report/byMonth', [app\controller\finance\FinReimbursementController::class, 'reportByMonth']);
+Route::get('/finance/reimbursement/report/byCategory', [app\controller\finance\FinReimbursementController::class, 'reportByCategory']);
+Route::get('/finance/reimbursement/report/byDept', [app\controller\finance\FinReimbursementController::class, 'reportByDept']);
+Route::get('/finance/reimbursement/report/byUser', [app\controller\finance\FinReimbursementController::class, 'reportByUser']);
+Route::get('/finance/reimbursement/report/byExpenseType', [app\controller\finance\FinReimbursementController::class, 'reportByExpenseType']);
 
 Route::any('/{path:.+}', function ($request, $path) {
     return json(['code' => 404, 'msg' => '接口不存在']);

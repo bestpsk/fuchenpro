@@ -1,8 +1,11 @@
+/**
+ * @description 通用工具函数库 - 日期格式化/防抖/深拷贝等
+ * @description 提供表格日期格式化、相对时间、URL参数解析、字节长度计算、
+ * 防抖函数、深拷贝、数组去重、CSS类名操作、代码格式化配置等常用工具
+ */
 import { parseTime } from './ruoyi'
 
-/**
- * 表格时间格式化
- */
+/** 表格单元格时间格式化，将日期值转为YYYY-MM-DD HH:mm:ss格式 */
 export function formatDate(cellValue) {
   if (cellValue == null || cellValue == "") return ""
   const date = new Date(cellValue) 
@@ -15,11 +18,7 @@ export function formatDate(cellValue) {
   return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds
 }
 
-/**
- * @param {number} time
- * @param {string} option
- * @returns {string}
- */
+/** 将时间戳转为相对时间文本（刚刚/X分钟前/X小时前/1天前），超过2天则格式化为月日时分 */
 export function formatTime(time, option) {
   if (('' + time).length === 10) {
     time = parseInt(time) * 1000
@@ -58,10 +57,7 @@ export function formatTime(time, option) {
   }
 }
 
-/**
- * @param {string} url
- * @returns {Object}
- */
+/** 解析URL查询参数为键值对对象 */
 export function getQueryObject(url) {
   url = url == null ? window.location.href : url
   const search = url.substring(url.lastIndexOf('?') + 1)
@@ -77,10 +73,7 @@ export function getQueryObject(url) {
   return obj
 }
 
-/**
- * @param {string} input value
- * @returns {number} output value
- */
+/** 计算UTF-8字符串的字节长度 */
 export function byteLength(str) {
   // returns the byte length of an utf8 string
   let s = str.length
@@ -93,10 +86,7 @@ export function byteLength(str) {
   return s
 }
 
-/**
- * @param {Array} actual
- * @returns {Array}
- */
+/** 过滤数组中的假值（null/undefined/''/0/false） */
 export function cleanArray(actual) {
   const newArray = []
   for (let i = 0; i < actual.length; i++) {
@@ -107,10 +97,7 @@ export function cleanArray(actual) {
   return newArray
 }
 
-/**
- * @param {Object} json
- * @returns {Array}
- */
+/** 将对象序列化为URL查询参数字符串 */
 export function param(json) {
   if (!json) return ''
   return cleanArray(
@@ -121,10 +108,7 @@ export function param(json) {
   ).join('&')
 }
 
-/**
- * @param {string} url
- * @returns {Object}
- */
+/** 将URL查询参数字符串解析为键值对对象 */
 export function param2Obj(url) {
   const search = decodeURIComponent(url.split('?')[1]).replace(/\+/g, ' ')
   if (!search) {
@@ -143,22 +127,14 @@ export function param2Obj(url) {
   return obj
 }
 
-/**
- * @param {string} val
- * @returns {string}
- */
+/** 将HTML字符串提取为纯文本 */
 export function html2Text(val) {
   const div = document.createElement('div')
   div.innerHTML = val
   return div.textContent || div.innerText
 }
 
-/**
- * Merges two objects, giving the last one precedence
- * @param {Object} target
- * @param {(Object|Array)} source
- * @returns {Object}
- */
+/** 深度合并两个对象，source中的属性覆盖target中的同名属性 */
 export function objectMerge(target, source) {
   if (typeof target !== 'object') {
     target = {}
@@ -177,10 +153,7 @@ export function objectMerge(target, source) {
   return target
 }
 
-/**
- * @param {HTMLElement} element
- * @param {string} className
- */
+/** 切换DOM元素的CSS类名，有则移除无则添加 */
 export function toggleClass(element, className) {
   if (!element || !className) {
     return
@@ -197,10 +170,7 @@ export function toggleClass(element, className) {
   element.className = classString
 }
 
-/**
- * @param {string} type
- * @returns {Date}
- */
+/** 获取时间戳，type为'start'返回90天前，否则返回今天0点 */
 export function getTime(type) {
   if (type === 'start') {
     return new Date().getTime() - 3600 * 1000 * 24 * 90
@@ -209,12 +179,7 @@ export function getTime(type) {
   }
 }
 
-/**
- * @param {Function} func
- * @param {number} wait
- * @param {boolean} immediate
- * @return {*}
- */
+/** 防抖函数，immediate为true时在开始边界触发，否则在结束边界触发 */
 export function debounce(func, wait, immediate) {
   let timeout, args, context, timestamp, result
 
@@ -250,13 +215,7 @@ export function debounce(func, wait, immediate) {
   }
 }
 
-/**
- * This is just a simple version of deep copy
- * Has a lot of edge cases bug
- * If you want to use a perfect deep copy, use lodash's _.cloneDeep
- * @param {Object} source
- * @returns {Object}
- */
+/** 简易深拷贝，仅支持对象和数组，复杂场景建议使用lodash的cloneDeep */
 export function deepClone(source) {
   if (!source && typeof source !== 'object') {
     throw new Error('error arguments', 'deepClone')
@@ -272,47 +231,29 @@ export function deepClone(source) {
   return targetObj
 }
 
-/**
- * @param {Array} arr
- * @returns {Array}
- */
+/** 数组去重 */
 export function uniqueArr(arr) {
   return Array.from(new Set(arr))
 }
 
-/**
- * @returns {string}
- */
+/** 生成唯一字符串（时间戳+随机数转32进制） */
 export function createUniqueString() {
   const timestamp = +new Date() + ''
   const randomNum = parseInt((1 + Math.random()) * 65536) + ''
   return (+(randomNum + timestamp)).toString(32)
 }
 
-/**
- * Check if an element has a class
- * @param {HTMLElement} elm
- * @param {string} cls
- * @returns {boolean}
- */
+/** 判断DOM元素是否包含指定CSS类名 */
 export function hasClass(ele, cls) {
   return !!ele.className.match(new RegExp('(\\s|^)' + cls + '(\\s|$)'))
 }
 
-/**
- * Add class to element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
+/** 为DOM元素添加CSS类名 */
 export function addClass(ele, cls) {
   if (!hasClass(ele, cls)) ele.className += ' ' + cls
 }
 
-/**
- * Remove class from element
- * @param {HTMLElement} elm
- * @param {string} cls
- */
+/** 从DOM元素移除CSS类名 */
 export function removeClass(ele, cls) {
   if (hasClass(ele, cls)) {
     const reg = new RegExp('(\\s|^)' + cls + '(\\s|$)')
@@ -320,6 +261,7 @@ export function removeClass(ele, cls) {
   }
 }
 
+/** 将逗号分隔的字符串构建为查找映射对象，可选大小写不敏感 */
 export function makeMap(str, expectsLowerCase) {
   const map = Object.create(null)
   const list = str.split(',')
@@ -331,8 +273,10 @@ export function makeMap(str, expectsLowerCase) {
     : val => map[val]
 }
  
+/** 代码生成器默认导出前缀 */
 export const exportDefault = 'export default '
 
+/** js-beautify代码格式化配置，分别用于HTML和JS */
 export const beautifierConf = {
   html: {
     indent_size: '2',
@@ -374,16 +318,17 @@ export const beautifierConf = {
   }
 }
 
-// 首字母大小
+/** 首字母大写转换 */
 export function titleCase(str) {
   return str.replace(/( |^)[a-z]/g, L => L.toUpperCase())
 }
 
-// 下划转驼峰
+/** 下划线命名转驼峰命名 */
 export function camelCase(str) {
   return str.replace(/_[a-z]/g, str1 => str1.substr(-1).toUpperCase())
 }
 
+/** 判断字符串是否为数字格式（整数或小数） */
 export function isNumberStr(str) {
   return /^[+-]?(0|([1-9]\d*))(\.\d+)?$/g.test(str)
 }

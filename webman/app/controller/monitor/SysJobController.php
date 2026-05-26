@@ -7,8 +7,14 @@ use app\service\SysJobService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
+/**
+ * 定时任务管理控制器
+ *
+ * 负责定时任务的增删改查、状态变更和立即执行等功能
+ */
 class SysJobController
 {
+    // 分页查询定时任务列表
     public function list(Request $request)
     {
         $service = new SysJobService();
@@ -17,6 +23,7 @@ class SysJobController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 根据ID获取定时任务详情
     public function getInfo(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -27,6 +34,7 @@ class SysJobController
         return AjaxResult::success($job);
     }
 
+    // 新增定时任务
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -35,6 +43,7 @@ class SysJobController
         return AjaxResult::toAjax($service->insertJob($data) ? 1 : 0);
     }
 
+    // 修改定时任务
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -43,6 +52,7 @@ class SysJobController
         return AjaxResult::toAjax($service->updateJob($data) ? 1 : 0);
     }
 
+    // 批量删除定时任务
     public function remove(Request $request)
     {
         $jobIds = explode(',', $request->input('jobIds', ''));
@@ -51,6 +61,7 @@ class SysJobController
         return AjaxResult::toAjax($service->deleteJobByIds($jobIds) ? 1 : 0);
     }
 
+    // 变更定时任务状态（启动/暂停）
     public function changeStatus(Request $request)
     {
         $jobId = $request->post('jobId');
@@ -59,6 +70,7 @@ class SysJobController
         return AjaxResult::toAjax($service->changeStatus($jobId, $status) ? 1 : 0);
     }
 
+    // 立即执行一次定时任务
     public function run(Request $request)
     {
         $jobId = $request->post('jobId');

@@ -48,6 +48,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 图片上传组件 - 多图片上传与管理
+ * @description 支持多图片上传、预览、删除，自动携带Token认证，限制文件大小和数量
+ */
 import { getToken } from "@/utils/auth"
 import { isExternal } from "@/utils/validate"
 import Sortable from 'sortablejs'
@@ -173,7 +177,7 @@ function handleExceed() {
 // 上传成功回调
 function handleUploadSuccess(res, file) {
   if (res.code === 200) {
-    uploadList.value.push({ name: res.fileName, url: res.fileName })
+    uploadList.value.push({ name: res.fileName, url: res.url || res.fileName })
     uploadedSuccessfully()
   } else {
     number.value--

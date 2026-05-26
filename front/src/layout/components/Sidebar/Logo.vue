@@ -14,6 +14,10 @@
 </template>
 
 <script setup>
+/**
+ * @description Logo组件 - 侧边栏顶部系统Logo和标题
+ * @description 展示系统Logo图标和标题文字，折叠时只显示Logo
+ */
 import logo from '@/assets/logo/logo.png'
 import useSettingsStore from '@/store/modules/settings'
 import variables from '@/assets/styles/variables.module.scss'

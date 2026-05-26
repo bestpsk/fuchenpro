@@ -51,6 +51,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 导入表弹窗 - 从数据库选择表导入代码生成器
+ * @description 查询数据库中未导入的表列表，支持多选后批量导入
+ */
 import { listDbTable, importTable } from "@/api/tool/gen"
 
 const total = ref(0)

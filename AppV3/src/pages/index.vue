@@ -1,6 +1,6 @@
 <template>
   <view class="home-page">
-    <HeaderNav />
+    <HeaderNav ref="headerNavRef" />
 
     <scroll-view
       scroll-y
@@ -9,10 +9,12 @@
       @refresherrefresh="onPullDownRefresh"
       :refresher-enabled="true"
       :refresher-triggered="isRefreshing"
+      :refresher-threshold="80"
+      refresher-background="#F5F7FA"
     >
-      <NoticeBar />
+      <NoticeBar ref="noticeBarRef" />
 
-      <StatisticsCard :data="combinedStats" />
+      <StatisticsCard :data="combinedStats" @refresh="loadHomeData" />
 
       <OrderList :list="orderList" />
 
@@ -33,18 +35,22 @@ import StatisticsCard from '@/components/home/StatisticsCard.vue'
 import OrderList from '@/components/home/OrderList.vue'
 import { listSalesOrder } from '@/api/business/salesOrder'
 import { listArchive } from '@/api/business/archive'
+import { getTodayStats } from '@/api/home'
 import { useUserStore } from '@/store/modules/user'
 
 const isRefreshing = ref(false)
 const combinedStats = ref([])
 const orderList = ref([])
+const headerNavRef = ref(null)
+const noticeBarRef = ref(null)
 
 const userStore = useUserStore()
 
 /** 计算滚动区域高度，基于系统窗口高度适配不同设备 */
 const scrollHeight = computed(() => {
   const systemInfo = uni.getSystemInfoSync()
-  return `${systemInfo.windowHeight}px`
+  const headerHeight = systemInfo.statusBarHeight + 200
+  return `${systemInfo.windowHeight - headerHeight}px`
 })
 
 onMounted(() => {
@@ -54,11 +60,16 @@ onMounted(() => {
 /** 加载首页统计数据和最近归档订单列表，将归档数据映射为订单展示格式 */
 async function loadHomeData() {
   try {
+    const statsRes = await getTodayStats()
+    const stats = statsRes.data || statsRes || {}
+    const dealCustomer = stats.dealCustomerCount || {}
+    const dealAmount = stats.dealAmount || {}
+    const operationCustomer = stats.operationCustomerCount || {}
+
     combinedStats.value = [
-      { label: '咨询客数', todayValue: '128', monthValue: '1,256' },
-      { label: '成交客数', todayValue: '36', monthValue: '386' },
-      { label: '成交金额', todayValue: '¥12.8k', monthValue: '¥128.5k' },
-      { label: '成交项次', todayValue: '89', monthValue: '892' }
+      { label: '成交客数', todayValue: String(dealCustomer.today || 0), monthValue: String(dealCustomer.month || 0) },
+      { label: '成交金额', todayValue: formatAmount(dealAmount.today || 0), monthValue: formatAmount(dealAmount.month || 0) },
+      { label: '操作客数', todayValue: String(operationCustomer.today || 0), monthValue: String(operationCustomer.month || 0) }
     ]
 
     const archiveRes = await listArchive({
@@ -77,7 +88,8 @@ async function loadHomeData() {
       sourceType: item.sourceType || item.source_type,
       sourceId: item.sourceId || item.source_id,
       status: getSourceTypeLabel(item.sourceType || item.source_type),
-      createTime: item.archiveDate || item.archive_date || item.createTime
+      createTime: item.archiveDate || item.archive_date || item.createTime,
+      operatorName: item.operatorUserName || item.operator_user_name || ''
     }))
   } catch (error) {
     console.error('加载首页数据失败:', error)
@@ -88,18 +100,28 @@ async function loadHomeData() {
 /** 下拉刷新处理，延迟800ms后重新加载数据并停止刷新动画 */
 function onPullDownRefresh() {
   isRefreshing.value = true
-
-  setTimeout(() => {
-    loadHomeData()
+  loadHomeData().finally(() => {
     isRefreshing.value = false
-    uni.stopPullDownRefresh()
-  }, 800)
+  })
+  headerNavRef.value?.loadUnreadCount()
+  noticeBarRef.value?.loadNotices()
 }
 
 /** 根据来源类型编码返回中文标签（0-开单/1-操作/2-还款/3-手动） */
 function getSourceTypeLabel(type) {
   const map = { '0': '开单', '1': '操作', '2': '还款', '3': '手动' }
   return map[type] || (type || '未知')
+}
+
+function formatAmount(value) {
+  const num = Number(value) || 0
+  if (num >= 10000) {
+    return '¥' + (num / 10000).toFixed(1) + 'w'
+  }
+  if (num >= 1000) {
+    return '¥' + (num / 1000).toFixed(1) + 'k'
+  }
+  return '¥' + num.toFixed(0)
 }
 </script>
 

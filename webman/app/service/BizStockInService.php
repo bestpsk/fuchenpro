@@ -9,8 +9,12 @@ use app\model\BizProduct;
 use app\model\SysUser;
 use support\Db;
 
+/**
+ * 入库服务层，处理入库单的增删改查和确认，确认时自动累加库存
+ */
 class BizStockInService
 {
+    // 按条件分页查询入库单列表
     public function selectStockInList($params = [])
     {
         $query = BizStockIn::query();
@@ -48,6 +52,8 @@ class BizStockInService
         
         return $list;
     }
+
+    // 根据ID查询入库单详情，含明细列表
 
     public function selectStockInById($stockInId)
     {
@@ -94,6 +100,8 @@ class BizStockInService
         return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
+    // 新增入库单，生成入库编号并创建明细
+
     public function insertStockIn($data)
     {
         $items = $data['items'] ?? [];
@@ -131,6 +139,8 @@ class BizStockInService
         }
         return $stockIn;
     }
+
+    // 更新入库单信息
 
     public function updateStockIn($data)
     {
@@ -176,6 +186,8 @@ class BizStockInService
         }
         return true;
     }
+
+    // 批量删除入库单
 
     public function deleteStockInByIds($stockInIds)
     {

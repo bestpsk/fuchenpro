@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 日程模型，记录员工的企业拜访日程及状态
+ */
 class BizSchedule extends Model
 {
     protected $table = 'biz_schedule';

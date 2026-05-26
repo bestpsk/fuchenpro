@@ -2,6 +2,9 @@
 
 namespace app\service;
 
+/**
+ * IP地址服务层，根据IP查询地理位置信息
+ */
 class IpService
 {
     public static function getLocation($ip)

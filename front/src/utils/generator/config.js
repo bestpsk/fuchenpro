@@ -1,3 +1,11 @@
+/**
+ * @description 代码生成器配置 - 表单设计器组件定义
+ * @description 定义表单设计器中所有可用组件的默认配置，包括表单全局配置、
+ * 输入类组件（文本/密码/计数器）、选择类组件（下拉/级联/单选/多选/开关/滑块/时间/日期/评分/颜色/上传）、
+ * 布局类组件（行容器/按钮），以及各组件的校验触发方式
+ */
+
+/** 表单全局默认配置 */
 export const formConf = {
   formRef: 'formRef',
   formModel: 'formData',
@@ -11,6 +19,7 @@ export const formConf = {
   formBtns: true,
 }
 
+/** 输入类组件配置列表（单行文本/多行文本/密码/计数器） */
 export const inputComponents = [
   {
     label: '单行文本',
@@ -106,6 +115,7 @@ export const inputComponents = [
   },
 ]
 
+/** 选择类组件配置列表（下拉/级联/单选/多选/开关/滑块/时间/日期/评分/颜色/上传） */
 export const selectComponents = [
   {
     label: '下拉选择',
@@ -409,6 +419,7 @@ export const selectComponents = [
   },
 ]
 
+/** 布局类组件配置列表（行容器/按钮） */
 export const layoutComponents = [
   {
     layout: 'rowFormItem',
@@ -438,7 +449,7 @@ export const layoutComponents = [
   },
 ]
 
-// 组件rule的触发方式，无触发方式的组件不生成rule
+/** 各组件表单校验的触发方式，未配置的组件不生成校验规则 */
 export const trigger = {
   'el-input': 'blur',
   'el-input-number': 'blur',

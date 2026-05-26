@@ -32,6 +32,10 @@
   </div>
 </template>
 <script setup>
+/**
+ * @description 树节点弹窗 - 表单设计器树形节点编辑
+ * @description 编辑表单设计器中的树形结构节点配置
+ */
 const open = defineModel()
 const emit = defineEmits(['confirm'])
 const formData = ref({

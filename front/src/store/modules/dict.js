@@ -1,11 +1,16 @@
+/**
+ * @description 字典状态管理 - 数据字典缓存
+ * @description 缓存后端字典数据到前端，避免重复请求。提供按key获取/设置/删除/清空字典的操作
+ */
 const useDictStore = defineStore(
   'dict',
   {
     state: () => ({
+      /** 字典缓存数组，每项包含key和value */
       dict: new Array()
     }),
     actions: {
-      // 获取字典
+      /** 根据字典类型key获取缓存的字典数据 */
       getDict(_key) {
         if (_key == null && _key == "") {
           return null
@@ -20,7 +25,7 @@ const useDictStore = defineStore(
           return null
         }
       },
-      // 设置字典
+      /** 缓存字典数据，按key-value对存入数组 */
       setDict(_key, value) {
         if (_key !== null && _key !== "") {
           this.dict.push({
@@ -29,7 +34,7 @@ const useDictStore = defineStore(
           })
         }
       },
-      // 删除字典
+      /** 根据key删除指定字典缓存 */
       removeDict(_key) {
         var bln = false
         try {
@@ -44,11 +49,11 @@ const useDictStore = defineStore(
         }
         return bln
       },
-      // 清空字典
+      /** 清空所有字典缓存 */
       cleanDict() {
         this.dict = new Array()
       },
-      // 初始字典
+      /** 初始化字典（预留） */
       initDict() {
       }
     }

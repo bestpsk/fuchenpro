@@ -13,6 +13,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 主内容区 - 路由视图与版权信息
+ * @description 渲染当前路由匹配的组件，底部显示版权信息，支持iframe内嵌页面和缓存控制
+ */
 import copyright from "./Copyright/index"
 import iframeToggle from "./IframeToggle/index"
 import useTagsViewStore from '@/store/modules/tagsView'

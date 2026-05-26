@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 门店模型，存储门店基本信息、营业时间及服务人员
+ */
 class BizStore extends Model
 {
     protected $table = 'biz_store';

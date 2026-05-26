@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 代码生成-列模型，存储数据库表字段的元信息及生成配置
+ */
 class GenTableColumn extends Model
 {
     protected $table = 'gen_table_column';

@@ -269,6 +269,10 @@
 </template>
 
 <script setup name="Role">
+/**
+ * @description 角色管理页面 - 角色CRUD/权限分配/数据权限
+ * @description 提供角色增删改查、状态切换、菜单权限分配、数据权限范围设置等功能
+ */
 import { addRole, changeRoleStatus, dataScope, delRole, getRole, listRole, updateRole, deptTreeSelect } from "@/api/system/role"
 import { roleMenuTreeselect, treeselect as menuTreeselect } from "@/api/system/menu"
 

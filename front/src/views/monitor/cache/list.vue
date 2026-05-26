@@ -155,6 +155,10 @@
 </template>
 
 <script setup name="CacheList">
+/**
+ * @description 缓存列表页面 - 缓存键名查看与清理
+ * @description 查看Redis缓存键名列表，支持按键名查询缓存值、按缓存名/键名/全部清理缓存
+ */
 import { listCacheName, listCacheKey, getCacheValue, clearCacheName, clearCacheKey, clearCacheAll } from "@/api/monitor/cache"
 
 const { proxy } = getCurrentInstance()

@@ -34,6 +34,11 @@
 </template>
 
 <script setup>
+/**
+ * @description 锁屏页面 - 系统锁定与密码解锁
+ * @description 提供系统锁屏功能，包含动态粒子背景、实时时钟、密码解锁验证、
+ * 退出重新登录等交互，解锁后跳转回锁屏前的页面
+ */
 import { useRouter } from 'vue-router'
 import useUserStore from '@/store/modules/user'
 import useLockStore from '@/store/modules/lock'
@@ -44,23 +49,33 @@ const router = useRouter()
 const userStore = useUserStore()
 const lockStore = useLockStore()
 
+/** 解锁密码输入值 */
 const password = ref('')
+/** 解锁按钮加载状态 */
 const loading = ref(false)
+/** 错误提示信息 */
 const errorMsg = ref('')
+/** 是否正在抖动动画（密码错误时触发） */
 const isShaking = ref(false)
+/** 当前时间（HH:MM:SS格式） */
 const currentTime = ref('')
+/** 当前日期（年月日 星期X格式） */
 const currentDate = ref('')
+/** 密码输入框DOM引用 */
 const passwordInput = ref(null)
+/** 粒子画布DOM引用 */
 const particleCanvas = ref(null)
 
 let timer = null
 let animationId = null
 let particles = []
 
+/** 头像加载失败时回退为默认头像 */
 const onAvatarError = (e) => {
   e.target.src = defAva
 }
 
+/** 启动实时时钟，每秒更新时间和日期显示 */
 const startClock = () => {
   const update = () => {
     const now = new Date()
@@ -73,6 +88,7 @@ const startClock = () => {
   timer = setInterval(update, 1000)
 }
 
+/** 解锁处理：验证密码 → 调用解锁接口 → 清除锁屏状态 → 跳转回原页面 */
 const handleUnlock = async () => {
   if (!password.value) {
     showError('请输入密码')
@@ -95,12 +111,14 @@ const handleUnlock = async () => {
   }
 }
 
+/** 显示错误信息并触发输入框抖动动画 */
 const showError = (msg) => {
   errorMsg.value = msg
   isShaking.value = true
   setTimeout(() => { isShaking.value = false }, 600)
 }
 
+/** 退出重新登录：清除锁屏状态 → 调用登出 → 跳转登录页 */
 const goLogin = () => {
   lockStore.unlockScreen()
   userStore.logOut().then(() => {
@@ -108,6 +126,7 @@ const goLogin = () => {
   })
 }
 
+/** 初始化粒子动画背景，80个粒子随机运动并在距离120px内绘制连线 */
 const initParticles = () => {
   const canvas = particleCanvas.value
   if (!canvas) return

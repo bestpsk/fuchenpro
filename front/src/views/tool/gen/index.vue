@@ -146,6 +146,10 @@
 </template>
 
 <script setup name="Gen">
+/**
+ * @description 代码生成页面 - 数据库表导入/预览/生成代码
+ * @description 提供已导入表列表查询、数据库表导入、代码预览、生成代码、同步表结构等功能
+ */
 import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/gen"
 import router from "@/router"
 import importTable from "./importTable"

@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 发货单模型，记录方案的发货信息、物流及审核状态
+ */
 class BizShipment extends Model
 {
     protected $table = 'biz_shipment';
@@ -19,16 +22,19 @@ class BizShipment extends Model
         'create_by', 'create_time', 'update_by', 'update_time'
     ];
 
+    // 关联所属方案
     public function plan()
     {
         return $this->belongsTo(BizPlan::class, 'plan_id', 'plan_id');
     }
 
+    // 关联发货单下的所有产品明细
     public function items()
     {
         return $this->hasMany(BizShipmentItem::class, 'shipment_id', 'shipment_id');
     }
 
+    // 关联所属企业
     public function enterprise()
     {
         return $this->belongsTo(BizEnterprise::class, 'enterprise_id', 'enterprise_id');

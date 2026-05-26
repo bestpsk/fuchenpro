@@ -10,7 +10,7 @@ class BizAttendanceConfigService
 {
     public function selectConfigList($params = [])
     {
-        $query = BizAttendanceConfig::with(['rule', 'dept']);
+        $query = BizAttendanceConfig::with(['rule']);
 
         if (!empty($params['config_name'])) {
             $query->where('config_name', 'like', '%' . $params['config_name'] . '%');
@@ -32,13 +32,16 @@ class BizAttendanceConfigService
 
     public function selectConfigById($configId)
     {
-        return BizAttendanceConfig::with(['rule', 'dept'])->find($configId);
+        return BizAttendanceConfig::with(['rule'])->find($configId);
     }
 
     public function insertConfig($data)
     {
-        if (!empty($data['user_ids']) && is_array($data['user_ids'])) {
-            $data['user_ids'] = implode(',', $data['user_ids']);
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            $data['user_ids'] = !empty($data['user_ids']) ? implode(',', $data['user_ids']) : null;
+        }
+        if (isset($data['dept_ids']) && is_array($data['dept_ids'])) {
+            $data['dept_ids'] = !empty($data['dept_ids']) ? implode(',', $data['dept_ids']) : null;
         }
         $data['create_time'] = date('Y-m-d H:i:s');
         return BizAttendanceConfig::create($data);
@@ -46,13 +49,16 @@ class BizAttendanceConfigService
 
     public function updateConfig($data)
     {
-        if (!empty($data['user_ids']) && is_array($data['user_ids'])) {
-            $data['user_ids'] = implode(',', $data['user_ids']);
+        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
+            $data['user_ids'] = !empty($data['user_ids']) ? implode(',', $data['user_ids']) : null;
+        }
+        if (isset($data['dept_ids']) && is_array($data['dept_ids'])) {
+            $data['dept_ids'] = !empty($data['dept_ids']) ? implode(',', $data['dept_ids']) : null;
         }
         $data['update_time'] = date('Y-m-d H:i:s');
 
         $fillable = [
-            'config_name', 'rule_id', 'config_type', 'user_ids', 'dept_id',
+            'config_name', 'rule_id', 'config_type', 'user_ids', 'dept_ids',
             'status', 'remark', 'create_by', 'create_time', 'update_by', 'update_time'
         ];
         $updateData = array_intersect_key($data, array_flip($fillable));
@@ -78,7 +84,7 @@ class BizAttendanceConfigService
 
         $user = SysUser::find($userId);
         if ($user && $user->dept_id) {
-            $deptConfig = BizAttendanceConfig::where('dept_id', $user->dept_id)
+            $deptConfig = BizAttendanceConfig::whereRaw("FIND_IN_SET(?, dept_ids)", [$user->dept_id])
                 ->where('config_type', 2)
                 ->where('status', '0')
                 ->first();

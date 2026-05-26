@@ -73,3 +73,12 @@
     </el-table>
 
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
+  </div>
+</template>
+
+<script setup>
+/**
+ * @description 出库管理临时页面 - 出库单查询与操作（旧版）
+ * @description 旧版出库管理页面模板，仅包含模板代码，逻辑待补充
+ */
+</script>

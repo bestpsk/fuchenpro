@@ -9,8 +9,12 @@ use app\model\BizPlanItem;
 use app\model\BizInventory;
 use app\service\BizPlanService;
 
+/**
+ * 出货服务层，处理出货单的增删改查、审核、发货、收货确认，自动更新方案金额和库存
+ */
 class BizShipmentService
 {
+    // 按条件分页查询发货单列表
     public function selectShipmentList($params = [])
     {
         $query = BizShipment::with(['plan']);
@@ -36,6 +40,8 @@ class BizShipmentService
         return $query->orderBy('shipment_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询发货单详情，含明细列表
+
     public function selectShipmentById($shipmentId)
     {
         return BizShipment::with(['items', 'plan', 'enterprise'])->find($shipmentId);
@@ -57,6 +63,8 @@ class BizShipmentService
 
         return 'SH' . $today . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
+
+    // 新增发货单，生成发货编号并扣减方案明细
 
     public function insertShipment($data)
     {
@@ -113,6 +121,8 @@ class BizShipmentService
         return $shipment;
     }
 
+    // 更新发货单信息
+
     public function updateShipment($data)
     {
         $shipment = BizShipment::find($data['shipment_id']);
@@ -157,6 +167,8 @@ class BizShipmentService
 
         return $result;
     }
+
+    // 批量删除发货单
 
     public function deleteShipmentByIds($shipmentIds)
     {
@@ -204,6 +216,8 @@ class BizShipmentService
             'update_time' => date('Y-m-d H:i:s')
         ]);
     }
+
+    // 确认收货
 
     public function confirmReceipt($shipmentId)
     {

@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 用户-岗位关联中间表模型，用于用户岗位的多对多关系
+ */
 class SysUserPost extends Model
 {
     protected $table = 'sys_user_post';

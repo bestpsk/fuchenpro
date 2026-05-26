@@ -15,6 +15,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 分页组件 - Element Plus分页器封装
+ * @description 封装el-pagination，统一分页样式和事件处理，支持页码切换后自动滚动到顶部
+ */
 import { scrollTo } from '@/utils/scroll-to'
 
 const props = defineProps({

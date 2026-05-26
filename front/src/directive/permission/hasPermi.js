@@ -1,6 +1,7 @@
- /**
- * v-hasPermi 操作权限处理
- * Copyright (c) 2019 ruoyi
+/**
+ * @description 操作权限指令 - 根据权限标识控制元素显示
+ * @description 使用方式：v-hasPermi="['system:user:add']"
+ * 当用户不拥有指定权限时，直接移除DOM元素；支持超管通配符 *:*:*
  */
 import useUserStore from '@/store/modules/user'
 

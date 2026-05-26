@@ -28,6 +28,17 @@
           </text>
         </view>
 
+        <view class="info-row" v-if="orderInfo.storeDealer || orderInfo.store_dealer">
+            <u-icon name="account" size="20" color="#86909C" />
+            <text class="label">门店管理</text>
+            <text class="value">{{ orderInfo.storeDealer || orderInfo.store_dealer }}</text>
+          </view>
+          <view class="info-row" v-if="orderInfo.creatorUserName || orderInfo.creator_user_name">
+            <u-icon name="man" size="20" color="#86909C" />
+            <text class="label">开单员工</text>
+            <text class="value">{{ orderInfo.creatorUserName || orderInfo.creator_user_name }}</text>
+          </view>
+
         <view v-if="detailMode === 'operation'" class="info-row">
           <u-icon name="account-fill" size="20" color="#86909C" />
           <text class="label">操作人</text>
@@ -97,7 +108,6 @@
           </view>
           <view class="item-right">
             <text class="item-count">{{ item.quantity || item.count || 0 }}次</text>
-            <text v-if="item.isDeal === '1' || item.is_deal === '1'" class="deal-tag">已成交</text>
           </view>
         </view>
 
@@ -105,28 +115,25 @@
           <template v-if="detailMode !== 'operation'">
           <view class="info-line">
             <view class="info-left">
-              <text class="info-label">方案价</text>
-              <text class="info-value price">¥{{ item.planPrice || item.plan_price || item.price || '0.00' }}</text>
+              <text class="info-label">单价</text>
+              <text class="info-value price">¥{{ getUnitPrice(item) }}</text>
             </view>
             <view class="info-right">
-              <text class="info-label">单价</text>
-              <text class="info-value">¥{{ getUnitPrice(item) }}</text>
+              <text class="info-label">成交价</text>
+              <text class="info-value amount">¥{{ getDisplayDealAmount(item) }}</text>
             </view>
           </view>
 
           <view class="info-line summary-line">
             <view class="info-left">
-              <text class="info-label">成交价</text>
-              <text class="info-value amount">¥{{ item.dealAmount || item.deal_amount || '0.00' }}</text>
-            </view>
-            <view class="info-right">
               <template v-if="getOwedAmount(item) > 0">
                 <text class="info-label">欠款</text>
                 <text class="info-value owed">¥{{ getOwedAmount(item) }}</text>
-                <text class="info-gap"></text>
               </template>
+            </view>
+            <view class="info-right">
               <text class="info-label">实付</text>
-              <text class="info-value paid">¥{{ item.paidAmount || item.paid_amount || '0.00' }}</text>
+              <text class="info-value paid">¥{{ getDisplayPaidAmount(item) }}</text>
             </view>
           </view>
           </template>
@@ -138,8 +145,8 @@
               <text class="info-value price">¥{{ getUnitPrice(item) }}</text>
             </view>
             <view class="info-right">
-              <text class="info-label">总消耗</text>
-              <text class="info-value amount">¥{{ item.planPrice || item.plan_price || '0.00' }}</text>
+              <text class="info-label">消耗金额</text>
+              <text class="info-value amount">¥{{ item.dealAmount || item.deal_amount || '0.00' }}</text>
             </view>
           </view>
           </template>
@@ -150,8 +157,9 @@
     <view class="audit-section" v-if="canAudit && detailMode !== 'operation'">
       <view class="section-title">审核操作</view>
       <view class="audit-btns">
-        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0'" type="primary" text="企业审核通过" @click="handleEnterpriseAudit"></u-button>
-        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '1'" type="success" text="财务审核通过" @click="handleFinanceAudit"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0'" type="primary" text="企业审核" @click="handleEnterpriseAudit"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '1'" type="success" text="财务审核" @click="handleFinanceAudit"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0'" type="error" plain text="取消订单" @click="handleCancelOrder"></u-button>
       </view>
     </view>
   </view>
@@ -164,7 +172,7 @@
  * operation（操作记录模式，展示满意度/照片/反馈），支持企业审核和财务审核操作
  */
 import { ref, computed, onMounted } from 'vue'
-import { getSalesOrder, enterpriseAudit, financeAudit } from '@/api/business/salesOrder'
+import { getSalesOrder, enterpriseAudit, financeAudit, cancelOrder } from '@/api/business/salesOrder'
 import { getOperationRecord } from '@/api/business/operationRecord'
 
 const orderInfo = ref({})
@@ -185,10 +193,9 @@ const satisfactionValue = ref(0)
 function getOrderStatusName(status) {
   if (!status && status !== 0) return '未知'
   const statusMap = {
-    '0': '待审核',
+    '0': '待确认',
     '1': '企业已审',
     '2': '财务已审',
-    '3': '已完成',
     '4': '已取消'
   }
   return statusMap[String(status)] || '未知'
@@ -216,7 +223,7 @@ function formatTime(time) { if (!time) return ''; return String(time).substring(
 /** 计算品项单次价：方案价÷次数 */
 function getUnitPrice(item) {
   const qty = Number(item.quantity || item.count || 1)
-  const price = Number(item.planPrice || item.plan_price || 0)
+  const price = Number(item.dealAmount || item.deal_amount || 0)
   if (qty <= 0) return '0.00'
   return (price / qty).toFixed(2)
 }
@@ -226,6 +233,21 @@ function getOwedAmount(item) {
   const deal = Number(item.dealAmount || item.deal_amount || 0)
   const paid = Number(item.paidAmount || item.paid_amount || 0)
   return Math.max(0, deal - paid).toFixed(2)
+}
+
+/** 显示成交金额：根据订单类型判断 */
+function getDisplayDealAmount(item) {
+  const sourceType = orderInfo.value.sourceType || orderInfo.value.source_type
+  if (sourceType === '2') return '-'
+  return Number(item.dealAmount || item.deal_amount || 0).toFixed(2)
+}
+
+/** 显示实付金额：根据订单类型判断 */
+function getDisplayPaidAmount(item) {
+  const sourceType = orderInfo.value.sourceType || orderInfo.value.source_type
+  const paid = Number(item.paidAmount || item.paid_amount || 0)
+  if (sourceType === '1') return '-'
+  return paid.toFixed(2)
 }
 
 /** 根据图片路径拼接完整URL，处理相对路径和绝对路径 */
@@ -314,6 +336,15 @@ async function handleFinanceAudit() {
   }})
 }
 
+async function handleCancelOrder() {
+  uni.showModal({ title: '提示', content: '确认取消该订单？取消后不可恢复。', success: async (res) => {
+    if (res.confirm) {
+      try { await cancelOrder(orderId.value); uni.showToast({ title: '取消成功', icon: 'success' }); loadDetail() }
+      catch (e) { console.error('取消失败:', e) }
+    }
+  }})
+}
+
 onMounted(() => {
   const pages = getCurrentPages()
   const options = pages[pages.length - 1].options || {}
@@ -323,6 +354,17 @@ onMounted(() => {
   uni.setNavigationBarTitle({
     title: detailMode.value === 'operation' ? '操作详情' : '订单详情'
   })
+
+  if (detailMode.value === 'order' && orderId.value) {
+    getSalesOrder(orderId.value).then(response => {
+      const data = response.data || response
+      if (String(data.source_type || data.sourceType || '0') === '1') {
+        detailMode.value = 'operation'
+        uni.setNavigationBarTitle({ title: '操作详情' })
+      }
+    }).catch(() => {})
+  }
+
   loadDetail()
 })
 </script>
@@ -362,8 +404,7 @@ page { background-color: #F5F7FA; }
 
   &.status-0 { background: #FFF7E8; color: #FF7D00; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-2 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-3 { background: #E8FFEA; color: #00B42A; }
+  &.status-2 { background: #E8FFEA; color: #00B42A; }
   &.status-4 { background: #F2F3F5; color: #86909C; }
 }
 

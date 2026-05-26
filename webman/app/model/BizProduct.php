@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 产品模型，存储产品基本信息、价格、保质期及库存预警设置
+ */
 class BizProduct extends Model
 {
     protected $table = 'biz_product';
@@ -18,11 +21,13 @@ class BizProduct extends Model
         'create_by', 'create_time', 'update_by', 'update_time'
     ];
 
+    // 关联所属供应商
     public function supplier()
     {
         return $this->belongsTo(BizSupplier::class, 'supplier_id', 'supplier_id');
     }
 
+    // 关联产品的库存记录
     public function inventory()
     {
         return $this->hasOne(BizInventory::class, 'product_id', 'product_id');

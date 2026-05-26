@@ -6,8 +6,12 @@ use app\model\SysConfig;
 use support\Redis;
 use app\common\Constants;
 
+/**
+ * 系统参数配置服务层，处理参数的增删改查和缓存管理
+ */
 class SysConfigService
 {
+    // 按条件分页查询系统参数配置列表
     public static function selectConfigList($params = [])
     {
         $query = SysConfig::query();
@@ -27,10 +31,14 @@ class SysConfigService
         return $query->orderBy('config_id', 'asc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询系统参数配置详情
+
     public static function selectConfigById($configId)
     {
         return SysConfig::find($configId);
     }
+
+    // 根据参数键名查询参数值
 
     public static function selectConfigByKey($configKey)
     {
@@ -49,6 +57,8 @@ class SysConfigService
         return '';
     }
 
+    // 新增系统参数配置
+
     public static function insertConfig($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
@@ -60,6 +70,8 @@ class SysConfigService
         return $result;
     }
 
+    // 更新系统参数配置信息
+
     public static function updateConfig($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
@@ -70,6 +82,8 @@ class SysConfigService
         }
         return $result;
     }
+
+    // 批量删除系统参数配置
 
     public static function deleteConfigByIds($configIds)
     {
@@ -93,6 +107,8 @@ class SysConfigService
             $redis->set(Constants::SYS_CONFIG_KEY . $config->config_key, $config->config_value);
         }
     }
+
+    // 查询验证码是否启用
 
     public static function selectCaptchaEnabled()
     {

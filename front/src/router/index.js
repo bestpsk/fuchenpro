@@ -1,3 +1,8 @@
+/**
+ * @description 路由配置 - 静态路由与动态路由定义
+ * @description 定义公共路由（登录/注册/首页/401/404等）和基于权限的动态路由，
+ * 动态路由在permission.js中根据用户权限动态挂载
+ */
 import { createWebHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'

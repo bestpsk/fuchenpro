@@ -41,7 +41,7 @@ service.interceptors.request.use(config => {
     console.log('[request]', config.url, 'Token:', getToken()?.substring(0, 30) + '...')
   }
   // GET请求：将params对象序列化为URL查询字符串，避免参数丢失
-  if (config.method === 'get' && config.params) {
+  if ((config.method === 'get' || config.method === 'delete') && config.params) {
     let url = config.url + '?' + tansParams(config.params)
     url = url.slice(0, -1)
     config.params = {}

@@ -73,6 +73,10 @@
 </template>
 
 <script setup>
+/**
+ * @description 字典详情抽屉 - 查看字典类型下的数据项
+ * @description 抽屉形式展示指定字典类型的字典数据列表
+ */
 import { listData } from '@/api/system/dict/data'
 
 const props = defineProps({

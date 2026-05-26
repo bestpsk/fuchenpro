@@ -5,15 +5,19 @@ namespace app\service;
 use app\model\BizEmployeeConfig;
 use support\Db;
 
+/**
+ * 员工配置服务层，处理员工工作配置的增删改查、排班状态和休息日期管理
+ */
 class BizEmployeeConfigService
 {
+    // 按条件分页查询员工排班配置列表
     public function selectConfigList($params = [])
     {
         $query = BizEmployeeConfig::query()
             ->leftJoin('sys_user_post as up', 'biz_employee_config.user_id', '=', 'up.user_id')
             ->leftJoin('sys_post as p', 'up.post_id', '=', 'p.post_id')
             ->leftJoin('sys_user as su', 'biz_employee_config.user_id', '=', 'su.user_id')
-            ->select('biz_employee_config.*', 'p.post_id', 'p.post_name', 'su.real_name', 'su.phonenumber');
+            ->select('biz_employee_config.*', 'p.post_id', 'p.post_name', 'su.nick_name', 'su.phonenumber');
 
         if (!empty($params['user_name'])) {
             $query->where('biz_employee_config.user_name', 'like', '%' . $params['user_name'] . '%');
@@ -53,6 +57,8 @@ class BizEmployeeConfigService
         return $result;
     }
 
+    // 根据ID查询员工排班配置详情
+
     public function selectConfigById($configId)
     {
         return BizEmployeeConfig::find($configId);
@@ -63,11 +69,15 @@ class BizEmployeeConfigService
         return BizEmployeeConfig::where('user_id', $userId)->first();
     }
 
+    // 新增员工排班配置
+
     public function insertConfig($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
         return BizEmployeeConfig::create($data);
     }
+
+    // 更新员工排班配置信息
 
     public function updateConfig($data)
     {
@@ -90,6 +100,8 @@ class BizEmployeeConfigService
             'update_time' => date('Y-m-d H:i:s')
         ]);
     }
+
+    // 批量删除员工排班配置
 
     public function deleteConfigByIds($configIds)
     {

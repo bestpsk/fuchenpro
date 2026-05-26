@@ -165,6 +165,10 @@
 </template>
 
 <script setup name="Config">
+/**
+ * @description 参数配置页面 - 系统参数增删改查与缓存刷新
+ * @description 提供系统参数增删改查、按键名查询参数值、刷新缓存等功能
+ */
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config"
 
 const { proxy } = getCurrentInstance()

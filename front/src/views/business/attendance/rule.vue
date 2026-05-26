@@ -118,6 +118,11 @@
 </template>
 
 <script setup name="AttendanceRule">
+/**
+ * @description 考勤规则页面 - 考勤规则CRUD与地图选点
+ * @description 提供考勤规则增删改查，包含上下班时间、迟到/早退阈值、
+ * 工作地点（经纬度+地址+允许距离）设置，支持地图选点定位
+ */
 import { listAttendanceRule, getAttendanceRule, addAttendanceRule, updateAttendanceRule, delAttendanceRule } from "@/api/business/attendance"
 import MapPicker from "@/components/MapPicker/index.vue"
 

@@ -5,13 +5,21 @@ namespace app\controller\system;
 use support\Request;
 use app\service\SysUserService;
 use app\service\PermissionService;
+use app\service\CosService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 use app\common\ExcelUtil;
 use app\model\SysUser;
 
+/**
+ * 系统用户管理控制器
+ *
+ * 负责用户的增删改查、导入导出、重置密码、状态变更、
+ * 个人信息修改、头像上传、角色授权和部门树查询等功能
+ */
 class SysUserController
 {
+    // 分页查询用户列表，支持按部门、用户名、手机号、状态等条件筛选
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->all());
@@ -21,6 +29,7 @@ class SysUserController
         return TableDataInfo::result($result->items(), $result->total());
     }
 
+    // 导出用户数据为Excel文件
     public function export(Request $request)
     {
         $params = $request->all();
@@ -34,6 +43,7 @@ class SysUserController
         return $excelUtil->exportExcel($list, '用户数据');
     }
 
+    // 从Excel文件导入用户数据，支持更新已存在用户
     public function importData(Request $request)
     {
         $file = $request->file('file');
@@ -57,12 +67,14 @@ class SysUserController
         }
     }
 
+    // 下载用户导入模板
     public function importTemplate(Request $request)
     {
         $excelUtil = new ExcelUtil(SysUser::class);
         return $excelUtil->importTemplateExcel('用户数据');
     }
 
+    // 获取用户详情，含角色列表和岗位列表；无ID时返回新增用户所需的角色岗位选项
     public function getInfo(Request $request)
     {
         $userId = $request->input('user_id', 0);
@@ -104,6 +116,7 @@ class SysUserController
         ]);
     }
 
+    // 新增用户，校验用户名、手机号、邮箱唯一性
     public function add(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -124,6 +137,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改用户信息，校验用户名、手机号、邮箱唯一性
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
@@ -144,10 +158,13 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 批量删除用户，不允许删除超级管理员(ID=1)
     public function remove(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $userIds = explode(',', end($parts));
+        $userIds = $request->input('userId', '');
+        if (!is_array($userIds)) {
+            $userIds = explode(',', $userIds);
+        }
         $userIds = array_map('intval', array_filter($userIds));
         if (in_array(1, $userIds)) {
             return AjaxResult::error('不允许删除超级管理员');
@@ -157,6 +174,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 重置指定用户密码
     public function resetPwd(Request $request)
     {
         $userId = $request->post('userId');
@@ -169,6 +187,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 变更用户状态（启用/停用）
     public function changeStatus(Request $request)
     {
         $userId = $request->post('userId');
@@ -178,6 +197,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 获取当前登录用户的个人信息，含角色组和岗位组
     public function profile(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -197,6 +217,7 @@ class SysUserController
         ]);
     }
 
+    // 修改当前登录用户的个人信息，校验手机号和邮箱唯一性
     public function updateProfile(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -214,6 +235,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 修改当前登录用户密码，需验证旧密码
     public function updatePwd(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -234,6 +256,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 上传当前登录用户头像，支持COS云存储和本地存储
     public function avatar(Request $request)
     {
         $loginUser = $request->loginUser;
@@ -244,6 +267,18 @@ class SysUserController
 
         $ext = $file->getUploadExtension() ?: 'png';
         $filename = md5(uniqid()) . '.' . $ext;
+
+        $cosService = new CosService();
+        if ($cosService->isEnabled()) {
+            $cosPath = 'avatar/' . $filename;
+            $avatarUrl = $cosService->uploadFile($file, $cosPath);
+            if ($avatarUrl) {
+                SysUser::where('user_id', $loginUser->userId)->update(['avatar' => $avatarUrl]);
+                return AjaxResult::success('', ['imgUrl' => $avatarUrl]);
+            }
+            return AjaxResult::error('COS上传失败');
+        }
+
         $uploadDir = public_path() . '/profile/avatar/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
@@ -251,11 +286,12 @@ class SysUserController
         $file->move($uploadDir . $filename);
 
         $avatarUrl = '/profile/avatar/' . $filename;
-        \app\model\SysUser::where('user_id', $loginUser->userId)->update(['avatar' => $avatarUrl]);
+        SysUser::where('user_id', $loginUser->userId)->update(['avatar' => $avatarUrl]);
 
         return AjaxResult::success('', ['imgUrl' => $avatarUrl]);
     }
 
+    // 获取用户角色授权页面数据（用户信息+所有角色列表）
     public function authRole(Request $request)
     {
         $parts = explode('/', $request->path());
@@ -281,6 +317,7 @@ class SysUserController
         ]);
     }
 
+    // 保存用户角色授权关系
     public function insertAuthRole(Request $request)
     {
         $userId = $request->post('userId');
@@ -297,6 +334,7 @@ class SysUserController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 获取部门树下拉选择数据
     public function deptTree(Request $request)
     {
         $deptService = new \app\service\SysDeptService();

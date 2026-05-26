@@ -1,9 +1,14 @@
-/* eslint-disable max-len */
+/**
+ * @description HTML生成器 - 表单设计器HTML代码生成
+ * @description 根据表单设计器的组件配置生成Vue模板代码，
+ * 支持生成表单页面和弹窗表单两种模式，涵盖所有Element Plus表单组件的模板生成
+ */
 import { trigger } from './config'
 
 let confGlobal
 let someSpanIsNot24
 
+/** 生成弹窗表单的外层Dialog包装 */
 export function dialogWrapper(str) {
   return `<el-dialog v-model="dialogVisible"  @open="onOpen" @close="onClose" title="Dialog Titile">
     ${str}
@@ -14,6 +19,7 @@ export function dialogWrapper(str) {
   </el-dialog>`
 }
 
+/** 生成页面模板的外层容器 */
 export function vueTemplate(str) {
   return `<template>
     <div class="app-container">
@@ -22,18 +28,21 @@ export function vueTemplate(str) {
   </template>`
 }
 
+/** 生成script标签包装 */
 export function vueScript(str) {
   return `<script setup>
     ${str}
   </script>`
 }
 
+/** 生成style标签包装 */
 export function cssStyle(cssStr) {
   return `<style>
     ${cssStr}
   </style>`
 }
 
+/** 构建表单模板，包含el-form和可选的el-row布局 */
 function buildFormTemplate(conf, child, type) {
   let labelPosition = ''
   if (conf.labelPosition !== 'right') {
@@ -52,6 +61,7 @@ function buildFormTemplate(conf, child, type) {
   return str
 }
 
+/** 构建表单底部的提交和重置按钮 */
 function buildFromBtns(conf, type) {
   let str = ''
   if (conf.formBtns && type === 'file') {
@@ -68,7 +78,7 @@ function buildFromBtns(conf, type) {
   return str
 }
 
-// span不为24的用el-col包裹
+/** 当组件span不为24时，用el-col包裹 */
 function colWrapper(element, str) {
   if (someSpanIsNot24 || element.span !== 24) {
     return `<el-col :span="${element.span}">
@@ -78,7 +88,9 @@ function colWrapper(element, str) {
   return str
 }
 
+/** 布局处理：列布局（表单项）和行布局（行容器） */
 const layouts = {
+  /** 生成列布局的表单项，包含label和校验规则 */
   colFormItem(element) {
     let labelWidth = ''
     if (element.labelWidth && element.labelWidth !== confGlobal.labelWidth) {
@@ -92,6 +104,7 @@ const layouts = {
     str = colWrapper(element, str)
     return str
   },
+  /** 生成行布局容器，支持flex布局属性 */
   rowFormItem(element) {
     const type = element.type === 'default' ? '' : `type="${element.type}"`
     const justify = element.type === 'default' ? '' : `justify="${element.justify}"`
@@ -106,6 +119,7 @@ const layouts = {
   }
 }
 
+/** 各Element Plus组件的HTML模板生成器 */
 const tags = {
   'el-button': el => {
     const {
@@ -116,7 +130,7 @@ const tags = {
     const size = el.size ? `size="${el.size}"` : ''
     let child = buildElButtonChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${type} ${icon} ${size} ${disabled}>${child}</${el.tag}>`
   },
   'el-input': el => {
@@ -135,7 +149,7 @@ const tags = {
       : ''
     let child = buildElInputChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${vModel} ${type} ${placeholder} ${maxlength} ${showWordLimit} ${readonly} ${disabled} ${clearable} ${prefixIcon} ${suffixIcon} ${showPassword} ${autosize} ${width}>${child}</${el.tag}>`
   },
   'el-input-number': el => {
@@ -157,7 +171,7 @@ const tags = {
     const multiple = el.multiple ? 'multiple' : ''
     let child = buildElSelectChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${vModel} ${placeholder} ${disabled} ${multiple} ${filterable} ${clearable} ${width}>${child}</${el.tag}>`
   },
   'el-radio-group': el => {
@@ -165,7 +179,7 @@ const tags = {
     const size = `size="${el.size}"`
     let child = buildElRadioGroupChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${vModel} ${size} ${disabled}>${child}</${el.tag}>`
   },
   'el-checkbox-group': el => {
@@ -175,7 +189,7 @@ const tags = {
     const max = el.max ? `:max="${el.max}"` : ''
     let child = buildElCheckboxGroupChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${vModel} ${min} ${max} ${size} ${disabled}>${child}</${el.tag}>`
   },
   'el-switch': el => {
@@ -269,11 +283,12 @@ const tags = {
     const ref = `ref="${el.vModel}"`
     let child = buildElUploadChild(el)
 
-    if (child) child = `\n${child}\n` // 换行
+    if (child) child = `\n${child}\n`
     return `<${el.tag} ${ref} ${fileList} ${action} ${autoUpload} ${multiple} ${beforeUpload} ${listType} ${accept} ${name} ${disabled}>${child}</${el.tag}>`
   }
 }
 
+/** 构建组件通用属性（v-model/clearable/placeholder/width/disabled） */
 function attrBuilder(el) {
   return {
     vModel: `v-model="${confGlobal.formModel}.${el.vModel}"`,
@@ -284,7 +299,7 @@ function attrBuilder(el) {
   }
 }
 
-// el-buttin 子级
+/** 生成按钮组件的子内容（按钮文字） */
 function buildElButtonChild(conf) {
   const children = []
   if (conf.default) {
@@ -293,7 +308,7 @@ function buildElButtonChild(conf) {
   return children.join('\n')
 }
 
-// el-input innerHTML
+/** 生成输入框组件的子内容（前缀/后缀插槽） */
 function buildElInputChild(conf) {
   const children = []
   if (conf.prepend) {
@@ -305,6 +320,7 @@ function buildElInputChild(conf) {
   return children.join('\n')
 }
 
+/** 生成下拉选择组件的子选项 */
 function buildElSelectChild(conf) {
   const children = []
   if (conf.options && conf.options.length) {
@@ -313,6 +329,7 @@ function buildElSelectChild(conf) {
   return children.join('\n')
 }
 
+/** 生成单选框组组件的子选项（支持按钮样式和边框） */
 function buildElRadioGroupChild(conf) {
   const children = []
   if (conf.options && conf.options.length) {
@@ -323,6 +340,7 @@ function buildElRadioGroupChild(conf) {
   return children.join('\n')
 }
 
+/** 生成多选框组组件的子选项（支持按钮样式和边框） */
 function buildElCheckboxGroupChild(conf) {
   const children = []
   if (conf.options && conf.options.length) {
@@ -333,6 +351,7 @@ function buildElCheckboxGroupChild(conf) {
   return children.join('\n')
 }
 
+/** 生成上传组件的子内容（上传按钮和提示文字） */
 function buildElUploadChild(conf) {
   const list = []
   if (conf['list-type'] === 'picture-card') list.push('<i class="el-icon-plus"></i>')
@@ -341,6 +360,7 @@ function buildElUploadChild(conf) {
   return list.join('\n')
 }
 
+/** 根据表单配置生成完整的HTML模板代码 */
 export function makeUpHtml(conf, type) {
   const htmlList = []
   confGlobal = conf

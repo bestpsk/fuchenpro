@@ -6,6 +6,9 @@ use app\model\BizPlan;
 use app\model\BizPlanItem;
 use app\model\BizEnterprise;
 
+/**
+ * 方案服务层，处理方案的增删改查、审核流程、金额管理和出货关联
+ */
 class BizPlanService
 {
     public function selectEnterpriseList($params = [])
@@ -20,6 +23,8 @@ class BizPlanService
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('enterprise_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
+
+    // 按条件分页查询方案列表，含企业名称和发货进度
 
     public function selectPlanList($params = [])
     {
@@ -54,9 +59,14 @@ class BizPlanService
         return $result;
     }
 
+    // 根据ID查询方案详情，含明细列表
     public function selectPlanById($planId)
     {
-        return BizPlan::with(['items', 'enterprise', 'shipments.items'])->find($planId);
+        $plan = BizPlan::with(['items.product', 'enterprise', 'shipments.items'])->find($planId);
+        if ($plan) {
+            $plan->enterprise_name = $plan->enterprise ? $plan->enterprise->enterprise_name : null;
+        }
+        return $plan;
     }
 
     public function generatePlanNo()
@@ -75,6 +85,8 @@ class BizPlanService
 
         return 'PL' . $today . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
+
+    // 新增方案，生成方案编号并计算金额
 
     public function insertPlan($data)
     {
@@ -95,6 +107,8 @@ class BizPlanService
 
         return $plan;
     }
+
+    // 更新方案信息
 
     public function updatePlan($data)
     {
@@ -143,6 +157,8 @@ class BizPlanService
             BizPlanItem::create($item);
         }
     }
+
+    // 批量删除方案，同时删除关联明细和发货单
 
     public function deletePlanByIds($planIds)
     {
@@ -196,6 +212,8 @@ class BizPlanService
 
         return BizPlan::where('plan_id', $planId)->update($updateData);
     }
+
+    // 修改方案状态
 
     public function changeStatus($planId, $status, $statusChangeBy = '')
     {

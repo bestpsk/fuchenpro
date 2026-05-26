@@ -5,6 +5,9 @@ namespace app\service;
 use support\Redis;
 use app\common\Constants;
 
+/**
+ * Redis缓存服务层，封装Redis常用操作，支持字符串和哈希数据类型
+ */
 class RedisService
 {
     public static function connection()

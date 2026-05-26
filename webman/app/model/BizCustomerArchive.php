@@ -4,6 +4,9 @@ namespace app\model;
 
 use support\Model;
 
+/**
+ * 客户档案模型，记录客户的消费/回访等归档信息，含方案项目快照和满意度
+ */
 class BizCustomerArchive extends Model
 {
     protected $table = 'biz_customer_archive';

@@ -5,8 +5,12 @@ namespace app\service;
 use app\model\SysNotice;
 use app\model\SysNoticeRead;
 
+/**
+ * 通知公告服务层，处理通知的增删改查、已读标记和已读用户查询
+ */
 class SysNoticeService
 {
+    // 按条件分页查询通知公告列表
     public function selectNoticeList($params = [])
     {
         $query = SysNotice::query();
@@ -26,10 +30,14 @@ class SysNoticeService
         return $query->orderBy('notice_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
     }
 
+    // 根据ID查询通知公告详情
+
     public function selectNoticeById($noticeId)
     {
         return SysNotice::find($noticeId);
     }
+
+    // 新增通知公告
 
     public function insertNotice($data)
     {
@@ -37,11 +45,15 @@ class SysNoticeService
         return SysNotice::create($data);
     }
 
+    // 更新通知公告信息
+
     public function updateNotice($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
         return SysNotice::where('notice_id', $data['notice_id'])->update($data);
     }
+
+    // 批量删除通知公告
 
     public function deleteNoticeByIds($noticeIds)
     {
@@ -58,11 +70,22 @@ class SysNoticeService
 
         $readIds = SysNoticeRead::where('user_id', $userId)->pluck('notice_id')->toArray();
 
+        $unreadCount = 0;
+        $list = [];
         foreach ($notices as $notice) {
-            $notice->read = in_array($notice->notice_id, $readIds);
+            $isRead = in_array($notice->notice_id, $readIds);
+            $item = $notice->toArray();
+            $item['is_read'] = $isRead;
+            $list[] = $item;
+            if (!$isRead) {
+                $unreadCount++;
+            }
         }
 
-        return $notices;
+        return [
+            'list' => $list,
+            'unreadCount' => $unreadCount
+        ];
     }
 
     public function markRead($userId, $noticeId)
@@ -103,7 +126,7 @@ class SysNoticeService
         $query = SysNoticeRead::join('sys_user', 'sys_notice_read.user_id', '=', 'sys_user.user_id')
             ->where('sys_notice_read.notice_id', $noticeId)
             ->where('sys_user.del_flag', '0')
-            ->select('sys_user.user_id', 'sys_user.user_name', 'sys_user.real_name', 'sys_notice_read.read_time');
+            ->select('sys_user.user_id', 'sys_user.user_name', 'sys_user.nick_name', 'sys_notice_read.read_time');
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
