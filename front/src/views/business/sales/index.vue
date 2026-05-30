@@ -47,7 +47,7 @@
             <div v-for="item in customerList" :key="item.customerId" :class="['customer-item', currentCustomerId === item.customerId ? 'active' : '']" @click="handleSelectCustomer(item)">
               <div class="customer-header">
                 <div class="customer-name-row">
-                  <el-avatar :size="28" :src="item.avatar || undefined" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '13px' }" @error="() => { item.avatar = '' }">
+                  <el-avatar :size="32" :src="item.avatar || undefined" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '14px' }" @error="() => { item.avatar = '' }">
                     {{ item.customerName ? item.customerName.charAt(0) : '' }}
                   </el-avatar>
                   <span class="customer-name">{{ item.customerName }}</span>
@@ -59,14 +59,14 @@
                 </div>
               </div>
               <div class="customer-stats">
-                <div class="stat-row stat-between" v-if="item.dealAmount > 0 || item.avgSatisfaction">
-                  <span class="stat-item" v-if="item.avgSatisfaction">
+                <div class="stat-row" v-if="item.dealAmount > 0 || item.avgSatisfaction">
+                  <span class="stat-item stat-satisfaction" v-if="item.avgSatisfaction">
                     <span class="stat-label">满意度</span>
                     <el-rate :model-value="item.avgSatisfaction" disabled size="small" />
                   </span>
-                  <span class="stat-item" v-if="item.dealAmount > 0">
+                  <span class="stat-item stat-amount" v-if="item.dealAmount > 0">
                     <span class="stat-label">成交</span>
-                    <span class="stat-value" style="color: #409eff">¥{{ item.dealAmount }}</span>
+                    <span class="stat-value highlight">¥{{ item.dealAmount }}</span>
                   </span>
                 </div>
               </div>
@@ -1467,20 +1467,127 @@ function submitQuickStore() {
 .customer-panel { height: calc(100vh - 200px); overflow: hidden; display: flex; flex-direction: column }
 .customer-panel :deep(.el-card__body) { flex: 1; overflow-y: auto }
 .panel-header { display: flex; justify-content: space-between; align-items: center }
-.customer-list { display: flex; flex-direction: column; gap: 8px }
-.customer-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid #ebeef5; background: var(--el-bg-color) }
-.customer-item:hover { background: var(--el-fill-color-light); border-color: #c0c4cc }
-.customer-item.active { background: var(--el-color-primary-light-9); border-color: var(--el-color-primary) }
-.customer-header { display: flex; justify-content: space-between; align-items: center }
-.customer-name-row { display: flex; align-items: center }
-.customer-name { font-weight: 500; font-size: 14px }
-.customer-tags { display: flex; align-items: center; gap: 4px }
-.customer-stats { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 12px; color: #606266 }
-.stat-row { display: flex; align-items: center; gap: 8px }
-.stat-between { justify-content: space-between }
-.stat-item { display: flex; align-items: center; gap: 2px }
-.stat-label { color: #000000ff; font-size: 12px }
-.stat-value { color: #303133; font-weight: 500 }
+.customer-list { display: flex; flex-direction: column; gap: 10px }
+.customer-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+.customer-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.12);
+  border-color: #a0cfff;
+  background: linear-gradient(135deg, #f5f9ff 0%, #ffffff 100%);
+}
+.customer-item.active {
+  background: linear-gradient(135deg, #ecf5ff 0%, #f0f7ff 100%);
+  border-color: #409eff;
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+}
+.customer-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #409eff;
+  border-radius: 0 2px 2px 0;
+}
+.customer-header { display: flex; justify-content: space-between; align-items: center; position: relative }
+.customer-name-row { display: flex; align-items: center; gap: 8px }
+.customer-name-row .el-avatar {
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+.customer-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #303133;
+  letter-spacing: 0.3px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.customer-name-row .el-button {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.customer-item:hover .customer-name-row .el-button {
+  opacity: 1;
+}
+.customer-tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.customer-tags :deep(.el-tag) {
+  border-radius: 10px;
+  font-size: 11px;
+  padding: 0 8px;
+  height: 20px;
+  line-height: 20px;
+}
+.customer-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ebeef5;
+}
+.stat-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.stat-item { display: flex; align-items: center; gap: 4px }
+.stat-label {
+  color: #909399;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.stat-value {
+  color: #303133;
+  font-weight: 500;
+  font-size: 13px;
+}
+.stat-value.highlight {
+  color: #409eff;
+  font-weight: 600;
+  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-satisfaction .el-rate {
+  margin-left: 4px;
+}
+
+/* 特殊状态样式 */
+.customer-tags :deep(.el-tag--info) {
+  background: #fef0f0;
+  border-color: #fde2e2;
+  color: #f56c6c;
+}
+.customer-tags :deep(.el-tag--warning) {
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 .section-title { font-size: 14px; font-weight: 500; color: #303133; padding-bottom: 8px; border-bottom: 1px solid #ebeef5; margin-bottom: 12px }
 
 .package-group-header-inline { width: 100% }
