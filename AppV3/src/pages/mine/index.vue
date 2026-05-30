@@ -8,7 +8,10 @@
           </view>
           <image v-if="avatar" @click="handleToAvatar" :src="avatar" class="avatar-img" mode="aspectFill" />
           <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
-          <view v-if="name" @click="handleToInfo" class="username">用户名：{{ name }}</view>
+          <view v-if="name" @click="handleToInfo" class="user-detail">
+            <text class="user-nick-name">{{ nickName || name }}</text>
+            <text v-if="deptAndPost" class="user-dept-post">{{ deptAndPost }}</text>
+          </view>
         </view>
         <view @click="handleToInfo" class="profile-link">
           <text>个人信息 ></text>
@@ -18,6 +21,14 @@
 
     <view class="content-section">
       <view class="quick-actions">
+        <!-- #ifdef H5 -->
+        <view class="action-item" @click="handleFullscreen">
+          <view class="action-icon" style="background-color: #EBF0FF">
+            <u-icon :name="fullscreenIcon" size="22" color="#3D6DF7" />
+          </view>
+          <text class="action-label">{{ fullscreenLabel }}</text>
+        </view>
+        <!-- #endif -->
         <view
           v-for="(item, index) in actionList"
           :key="'action-' + index"
@@ -25,7 +36,7 @@
           @click="handleActionClick(item)"
         >
           <view class="action-icon" :style="{ backgroundColor: item.bgColor || '#f5f5f5' }">
-            <u-icon :name="item.icon" size="20" :color="item.iconColor || '#666'" />
+            <u-icon :name="item.icon" size="22" :color="item.iconColor || '#666'" />
           </view>
           <text class="action-label">{{ item.title }}</text>
         </view>
@@ -39,10 +50,10 @@
           @click="handleMenuClick(item)"
         >
           <view class="menu-icon" :style="{ backgroundColor: item.bgColor || '#e8f2ff' }">
-            <u-icon :name="item.icon" size="16" :color="item.iconColor || '#3c96f3'" />
+            <u-icon :name="item.icon" size="18" :color="item.iconColor || '#3c96f3'" />
           </view>
           <text class="menu-text">{{ item.title }}</text>
-          <text class="menu-arrow">></text>
+          <u-icon name="arrow-right" size="14" color="#c0c4cc" />
         </view>
       </view>
     </view>
@@ -52,24 +63,35 @@
 <script setup>
 import { computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
+import { useFullscreen } from '@/utils/fullscreen'
 
 const userStore = useUserStore()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const name = computed(() => userStore.name)
 const avatar = computed(() => userStore.avatar)
+const nickName = computed(() => userStore.getNickName)
+const deptAndPost = computed(() => {
+  const dept = userStore.getDeptName
+  const post = userStore.getPostName
+  return [dept, post].filter(Boolean).join('·') || ''
+})
+
+const fullscreenIcon = computed(() => isFullscreen.value ? 'list' : 'grid')
+const fullscreenLabel = computed(() => isFullscreen.value ? '退出全屏' : '全屏模式')
 
 const actionList = [
-  { title: '在线客服', icon: 'chat', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
-  { title: '反馈社区', icon: 'edit-pen', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
-  { title: '点赞我们', icon: 'thumb-up', path: '', iconColor: '#666', bgColor: '#f5f5f5' },
-  { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#666', bgColor: '#f5f5f5' }
+  { title: '在线客服', icon: 'chat', path: '', iconColor: '#3D6DF7', bgColor: '#EBF0FF' },
+  { title: '问题反馈', icon: 'edit-pen', path: '/pages/admin/feedback/index', iconColor: '#5B8FF9', bgColor: '#EAF1FF' },
+  { title: '专业资料', icon: 'file-text', path: '', iconColor: '#2DA8A8', bgColor: '#E6F7F7' },
+  { title: '企业介绍', icon: 'home', path: '/pages/mine/about/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' }
 ]
 
 const menuList = [
-  { title: '编辑资料', icon: 'edit-pen', path: '/pages/mine/info/edit', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
-  { title: '常见问题', icon: 'question-circle', path: '/pages/mine/help/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
-  { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' },
-  { title: '应用设置', icon: 'setting', path: '/pages/mine/setting/index', iconColor: '#3c96f3', bgColor: '#e8f2ff' }
+  { title: '编辑资料', icon: 'account', path: '/pages/mine/info/edit', iconColor: '#3D6DF7', bgColor: '#EBF0FF' },
+  { title: '常见问题', icon: 'question-circle', path: '/pages/mine/help/index', iconColor: '#5B8FF9', bgColor: '#EAF1FF' },
+  { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#2DA8A8', bgColor: '#E6F7F7' },
+  { title: '应用设置', icon: 'setting', path: '/pages/mine/setting/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' }
 ]
 
 function handleToInfo() {
@@ -80,6 +102,9 @@ function handleToLogin() {
 }
 function handleToAvatar() {
   uni.navigateTo({ url: '/pages/mine/avatar/index' })
+}
+function handleFullscreen() {
+  toggleFullscreen()
 }
 function handleActionClick(item) {
   if (item.path) {
@@ -107,7 +132,7 @@ page {
 }
 
 .header-section {
-  background-color: #3c96f3;
+  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
   padding: 60rpx 30rpx 80rpx;
   color: white;
 }
@@ -127,7 +152,8 @@ page {
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.3);
+  border: 2rpx solid rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,10 +171,21 @@ page {
   margin-left: 24rpx;
 }
 
-.username {
-  font-size: 32rpx;
+.user-detail {
+  display: flex;
+  flex-direction: column;
   margin-left: 24rpx;
-  font-weight: 500;
+  gap: 6rpx;
+}
+
+.user-nick-name {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.user-dept-post {
+  font-size: 24rpx;
+  opacity: 0.85;
 }
 
 .profile-link {
@@ -229,10 +266,5 @@ page {
   flex: 1;
   font-size: 30rpx;
   color: #333;
-}
-
-.menu-arrow {
-  font-size: 28rpx;
-  color: #ccc;
 }
 </style>

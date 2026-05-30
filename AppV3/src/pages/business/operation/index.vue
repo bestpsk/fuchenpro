@@ -10,7 +10,7 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="operationList.length > 0" class="card-list">
         <view v-for="item in operationList" :key="item.recordId" class="operation-card">
           <view class="card-header">
@@ -50,14 +50,14 @@
  * @description 操作记录列表页 - 项目操作记录查看
  * @description 展示操作记录列表，支持关键词搜索（客户名/操作类型）、分页加载、下拉刷新
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { listOperation } from '@/api/business/operationRecord'
+
 
 const operationList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
-const scrollHeight = ref(600)
 
 let searchTimer = null
 
@@ -90,21 +90,20 @@ function handleSearch() { getList(true) }
 function onSearchInput() { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(() => handleSearch(), 500) }
 function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 
-function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 180 }
-onMounted(() => { calcScrollHeight(); getList(true) })
+onMounted(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.operation-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 40rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.operation-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx; }
 
-.search-section { padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
+.search-section { flex-shrink: 0; padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 24rpx; height: 72rpx; gap: 12rpx; }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
 .clear-btn { flex-shrink: 0; padding: 8rpx; display: flex; align-items: center; }
 
-.list-scroll { padding: 20rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .operation-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04); }

@@ -63,7 +63,7 @@
       </view>
     </u-popup>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" v-if="currentStoreId">
+    <scroll-view scroll-y class="list-scroll" v-if="currentStoreId">
       <view v-if="customerList.length > 0" class="card-list">
         <view v-for="item in customerList" :key="item.customerId" class="customer-card" @click="goCustomerDetail(item)">
           <view class="card-header">
@@ -80,7 +80,7 @@
           <view class="card-body">
             <view class="info-row">
               <view class="tag-list" v-if="item.tag">
-                <text class="customer-tag" v-for="(tag, idx) in item.tag.split(',')" :key="idx">{{ tag }}</text>
+                <text class="customer-tag" v-for="(tag, idx) in item.tag.split(',')" :key="idx">{{ getTagLabel(tag) }}</text>
               </view>
               <text class="no-tag" v-else>暂无标签</text>
             </view>
@@ -105,8 +105,8 @@
     </view>
 
     <!-- 新增客户弹窗 -->
-    <u-popup :show="showAddCustomerPopup" mode="center" round="16" :closeOnClickOverlay="false">
-      <view class="add-customer-popup">
+    <u-popup :show="showAddCustomerPopup" mode="bottom" round="16" :closeOnClickOverlay="false">
+      <view class="add-customer-drawer">
         <!-- 标题栏 -->
         <view class="popup-header">
           <text class="popup-title">新增客户</text>
@@ -176,13 +176,9 @@
           <!-- 客户标签 -->
           <view class="form-item">
             <view class="form-label">客户标签</view>
-            <input
-              class="form-input"
-              type="text"
-              v-model="customerForm.tag"
-              placeholder="多个标签用逗号分隔，如：VIP,老客户"
-              placeholder-class="form-placeholder"
-            />
+            <view class="tag-selector">
+              <view class="tag-option" v-for="d in customerTagDict" :key="d.value" :class="{ active: customerForm.tag.includes(d.value) }" @click="toggleTag(d.value)">{{ d.label }}</view>
+            </view>
           </view>
 
           <!-- 备注 -->
@@ -221,14 +217,41 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import config from '@/config'
+import { getDicts } from '@/api/system/dict/data'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
+
 
 /** 本地存储键名，用于持久化企业和门店选择 */
 const STORAGE_KEYS = {
   enterprise: 'sales_selected_enterprise',
   store: 'sales_selected_store'
+}
+
+const customerTagDict = ref([])
+
+async function loadCustomerTagDict() {
+  try {
+    const res = await getDicts('biz_customer_tag')
+    customerTagDict.value = (res.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+function toggleTag(value) {
+  const idx = customerForm.tag.indexOf(value)
+  if (idx === -1) {
+    customerForm.tag.push(value)
+  } else {
+    customerForm.tag.splice(idx, 1)
+  }
+}
+
+function getTagLabel(value) {
+  const item = customerTagDict.value.find(d => d.value === value)
+  return item ? item.label : value
 }
 
 function getAvatarUrl(avatar) {
@@ -311,17 +334,16 @@ const showEnterprisePicker = ref(false)
 const showStorePicker = ref(false)
 const enterpriseSearchKeyword = ref('')
 const storeSearchKeyword = ref('')
-/** 列表滚动区域高度 */
-const scrollHeight = ref(600)
+
 
 const showAddCustomerPopup = ref(false)
 const customerAvatarPreview = ref('')
 /** 新增客户表单数据 */
 const customerForm = reactive({
   customerName: '',
-  gender: '',
+  gender: '1',
   age: '',
-  tag: '',
+  tag: [],
   remark: ''
 })
 /** 表单校验错误状态 */
@@ -330,8 +352,8 @@ const formErrors = reactive({
 })
 /** 性别选项配置 */
 const genderOptions = [
-  { label: '男', value: '0', icon: 'man', color: '#3D6DF7' },
-  { label: '女', value: '1', icon: 'woman', color: '#FF6B9D' }
+  { label: '女', value: '1', icon: 'woman', color: '#FF6B9D' },
+  { label: '男', value: '0', icon: 'man', color: '#3D6DF7' }
 ]
 
 /** 搜索防抖定时器 */
@@ -393,13 +415,19 @@ async function onStoreSelect(item) {
 }
 
 /** 根据关键词和企业/门店ID加载客户列表 */
+const isLoadingCustomers = ref(false)
+const isFirstShow = ref(true)
+
 async function loadCustomerList() {
   if (!currentStoreId.value) return
+  if (isLoadingCustomers.value) return
+  isLoadingCustomers.value = true
   try {
     const response = await searchCustomer(customerKeyword.value, currentEnterpriseId.value, currentStoreId.value)
     const data = response.data || response
     customerList.value = data.rows || data || []
   } catch (e) { console.error('加载客户列表失败:', e) }
+  finally { isLoadingCustomers.value = false }
 }
 
 /** 客户搜索防抖处理，500ms后触发搜索 */
@@ -443,9 +471,9 @@ function closeAddCustomerPopup() {
 /** 重置新增客户表单所有字段和校验状态 */
 function resetCustomerForm() {
   customerForm.customerName = ''
-  customerForm.gender = ''
+  customerForm.gender = '1'
   customerForm.age = ''
-  customerForm.tag = ''
+  customerForm.tag = []
   customerForm.remark = ''
   customerAvatarPreview.value = ''
   formErrors.customerName = false
@@ -509,7 +537,7 @@ async function submitAddCustomer() {
 
     if (customerForm.gender) data.gender = customerForm.gender
     if (customerForm.age) data.age = parseInt(customerForm.age)
-    if (customerForm.tag.trim()) data.tag = customerForm.tag.trim()
+    if (customerForm.tag.length > 0) data.tag = customerForm.tag.join(',')
     if (customerForm.remark.trim()) data.remark = customerForm.remark.trim()
 
     const res = await addCustomer(data)
@@ -537,28 +565,28 @@ function goAddCustomer() {
   openAddCustomerPopup()
 }
 
-/** 计算列表滚动区域高度，基于系统窗口高度减去搜索区域 */
-function calcScrollHeight() {
-  const systemInfo = uni.getSystemInfoSync()
-  scrollHeight.value = systemInfo.windowHeight - 200
-}
-
 onMounted(async () => {
-  calcScrollHeight()
   await loadEnterpriseOptions()
   loadSelectionFromStorage()
+  loadCustomerTagDict()
 })
 
 onShow(() => {
+  if (isFirstShow.value) {
+    isFirstShow.value = false
+    return
+  }
   if (currentStoreId.value) loadCustomerList()
 })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.sales-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 120rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.sales-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx; box-sizing: border-box;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.search-section { padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
+.search-section { flex-shrink: 0; padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
 .selector-row { display: flex; gap: 16rpx; margin-bottom: 16rpx; }
 .selector-item { flex: 1; display: flex; align-items: center; gap: 8rpx; background: rgba(255,255,255,0.15); border-radius: 12rpx; padding: 16rpx 20rpx; }
 .selector-label { font-size: 24rpx; color: rgba(255,255,255,0.7); white-space: nowrap; }
@@ -568,7 +596,7 @@ page { background-color: #F5F7FA; }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
 
-.list-scroll { padding: 20rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .customer-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
@@ -625,18 +653,25 @@ page { background-color: #F5F7FA; }
 }
 
 /* 新增客户弹窗样式 */
-.add-customer-popup {
-  width: 650rpx;
+.add-customer-drawer {
+  width: 100%;
+  max-height: 85vh;
   background: #fff;
-  border-radius: 24rpx;
+  border-radius: 24rpx 24rpx 0 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  padding: 0 32rpx;
+  box-sizing: border-box;
 }
 
 .popup-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32rpx;
+  padding: 32rpx 32rpx;
+  margin-left: -32rpx;
+  margin-right: -32rpx;
   border-bottom: 1rpx solid #F2F3F5;
 }
 
@@ -652,7 +687,7 @@ page { background-color: #F5F7FA; }
 
 .form-scroll {
   max-height: 60vh;
-  padding: 24rpx 32rpx;
+  padding: 24rpx 0;
 }
 
 .form-item {
@@ -725,6 +760,25 @@ page { background-color: #F5F7FA; }
   font-size: 28rpx;
 }
 
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.tag-option {
+  font-size: 26rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 8rpx;
+  background: #F2F3F5;
+  color: #86909C;
+}
+
+.tag-option.active {
+  background: #E8F3FF;
+  color: #165DFF;
+}
+
 .gender-selector {
   display: flex;
   gap: 20rpx;
@@ -788,6 +842,8 @@ page { background-color: #F5F7FA; }
   display: flex;
   gap: 20rpx;
   padding: 24rpx 32rpx 32rpx;
+  margin-left: -32rpx;
+  margin-right: -32rpx;
   border-top: 1rpx solid #F2F3F5;
 }
 

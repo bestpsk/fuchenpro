@@ -20,7 +20,7 @@ export function listArchive(params) {
  * @returns {Promise<void>}
  */
 export function addArchive(data) {
-  return request({ url: '/business/archive', method: 'post', data })
+  return request({ url: '/business/archive/add', method: 'post', data })
 }
 
 /**
@@ -29,5 +29,5 @@ export function addArchive(data) {
  * @returns {Promise<void>}
  */
 export function deleteArchive(id) {
-  return request({ url: '/business/archive/' + id, method: 'delete' })
+  return request({ url: '/business/archive', method: 'delete', params: { archiveIds: id } })
 }

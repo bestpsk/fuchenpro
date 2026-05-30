@@ -390,8 +390,8 @@ watch(searchPool, (list) => {
     padding: 0 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background: #f7f7f7;
-    color: #555;
+    background: var(--el-fill-color-lighter);
+    color: var(--el-text-color-regular);
     font-size: 11px;
     font-family: inherit;
     line-height: 1;

@@ -7,6 +7,7 @@ use app\model\BizSalesOrder;
 use app\model\BizOrderItem;
 use app\model\BizOperationRecord;
 use app\model\BizRepaymentRecord;
+use app\model\BizCustomer;
 
 /**
  * 客户档案服务层
@@ -23,11 +24,22 @@ class BizCustomerArchiveService
         if (!empty($params['enterprise_id'])) $query->where('enterprise_id', $params['enterprise_id']);
         if (!empty($params['store_id'])) $query->where('store_id', $params['store_id']);
         if (isset($params['source_type']) && $params['source_type'] !== '') $query->where('source_type', $params['source_type']);
+        if (!empty($params['archive_type'])) $query->where('archive_type', $params['archive_type']);
         if (!empty($params['start_date'])) $query->where('archive_date', '>=', $params['start_date']);
         if (!empty($params['end_date'])) $query->where('archive_date', '<=', $params['end_date']);
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 50);
-        return $query->orderBy('archive_date', 'desc')->orderBy('archive_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        $result = $query->orderBy('archive_date', 'desc')->orderBy('archive_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+
+        if ($result->count() > 0) {
+            $customerIds = $result->pluck('customer_id')->unique()->filter()->toArray();
+            $avatars = BizCustomer::whereIn('customer_id', $customerIds)->pluck('avatar', 'customer_id')->toArray();
+            foreach ($result->items() as $item) {
+                $item->avatar = $avatars[$item->customer_id] ?? '';
+            }
+        }
+
+        return $result;
     }
 
     // 手动新增客户档案，自动将plan_items和photos数组转为JSON

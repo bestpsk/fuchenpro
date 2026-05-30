@@ -40,13 +40,14 @@
       </view>
     </u-popup>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="orderList.length > 0" class="card-list">
         <view v-for="item in orderList" :key="item.order_id || item.orderId" class="order-card" @click="goDetail(item)">
           <view class="card-header">
             <view class="header-left">
               <text class="order-no">{{ displayOrderNo(item) }}</text>
               <u-tag :text="getSourceTypeLabel(item)" size="mini" :type="getSourceTagType(item)" />
+              <u-tag v-if="getPaymentMethodLabel(item)" :text="getPaymentMethodLabel(item)" size="mini" :type="getPaymentMethodTagType(item)" />
             </view>
             <view class="status-tag" :class="'status-' + (item.order_status ?? item.orderStatus ?? item.status)">{{ getOrderStatusName(item.order_status ?? item.orderStatus ?? item.status) }}</view>
           </view>
@@ -77,13 +78,13 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { listSalesOrder } from '@/api/business/salesOrder'
 import { useDictStore } from '@/store/modules/dict'
 
+
 const dictStore = useDictStore()
 const orderList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 
 let searchTimer = null
 
@@ -114,6 +115,19 @@ function getSourceTypeLabel(item) {
 function getSourceTagType(item) {
   const source = String(item.source_type || item.sourceType || '0')
   return dictStore.getDictTagType('biz_source_type', source)
+}
+
+function getPaymentMethodLabel(item) {
+  const method = item.payment_method || item.paymentMethod
+  if (!method) return ''
+  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
+  return map[method] || ''
+}
+
+function getPaymentMethodTagType(item) {
+  const method = item.payment_method || item.paymentMethod
+  const map = { cash: 'warning', card: 'success', gift: '' }
+  return map[method] || 'info'
 }
 
 function getOrderStatusName(status) {
@@ -182,15 +196,16 @@ function goDetail(item) {
   }
 }
 
-function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 180 }
-onMounted(() => { calcScrollHeight(); dictStore.loadDict('biz_source_type'); getList(true) })
+onMounted(() => { dictStore.loadDict('biz_source_type'); getList(true) })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.order-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 40rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.order-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.search-section { padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
+.search-section { flex-shrink: 0; padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
@@ -200,7 +215,7 @@ page { background-color: #F5F7FA; }
   .icon-rotate { transform: rotate(180deg); transition: transform 0.3s ease; }
 }
 
-.active-filters { padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
+.active-filters { flex-shrink: 0; padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
 .filter-scroll { white-space: nowrap; }
 .filter-tags { display: inline-flex; gap: 16rpx; padding: 16rpx 0; }
 .filter-tag { display: inline-flex; align-items: center; gap: 8rpx; padding: 10rpx 20rpx; background: rgba(255,255,255,0.2); border-radius: 28rpx; font-size: 24rpx; color: #fff;
@@ -217,7 +232,7 @@ page { background-color: #F5F7FA; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
 
-.list-scroll { padding: 20rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .order-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);

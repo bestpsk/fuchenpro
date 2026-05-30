@@ -364,8 +364,7 @@ const selectedPaymentMethod = ref('cash')
 
 const orderPaymentMethods = ref([
   { label: '现金', value: 'cash' },
-  { label: '划卡', value: 'card' },
-  { label: '置换', value: 'exchange' },
+  { label: '耗卡', value: 'card' },
   { label: '赠送', value: 'gift' }
 ])
 
@@ -557,7 +556,7 @@ function getOrderStatusName(status) {
 }
 
 function getPaymentMethodName(method) {
-  const map = { cash: '现金', card: '划卡', exchange: '置换', gift: '赠送' }
+  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
   return map[method] || method || '-'
 }
 
@@ -581,7 +580,9 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 page { background-color: #F5F6F8; }
-.order-container { display: flex; flex-direction: column; }
+.order-container { display: flex; flex-direction: column;
+  :deep(.u-popup) { flex: none !important; }
+}
 
 .customer-info { padding: 16rpx 24rpx; background: #fff; border-bottom: 1rpx solid #F2F3F5; }
 .info-row { display: flex; align-items: center; gap: 10rpx; margin-bottom: 6rpx; &:last-child { margin-bottom: 0; } }

@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `app_menu_config` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='App移动端菜单配置表';
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='App移动端菜单配置表';
 
 -- 数据导出被取消选择。
 
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_config` (
   `rule_id` int(11) NOT NULL COMMENT '考勤规则ID',
   `user_ids` varchar(500) DEFAULT NULL COMMENT '用户ID列表（逗号分隔）',
   `config_type` tinyint(1) NOT NULL DEFAULT '1' COMMENT '配置类型：1=用户级，2=部门级',
-  `dept_id` int(11) DEFAULT NULL COMMENT '部门ID（部门级配置）',
+  `dept_ids` varchar(500) DEFAULT NULL COMMENT '部门ID列表（逗号分隔）',
   `status` char(1) DEFAULT '0' COMMENT '状态：0=正常，1=停用',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   `create_by` varchar(64) DEFAULT NULL COMMENT '创建者',
@@ -80,9 +80,9 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_config` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`config_id`),
   KEY `idx_rule_id` (`rule_id`),
-  KEY `idx_dept_id` (`dept_id`),
-  KEY `idx_config_type` (`config_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤配置表';
+  KEY `idx_config_type` (`config_type`),
+  KEY `idx_dept_ids` (`dept_ids`(100))
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤配置表';
 
 -- 数据导出被取消选择。
 
@@ -157,6 +157,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer` (
   `store_id` bigint(20) DEFAULT NULL COMMENT '所属门店ID',
   `store_name` varchar(100) DEFAULT NULL COMMENT '所属门店名称',
   `customer_name` varchar(50) NOT NULL COMMENT '客户姓名',
+  `avatar` varchar(500) DEFAULT '' COMMENT '客户头像',
   `phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
   `wechat` varchar(50) DEFAULT NULL COMMENT '微信',
   `gender` char(1) DEFAULT '2' COMMENT '性别(0男1女2未知)',
@@ -173,7 +174,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer` (
   KEY `idx_store_id` (`store_id`),
   KEY `idx_customer_name` (`customer_name`),
   KEY `idx_phone` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
 
 -- 数据导出被取消选择。
 
@@ -206,7 +207,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
   KEY `idx_archive_date` (`archive_date`),
   KEY `idx_source_type` (`source_type`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
 
 -- 数据导出被取消选择。
 
@@ -239,7 +240,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer_package` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
 
 -- 数据导出被取消选择。
 
@@ -293,7 +294,40 @@ CREATE TABLE IF NOT EXISTS `biz_enterprise` (
   PRIMARY KEY (`enterprise_id`),
   KEY `idx_enterprise_name` (`enterprise_name`),
   KEY `idx_server_user_id` (`server_user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业管理表';
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业管理表';
+
+-- 数据导出被取消选择。
+
+-- 导出  表 fuchenpro.biz_feedback 结构
+DROP TABLE IF EXISTS `biz_feedback`;
+CREATE TABLE IF NOT EXISTS `biz_feedback` (
+  `feedback_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
+  `title` varchar(200) NOT NULL COMMENT '反馈标题',
+  `content` text NOT NULL COMMENT '反馈内容',
+  `feedback_type` char(1) DEFAULT '0' COMMENT '反馈类型(0功能异常 1优化建议 2其他)',
+  `status` char(1) DEFAULT '0' COMMENT '处理状态(0待处理 1处理中 2已处理 3已关闭)',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`feedback_id`),
+  KEY `idx_create_by` (`create_by`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='问题反馈表';
+
+-- 数据导出被取消选择。
+
+-- 导出  表 fuchenpro.biz_feedback_reply 结构
+DROP TABLE IF EXISTS `biz_feedback_reply`;
+CREATE TABLE IF NOT EXISTS `biz_feedback_reply` (
+  `reply_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '回复ID',
+  `feedback_id` bigint(20) NOT NULL COMMENT '反馈ID',
+  `content` text NOT NULL COMMENT '回复内容',
+  `create_by` varchar(64) DEFAULT '' COMMENT '回复人',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '回复时间',
+  PRIMARY KEY (`reply_id`),
+  KEY `idx_feedback_id` (`feedback_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='反馈回复表';
 
 -- 数据导出被取消选择。
 
@@ -349,7 +383,7 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
   KEY `idx_package_id` (`package_id`),
   KEY `idx_operation_date` (`operation_date`),
   KEY `idx_operation_batch_id` (`operation_batch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
 
 -- 数据导出被取消选择。
 
@@ -364,6 +398,7 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
   `paid_amount` decimal(12,2) DEFAULT '0.00' COMMENT '实付金额',
   `unit_price` decimal(10,2) DEFAULT '0.00' COMMENT '单次价',
   `owed_amount` decimal(10,2) DEFAULT '0.00' COMMENT '欠款金额',
+  `payment_method` varchar(50) DEFAULT 'cash' COMMENT '付款方式',
   `is_our_operation` tinyint(4) NOT NULL DEFAULT '1' COMMENT '是否我们操作(0否1是)',
   `customer_feedback` varchar(500) DEFAULT NULL COMMENT '顾客反馈',
   `before_photo` varchar(500) DEFAULT NULL COMMENT '操作前对比照',
@@ -372,7 +407,7 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`item_id`),
   KEY `idx_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
 
 -- 数据导出被取消选择。
 
@@ -393,7 +428,7 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`package_item_id`),
   KEY `idx_package_id` (`package_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
 
 -- 数据导出被取消选择。
 
@@ -428,7 +463,7 @@ CREATE TABLE IF NOT EXISTS `biz_plan` (
   PRIMARY KEY (`plan_id`),
   UNIQUE KEY `uk_plan_no` (`plan_no`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
 
 -- 数据导出被取消选择。
 
@@ -452,7 +487,7 @@ CREATE TABLE IF NOT EXISTS `biz_plan_item` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`item_id`),
   KEY `idx_plan_id` (`plan_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案配赠明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案配赠明细表';
 
 -- 数据导出被取消选择。
 
@@ -543,6 +578,7 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
   `deal_amount` decimal(12,2) DEFAULT '0.00' COMMENT '成交总金额',
   `paid_amount` decimal(12,2) DEFAULT '0.00' COMMENT '实付金额',
   `owed_amount` decimal(12,2) DEFAULT '0.00' COMMENT '欠款金额',
+  `payment_method` varchar(50) DEFAULT 'cash' COMMENT '付款方式',
   `order_status` char(1) NOT NULL DEFAULT '0' COMMENT '订单状态(0待确认1已成交2已取消)',
   `source_type` char(1) NOT NULL DEFAULT '0' COMMENT '来源类型（0开单 1操作 2还款 3手动）',
   `operation_batch_id` varchar(32) DEFAULT NULL COMMENT '操作批次ID（来源为操作时关联）',
@@ -567,7 +603,7 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_order_status` (`order_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
 
 -- 数据导出被取消选择。
 
@@ -626,7 +662,7 @@ CREATE TABLE IF NOT EXISTS `biz_shipment` (
   UNIQUE KEY `uk_shipment_no` (`shipment_no`),
   KEY `idx_plan_id` (`plan_id`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出货单表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出货单表';
 
 -- 数据导出被取消选择。
 
@@ -650,7 +686,7 @@ CREATE TABLE IF NOT EXISTS `biz_shipment_item` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`item_id`),
   KEY `idx_shipment_id` (`shipment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出货明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出货明细表';
 
 -- 数据导出被取消选择。
 
@@ -832,7 +868,7 @@ CREATE TABLE IF NOT EXISTS `biz_store` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_name` (`store_name`),
   KEY `idx_server_user_id` (`server_user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店管理表';
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店管理表';
 
 -- 数据导出被取消选择。
 
@@ -1199,6 +1235,27 @@ CREATE TABLE IF NOT EXISTS `qrtz_triggers` (
 
 -- 数据导出被取消选择。
 
+-- 导出  表 fuchenpro.sys_app_menu 结构
+DROP TABLE IF EXISTS `sys_app_menu`;
+CREATE TABLE IF NOT EXISTS `sys_app_menu` (
+  `app_menu_id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'App菜单ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '关联sys_menu的menu_id',
+  `app_path` varchar(200) DEFAULT '' COMMENT 'App页面路径',
+  `app_icon` varchar(100) DEFAULT '' COMMENT 'App图标名称(uView图标)',
+  `bg_color` varchar(20) DEFAULT '#3D6DF7' COMMENT '图标背景色',
+  `icon_color` varchar(20) DEFAULT '#fff' COMMENT '图标颜色',
+  `sort_order` int(11) DEFAULT '0' COMMENT '排序',
+  `visible` tinyint(4) DEFAULT '1' COMMENT '是否显示(1显示 0隐藏)',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`app_menu_id`),
+  UNIQUE KEY `uk_menu_id` (`menu_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='App菜单扩展配置表';
+
+-- 数据导出被取消选择。
+
 -- 导出  表 fuchenpro.sys_banner 结构
 DROP TABLE IF EXISTS `sys_banner`;
 CREATE TABLE IF NOT EXISTS `sys_banner` (
@@ -1276,7 +1333,7 @@ CREATE TABLE IF NOT EXISTS `sys_dict_data` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=215 DEFAULT CHARSET=utf8 COMMENT='字典数据表';
+) ENGINE=InnoDB AUTO_INCREMENT=226 DEFAULT CHARSET=utf8 COMMENT='字典数据表';
 
 -- 数据导出被取消选择。
 
@@ -1294,7 +1351,7 @@ CREATE TABLE IF NOT EXISTS `sys_dict_type` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_id`),
   UNIQUE KEY `dict_type` (`dict_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=127 DEFAULT CHARSET=utf8 COMMENT='字典类型表';
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8 COMMENT='字典类型表';
 
 -- 数据导出被取消选择。
 
@@ -1352,7 +1409,7 @@ CREATE TABLE IF NOT EXISTS `sys_logininfor` (
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=298 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=326 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
 
 -- 数据导出被取消选择。
 
@@ -1380,7 +1437,7 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3023 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
+) ENGINE=InnoDB AUTO_INCREMENT=3030 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
 
 -- 数据导出被取消选择。
 
@@ -1398,7 +1455,7 @@ CREATE TABLE IF NOT EXISTS `sys_notice` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`notice_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COMMENT='通知公告表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='通知公告表';
 
 -- 数据导出被取消选择。
 
@@ -1411,7 +1468,7 @@ CREATE TABLE IF NOT EXISTS `sys_notice_read` (
   `read_time` datetime NOT NULL COMMENT '阅读时间',
   PRIMARY KEY (`read_id`),
   UNIQUE KEY `uk_user_notice` (`user_id`,`notice_id`) COMMENT '同一用户同一公告只记录一次'
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='公告已读记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='公告已读记录表';
 
 -- 数据导出被取消选择。
 

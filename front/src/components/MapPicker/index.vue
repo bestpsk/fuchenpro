@@ -199,7 +199,7 @@ defineExpose({ open })
   gap: 6px;
   margin-top: 12px;
   padding: 8px 12px;
-  background: #f5f7fa;
+  background: var(--el-fill-color-lighter);
   border-radius: 6px;
   font-size: 13px;
   color: #606266;

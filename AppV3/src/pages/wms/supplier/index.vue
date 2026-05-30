@@ -8,7 +8,7 @@
           <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
         </view>
         <view class="filter-btn" :class="{ active: hasActiveFilters }" @click="toggleFilter">
-          <u-icon name="list" size="12" :color="hasActiveFilters ? '#10B981' : '#4E5969'"></u-icon>
+          <u-icon name="list" size="12" :color="hasActiveFilters ? '#3D6DF7' : '#4E5969'"></u-icon>
           <text>筛选</text>
         </view>
       </view>
@@ -30,7 +30,7 @@
       </view>
     </u-popup>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="supplierList.length > 0" class="card-list">
         <view v-for="item in supplierList" :key="item.supplierId" class="supplier-card" @click="goDetail(item)">
           <view class="card-header">
@@ -73,12 +73,12 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listSupplier } from '@/api/wms/supplier'
 
+
 const supplierList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 
 let searchTimer = null
 
@@ -128,23 +128,24 @@ function handleAdd() {
   uni.navigateTo({ url: '/pages/wms/supplier/form?mode=add' })
 }
 
-function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 120 }
-onMounted(() => { calcScrollHeight(); getList(true) })
+onMounted(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.supplier-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 40rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.supplier-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.search-section { padding: 20rpx 0; }
+.search-section { flex-shrink: 0; padding: 20rpx 0; }
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
 .clear-btn { flex-shrink: 0; padding: 8rpx; display: flex; align-items: center; }
 .filter-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 6rpx; height: 56rpx; padding: 0 22rpx; background: #F5F7FA; border-radius: 28rpx; transition: all 0.2s;
   text { font-size: 26rpx; color: #4E5969; font-weight: 500; white-space: nowrap; }
-  &.active { background: #E6F7F1;
-    text { color: #10B981; }
+  &.active { background: #e8f0fe;
+    text { color: #3D6DF7; }
   }
 }
 
@@ -154,11 +155,11 @@ page { background-color: #F5F7FA; }
 .form-label { font-size: 28rpx; color: #1D2129; font-weight: 500; margin-bottom: 16rpx; }
 .form-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .option-tag { padding: 14rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent; transition: all 0.2s;
-  &.active { background: #E6F7F1; color: #10B981; border-color: #10B981; }
+  &.active { background: #e8f0fe; color: #3D6DF7; border-color: #3D6DF7; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
 
-.list-scroll { padding: 12rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 12rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 16rpx; }
 
 .supplier-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; transition: all 0.15s;
@@ -167,7 +168,7 @@ page { background-color: #F5F7FA; }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .supplier-name { font-size: 30rpx; font-weight: 600; color: #1D2129; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 16rpx; }
 .status-badge { padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
-  &.status-0 { background: #E6F7F1; color: #10B981; }
+  &.status-0 { background: #e8f0fe; color: #3D6DF7; }
   &.status-1 { background: #F2F3F5; color: #86909C; }
 }
 
@@ -178,11 +179,11 @@ page { background-color: #F5F7FA; }
 .info-item { display: flex; align-items: center; gap: 8rpx; flex: 1; min-width: 0; }
 .info-label { font-size: 24rpx; color: #86909C; flex-shrink: 0; }
 .info-value { font-size: 26rpx; color: #1D2129; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  &.phone-link { color: #10B981; }
+  &.phone-link { color: #3D6DF7; }
   &.address-text { white-space: normal; overflow: visible; }
 }
 
-.fab-btn { position: fixed; right: 40rpx; bottom: 80rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: #10B981; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(16,185,129,0.35); z-index: 100;
+.fab-btn { position: fixed; right: 40rpx; bottom: 80rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: #3D6DF7; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(61,109,247,0.35); z-index: 100;
   &:active { transform: scale(0.92); }
 }
 </style>

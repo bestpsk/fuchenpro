@@ -8,7 +8,7 @@
           <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
         </view>
         <view class="filter-btn" :class="{ active: hasActiveFilters }" @click="toggleFilter">
-          <u-icon name="list" size="12" :color="hasActiveFilters ? '#10B981' : '#4E5969'"></u-icon>
+          <u-icon name="list" size="12" :color="hasActiveFilters ? '#3D6DF7' : '#4E5969'"></u-icon>
           <text>筛选</text>
         </view>
       </view>
@@ -30,7 +30,7 @@
       </view>
     </u-popup>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="shipmentList.length > 0" class="card-list">
         <view v-for="item in shipmentList" :key="item.shipmentId" class="shipment-card" @click="goDetail(item)">
           <view class="card-header">
@@ -67,12 +67,12 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listShipment } from '@/api/business/shipment'
 
+
 const shipmentList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 
 let searchTimer = null
 
@@ -135,23 +135,24 @@ function goDetail(item) {
   uni.navigateTo({ url: `/pages/wms/shipment/detail?id=${item.shipmentId}` })
 }
 
-function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 120 }
-onMounted(() => { calcScrollHeight(); getList(true) })
+onMounted(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.shipment-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 40rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.shipment-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.search-section { padding: 20rpx 0; }
+.search-section { flex-shrink: 0; padding: 20rpx 0; }
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
 .clear-btn { flex-shrink: 0; padding: 8rpx; display: flex; align-items: center; }
 .filter-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 6rpx; height: 56rpx; padding: 0 22rpx; background: #F5F7FA; border-radius: 28rpx; transition: all 0.2s;
   text { font-size: 26rpx; color: #4E5969; font-weight: 500; white-space: nowrap; }
-  &.active { background: #E6F7F1;
-    text { color: #10B981; }
+  &.active { background: #e8f0fe;
+    text { color: #3D6DF7; }
   }
 }
 
@@ -161,11 +162,11 @@ page { background-color: #F5F7FA; }
 .form-label { font-size: 28rpx; color: #1D2129; font-weight: 500; margin-bottom: 16rpx; }
 .form-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .option-tag { padding: 14rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent; transition: all 0.2s;
-  &.active { background: #E6F7F1; color: #10B981; border-color: #10B981; }
+  &.active { background: #e8f0fe; color: #3D6DF7; border-color: #3D6DF7; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
 
-.list-scroll { padding: 12rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 12rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 16rpx; }
 
 .shipment-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; transition: all 0.15s;
@@ -176,7 +177,7 @@ page { background-color: #F5F7FA; }
 .status-badge { padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
   &.status-0 { background: #FFF7E8; color: #FF7D00; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-2 { background: #E6F7F1; color: #10B981; }
+  &.status-2 { background: #e8f0fe; color: #3D6DF7; }
   &.status-3 { background: #F0E8FF; color: #8B5CF6; }
   &.status-4 { background: #FFECE8; color: #F53F3F; }
 }

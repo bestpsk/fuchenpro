@@ -17,7 +17,7 @@
           @click="handleOrderClick(item)"
         >
           <view class="order-left">
-            <u-avatar v-if="item.avatar && item.avatar !== '/static/images/profile.jpg'" :src="item.avatar" size="64" mode="aspectFill" />
+            <u-avatar v-if="item.avatar" :src="item.avatar" size="64" mode="aspectFill" />
             <u-avatar v-else :text="item.name ? item.name.charAt(0) : ''" size="64" bg-color="#3D6DF7" color="#fff" fontSize="24" />
             <view class="customer-info">
               <view class="customer-name">

@@ -125,7 +125,7 @@ page { background-color: #F5F7FA; }
 .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; padding-bottom: 20rpx; border-bottom: 1rpx solid #F2F3F5; }
 .supplier-name { font-size: 32rpx; font-weight: 600; color: #1D2129; flex: 1; margin-right: 16rpx; }
 .status-badge { padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
-  &.status-0 { background: #E6F7F1; color: #10B981; }
+  &.status-0 { background: #e8f0fe; color: #3D6DF7; }
   &.status-1 { background: #F2F3F5; color: #86909C; }
 }
 
@@ -135,7 +135,7 @@ page { background-color: #F5F7FA; }
 .info-row { display: flex; align-items: center; gap: 12rpx; }
 .info-label { font-size: 26rpx; color: #86909C; min-width: 100rpx; flex-shrink: 0; }
 .info-value { font-size: 28rpx; color: #1D2129; flex: 1;
-  &.phone-link { color: #10B981; }
+  &.phone-link { color: #3D6DF7; }
   &.remark-text { word-break: break-all; line-height: 1.6; }
 }
 .info-time { font-size: 24rpx; color: #86909C; flex-shrink: 0; }

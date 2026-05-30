@@ -110,7 +110,6 @@
     <scroll-view
       scroll-y
       class="list-scroll"
-      :style="{ height: scrollHeight + 'px' }"
       @scrolltolower="loadMore"
       refresher-enabled
       :refresher-triggered="refreshing"
@@ -157,11 +156,11 @@
             <view class="info-row">
               <view class="info-item">
                 <text class="label">门店</text>
-                <text class="value highlight">{{ item.storeCount || 0 }} 家</text>
+                <text class="value highlight">{{ item.storeCount ? item.storeCount + ' 家' : '-' }}</text>
               </view>
               <view class="info-item">
                 <text class="label">年业绩</text>
-                <text class="value highlight">¥{{ item.annualPerformance || '0.00' }}</text>
+                <text class="value highlight">{{ item.annualPerformance ? '¥' + item.annualPerformance : '-' }}</text>
               </view>
             </view>
             <view class="info-row" v-if="item.serverUserName">
@@ -219,12 +218,12 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listEnterprise, delEnterprise } from '@/api/business/enterprise'
 
+
 const enterpriseList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 
 /** 搜索防抖定时器 */
 let searchTimer = null
@@ -416,13 +415,7 @@ function handleDelete(item) {
   })
 }
 
-function calcScrollHeight() {
-  const systemInfo = uni.getSystemInfoSync()
-  scrollHeight.value = systemInfo.windowHeight - 180
-}
-
 onMounted(() => {
-  calcScrollHeight()
   getList(true)
 })
 </script>
@@ -430,15 +423,24 @@ onMounted(() => {
 <style lang="scss" scoped>
 page {
   background-color: #F5F7FA;
+  height: 100%;
+  overflow: hidden;
 }
 
 .enterprise-container {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   padding: 0 24rpx;
-  padding-bottom: 120rpx;
+
+  :deep(.u-popup) {
+    flex: none !important;
+  }
 }
 
 .search-section {
+  flex-shrink: 0;
   padding: 20rpx 24rpx;
   margin-left: -24rpx;
   margin-right: -24rpx;
@@ -505,6 +507,7 @@ page {
 }
 
 .active-filters {
+  flex-shrink: 0;
   padding: 12rpx 24rpx 16rpx;
   margin-left: -24rpx;
   margin-right: -24rpx;
@@ -594,6 +597,8 @@ page {
 }
 
 .list-scroll {
+  flex: 1;
+  overflow: hidden;
   padding: 20rpx 0;
 }
 

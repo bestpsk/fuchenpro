@@ -46,6 +46,7 @@ function addIframe() {
   width: 100%;
   position: relative;
   overflow: hidden;
+  background-color: var(--el-bg-color-page);
 }
 
 .fixed-header + .app-main {
@@ -117,7 +118,7 @@ function addIframe() {
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
+  background-color: var(--el-fill-color-lighter);
 }
 
 ::-webkit-scrollbar-thumb {

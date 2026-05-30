@@ -105,6 +105,7 @@
           <view class="item-left">
             <text class="item-index">{{ idx + 1 }}.</text>
             <text class="item-name">{{ item.productName || item.product_name || item.itemName || '-' }}</text>
+            <u-tag v-if="detailMode !== 'operation' && getItemPaymentMethod(item)" :text="getItemPaymentMethod(item)" size="mini" :type="getItemPaymentTagType(item)" plain />
           </view>
           <view class="item-right">
             <text class="item-count">{{ item.quantity || item.count || 0 }}次</text>
@@ -248,6 +249,19 @@ function getDisplayPaidAmount(item) {
   const paid = Number(item.paidAmount || item.paid_amount || 0)
   if (sourceType === '1') return '-'
   return paid.toFixed(2)
+}
+
+function getItemPaymentMethod(item) {
+  const method = item.paymentMethod || item.payment_method
+  if (!method) return ''
+  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
+  return map[method] || ''
+}
+
+function getItemPaymentTagType(item) {
+  const method = item.paymentMethod || item.payment_method
+  const map = { cash: 'warning', card: 'success', gift: '' }
+  return map[method] || 'info'
 }
 
 /** 根据图片路径拼接完整URL，处理相对路径和绝对路径 */

@@ -2,7 +2,11 @@
   <view class="notice-container">
     <view class="top-bar">
       <view class="top-bar-inner">
-        <text class="top-bar-title">通知公告</text>
+        <view class="search-wrap">
+          <u-icon name="search" size="16" color="#86909C"></u-icon>
+          <input class="search-input" v-model="queryParams.noticeTitle" placeholder="搜索公告标题" confirm-type="search" @confirm="handleSearch" />
+          <u-icon v-if="queryParams.noticeTitle" name="close-circle-fill" size="16" color="#C9CDD4" @click="clearSearch"></u-icon>
+        </view>
         <view v-if="noticeList.length > 0" class="mark-all-btn" @click="handleMarkAllRead">
           <u-icon name="checkmark" size="14" color="#3D6DF7"></u-icon>
           <text>全部已读</text>
@@ -31,6 +35,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listNotice, markNoticeReadAll } from '@/api/system/notice'
 
 const noticeList = ref([])
@@ -39,7 +44,7 @@ const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const scrollHeight = ref(600)
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10 })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, noticeTitle: '' })
 
 async function getList(isRefresh = false) {
   if (loading.value) return
@@ -80,6 +85,15 @@ function handleMarkAllRead() {
   }).catch(() => {})
 }
 
+function handleSearch() {
+  getList(true)
+}
+
+function clearSearch() {
+  queryParams.noticeTitle = ''
+  getList(true)
+}
+
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/system/notice/detail?noticeId=${item.noticeId}` })
 }
@@ -91,28 +105,50 @@ function formatTime(time) {
 
 function calcScrollHeight() {
   const systemInfo = uni.getSystemInfoSync()
-  scrollHeight.value = systemInfo.windowHeight - 100
+  scrollHeight.value = systemInfo.windowHeight - 60
 }
 
 onMounted(() => {
   calcScrollHeight()
   getList(true)
 })
+
+onShow(() => {
+  getList(true)
+})
 </script>
 
 <style lang="scss" scoped>
 page { background-color: #F5F7FA; }
-.notice-container { min-height: 100vh; }
+.notice-container { display: flex; flex-direction: column; min-height: 100vh;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.top-bar { background: #fff; padding: 20rpx 30rpx; border-bottom: 1rpx solid #F2F3F5; }
+.top-bar { background: #fff; padding: 20rpx 30rpx; border-bottom: 1rpx solid #F2F3F5; flex-shrink: 0; }
 .top-bar-inner { display: flex; justify-content: space-between; align-items: center; }
-.top-bar-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.search-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  background: #F2F3F5;
+  border-radius: 28rpx;
+  padding: 12rpx 24rpx;
+  margin-right: 20rpx;
+}
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1D2129;
+  height: 36rpx;
+  line-height: 36rpx;
+}
 .mark-all-btn { display: flex; align-items: center; gap: 6rpx; padding: 10rpx 20rpx; background: #E8F0FE; border-radius: 28rpx;
   text { font-size: 24rpx; color: #3D6DF7; font-weight: 500; }
   &:active { opacity: 0.7; }
 }
 
-.list-scroll { padding: 20rpx 24rpx; }
+.list-scroll { padding: 20rpx 30rpx; flex: 1; box-sizing: border-box; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .notice-card { position: relative; background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);

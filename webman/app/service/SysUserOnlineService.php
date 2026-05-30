@@ -40,6 +40,7 @@ class SysUserOnlineService
             $onlineList[] = [
                 'tokenId' => $loginUser->token,
                 'userName' => $loginUser->user ? $loginUser->user->user_name : '',
+                'nickName' => $loginUser->user ? $loginUser->user->nick_name : '',
                 'deptName' => $deptName,
                 'ipaddr' => $loginUser->ipaddr,
                 'loginLocation' => $loginUser->loginLocation,

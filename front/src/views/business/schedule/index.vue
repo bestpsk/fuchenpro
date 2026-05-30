@@ -856,7 +856,7 @@ onMounted(() => {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   overflow-x: auto;
-  background: white;
+  background: var(--el-bg-color);
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
@@ -907,7 +907,7 @@ onMounted(() => {
 }
 
 .data-row:hover {
-  background-color: #fafbfc;
+  background-color: var(--el-fill-color-lighter);
 }
 
 .data-row:last-child { border-bottom: none; }
@@ -974,8 +974,8 @@ onMounted(() => {
 }
 
 .day-cell.rest-day {
-  background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
-  border-color: #fbc4c4;
+  background: linear-gradient(135deg, var(--el-color-danger-light-9, #fff0f0) 0%, var(--el-color-danger-light-8, #ffe8e8) 100%);
+  border-color: var(--el-color-danger-light-5, #fbc4c4);
   cursor: not-allowed;
   display: flex;
   align-items: center;
@@ -1080,7 +1080,7 @@ onMounted(() => {
   border-radius: 6px;
 }
 .rest-date-cell:hover {
-  background-color: #f0f5ff;
+  background-color: var(--el-color-primary-light-9);
 }
 .rest-date-cell .date-num {
   font-size: 13px;

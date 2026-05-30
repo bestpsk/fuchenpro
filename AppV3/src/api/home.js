@@ -32,10 +32,19 @@ export function getRecentOrders(params) {
  * 获取今日统计数据，包括今日订单数、销售额等
  * @returns {Promise<object>} 今日统计数据
  */
-export function getTodayStats() {
+export function getTodayStats(params) {
   return request({
     url: '/home/stats',
-    method: 'get'
+    method: 'get',
+    params
+  })
+}
+
+export function getEnterpriseStats(params) {
+  return request({
+    url: '/home/enterprise-stats',
+    method: 'get',
+    params
   })
 }
 

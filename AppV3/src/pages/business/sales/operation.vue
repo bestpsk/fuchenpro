@@ -26,7 +26,8 @@
             <view v-for="pkg in packageList" :key="pkg.packageId" class="pkg-card">
               <view class="pkg-card-head">
                 <text class="pkg-name">{{ pkg.packageName }}</text>
-                <text class="pkg-status" :class="pkg.status === '2' ? 'exhausted' : 'active'">{{ pkg.status === '2' ? '已用完' : '已成交' }}</text>
+                <view class="pkg-tag owed" v-if="owedPackageMap[pkg.packageId] && Number(owedPackageMap[pkg.packageId].owedAmount || 0) > 0">欠款</view>
+                <view class="pkg-tag payment" v-if="owedPackageMap[pkg.packageId] && owedPackageMap[pkg.packageId].paymentMethod">{{ getPaymentMethodName(owedPackageMap[pkg.packageId].paymentMethod) }}</view>
                 <text class="pkg-amount">¥{{ Number(pkg.totalAmount || 0).toFixed(2) }}</text>
               </view>
               <view v-for="item in (pkg.items || [])" :key="item.packageItemId" class="item-row" :class="{ disabled: item.remainingQuantity <= 0 || pkg.status === '2' }">
@@ -228,12 +229,14 @@
  * @description 从客户套餐中选择品项进行持卡操作，支持数量调整、满意度评价、
  * 操作前后照片上传、操作记录查看等功能
  */
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { getPackageByCustomer } from '@/api/business/customerPackage'
 import { listOperation, addOperation } from '@/api/business/operationRecord'
+import { getOwedPackages } from '@/api/business/repayment'
 import { listEmployeeConfig } from '@/api/business/employeeConfig'
 import { useUserStore } from '@/store/modules/user'
 import upload from '@/utils/upload'
+import { useScrollHeight } from '@/utils/useScrollHeight'
 
 const userStore = useUserStore()
 
@@ -250,7 +253,7 @@ const tabList = ref([{ name: '操作' }, { name: '操作记录' }])
 const operationList = ref([])
 
 const packageList = ref([])
-/** 已选中的操作品项列表 */
+const owedPackageMap = ref({})
 const selectedItems = ref([])
 
 const showDetailDrawer = ref(false)
@@ -260,7 +263,13 @@ const datePickerValue = ref(Number(new Date()))
 const showOperatorPicker = ref(false)
 const operatorList = ref([])
 /** 抽屉内滚动区域高度 */
-const drawerScrollHeight = ref(600)
+const { scrollHeight: drawerScrollHeight, recalc: recalcDrawerHeight } = useScrollHeight(() => {
+  const sysInfo = uni.getSystemInfoSync()
+  const safeBottom = sysInfo.safeAreaInsets?.bottom || 0
+  const headH = uni.upx2px ? uni.upx2px(56) : 28
+  const footH = uni.upx2px ? uni.upx2px(100) : 50 + safeBottom
+  return Math.floor(sysInfo.windowHeight * 0.93) - headH - footH
+})
 
 /** 操作表单数据 */
 const form = reactive({
@@ -336,11 +345,7 @@ function openDetailDrawer() {
   form.remark = ''
   datePickerValue.value = Number(new Date())
   loadOperators()
-  const sysInfo = uni.getSystemInfoSync()
-  const safeBottom = sysInfo.safeAreaInsets?.bottom || 0
-  const headH = uni.upx2px ? uni.upx2px(56) : 28
-  const footH = uni.upx2px ? uni.upx2px(100) : 50 + safeBottom
-  drawerScrollHeight.value = Math.floor(sysInfo.windowHeight * 0.93) - headH - footH
+  recalcDrawerHeight()
   showDetailDrawer.value = true
 }
 
@@ -492,6 +497,26 @@ async function loadPackages() {
   } catch (e) {
     console.error('加载套餐失败:', e)
   }
+  loadOwedPackages()
+}
+
+async function loadOwedPackages() {
+  if (!customerId.value) return
+  try {
+    const res = await getOwedPackages({ customerId: customerId.value })
+    const data = res.data || res
+    const list = Array.isArray(data) ? data : (data.rows || [])
+    const map = {}
+    list.forEach(pkg => { map[pkg.packageId] = pkg })
+    owedPackageMap.value = map
+  } catch (e) {
+    console.error('加载欠款信息失败:', e)
+  }
+}
+
+function getPaymentMethodName(method) {
+  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
+  return map[method] || method || ''
 }
 
 const pages = getCurrentPages()
@@ -509,7 +534,9 @@ loadPackages()
 
 <style lang="scss" scoped>
 page { background-color: #F5F7FA; }
-.op-page { min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; box-sizing: border-box; }
+.op-page { min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; box-sizing: border-box;
+  :deep(.u-popup) { flex: none !important; }
+}
 
 .customer-info { padding: 14rpx 16rpx; background: #fff; border-bottom: 1rpx solid #F2F3F5; }
 .info-row { display: flex; align-items: center; gap: 10rpx; margin-bottom: 6rpx; &:last-child { margin-bottom: 0; } }
@@ -531,9 +558,9 @@ page { background-color: #F5F7FA; }
 .pkg-card-head { display: flex; align-items: center; gap: 8rpx; margin-bottom: 12rpx; padding-bottom: 10rpx; border-bottom: 1rpx solid #F2F3F5;
   .pkg-name { font-size: 26rpx; font-weight: 600; color: #1D2129; }
 }
-.pkg-status { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 4rpx;
-  &.active { color: #00B42A; background: #E8FFEA; }
-  &.exhausted { color: #86909C; background: #F2F3F5; }
+.pkg-tag { font-size: 20rpx; padding: 2rpx 12rpx; border-radius: 4rpx; font-weight: 500; flex-shrink: 0;
+  &.owed { color: #F53F3F; background: #FFECE8; }
+  &.payment { color: #FF7D00; background: #FFF7E8; }
 }
 .pkg-amount { margin-left: auto; font-size: 24rpx; color: #FF6B35; font-weight: 600; }
 

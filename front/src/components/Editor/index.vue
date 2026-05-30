@@ -39,10 +39,11 @@ import { getToken } from "@/utils/auth"
 const { proxy } = getCurrentInstance()
 
 const quillEditorRef = ref()
-const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + "/common/upload") // 上传的图片服务器地址
+const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + "/common/upload")
 const headers = ref({
   Authorization: "Bearer " + getToken()
 })
+const savedSelectionIndex = ref(0)
 
 const props = defineProps({
   /* 编辑器的内容 */
@@ -124,6 +125,14 @@ onMounted(() => {
     let toolbar = quill.getModule("toolbar")
     toolbar.addHandler("image", (value) => {
       if (value) {
+        const selection = quill.getSelection()
+        if (selection) {
+          savedSelectionIndex.value = selection.index
+        } else if (quill.selection && quill.selection.savedRange) {
+          savedSelectionIndex.value = quill.selection.savedRange.index
+        } else {
+          savedSelectionIndex.value = quill.getLength() - 1
+        }
         proxy.$refs.uploadRef.click()
       } else {
         quill.format("image", false)
@@ -155,16 +164,23 @@ function handleBeforeUpload(file) {
 
 // 上传成功处理
 function handleUploadSuccess(res, file) {
-  // 如果上传成功
   if (res.code == 200) {
-    // 获取富文本实例
-    let quill = toRaw(quillEditorRef.value).getQuill()
-    // 获取光标位置
-    let length = quill.selection.savedRange.index
-    // 插入图片，res.url为服务器返回的图片链接地址
-    quill.insertEmbed(length, "image", import.meta.env.VITE_APP_BASE_API + res.fileName)
-    // 调整光标到最后
-    quill.setSelection(length + 1)
+    try {
+      let quill = toRaw(quillEditorRef.value).getQuill()
+      let length = savedSelectionIndex.value
+      const currentSelection = quill.getSelection()
+      if (currentSelection) {
+        length = currentSelection.index
+      }
+      if (typeof length !== 'number' || length < 0) {
+        length = quill.getLength() - 1
+      }
+      quill.insertEmbed(length, "image", res.url)
+      quill.setSelection(length + 1)
+    } catch (e) {
+      console.error('图片插入失败:', e)
+      proxy.$modal.msgError("图片插入失败")
+    }
   } else {
     proxy.$modal.msgError("图片插入失败")
   }
@@ -183,6 +199,11 @@ function handlePasteCapture(e) {
       const item = clipboard.items[i]
       if (item.type.indexOf('image') !== -1) {
         e.preventDefault()
+        const quill = quillEditorRef.value.getQuill()
+        const selection = quill.getSelection()
+        if (selection) {
+          savedSelectionIndex.value = selection.index
+        }
         const file = item.getAsFile()
         insertImage(file)
       }

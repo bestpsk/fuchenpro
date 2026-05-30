@@ -214,8 +214,8 @@ page { background-color: #F5F7FA; }
   &.active { color: #1D2129; }
 }
 .radio-dot { width: 32rpx; height: 32rpx; border-radius: 50%; border: 4rpx solid #C9CDD4; position: relative; transition: border-color 0.2s;
-  .radio-item.active & { border-color: #10B981;
-    &::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 16rpx; height: 16rpx; border-radius: 50%; background: #10B981; }
+  .radio-item.active & { border-color: #3D6DF7;
+    &::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 16rpx; height: 16rpx; border-radius: 50%; background: #3D6DF7; }
   }
 }
 

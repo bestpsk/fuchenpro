@@ -194,7 +194,7 @@ getCookie()
 
 .login-form {
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--el-bg-color);
   width: 400px;
   padding: 25px 25px 5px 25px;
   z-index: 1;

@@ -17,13 +17,15 @@ const defaultAvatar = '/static/images/profile.jpg'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    token: getToken(),                    // JWT认证令牌，从本地存储初始化
-    id: storage.get(constant.id),         // 用户ID
-    name: storage.get(constant.name),     // 用户名（登录账号）
-    nickName: storage.get(constant.nickName) || '',  // 用户昵称
-    avatar: storage.get(constant.avatar), // 用户头像URL
-    roles: storage.get(constant.roles),   // 用户角色列表，用于权限判断
-    permissions: storage.get(constant.permissions)  // 用户权限标识列表，用于按钮级权限控制
+    token: getToken(),
+    id: storage.get(constant.id),
+    name: storage.get(constant.name),
+    nickName: storage.get(constant.nickName) || '',
+    deptName: storage.get(constant.deptName) || '',
+    postName: storage.get(constant.postName) || '',
+    avatar: storage.get(constant.avatar),
+    roles: storage.get(constant.roles),
+    permissions: storage.get(constant.permissions)
   }),
   getters: {
     getToken: (state) => state.token,
@@ -31,6 +33,8 @@ export const useUserStore = defineStore('user', {
     getId: (state) => state.id,
     getName: (state) => state.name,
     getNickName: (state) => state.nickName,
+    getDeptName: (state) => state.deptName,
+    getPostName: (state) => state.postName,
     getRoles: (state) => state.roles,
     getPermissions: (state) => state.permissions
   },
@@ -80,10 +84,14 @@ export const useUserStore = defineStore('user', {
       this.id = userid
       this.name = username
       this.nickName = nickname
+      this.deptName = user.deptName || ''
+      this.postName = (user.posts && user.posts.length > 0) ? user.posts[0].postName : ''
       this.avatar = avatar
       storage.set(constant.id, userid)
       storage.set(constant.name, username)
       storage.set(constant.nickName, nickname)
+      storage.set(constant.deptName, this.deptName)
+      storage.set(constant.postName, this.postName)
       storage.set(constant.avatar, avatar)
     },
     /**

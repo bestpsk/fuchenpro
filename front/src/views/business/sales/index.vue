@@ -47,7 +47,7 @@
             <div v-for="item in customerList" :key="item.customerId" :class="['customer-item', currentCustomerId === item.customerId ? 'active' : '']" @click="handleSelectCustomer(item)">
               <div class="customer-header">
                 <div class="customer-name-row">
-                  <el-avatar :size="28" :src="item.avatar || undefined" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '13px' }">
+                  <el-avatar :size="28" :src="item.avatar || undefined" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '13px' }" @error="() => { item.avatar = '' }">
                     {{ item.customerName ? item.customerName.charAt(0) : '' }}
                   </el-avatar>
                   <span class="customer-name">{{ item.customerName }}</span>
@@ -141,11 +141,11 @@
                 <span class="stat-label" style="font-size:13px; white-space:nowrap">门店成交人</span>
                 <el-input v-model="orderStoreDealer" placeholder="请输入门店成交人" clearable style="flex:1" size="small" />
               </div>
-              <div style="margin-top: 12px; background: #fafafa; padding: 12px; border-radius: 4px">
+              <div style="margin-top: 12px; background: var(--el-fill-color-lighter); padding: 12px; border-radius: 4px">
                 <div style="margin-bottom: 6px; font-size:13px">备注</div>
                 <el-input v-model="orderCustomerFeedback" type="textarea" :rows="2" placeholder="请输入顾客反馈..." size="small" />
               </div>
-              <el-row style="margin-top: 12px; text-align: right; background: #f5f7fa; padding: 10px 16px; border-radius: 4px">
+              <el-row style="margin-top: 12px; text-align: right; background: var(--el-fill-color-lighter); padding: 10px 16px; border-radius: 4px">
                 <el-col :span="24">
                   <span style="margin-right: 12px">合计: <b style="color: #409eff">{{ totalDealAmount }}</b> 元</span>
                   <el-button type="primary" @click="submitOrder">提交订单</el-button>
@@ -648,7 +648,7 @@
       <el-form ref="customerFormRef" :model="customerForm" :rules="customerRules" label-width="80px">
         <el-form-item label="头像">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <el-avatar :size="56" :src="customerForm.avatar || undefined" :style="{ background: customerForm.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '22px' }">
+            <el-avatar :size="56" :src="customerForm.avatar || undefined" :style="{ background: customerForm.gender === '1' ? '#FF6B9D' : '#3D6DF7', fontSize: '22px' }" @error="() => { customerForm.avatar = '' }">
               {{ customerForm.customerName ? customerForm.customerName.charAt(0) : '' }}
             </el-avatar>
             <el-upload
@@ -687,7 +687,7 @@
           </el-col>
         </el-row>
         <el-form-item label="客户标签" prop="tag">
-          <el-select v-model="customerForm.tag" placeholder="请选择标签" clearable style="width: 100%">
+          <el-select v-model="customerForm.tag" placeholder="请选择标签" clearable multiple style="width: 100%">
             <el-option v-for="dict in biz_customer_tag" :key="dict.value" :label="dict.label" :value="dict.value" />
           </el-select>
         </el-form-item>
@@ -1361,7 +1361,7 @@ function handleDeleteArchive(row) {
 }
 
 function handleAddCustomer() {
-  customerForm.value = { customerName: '', phone: '', wechat: '', gender: '0', age: null, tag: '', remark: '', avatar: '', avatarFile: null }
+  customerForm.value = { customerName: '', phone: '', wechat: '', gender: '0', age: null, tag: [], remark: '', avatar: '', avatarFile: null }
   customerDialogTitle.value = '新增客户'
   customerDialogVisible.value = true
 }
@@ -1377,7 +1377,7 @@ async function handleEditCustomer(item) {
       wechat: data.wechat || '',
       gender: String(data.gender ?? '0'),
       age: data.age || null,
-      tag: data.tag || '',
+      tag: data.tag ? data.tag.split(',') : [],
       remark: data.remark || '',
       avatar: data.avatar || '',
       avatarFile: null
@@ -1404,6 +1404,7 @@ function submitCustomerForm() {
       const store = storeOptions.value.find(s => s.storeId === currentStoreId.value)
       const data = {
         ...customerForm.value,
+        tag: customerForm.value.tag.join(','),
         enterpriseId: currentEnterpriseId.value,
         enterpriseName: ent?.enterpriseName,
         storeId: currentStoreId.value,
@@ -1422,6 +1423,9 @@ function submitCustomerForm() {
         }
         proxy.$modal.msgSuccess(isEdit ? '修改成功' : '新增成功')
         customerDialogVisible.value = false
+        if (customerForm.value.avatar && customerForm.value.avatar.startsWith('blob:')) {
+          URL.revokeObjectURL(customerForm.value.avatar)
+        }
         loadCustomerList()
         if (!isEdit && res.data && res.data.customerId) {
           handleSelectCustomer({ customerId: res.data.customerId, ...data })
@@ -1464,8 +1468,8 @@ function submitQuickStore() {
 .customer-panel :deep(.el-card__body) { flex: 1; overflow-y: auto }
 .panel-header { display: flex; justify-content: space-between; align-items: center }
 .customer-list { display: flex; flex-direction: column; gap: 8px }
-.customer-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid #ebeef5; background: #fff }
-.customer-item:hover { background: #f5f7fa; border-color: #c0c4cc }
+.customer-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: 1px solid #ebeef5; background: var(--el-bg-color) }
+.customer-item:hover { background: var(--el-fill-color-light); border-color: #c0c4cc }
 .customer-item.active { background: var(--el-color-primary-light-9); border-color: var(--el-color-primary) }
 .customer-header { display: flex; justify-content: space-between; align-items: center }
 .customer-name-row { display: flex; align-items: center }
@@ -1493,7 +1497,7 @@ function submitQuickStore() {
 .package-group-remark { margin-top: 4px; font-size: 12px }
 
 .archive-timeline { display: flex; flex-direction: column; gap: 12px }
-.archive-card { border: 1px solid #ebeef5; border-radius: 8px; padding: 12px 16px; transition: all 0.2s; background: #fff }
+.archive-card { border: 1px solid #ebeef5; border-radius: 8px; padding: 12px 16px; transition: all 0.2s; background: var(--el-bg-color) }
 .archive-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08) }
 .archive-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0 }
 .archive-card-left { display: flex; align-items: center; gap: 8px }

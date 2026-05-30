@@ -380,11 +380,11 @@ onMounted(() => {
   border: 1px solid #e4e7ed;
   border-radius: 6px;
   margin-bottom: 10px;
-  background-color: #fafafa;
+  background-color: var(--el-fill-color-lighter);
 }
 .tier-header {
   padding: 8px 15px;
-  background-color: #f0f2f5;
+  background-color: var(--el-fill-color-light);
   font-weight: bold;
   font-size: 14px;
   color: #303133;

@@ -70,7 +70,6 @@
     <scroll-view
       scroll-y
       class="list-scroll"
-      :style="{ height: scrollHeight + 'px' }"
       @scrolltolower="loadMore"
       refresher-enabled
       :refresher-triggered="refreshing"
@@ -80,7 +79,7 @@
         <view v-for="item in storeList" :key="item.storeId" class="store-card" @click="goDetail(item)">
           <view class="card-header">
             <view class="store-name">
-              <u-icon name="shop" size="18" color="#FF6B35"></u-icon>
+              <u-icon name="home-fill" size="18" color="#FF6B35"></u-icon>
               <text class="name-text">{{ item.storeName }}</text>
             </view>
             <view class="status-tag" :class="item.status === '0' ? 'status-normal' : 'status-stop'">
@@ -111,7 +110,7 @@
               </view>
               <view class="info-item">
                 <text class="label">年业绩</text>
-                <text class="value highlight">¥{{ item.annualPerformance || '0.00' }}</text>
+                <text class="value highlight">{{ item.annualPerformance ? '¥' + item.annualPerformance : '-' }}</text>
               </view>
             </view>
             <view class="info-row" v-if="item.address">
@@ -156,12 +155,12 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { listStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
 
+
 const storeList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 const enterpriseOptions = ref([])
 
 let searchTimer = null
@@ -292,24 +291,19 @@ function handleDelete(item) {
   })
 }
 
-function calcScrollHeight() {
-  const systemInfo = uni.getSystemInfoSync()
-  scrollHeight.value = systemInfo.windowHeight - 180
-}
-
 onMounted(() => {
-  calcScrollHeight()
   loadEnterpriseOptions()
   getList(true)
 })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.store-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.store-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 120rpx; }
-
-.search-section { padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
+.search-section { flex-shrink: 0; padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
 
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; }
 
@@ -322,7 +316,7 @@ page { background-color: #F5F7FA; }
   .icon-rotate { transform: rotate(180deg); transition: transform 0.3s ease; }
 }
 
-.active-filters { padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
+.active-filters { flex-shrink: 0; padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
 .filter-scroll { white-space: nowrap; }
 .filter-tags { display: inline-flex; gap: 16rpx; padding: 16rpx 0; }
 .filter-tag { display: inline-flex; align-items: center; gap: 8rpx; padding: 10rpx 20rpx; background: rgba(255,255,255,0.2); border-radius: 28rpx; font-size: 24rpx; color: #fff;
@@ -341,7 +335,7 @@ page { background-color: #F5F7FA; }
   .u-button { flex: 1; }
 }
 
-.list-scroll { padding: 20rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .store-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);

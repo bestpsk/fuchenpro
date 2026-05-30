@@ -302,7 +302,7 @@ defineExpose({
     width: 56px;
     height: 48px;
     border-radius: 4px;
-    background: #f0f2f5;
+    background: var(--el-fill-color-light);
     border: 2px solid transparent;
   }
 
@@ -310,7 +310,7 @@ defineExpose({
     b:first-child {
       display: block;
       height: 30%;
-      background: #fff;
+      background: var(--el-bg-color);
     }
     b:last-child {
       width: 30%;

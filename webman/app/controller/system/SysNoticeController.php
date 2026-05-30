@@ -20,7 +20,7 @@ class SysNoticeController
     {
         $service = new SysNoticeService();
         $params = convert_to_snake_case($request->all());
-        $result = $service->selectNoticeList($params);
+        $result = $service->selectNoticeList($params, $request->loginUser->userId);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

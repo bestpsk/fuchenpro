@@ -1,9 +1,11 @@
 <template>
-  <view class="setting-container" :style="{ height: `${windowHeight}px` }">
+  <view class="setting-container">
     <view class="menu-list">
       <view class="list-cell list-cell-arrow" @click="handleWelcomeSlogan">
         <view class="menu-item-box">
-          <u-icon name="chat" size="18" color="#3c96f3" style="margin-right: 10px" />
+          <view class="setting-icon" style="background-color: #EBF0FF">
+            <u-icon name="chat" size="18" color="#3D6DF7" />
+          </view>
           <view class="menu-item-content">
             <text>首页问候语</text>
             <text class="menu-item-desc">{{ welcomeSlogan }}</text>
@@ -12,22 +14,41 @@
       </view>
       <view class="list-cell list-cell-arrow" @click="handleToPwd">
         <view class="menu-item-box">
-          <u-icon name="lock" size="18" color="#3c96f3" style="margin-right: 10px" />
+          <view class="setting-icon" style="background-color: #EAF1FF">
+            <u-icon name="lock" size="18" color="#5B8FF9" />
+          </view>
           <view>修改密码</view>
         </view>
       </view>
       <view class="list-cell list-cell-arrow" @click="handleToUpgrade">
         <view class="menu-item-box">
-          <u-icon name="reload" size="18" color="#3c96f3" style="margin-right: 10px" />
+          <view class="setting-icon" style="background-color: #E6F7F7">
+            <u-icon name="reload" size="18" color="#2DA8A8" />
+          </view>
           <view>检查更新</view>
         </view>
       </view>
       <view class="list-cell list-cell-arrow" @click="handleCleanTmp">
         <view class="menu-item-box">
-          <u-icon name="trash" size="18" color="#3c96f3" style="margin-right: 10px" />
+          <view class="setting-icon" style="background-color: #EDE8FF">
+            <u-icon name="trash" size="18" color="#6C5CE7" />
+          </view>
           <view>清理缓存</view>
         </view>
       </view>
+      <!-- #ifdef H5 -->
+      <view class="list-cell list-cell-arrow" @click="handleFullscreen">
+        <view class="menu-item-box">
+          <view class="setting-icon" style="background-color: #EBF0FF">
+            <u-icon :name="fullscreenIcon" size="18" color="#3D6DF7" />
+          </view>
+          <view class="menu-item-content">
+            <text>全屏模式</text>
+            <text class="menu-item-desc">{{ fullscreenDesc }}</text>
+          </view>
+        </view>
+      </view>
+      <!-- #endif -->
     </view>
     <view class="item-box" @click="handleLogout">
       <text>退出登录</text>
@@ -47,15 +68,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { getConfigKey, getWelcomeSlogan, setWelcomeSlogan } from '@/api/system/config'
+import { useFullscreen } from '@/utils/fullscreen'
 
 const userStore = useUserStore()
-const windowHeight = ref(uni.getSystemInfoSync().windowHeight)
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 const welcomeSlogan = ref(uni.getStorageSync('welcome_slogan') || '开启美好的一天')
 const showSloganPopup = ref(false)
 const sloganInput = ref('')
+
+const fullscreenIcon = computed(() => isFullscreen.value ? 'list' : 'grid')
+const fullscreenDesc = computed(() => isFullscreen.value ? '已开启' : '未开启')
 
 loadSlogan()
 
@@ -101,6 +126,10 @@ function handleCleanTmp() {
   uni.showToast({ title: '模块建设中~', icon: 'none' })
 }
 
+function handleFullscreen() {
+  toggleFullscreen()
+}
+
 function handleLogout() {
   uni.showModal({
     title: '系统提示',
@@ -117,7 +146,10 @@ function handleLogout() {
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #f8f8f8; }
+page { background-color: #f8f8f8; height: 100%; overflow: hidden; }
+.setting-container { display: flex; flex-direction: column; height: 100%; overflow: hidden;
+  :deep(.u-popup) { flex: none !important; }
+}
 
 .menu-list { margin: 20rpx 30rpx; background: #fff; border-radius: 16rpx; overflow: hidden; }
 
@@ -134,6 +166,16 @@ page { background-color: #f8f8f8; }
 }
 
 .menu-item-box { display: flex; align-items: center; flex: 1; }
+
+.setting-icon {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+}
 
 .menu-item-content { display: flex; align-items: center; justify-content: space-between; flex: 1; }
 

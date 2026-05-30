@@ -4,17 +4,13 @@
  * 与storage.js配合使用，确保键名一致性和可维护性
  */
 const constant = {
-  /** 用户头像URL的存储键 */
   avatar: 'user_avatar',
-  /** 用户ID的存储键 */
   id: 'user_id',
-  /** 用户名（登录账号）的存储键 */
   name: 'user_name',
-  /** 用户昵称的存储键 */
   nickName: 'user_nick_name',
-  /** 用户角色列表的存储键 */
+  deptName: 'user_dept_name',
+  postName: 'user_post_name',
   roles: 'user_roles',
-  /** 用户权限标识列表的存储键 */
   permissions: 'user_permissions'
 }
 

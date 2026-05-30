@@ -266,7 +266,7 @@ page { background-color: #F5F7FA; }
 .status-badge { padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
   &.status-0 { background: #FFF7E8; color: #FF7D00; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
-  &.status-2 { background: #E6F7F1; color: #10B981; }
+  &.status-2 { background: #e8f0fe; color: #3D6DF7; }
   &.status-3 { background: #F0E8FF; color: #8B5CF6; }
   &.status-4 { background: #FFECE8; color: #F53F3F; }
 }
@@ -279,7 +279,7 @@ page { background-color: #F5F7FA; }
 .info-row { display: flex; align-items: center; gap: 12rpx; }
 .info-label { font-size: 26rpx; color: #86909C; min-width: 100rpx; flex-shrink: 0; }
 .info-value { font-size: 28rpx; color: #1D2129; flex: 1;
-  &.phone-link { color: #10B981; }
+  &.phone-link { color: #3D6DF7; }
   &.amount { color: #FF6B35; font-weight: 600; }
   &.remark-text { word-break: break-all; line-height: 1.6; }
 }

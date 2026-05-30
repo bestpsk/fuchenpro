@@ -387,7 +387,7 @@ getList()
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
+  background: var(--el-fill-color-lighter);
   border-radius: 8px;
   border: 1px dashed #dcdfe6;
   color: #909399;

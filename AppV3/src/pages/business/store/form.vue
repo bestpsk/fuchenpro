@@ -11,7 +11,7 @@
 
       <view class="form-field">
         <view class="field-input-box">
-          <u-icon name="shop" size="18" color="#86909C"></u-icon>
+          <u-icon name="home-fill" size="18" color="#86909C"></u-icon>
           <input class="field-input" type="text" v-model="form.storeName" placeholder="* 门店名称" placeholder-class="field-placeholder" />
         </view>
       </view>
@@ -68,7 +68,7 @@
         </view>
         <view class="form-field half-width">
           <view class="field-input-box">
-            <u-icon name="group" size="16" color="#86909C"></u-icon>
+            <u-icon name="account-fill" size="16" color="#86909C"></u-icon>
             <input class="field-input" type="number" v-model="form.regularCustomers" placeholder="常来顾客数" placeholder-class="field-placeholder" />
           </view>
         </view>

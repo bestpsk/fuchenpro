@@ -141,6 +141,20 @@
           <el-table-column label="成交金额" prop="dealAmount" width="100" align="right">
             <template #default="scope">{{ Number(scope.row.dealAmount || 0).toFixed(2) }}</template>
           </el-table-column>
+          <el-table-column label="付款方式" width="90" align="center">
+            <template #default="scope">
+              <el-tag v-if="getItemPaymentMethod(scope.row)" :type="getItemPaymentTagType(scope.row)" size="small">{{ getItemPaymentMethod(scope.row) }}</el-tag>
+              <span v-else style="color: #909399">-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="付款金额" prop="paidAmount" width="100" align="right">
+            <template #default="scope">{{ Number(scope.row.paidAmount || 0).toFixed(2) }}</template>
+          </el-table-column>
+          <el-table-column label="欠款金额" prop="owedAmount" width="100" align="right">
+            <template #default="scope">
+              <span :style="{ color: Number(scope.row.owedAmount || 0) > 0 ? '#f56c6c' : '#909399' }">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="备注" prop="remark" :show-overflow-tooltip="true" />
         </el-table>
       </div>
@@ -176,6 +190,19 @@ function getSourceTypeLabel(type) {
 function getSourceTypeTagType(type) {
   const map = { '0': '', '1': 'success', '2': 'warning', '3': 'info' }
   return map[type] || 'info'
+}
+
+function getItemPaymentMethod(item) {
+  const method = item.paymentMethod || item.payment_method
+  if (!method) return ''
+  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
+  return map[method] || ''
+}
+
+function getItemPaymentTagType(item) {
+  const method = item.paymentMethod || item.payment_method
+  const map = { cash: 'warning', card: 'success', gift: '' }
+  return map[method] || 'info'
 }
 
 const orderList = ref([])

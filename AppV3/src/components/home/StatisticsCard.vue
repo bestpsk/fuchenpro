@@ -44,14 +44,24 @@ const emit = defineEmits(['refresh'])
 const defaultStats = [
   { label: '成交客数', todayValue: '0', monthValue: '0' },
   { label: '成交金额', todayValue: '¥0', monthValue: '¥0' },
-  { label: '操作客数', todayValue: '0', monthValue: '0' }
+  { label: '实付金额', todayValue: '¥0', monthValue: '¥0' },
+  { label: '欠款金额', todayValue: '¥0', monthValue: '¥0' },
+  { label: '现金', todayValue: '¥0', monthValue: '¥0' },
+  { label: '耗卡', todayValue: '¥0', monthValue: '¥0' },
+  { label: '赠送', todayValue: '0', monthValue: '0' },
+  { label: '操作客数', todayValue: '0', monthValue: '0' },
+  { label: '操作金额', todayValue: '¥0', monthValue: '¥0' }
 ]
 
 const statsList = ref(props.data.length > 0 ? props.data : defaultStats)
 
 watch(() => props.data, (val) => {
   if (val && val.length > 0) {
-    statsList.value = val
+    statsList.value = val.filter(item => {
+      const today = String(item.todayValue).replace(/[¥,]/g, '')
+      const month = String(item.monthValue).replace(/[¥,]/g, '')
+      return parseFloat(today) !== 0 || parseFloat(month) !== 0
+    })
   }
 }, { deep: true })
 
@@ -129,34 +139,32 @@ function handleMore() {
 
 .stats-grid {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16rpx 0;
 }
 
 .stat-item {
-  flex: 1;
+  width: 33.33%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
-
-  &:not(:last-child) {
-    border-right: 1rpx solid #E5E6EB;
-  }
+  gap: 6rpx;
+  box-sizing: border-box;
 
   .stat-label {
-    font-size: 23rpx;
+    font-size: 22rpx;
     color: #86909C;
   }
 
   .stat-value-today {
-    font-size: 40rpx;
+    font-size: 32rpx;
     font-weight: 700;
     color: #3D6DF7;
     line-height: 1;
   }
 
   .stat-value-month {
-    font-size: 23rpx;
+    font-size: 20rpx;
     color: #86909C;
     font-weight: 400;
     line-height: 1.4;

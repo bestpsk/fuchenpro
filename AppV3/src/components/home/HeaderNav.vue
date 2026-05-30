@@ -11,6 +11,11 @@
         </view>
 
         <view class="nav-right">
+          <!-- #ifdef H5 -->
+          <view class="icon-btn" @click="handleFullscreen">
+            <u-icon :name="isFullscreen ? 'list' : 'grid'" size="24" color="#fff" />
+          </view>
+          <!-- #endif -->
           <view class="icon-btn" @click="handleMessage">
             <u-icon name="bell" size="24" color="#fff" />
             <u-badge v-if="messageCount > 0" :value="messageCount" :absolute="true" type="error"></u-badge>
@@ -42,9 +47,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { listNoticeTop } from '@/api/system/notice'
 import { getConfigKey, getWelcomeSlogan } from '@/api/system/config'
+import { useFullscreen } from '@/utils/fullscreen'
 import QuickMenu from './QuickMenu.vue'
 
 const userStore = useUserStore()
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 const statusBarHeight = ref(44)
 const messageCount = ref(0)
@@ -54,7 +61,7 @@ const welcomeSlogan = ref('开启美好的一天')
 const userInfo = computed(() => ({
   avatar: userStore.getAvatar || '/static/images/profile.jpg',
   name: userStore.getNickName || userStore.getName || '用户',
-  role: '美容顾问'
+  role: [userStore.getDeptName, userStore.getPostName].filter(Boolean).join('·') || '美容顾问'
 }))
 
 /** 根据当前时间自动生成问候语（早上好/下午好/晚上好） */
@@ -107,13 +114,17 @@ function handleSetting() {
   uni.navigateTo({ url: '/pages/mine/setting/index' })
 }
 
+function handleFullscreen() {
+  toggleFullscreen()
+}
+
 defineExpose({ loadUnreadCount })
 </script>
 
 <style lang="scss" scoped>
 .header-section {
   background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
-  padding-bottom: 12rpx;
+  padding-bottom: 26rpx;
 }
 
 .header-nav {

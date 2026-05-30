@@ -39,14 +39,14 @@ const DEFAULT_MENUS = {
     groupName: '进销存管理',
     groupKey: 'wms',
     items: [
-      { id: 60, title: '供货商管理', icon: 'account', path: '/pages/wms/supplier/index', iconColor: '#fff', bgColor: '#10B981', sortOrder: 1 },
-      { id: 61, title: '货品管理', icon: 'list', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 2 },
-      { id: 62, title: '入库管理', icon: 'arrow-down', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 3 },
-      { id: 63, title: '出库管理', icon: 'arrow-up', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 4 },
-      { id: 64, title: '库存查看', icon: 'search', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 5 },
-      { id: 65, title: '库存盘点', icon: 'checkmark-circle', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 6 },
-      { id: 66, title: '店企业出货', icon: 'car', path: '/pages/wms/shipment/index', iconColor: '#fff', bgColor: '#10B981', sortOrder: 7 },
-      { id: 67, title: '进销存报表', icon: 'list-dot', path: '', iconColor: '#fff', bgColor: '#10B981', sortOrder: 8 }
+      { id: 60, title: '供货商管理', icon: 'account', path: '/pages/wms/supplier/index', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 1 },
+      { id: 61, title: '货品管理', icon: 'list', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 2 },
+      { id: 62, title: '入库管理', icon: 'arrow-down', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 3 },
+      { id: 63, title: '出库管理', icon: 'arrow-up', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 4 },
+      { id: 64, title: '库存查看', icon: 'search', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 5 },
+      { id: 65, title: '库存盘点', icon: 'checkmark-circle', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 6 },
+      { id: 66, title: '店企业出货', icon: 'car', path: '/pages/wms/shipment/index', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 7 },
+      { id: 67, title: '进销存报表', icon: 'list-dot', path: '', iconColor: '#fff', bgColor: '#3D6DF7', sortOrder: 8 }
     ]
   },
   finance: {

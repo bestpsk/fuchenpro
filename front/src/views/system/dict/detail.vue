@@ -154,7 +154,7 @@ function loadData() {
   margin-bottom: 16px;
 }
 .stat-card {
-  background: #f7f9fb;
+  background: var(--el-fill-color-lighter);
   border: 1px solid #e8ecf0;
   border-radius: 6px;
   padding: 10px 14px;
@@ -192,7 +192,7 @@ function loadData() {
   padding: 9px 14px;
   font-size: 12px;
   color: #888;
-  background: #f7f9fb;
+  background: var(--el-fill-color-lighter);
   border-right: 1px solid #f0f4f8;
 }
 .dict-cell-val {

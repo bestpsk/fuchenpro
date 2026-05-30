@@ -24,7 +24,7 @@
 
       <view class="form-field" @click="showTypePicker = mode !== 'view'">
         <view class="field-input-box">
-          <u-icon name="shop" size="18" color="#86909C"></u-icon>
+          <u-icon name="grid" size="18" color="#86909C"></u-icon>
           <input class="field-input" :value="form.typeName" placeholder="* 企业类型" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
           <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
         </view>
@@ -152,7 +152,7 @@ const form = reactive({
   address: '',
   enterpriseType: '',
   typeName: '',
-  storeCount: 0,
+  storeCount: '',
   annualPerformance: '',
   enterpriseLevel: '',
   levelName: '',
@@ -205,7 +205,7 @@ async function loadDetail() {
       address: data.address || '',
       enterpriseType: String(data.enterpriseType || ''),
       typeName: getTypeName(data.enterpriseType),
-      storeCount: data.storeCount || 0,
+      storeCount: data.storeCount ? String(data.storeCount) : '',
       annualPerformance: data.annualPerformance ? String(data.annualPerformance) : '',
       enterpriseLevel: String(data.enterpriseLevel || ''),
       levelName: getLevelName(data.enterpriseLevel),
@@ -251,7 +251,7 @@ async function submitForm() {
       phone: form.phone,
       address: form.address || null,
       enterpriseType: form.enterpriseType,
-      storeCount: form.storeCount || 0,
+      storeCount: form.storeCount ? parseInt(form.storeCount) : 0,
       annualPerformance: form.annualPerformance ? parseFloat(form.annualPerformance) : 0,
       enterpriseLevel: form.enterpriseLevel,
       serverUserName: form.serverUserName || null,

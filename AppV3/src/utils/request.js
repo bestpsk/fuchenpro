@@ -75,7 +75,10 @@ const request = (options) => {
         }
       },
       fail: (error) => {
-        // 网络异常错误信息汉化处理
+        if (error.errMsg && (error.errMsg.includes('abort') || error.errMsg.includes('cancel'))) {
+          reject(error)
+          return
+        }
         let message = '后端接口连接异常'
         if (error.errMsg && error.errMsg.includes('timeout')) {
           message = '系统接口请求超时'

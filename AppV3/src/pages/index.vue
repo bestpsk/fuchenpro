@@ -5,7 +5,6 @@
     <scroll-view
       scroll-y
       class="main-content"
-      :style="{ height: scrollHeight }"
       @refresherrefresh="onPullDownRefresh"
       :refresher-enabled="true"
       :refresher-triggered="isRefreshing"
@@ -28,7 +27,7 @@
  * @description 首页 - 应用总览与快捷入口
  * @description 展示通知栏、统计卡片、最近订单列表，支持下拉刷新获取最新数据
  */
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import HeaderNav from '@/components/home/HeaderNav.vue'
 import NoticeBar from '@/components/home/NoticeBar.vue'
 import StatisticsCard from '@/components/home/StatisticsCard.vue'
@@ -46,13 +45,6 @@ const noticeBarRef = ref(null)
 
 const userStore = useUserStore()
 
-/** 计算滚动区域高度，基于系统窗口高度适配不同设备 */
-const scrollHeight = computed(() => {
-  const systemInfo = uni.getSystemInfoSync()
-  const headerHeight = systemInfo.statusBarHeight + 200
-  return `${systemInfo.windowHeight - headerHeight}px`
-})
-
 onMounted(() => {
   loadHomeData()
 })
@@ -64,26 +56,46 @@ async function loadHomeData() {
     const stats = statsRes.data || statsRes || {}
     const dealCustomer = stats.dealCustomerCount || {}
     const dealAmount = stats.dealAmount || {}
+    const paidAmount = stats.paidAmount || {}
+    const owedAmount = stats.owedAmount || {}
+    const cashAmount = stats.cashAmount || {}
+    const cardAmount = stats.cardAmount || {}
+    const giftCount = stats.giftCount || {}
     const operationCustomer = stats.operationCustomerCount || {}
+    const operationAmount = stats.operationAmount || {}
 
     combinedStats.value = [
       { label: '成交客数', todayValue: String(dealCustomer.today || 0), monthValue: String(dealCustomer.month || 0) },
       { label: '成交金额', todayValue: formatAmount(dealAmount.today || 0), monthValue: formatAmount(dealAmount.month || 0) },
-      { label: '操作客数', todayValue: String(operationCustomer.today || 0), monthValue: String(operationCustomer.month || 0) }
-    ]
+      { label: '实付金额', todayValue: formatAmount(paidAmount.today || 0), monthValue: formatAmount(paidAmount.month || 0) },
+      { label: '欠款金额', todayValue: formatAmount(owedAmount.today || 0), monthValue: formatAmount(owedAmount.month || 0) },
+      { label: '现金', todayValue: formatAmount(cashAmount.today || 0), monthValue: formatAmount(cashAmount.month || 0) },
+      { label: '耗卡', todayValue: formatAmount(cardAmount.today || 0), monthValue: formatAmount(cardAmount.month || 0) },
+      { label: '赠送', todayValue: String(giftCount.today || 0), monthValue: String(giftCount.month || 0) },
+      { label: '操作客数', todayValue: String(operationCustomer.today || 0), monthValue: String(operationCustomer.month || 0) },
+      { label: '操作金额', todayValue: formatAmount(operationAmount.today || 0), monthValue: formatAmount(operationAmount.month || 0) }
+    ].filter(item => {
+      const today = String(item.todayValue).replace(/[¥,]/g, '')
+      const month = String(item.monthValue).replace(/[¥,]/g, '')
+      return parseFloat(today) !== 0 || parseFloat(month) !== 0
+    })
 
     const archiveRes = await listArchive({
       operatorUserId: userStore.getId,
       pageNum: 1,
-      pageSize: 5,
+      pageSize: 20,
       orderByColumn: 'archive_date',
       isAsc: 'desc'
     })
-    orderList.value = (archiveRes.rows || []).map(item => ({
+    const filteredRows = (archiveRes.rows || []).filter(item => {
+      const st = item.sourceType || item.source_type
+      return st !== '3'
+    })
+    orderList.value = filteredRows.slice(0, 5).map(item => ({
       id: item.archiveId || item.archive_id,
       name: item.customerName || item.customer_name || '',
       store: [item.enterpriseName || item.enterprise_name, item.storeName || item.store_name].filter(Boolean).join('·'),
-      avatar: '/static/images/profile.jpg',
+      avatar: item.avatar || '',
       amount: Number(item.amount || 0).toFixed(2),
       sourceType: item.sourceType || item.source_type,
       sourceId: item.sourceId || item.source_id,
@@ -115,24 +127,24 @@ function getSourceTypeLabel(type) {
 
 function formatAmount(value) {
   const num = Number(value) || 0
-  if (num >= 10000) {
-    return '¥' + (num / 10000).toFixed(1) + 'w'
-  }
-  if (num >= 1000) {
-    return '¥' + (num / 1000).toFixed(1) + 'k'
-  }
   return '¥' + num.toFixed(0)
 }
 </script>
 
 <style lang="scss" scoped>
+page { height: 100%; overflow: hidden; }
 .home-page {
-  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: #F5F7FA;
+  overflow: hidden;
 }
 
 .main-content {
   padding-top: 20rpx;
+  flex: 1;
+  overflow: hidden;
 }
 
 .bottom-spacer {

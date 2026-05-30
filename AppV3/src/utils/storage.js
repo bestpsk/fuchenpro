@@ -8,7 +8,7 @@ import constant from './constant'
 // 聚合存储的键名，所有用户数据存储在此键下的对象中
 let storageKey = 'storage_data'
 // 允许存储的key白名单，不在白名单中的key将被忽略
-let storageNodeKeys = [constant.avatar, constant.id, constant.name, constant.roles, constant.permissions]
+let storageNodeKeys = [constant.avatar, constant.id, constant.name, constant.nickName, constant.deptName, constant.postName, constant.roles, constant.permissions]
 
 const storage = {
   /**

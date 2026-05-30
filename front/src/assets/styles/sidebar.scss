@@ -7,6 +7,7 @@
     transition: margin-left .28s;
     margin-left: vars.$base-sidebar-width;
     position: relative;
+    background-color: var(--el-bg-color-page);
   }
 
   .sidebarHide {
@@ -186,16 +187,16 @@
       .el-menu-item:not(.is-active):hover,
       .submenu-title-noDropdown:hover,
       .el-sub-menu__title:hover {
-        background-color: #f5f7fa;
+        background-color: var(--el-fill-color-lighter);
         color: rgba(0, 0, 0, 0.85) !important;
       }
 
       .nest-menu .el-sub-menu > .el-sub-menu__title,
       .el-sub-menu .el-menu-item {
-        background-color: #fafafa;
+        background-color: var(--el-fill-color-lighter);
 
         &:hover {
-          background-color: #f0f5ff;
+          background-color: var(--el-color-primary-light-9);
         }
       }
     }

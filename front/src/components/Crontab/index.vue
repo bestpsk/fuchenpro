@@ -267,7 +267,7 @@ onMounted(() => {
     overflow: hidden;
     line-height: 34px;
     padding-top: 6px;
-    background: #f2f2f2;
+    background: var(--el-fill-color-lighter);
 }
 .popup-result {
     box-sizing: border-box;
@@ -286,7 +286,7 @@ onMounted(() => {
     margin-left: -70px;
     text-align: center;
     line-height: 30px;
-    background: #fff;
+    background: var(--el-bg-color);
 }
 .popup-result table {
     text-align: center;

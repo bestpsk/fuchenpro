@@ -555,7 +555,7 @@ onBeforeUnmount(() => {
 .tree-sidebar {
   flex-shrink: 0;
   width: 220px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-right: 1px solid #e8eaed;
   display: flex;
   flex-direction: column;
@@ -612,14 +612,14 @@ onBeforeUnmount(() => {
   justify-content: center;
   width: 15px;
   height: 20px;
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 0 4px 4px 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
   
   .tree-sidebar.collapsed & {
     right: 0;
-    background: #f7f8fa;
+    background: var(--el-fill-color-lighter);
     border-radius: 0 4px 4px 0;
   }
   
@@ -649,7 +649,7 @@ onBeforeUnmount(() => {
   padding: 0 10px;
   height: 40px;
   border-bottom: 1px solid #e8eaed;
-  background: #f7f8fa;
+  background: var(--el-fill-color-lighter);
   flex-shrink: 0;
 
   .tree-title {
@@ -723,12 +723,12 @@ onBeforeUnmount(() => {
     margin-bottom: 1px;
 
     &:hover {
-      background: #f0f7ff;
+      background: var(--el-color-primary-light-9);
     }
   }
 
   :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background: #e6f0fd;
+    background: var(--el-color-primary-light-8);
     color: #409eff;
     font-weight: 600;
 

@@ -148,7 +148,7 @@ defineExpose({
 }
 
 .type-notify {
-  background: #fff8e6;
+  background: var(--el-color-warning-light-9);
   color: #b7791f;
   border-left: 3px solid #d97706;
 }
@@ -231,7 +231,7 @@ defineExpose({
 }
 
 .notice-body {
-  background: #fff;
+  background: var(--el-bg-color);
   border-radius: 6px;
   padding: 28px 32px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
@@ -280,6 +280,7 @@ defineExpose({
 
 .notice-content :deep(img) {
   max-width: 100%;
+  height: auto;
   border-radius: 4px;
   margin: 8px 0;
 }
@@ -299,7 +300,7 @@ defineExpose({
   margin: 1em 0;
   padding: 6px 16px;
   color: #718096;
-  background: #f7fafc;
+  background: var(--el-fill-color-lighter);
 }
 
 .notice-content :deep(table) {
@@ -316,7 +317,7 @@ defineExpose({
 }
 
 .notice-content :deep(table th) {
-  background: #f7fafc;
+  background: var(--el-fill-color-lighter);
   font-weight: 600;
 }
 
@@ -356,7 +357,7 @@ defineExpose({
   }
   
   .el-drawer__body {
-    background: #f5f6f8;
+    background: var(--el-fill-color-lighter);
     padding: 0;
   }
 }

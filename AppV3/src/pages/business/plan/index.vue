@@ -40,7 +40,7 @@
       </view>
     </u-popup>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="planList.length > 0" class="card-list">
         <view v-for="item in planList" :key="item.planId" class="plan-card" @click="goDetail(item)">
           <view class="card-header">
@@ -82,12 +82,12 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listPlan, listEnterprise } from '@/api/business/plan'
 
+
 const planList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const scrollHeight = ref(600)
 
 let searchTimer = null
 
@@ -158,15 +158,16 @@ function handleAdd() {
   uni.navigateTo({ url: '/pages/business/plan/form?mode=add' })
 }
 
-function calcScrollHeight() { const systemInfo = uni.getSystemInfoSync(); scrollHeight.value = systemInfo.windowHeight - 180 }
-onMounted(() => { calcScrollHeight(); getList(true) })
+onMounted(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.plan-container { min-height: 100vh; padding: 0 24rpx; padding-bottom: 40rpx; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.plan-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 0 24rpx;
+  :deep(.u-popup) { flex: none !important; }
+}
 
-.search-section { padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
+.search-section { flex-shrink: 0; padding: 20rpx 24rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%); }
 .search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
@@ -176,7 +177,7 @@ page { background-color: #F5F7FA; }
   .icon-rotate { transform: rotate(180deg); transition: transform 0.3s ease; }
 }
 
-.active-filters { padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
+.active-filters { flex-shrink: 0; padding: 12rpx 24rpx 16rpx; margin-left: -24rpx; margin-right: -24rpx; background: linear-gradient(180deg, #4A7AEF 0%, #F5F7FA 100%); }
 .filter-scroll { white-space: nowrap; }
 .filter-tags { display: inline-flex; gap: 16rpx; padding: 16rpx 0; }
 .filter-tag { display: inline-flex; align-items: center; gap: 8rpx; padding: 10rpx 20rpx; background: rgba(255,255,255,0.2); border-radius: 28rpx; font-size: 24rpx; color: #fff;
@@ -193,7 +194,7 @@ page { background-color: #F5F7FA; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
 
-.list-scroll { padding: 20rpx 0; }
+.list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
 .plan-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);

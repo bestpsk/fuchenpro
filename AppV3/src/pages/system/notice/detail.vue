@@ -12,7 +12,7 @@
       <view class="detail-meta">
         <view class="meta-item">
           <u-icon name="account" size="14" color="#86909C"></u-icon>
-          <text>{{ detail.createBy || '-' }}</text>
+          <text>{{ detail.createNickName || '-' }}</text>
         </view>
         <view class="meta-item">
           <u-icon name="clock" size="14" color="#86909C"></u-icon>
@@ -21,7 +21,7 @@
       </view>
       <view class="detail-divider"></view>
       <view class="detail-body">
-        <rich-text v-if="detail.noticeContent" :nodes="detail.noticeContent" class="rich-content"></rich-text>
+        <rich-text v-if="detail.noticeContent" :nodes="processedContent" class="rich-content"></rich-text>
         <view v-else class="empty-content">
           <u-icon name="file-text" size="40" color="#C9CDD4"></u-icon>
           <text>暂无内容</text>
@@ -36,12 +36,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getNotice, markNoticeRead } from '@/api/system/notice'
 
 const detail = ref(null)
 const loading = ref(false)
+
+const processedContent = computed(() => {
+  const html = detail.value?.noticeContent
+  if (!html) return ''
+  return html.replace(/<img\s+/gi, '<img style="max-width:100%;height:auto;" ')
+})
 
 onLoad((options) => {
   const noticeId = options?.noticeId

@@ -139,7 +139,7 @@ function markAllRead() {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: #f7f9fb;
+  background: var(--el-fill-color-lighter);
   border-bottom: 1px solid #eee;
   font-size: 13px;
   font-weight: 600;
@@ -170,7 +170,7 @@ function markAllRead() {
   transition: background 0.15s;
 }
 .notice-popover .notice-item:last-child { border-bottom: none; }
-.notice-popover .notice-item:hover { background: #f7f9fb; }
+.notice-popover .notice-item:hover { background: var(--el-fill-color-lighter); }
 .notice-popover .notice-item.is-read .notice-tag,
 .notice-popover .notice-item.is-read .notice-item-title,
 .notice-popover .notice-item.is-read .notice-item-date { opacity: 0.45; filter: grayscale(1); color: #999; }

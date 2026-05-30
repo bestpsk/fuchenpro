@@ -13,6 +13,7 @@ Route::post('/common/upload', [app\controller\CommonController::class, 'upload']
 Route::get('/common/download', [app\controller\CommonController::class, 'downloads']);
 
 Route::get('/home/stats', [app\controller\AppHomeController::class, 'stats']);
+Route::get('/home/enterprise-stats', [app\controller\AppHomeController::class, 'enterpriseStats']);
 
 Route::get('/system/user/list', [app\controller\system\SysUserController::class, 'list']);
 Route::post('/system/user/export', [app\controller\system\SysUserController::class, 'export']);
@@ -137,6 +138,7 @@ Route::delete('/monitor/jobLog/clean', [app\controller\monitor\SysJobLogControll
 Route::delete('/monitor/jobLog', [app\controller\monitor\SysJobLogController::class, 'remove']);
 
 Route::get('/monitor/server', [app\controller\monitor\ServerController::class, 'getInfo']);
+Route::get('/monitor/data', [app\controller\monitor\DataController::class, 'getInfo']);
 Route::get('/monitor/cache', [app\controller\monitor\CacheController::class, 'getInfo']);
 Route::get('/monitor/cache/getNames', [app\controller\monitor\CacheController::class, 'getNames']);
 Route::get('/monitor/cache/getKeys/{cacheName}', [app\controller\monitor\CacheController::class, 'getKeys']);
@@ -271,14 +273,21 @@ Route::post('/business/attendance/config', [app\controller\business\BizAttendanc
 Route::put('/business/attendance/config', [app\controller\business\BizAttendanceConfigController::class, 'edit']);
 Route::delete('/business/attendance/config', [app\controller\business\BizAttendanceConfigController::class, 'remove']);
 
-Route::get('/system/appMenu/list', [app\controller\system\AppMenuConfigController::class, 'list']);
-Route::get('/system/appMenu/grouped', [app\controller\system\AppMenuConfigController::class, 'grouped']);
-Route::put('/system/appMenu/updateSort', [app\controller\system\AppMenuConfigController::class, 'updateSort']);
-Route::put('/system/appMenu/changeStatus', [app\controller\system\AppMenuConfigController::class, 'changeStatus']);
-Route::post('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'add']);
-Route::put('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'edit']);
-Route::delete('/system/appMenu', [app\controller\system\AppMenuConfigController::class, 'remove']);
-Route::get('/system/appMenu/{id}', [app\controller\system\AppMenuConfigController::class, 'getInfo']);
+Route::get('/admin/feedback/list', [app\controller\admin\BizFeedbackController::class, 'list']);
+Route::get('/admin/feedback/replyList', [app\controller\admin\BizFeedbackController::class, 'replyList']);
+Route::post('/admin/feedback', [app\controller\admin\BizFeedbackController::class, 'add']);
+Route::put('/admin/feedback', [app\controller\admin\BizFeedbackController::class, 'edit']);
+Route::put('/admin/feedback/handle', [app\controller\admin\BizFeedbackController::class, 'handle']);
+Route::delete('/admin/feedback', [app\controller\admin\BizFeedbackController::class, 'remove']);
+Route::get('/admin/feedback/{feedbackId}', [app\controller\admin\BizFeedbackController::class, 'getInfo']);
+Route::post('/admin/feedback/reply', [app\controller\admin\BizFeedbackController::class, 'reply']);
+
+Route::get('/system/appMenu/list', [app\controller\system\SysAppMenuController::class, 'list']);
+Route::get('/system/appMenu/grouped', [app\controller\system\SysAppMenuController::class, 'grouped']);
+Route::post('/system/appMenu', [app\controller\system\SysAppMenuController::class, 'add']);
+Route::put('/system/appMenu', [app\controller\system\SysAppMenuController::class, 'edit']);
+Route::delete('/system/appMenu', [app\controller\system\SysAppMenuController::class, 'remove']);
+Route::get('/system/appMenu/{menuId}', [app\controller\system\SysAppMenuController::class, 'getInfo']);
 
 Route::get('/system/user/detail/welcomeSlogan', [app\controller\system\SysUserDetailController::class, 'getWelcomeSlogan']);
 Route::put('/system/user/detail/welcomeSlogan', [app\controller\system\SysUserDetailController::class, 'setWelcomeSlogan']);

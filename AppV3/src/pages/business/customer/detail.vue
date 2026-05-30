@@ -50,9 +50,9 @@
       </view>
 
       <view class="form-field">
-        <view class="field-input-box">
-          <u-icon name="tags" size="18" color="#86909C"></u-icon>
-          <input class="field-input" type="text" v-model="form.tag" placeholder="客户标签（逗号分隔）" placeholder-class="field-placeholder" />
+        <view class="field-label"><u-icon name="tags" size="18" color="#86909C"></u-icon><text class="label-text">客户标签</text></view>
+        <view class="tag-selector">
+          <view class="tag-option" v-for="d in customerTagDict" :key="d.value" :class="{ active: form.tag.includes(d.value) }" @click="toggleTag(d.value)">{{ d.label }}</view>
         </view>
       </view>
 
@@ -83,6 +83,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getCustomer, updateCustomer } from '@/api/business/customer'
+import { getDicts } from '@/api/system/dict/data'
 import config from '@/config'
 
 const submitting = ref(false)
@@ -95,21 +96,41 @@ const form = reactive({
   customerName: '',
   phone: '',
   wechat: '',
-  gender: '0',
+  gender: '1',
   age: null,
-  tag: '',
+  tag: [],
   remark: ''
 })
 
 const genderOptions = [
-  { label: '男', value: '0' },
-  { label: '女', value: '1' }
+  { label: '女', value: '1' },
+  { label: '男', value: '0' }
 ]
 
 const genderLabel = computed(() => {
   const item = genderOptions.find(g => g.value === form.gender)
   return item ? item.label : ''
 })
+
+const customerTagDict = ref([])
+
+async function loadCustomerTagDict() {
+  try {
+    const res = await getDicts('biz_customer_tag')
+    customerTagDict.value = (res.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+function toggleTag(value) {
+  const idx = form.tag.indexOf(value)
+  if (idx === -1) {
+    form.tag.push(value)
+  } else {
+    form.tag.splice(idx, 1)
+  }
+}
 
 function onGenderConfirm(e) {
   form.gender = e.value[0].value
@@ -134,7 +155,7 @@ async function loadDetail() {
       wechat: data.wechat || '',
       gender: String(data.gender ?? '2'),
       age: data.age || null,
-      tag: data.tag || '',
+      tag: data.tag ? data.tag.split(',') : [],
       remark: data.remark || ''
     })
     const avatar = data.avatar || ''
@@ -196,7 +217,7 @@ async function submitForm() {
       wechat: form.wechat || null,
       gender: form.gender,
       age: form.age || null,
-      tag: form.tag || null,
+      tag: form.tag.length > 0 ? form.tag.join(',') : null,
       remark: form.remark || null
     }
 
@@ -227,6 +248,8 @@ onMounted(() => {
   const currentPage = pages[pages.length - 1]
   const options = currentPage.options || {}
   customerId.value = options.id ? parseInt(options.id) : null
+
+  loadCustomerTagDict()
 
   if (customerId.value) {
     uni.setNavigationBarTitle({ title: '客户信息' })
@@ -294,6 +317,38 @@ page { background-color: #F5F7FA; }
 }
 
 .field-placeholder { color: #C9CDD4; font-size: 30rpx; }
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.label-text {
+  font-size: 28rpx;
+  color: #86909C;
+  font-weight: 500;
+}
+
+.tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.tag-option {
+  font-size: 26rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 8rpx;
+  background: #F2F3F5;
+  color: #86909C;
+}
+
+.tag-option.active {
+  background: #E8F3FF;
+  color: #165DFF;
+}
 
 .field-textarea-box {
   display: flex;

@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\SysNotice;
 use app\model\SysNoticeRead;
+use app\model\SysUser;
 
 /**
  * 通知公告服务层，处理通知的增删改查、已读标记和已读用户查询
@@ -11,7 +12,7 @@ use app\model\SysNoticeRead;
 class SysNoticeService
 {
     // 按条件分页查询通知公告列表
-    public function selectNoticeList($params = [])
+    public function selectNoticeList($params = [], $userId = null)
     {
         $query = SysNotice::query();
 
@@ -27,14 +28,30 @@ class SysNoticeService
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
-        return $query->orderBy('notice_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        $result = $query->orderBy('notice_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+
+        if ($userId) {
+            $readIds = SysNoticeRead::where('user_id', $userId)->pluck('notice_id')->toArray();
+            foreach ($result->items() as $item) {
+                $item->is_read = in_array($item->notice_id, $readIds);
+            }
+        }
+
+        return $result;
     }
 
     // 根据ID查询通知公告详情
 
     public function selectNoticeById($noticeId)
     {
-        return SysNotice::find($noticeId);
+        $notice = SysNotice::find($noticeId);
+        if ($notice && $notice->create_by) {
+            $user = SysUser::where('user_name', $notice->create_by)->first();
+            $notice->create_nick_name = $user ? $user->nick_name : $notice->create_by;
+        } else {
+            $notice->create_nick_name = '';
+        }
+        return $notice;
     }
 
     // 新增通知公告
