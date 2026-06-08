@@ -20,6 +20,7 @@ class BizCustomerPackageController
     {
         $service = new BizCustomerPackageService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectPackageList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -41,8 +42,9 @@ class BizCustomerPackageController
         $customerId = $request->input('customerId');
         $allParams = $request->all();
         $status = (isset($allParams['status']) && $allParams['status'] !== '') ? $allParams['status'] : null;
+        $params = ['login_user' => $request->loginUser];
         $service = new BizCustomerPackageService();
-        $result = $service->selectPackagesByCustomer($customerId, $status);
+        $result = $service->selectPackagesByCustomer($customerId, $status, $params);
         return AjaxResult::success($result);
     }
 }

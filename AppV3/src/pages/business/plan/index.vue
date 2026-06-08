@@ -72,7 +72,7 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <view class="fab-btn" @click="handleAdd">
+    <view class="fab-btn" v-if="checkPermi('business:plan:add')" @click="handleAdd">
       <u-icon name="plus" size="28" color="#fff"></u-icon>
     </view>
   </view>
@@ -81,6 +81,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listPlan, listEnterprise } from '@/api/business/plan'
+import { checkPermi } from '@/utils/permission'
 
 
 const planList = ref([])

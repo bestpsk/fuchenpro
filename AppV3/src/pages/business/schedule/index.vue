@@ -1,12 +1,12 @@
 <template>
   <view class="schedule-container">
     <view class="search-section">
-      <view class="month-picker" @click="showMonthPicker = true">
+      <view class="month-picker" @click="showMonthPicker = true" v-if="currentTab === 0 || currentTab === 1">
         <u-icon name="calendar" size="16" color="#fff"></u-icon>
         <text class="month-text">{{ queryParams.yearMonth }}</text>
         <u-icon name="arrow-down" size="12" color="#fff"></u-icon>
       </view>
-      <view class="search-box">
+      <view class="search-box" v-if="currentTab === 0">
         <u-icon name="search" size="16" color="#86909C"></u-icon>
         <input class="search-input" type="text" v-model="queryParams.keyword" placeholder="搜索员工/企业" placeholder-class="search-placeholder" confirm-type="search" @input="onSearchInput" @confirm="handleSearch" />
         <view v-if="queryParams.keyword" class="clear-btn" @click="clearKeyword">
@@ -17,9 +17,28 @@
           <u-icon name="arrow-down" size="12" :class="{ 'icon-rotate': showFilter }"></u-icon>
         </view>
       </view>
+      <view class="search-box" v-if="currentTab === 1">
+        <u-icon name="search" size="16" color="#86909C"></u-icon>
+        <input class="search-input" type="text" v-model="enterpriseSearchKeyword" placeholder="搜索企业/员工" placeholder-class="search-placeholder" confirm-type="search" @confirm="getEnterpriseList" />
+        <view v-if="enterpriseSearchKeyword" class="clear-btn" @click="enterpriseSearchKeyword = ''; getEnterpriseList()">
+          <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
+        </view>
+      </view>
+      <view class="search-box" v-if="currentTab === 2">
+        <u-icon name="search" size="16" color="#86909C"></u-icon>
+        <input class="search-input" type="text" v-model="configQueryParams.userName" placeholder="搜索员工姓名" placeholder-class="search-placeholder" confirm-type="search" @confirm="queryConfig" />
+        <view v-if="configQueryParams.userName" class="clear-btn" @click="configQueryParams.userName = ''; queryConfig()">
+          <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
+        </view>
+        <view class="filter-btn" @click="showConfigFilter = !showConfigFilter">
+          <text>筛选</text>
+          <u-icon name="arrow-down" size="12" :class="{ 'icon-rotate': showConfigFilter }"></u-icon>
+        </view>
+      </view>
     </view>
 
-    <view v-if="hasActiveFilters" class="active-filters">
+    <!-- Tab 0: 员工行程 筛选 -->
+    <view v-if="hasActiveFilters && currentTab === 0" class="active-filters">
       <scroll-view scroll-x class="filter-scroll">
         <view class="filter-tags">
           <view v-if="queryParams.purpose" class="filter-tag active" @click="clearFilter('purpose')">
@@ -32,7 +51,20 @@
       </scroll-view>
     </view>
 
-    <u-popup :show="showFilter" mode="top" round="16" @close="toggleFilter">
+    <!-- Tab 2: 员工配置 筛选 -->
+    <view v-if="currentTab === 2 && showConfigFilter" class="active-filters">
+      <view class="config-filter-bar">
+        <view class="config-filter-item">
+          <text class="config-filter-label">是否可排班</text>
+          <view class="config-filter-options">
+            <view class="option-tag" :class="{ active: configQueryParams.isSchedulable === '1' }" @click="configQueryParams.isSchedulable = configQueryParams.isSchedulable === '1' ? '' : '1'">是</view>
+            <view class="option-tag" :class="{ active: configQueryParams.isSchedulable === '0' }" @click="configQueryParams.isSchedulable = configQueryParams.isSchedulable === '0' ? '' : '0'">否</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <u-popup v-if="showFilter" :show="showFilter" mode="top" round="16" @close="toggleFilter">
       <view class="popup-content">
         <view class="popup-title">筛选条件</view>
         <view class="form-item">
@@ -54,9 +86,15 @@
       </view>
     </u-popup>
 
-    <u-datetime-picker :show="showMonthPicker" mode="year-month" v-model="monthPickerValue" @confirm="onMonthConfirm" @cancel="showMonthPicker = false" @close="showMonthPicker = false"></u-datetime-picker>
+    <u-datetime-picker v-if="showMonthPicker" :show="showMonthPicker" mode="year-month" v-model="monthPickerValue" @confirm="onMonthConfirm" @cancel="showMonthPicker = false" @close="showMonthPicker = false"></u-datetime-picker>
 
-    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <!-- Tabs -->
+    <view class="tabs-wrapper">
+      <u-tabs :list="tabList" :current="currentTab" @click="onTabChange" :activeStyle="{ color: '#3D6DF7', fontWeight: 'bold' }" :lineColor="'#3D6DF7'" :scrollable="false"></u-tabs>
+    </view>
+
+    <!-- Tab 0: 员工行程 -->
+    <scroll-view v-if="currentTab === 0" scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="scheduleList.length > 0" class="card-list">
         <view v-for="item in scheduleList" :key="item.scheduleIds[0]" class="schedule-card" @click="goDetail(item)">
           <view class="card-header">
@@ -95,10 +133,10 @@
           <view class="card-footer">
             <view class="time-text">共{{ item.scheduleDates.length }}天</view>
             <view class="action-btns">
-              <view class="action-btn edit" @click.stop="goEdit(item)">
+              <view class="action-btn edit" v-if="checkPermi('business:schedule:edit')" @click.stop="goEdit(item)">
                 <u-icon name="edit-pen" size="14"></u-icon><text>编辑</text>
               </view>
-              <view class="action-btn delete" @click.stop="handleDelete(item)">
+              <view class="action-btn delete" v-if="checkPermi('business:schedule:remove')" @click.stop="handleDelete(item)">
                 <u-icon name="trash" size="14"></u-icon><text>删除</text>
               </view>
             </view>
@@ -109,29 +147,203 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <view class="fab-btn" @click="goAdd">
+    <!-- Tab 1: 企业排班 -->
+    <scroll-view v-if="currentTab === 1" scroll-y class="list-scroll" refresher-enabled :refresher-triggered="enterpriseRefreshing" @refresherrefresh="onEnterpriseRefresh">
+      <view v-if="enterpriseScheduleList.length > 0" class="card-list">
+        <view v-for="group in enterpriseScheduleList" :key="group.enterpriseId" class="enterprise-group">
+          <view class="enterprise-header">
+            <u-icon name="home-fill" size="16" color="#3D6DF7"></u-icon>
+            <text class="enterprise-name">{{ group.enterpriseName }}</text>
+            <text class="enterprise-count">{{ group.schedules.length }}条排班</text>
+          </view>
+          <view v-for="(item, idx) in group.schedules" :key="idx" class="schedule-card enterprise-schedule-card">
+            <view class="card-header">
+              <view class="user-info">
+                <u-icon name="account-fill" size="16" color="#3D6DF7"></u-icon>
+                <text class="user-name">{{ item.userName || '-' }}</text>
+              </view>
+              <view class="status-tag" :class="'status-' + item.status">{{ getStatusName(item.status) }}</view>
+            </view>
+            <view class="card-body">
+              <view class="info-row">
+                <view class="info-item">
+                  <text class="label">目的</text>
+                  <text class="value purpose-text">{{ getPurposeName(item.purpose) }}</text>
+                </view>
+                <view class="info-item">
+                  <text class="label">日期</text>
+                  <text class="value">{{ item.scheduleDate }}</text>
+                </view>
+              </view>
+              <view class="info-row" v-if="item.remark">
+                <view class="info-item full">
+                  <text class="label">备注</text>
+                  <text class="value remark-text">{{ item.remark }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <u-empty v-else-if="!enterpriseLoading" mode="data" text="暂无企业排班数据" :marginTop="100"></u-empty>
+      <u-loadmore v-else :status="'loading'" :loading-text="'加载中...'" :marginTop="20" />
+    </scroll-view>
+
+    <!-- Tab 2: 员工配置 -->
+    <scroll-view v-if="currentTab === 2" scroll-y class="list-scroll" refresher-enabled :refresher-triggered="configRefreshing" @refresherrefresh="onConfigRefresh">
+      <view v-if="employeeConfigList.length > 0" class="card-list">
+        <view v-for="item in employeeConfigList" :key="item.userId" class="schedule-card config-card">
+          <view class="card-header">
+            <view class="user-info">
+              <u-icon name="account-fill" size="16" color="#3D6DF7"></u-icon>
+              <text class="user-name">{{ item.userName || '-' }}</text>
+              <text v-if="item.deptName" class="dept-tag">{{ item.deptName }}</text>
+            </view>
+            <view class="schedulable-switch" v-if="hasEditPermi">
+              <text class="switch-label">可排班</text>
+              <u-switch v-model="item.isSchedulable" activeValue="1" inactiveValue="0" @change="handleSchedulableChange(item)" :activeColor="'#3D6DF7'"></u-switch>
+            </view>
+            <view v-else class="schedulable-status">
+              <text :class="item.isSchedulable === '1' ? 'schedulable-yes' : 'schedulable-no'">{{ item.isSchedulable === '1' ? '可排班' : '不可排班' }}</text>
+            </view>
+          </view>
+          <view class="card-body">
+            <view class="info-row">
+              <view class="info-item full">
+                <text class="label">休息日</text>
+                <view class="rest-dates-wrap" v-if="item.restDates && item.restDates.length > 0">
+                  <view class="date-tag rest" v-for="(date, idx) in item.restDates" :key="idx">{{ formatDay(date) }}</view>
+                </view>
+                <text class="value remark-text" v-else>未配置</text>
+              </view>
+            </view>
+          </view>
+          <view class="card-footer" v-if="hasEditPermi">
+            <view></view>
+            <view class="action-btns">
+              <view class="action-btn edit" @click="openRestDateConfig(item)">
+                <u-icon name="calendar" size="14"></u-icon><text>配置休息日</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      <u-empty v-else-if="!configLoading" mode="data" text="暂无员工配置数据" :marginTop="100"></u-empty>
+      <u-loadmore v-else :status="'loading'" :loading-text="'加载中...'" :marginTop="20" />
+    </scroll-view>
+
+    <!-- FAB: 仅在员工行程Tab显示 -->
+    <view class="fab-btn" v-if="currentTab === 0 && checkPermi('business:schedule:add')" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
+
+    <!-- 休息日期配置弹窗 -->
+    <u-popup :show="showRestDatePopup" mode="bottom" round="16" @close="showRestDatePopup = false">
+      <view class="rest-date-popup">
+        <view class="popup-title-row">
+          <text class="popup-title">配置休息日期</text>
+          <text class="popup-subtitle">{{ currentConfigUser.userName }}</text>
+        </view>
+        <view class="rest-date-tip">点击日期可选择/取消休息日，支持多选</view>
+        <view class="popup-actions">
+          <u-button type="info" plain text="取消" @click="showRestDatePopup = false"></u-button>
+          <u-button type="primary" text="保存" :loading="restDateSaving" @click="saveRestDatesAction"></u-button>
+        </view>
+      </view>
+    </u-popup>
+    <u-calendar
+      :show="showRestDateCalendar"
+      mode="multiple"
+      :defaultDate="tempRestDates"
+      :color="'#3D6DF7'"
+      @confirm="onRestDateConfirm"
+      @close="showRestDateCalendar = false"
+    ></u-calendar>
   </view>
 </template>
 
 <script setup>
 /**
- * @description 行程列表页 - 行程安排管理
- * @description 展示行程列表，支持月份选择、按目的/状态筛选、关键词搜索，
- * 将同一员工同一企业同一目的的行程按日期分组展示，支持删除整组行程
+ * @description 行程管理页 - 员工行程/企业排班/员工配置三Tab
+ * @description Tab1: 员工行程列表，支持月份选择、筛选、搜索
+ * Tab2: 企业排班，按企业分组展示排班数据
+ * Tab3: 员工配置，管理员工排班开关和休息日期
  */
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listSchedule, delSchedule } from '@/api/business/schedule'
+import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
+import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
+import { checkPermi } from '@/utils/permission'
 
+// ==================== 通用 ====================
+const currentTab = ref(0)
+const showMonthPicker = ref(false)
+const monthPickerValue = ref(Number(new Date()))
 
+const tabList = computed(() => {
+  const list = [{ name: '员工行程' }, { name: '企业排班' }]
+  if (checkPermi('business:employeeConfig:list')) {
+    list.push({ name: '员工配置' })
+  }
+  return list
+})
+
+const hasEditPermi = computed(() => checkPermi('business:employeeConfig:edit'))
+
+function onTabChange(e) {
+  currentTab.value = e.index
+  if (currentTab.value === 1) {
+    getEnterpriseList()
+  } else if (currentTab.value === 2) {
+    queryConfig()
+  }
+}
+
+function onMonthConfirm(e) {
+  const date = new Date(e.value)
+  queryParams.yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  showMonthPicker.value = false
+  if (currentTab.value === 0) {
+    getList(true)
+  } else if (currentTab.value === 1) {
+    getEnterpriseList()
+  }
+}
+
+const purposeOptions = ref([
+  { label: '爆卡', value: '1' },
+  { label: '启动销售', value: '2' },
+  { label: '售后服务', value: '3' },
+  { label: '洽谈业务', value: '4' }
+])
+
+const statusOptions = ref([
+  { label: '已预约', value: '1' },
+  { label: '服务中', value: '2' },
+  { label: '已完成', value: '3' },
+  { label: '已取消', value: '4' }
+])
+
+function getPurposeName(value) {
+  const item = purposeOptions.value.find(p => p.value === String(value))
+  return item ? item.label : '-'
+}
+
+function getStatusName(value) {
+  const item = statusOptions.value.find(s => s.value === String(value))
+  return item ? item.label : '-'
+}
+
+function formatDay(dateStr) {
+  if (!dateStr) return ''
+  return dateStr.substring(5)
+}
+
+// ==================== Tab 0: 员工行程 ====================
 const scheduleList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
-const showMonthPicker = ref(false)
-const monthPickerValue = ref(Number(new Date()))
 
 let searchTimer = null
 
@@ -148,48 +360,8 @@ const queryParams = reactive({
   status: ''
 })
 
-const purposeOptions = ref([
-  { label: '爆卡', value: '1' },
-  { label: '启动销售', value: '2' },
-  { label: '售后服务', value: '3' },
-  { label: '洽谈业务', value: '4' }
-])
-
-const statusOptions = ref([
-  { label: '已预约', value: '1' },
-  { label: '服务中', value: '2' },
-  { label: '已完成', value: '3' },
-  { label: '已取消', value: '4' }
-])
-
-/** 行程目的编码映射为中文名称（1-爆卡/2-启动销售/3-售后服务/4-洽谈业务） */
-function getPurposeName(value) {
-  const item = purposeOptions.value.find(p => p.value === String(value))
-  return item ? item.label : '-'
-}
-
-/** 行程状态编码映射为中文名称（1-已预约/2-服务中/3-已完成/4-已取消） */
-function getStatusName(value) {
-  const item = statusOptions.value.find(s => s.value === String(value))
-  return item ? item.label : '-'
-}
-
-/** 格式化日期为MM-DD简短格式 */
-function formatDay(dateStr) {
-  if (!dateStr) return ''
-  return dateStr.substring(5)
-}
-
-/**
- * 将行程列表按员工+企业+目的+状态+备注进行分组，
- * 同组内的日期合并为scheduleDates数组并按时间排序，
- * 用于在列表中以组为单位展示多天行程
- */
 function groupScheduleList(list) {
   const groupMap = new Map()
-
-  console.log('[Schedule] 原始数据条数:', list.length)
-  console.log('[Schedule] 原始数据:', list)
 
   list.forEach(item => {
     const key = `${item.userId}_${item.enterpriseId}_${item.purpose}_${item.status}_${item.remark || ''}`
@@ -218,26 +390,13 @@ function groupScheduleList(list) {
     }))
     .sort((a, b) => new Date(a.scheduleDates[0]) - new Date(b.scheduleDates[0]))
 
-  console.log('[Schedule] 分组后数据条数:', result.length)
-  console.log('[Schedule] 分组后数据:', result)
-
   return result
 }
 
-/** 取日期数组前6个用于展示，超出部分省略 */
 function getDisplayDates(dates) {
   return dates.slice(0, 6)
 }
 
-/** 月份选择确认，格式化为YYYY-MM并重新加载列表 */
-function onMonthConfirm(e) {
-  const date = new Date(e.value)
-  queryParams.yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-  showMonthPicker.value = false
-  getList(true)
-}
-
-/** 加载行程列表，根据年月计算起止日期，搜索时同时匹配员工名和企业名，加载后自动分组 */
 async function getList(isRefresh = false) {
   if (loading.value) return
   loading.value = true
@@ -255,8 +414,6 @@ async function getList(isRefresh = false) {
     const data = response.data || response
     const list = data.rows || []
     const total = data.total || 0
-
-    console.log('[Schedule] API返回条数:', list.length, '总数:', total)
 
     const grouped = groupScheduleList(list)
 
@@ -303,7 +460,6 @@ function goAdd() {
   uni.navigateTo({ url: '/pages/business/schedule/form?mode=add' })
 }
 
-/** 删除行程组，弹出确认框后批量删除该组所有行程ID，成功后刷新列表 */
 function handleDelete(item) {
   uni.showModal({
     title: '提示', content: `是否确认删除该行程（共${item.scheduleIds.length}天）?`,
@@ -316,6 +472,160 @@ function handleDelete(item) {
   })
 }
 
+// ==================== Tab 1: 企业排班 ====================
+const enterpriseScheduleList = ref([])
+const enterpriseLoading = ref(false)
+const enterpriseRefreshing = ref(false)
+const enterpriseSearchKeyword = ref('')
+
+async function getEnterpriseList() {
+  enterpriseLoading.value = true
+  try {
+    const [year, month] = queryParams.yearMonth.split('-')
+    const params = { yearMonth: queryParams.yearMonth }
+    if (enterpriseSearchKeyword.value) {
+      params.enterpriseName = enterpriseSearchKeyword.value
+      params.userName = enterpriseSearchKeyword.value
+    }
+    const response = await getEnterpriseSchedule(params)
+    const data = response.data || response
+    const list = Array.isArray(data) ? data : (data.rows || [])
+
+    // 按企业分组
+    const groupMap = new Map()
+    list.forEach(item => {
+      const eid = item.enterpriseId || 'unknown'
+      if (!groupMap.has(eid)) {
+        groupMap.set(eid, {
+          enterpriseId: eid,
+          enterpriseName: item.enterpriseName || '未知企业',
+          schedules: []
+        })
+      }
+      groupMap.get(eid).schedules.push(item)
+    })
+
+    enterpriseScheduleList.value = Array.from(groupMap.values())
+  } catch (e) {
+    console.error('获取企业排班失败:', e)
+    enterpriseScheduleList.value = []
+  } finally {
+    enterpriseLoading.value = false
+    enterpriseRefreshing.value = false
+  }
+}
+
+function onEnterpriseRefresh() {
+  enterpriseRefreshing.value = true
+  getEnterpriseList()
+}
+
+// ==================== Tab 2: 员工配置 ====================
+const employeeConfigList = ref([])
+const configLoading = ref(false)
+const configRefreshing = ref(false)
+const showConfigFilter = ref(false)
+const showRestDatePopup = ref(false)
+const showRestDateCalendar = ref(false)
+const restDateSaving = ref(false)
+const currentConfigUser = ref({})
+const tempRestDates = ref([])
+
+const configQueryParams = reactive({
+  pageNum: 1,
+  pageSize: 50,
+  userName: '',
+  deptName: '',
+  isSchedulable: ''
+})
+
+async function queryConfig() {
+  configLoading.value = true
+  try {
+    const params = { ...configQueryParams }
+    // 清理空值
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === undefined || params[key] === null) {
+        delete params[key]
+      }
+    })
+    const response = await listEmployeeConfig(params)
+    const data = response.data || response
+    employeeConfigList.value = data.rows || []
+  } catch (e) {
+    console.error('获取员工配置失败:', e)
+    employeeConfigList.value = []
+  } finally {
+    configLoading.value = false
+    configRefreshing.value = false
+  }
+}
+
+function onConfigRefresh() {
+  configRefreshing.value = true
+  queryConfig()
+}
+
+async function handleSchedulableChange(row) {
+  try {
+    await updateSchedulable(row.userId, row.isSchedulable === '1' || row.isSchedulable === true)
+    uni.showToast({ title: '更新成功', icon: 'success' })
+  } catch (e) {
+    // 回滚
+    row.isSchedulable = row.isSchedulable === '1' ? '0' : '1'
+    uni.showToast({ title: '更新失败', icon: 'none' })
+  }
+}
+
+function openRestDateConfig(row) {
+  currentConfigUser.value = row
+  tempRestDates.value = []
+  showRestDatePopup.value = true
+  // 加载已有休息日期
+  getRestDates(row.userId).then(response => {
+    const dates = response.data || []
+    tempRestDates.value = dates
+    showRestDateCalendar.value = true
+  }).catch(() => {
+    showRestDateCalendar.value = true
+  })
+}
+
+function onRestDateConfirm(e) {
+  // u-calendar confirm 返回选中的日期数组
+  // e 可能是字符串数组，也可能是 { year, month, day } 对象数组
+  const items = Array.isArray(e) ? e : (e ? [e] : [])
+  tempRestDates.value = items.map(d => {
+    if (typeof d === 'string') return d
+    // 处理 { year, month, day } 对象格式
+    if (d && typeof d === 'object' && d.year !== undefined) {
+      return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
+    }
+    // 处理 Date 对象
+    if (d instanceof Date) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }
+    return String(d)
+  })
+}
+
+async function saveRestDatesAction() {
+  restDateSaving.value = true
+  try {
+    await saveRestDates(currentConfigUser.value.userId, tempRestDates.value)
+    uni.showToast({ title: '保存成功', icon: 'success' })
+    showRestDatePopup.value = false
+    showRestDateCalendar.value = false
+    // 刷新配置列表
+    queryConfig()
+  } catch (e) {
+    uni.showToast({ title: '保存失败', icon: 'none' })
+  } finally {
+    restDateSaving.value = false
+  }
+}
+
+// ==================== 初始化 ====================
 onMounted(() => { getList(true) })
 </script>
 
@@ -345,6 +655,11 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &.active { background: #fff; color: #3D6DF7; }
 }
 
+.config-filter-bar { padding: 12rpx 0; }
+.config-filter-item { margin-bottom: 12rpx; }
+.config-filter-label { font-size: 26rpx; color: #fff; margin-bottom: 8rpx; }
+.config-filter-options { display: flex; gap: 12rpx; }
+
 .popup-content { padding: 30rpx; background: #fff; }
 .popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; margin-bottom: 30rpx; }
 .form-item { margin-bottom: 30rpx; }
@@ -355,6 +670,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
 
+.tabs-wrapper { flex-shrink: 0; background: #fff; }
+
 .list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
@@ -362,9 +679,9 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &:active { transform: scale(0.98); opacity: 0.9; }
 }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.user-info { display: flex; align-items: center; gap: 8rpx; }
+.user-info { display: flex; align-items: center; gap: 8rpx; flex: 1; min-width: 0; }
 .user-name { font-size: 28rpx; font-weight: 600; color: #1D2129; }
-.status-tag { padding: 6rpx 16rpx; border-radius: 6rpx; font-size: 22rpx; font-weight: 500;
+.status-tag { padding: 6rpx 16rpx; border-radius: 6rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
   &.status-2 { background: #FFF7E8; color: #FF7D00; }
   &.status-3 { background: #E8FFEA; color: #00B42A; }
@@ -375,7 +692,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .info-row { display: flex; margin-bottom: 16rpx; &:last-child { margin-bottom: 0; } }
 .info-item { flex: 1; display: flex; align-items: center; gap: 12rpx;
   &.full { flex: none; width: 100%; }
-  .label { font-size: 24rpx; color: #86909C; min-width: 60rpx; }
+  .label { font-size: 24rpx; color: #86909C; min-width: 60rpx; flex-shrink: 0; }
   .value { font-size: 26rpx; color: #1D2129;
     &.purpose-text { color: #3D6DF7; }
     &.remark-text { color: #86909C; }
@@ -398,10 +715,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   color: #4E5969;
   flex-shrink: 0;
 
-  &.more {
-    background: #E8F0FE;
-    color: #3D6DF7;
-  }
+  &.more { background: #E8F0FE; color: #3D6DF7; }
+  &.rest { background: #FFF1F0; color: #F53F3F; }
 }
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20rpx; padding-top: 16rpx; }
@@ -415,4 +730,30 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .fab-btn { position: fixed; right: 32rpx; bottom: 120rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #FF8F5E); display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(255,107,53,0.4);
   &:active { transform: scale(0.95); opacity: 0.9; }
 }
+
+/* 企业排班样式 */
+.enterprise-group { margin-bottom: 20rpx; }
+.enterprise-header { display: flex; align-items: center; gap: 10rpx; padding: 16rpx 20rpx; background: #E8F0FE; border-radius: 12rpx 12rpx 0 0; }
+.enterprise-name { font-size: 28rpx; font-weight: 600; color: #3D6DF7; flex: 1; }
+.enterprise-count { font-size: 22rpx; color: #86909C; }
+.enterprise-schedule-card { border-radius: 0; box-shadow: none; border-bottom: 1rpx solid #F2F3F5;
+  &:last-child { border-bottom: none; border-radius: 0 0 12rpx 12rpx; }
+}
+
+/* 员工配置样式 */
+.config-card { padding: 24rpx 28rpx; }
+.dept-tag { font-size: 22rpx; color: #86909C; background: #F2F3F5; padding: 2rpx 12rpx; border-radius: 4rpx; margin-left: 8rpx; }
+.schedulable-switch { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; }
+.switch-label { font-size: 24rpx; color: #4E5969; }
+.schedulable-status { flex-shrink: 0; }
+.schedulable-yes { font-size: 24rpx; color: #00B42A; font-weight: 500; }
+.schedulable-no { font-size: 24rpx; color: #F53F3F; font-weight: 500; }
+.rest-dates-wrap { display: flex; flex-wrap: wrap; gap: 8rpx; }
+
+/* 休息日期弹窗 */
+.rest-date-popup { padding: 30rpx; background: #fff; min-height: 600rpx; }
+.popup-title-row { display: flex; align-items: baseline; gap: 16rpx; margin-bottom: 12rpx; }
+.popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.popup-subtitle { font-size: 26rpx; color: #86909C; }
+.rest-date-tip { font-size: 24rpx; color: #86909C; margin-bottom: 20rpx; }
 </style>

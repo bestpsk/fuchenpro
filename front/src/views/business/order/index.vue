@@ -97,7 +97,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="View" @click="handleView(scope.row)">详情</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['business:order:query']">详情</el-button>
           <el-button link type="danger" icon="Close" @click="handleCancel(scope.row)" v-if="scope.row.orderStatus === '0'" v-hasPermi="['business:order:cancel']">取消</el-button>
         </template>
       </el-table-column>

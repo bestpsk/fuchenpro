@@ -134,15 +134,15 @@
       </view>
     </view>
 
-    <view class="info-card" v-if="planShipments.length > 0">
+    <view class="info-card" v-if="planStockOuts.length > 0">
       <view class="section-header">
-        <view class="card-title">出货记录</view>
-        <text class="item-count">{{ planShipments.length }}条</text>
+        <view class="card-title">出库记录</view>
+        <text class="item-count">{{ planStockOuts.length }}条</text>
       </view>
-      <view v-for="(item, idx) in planShipments" :key="idx" class="item-card">
+      <view v-for="(item, idx) in planStockOuts" :key="idx" class="item-card">
         <view class="item-header">
-          <text class="item-name">{{ item.shipmentNo || '-' }}</text>
-          <view class="shipment-status" :class="'shipment-' + item.shipmentStatus">{{ getShipmentStatusLabel(item.shipmentStatus) }}</view>
+          <text class="item-name">{{ item.stockOutNo || '-' }}</text>
+          <view class="stockout-status" :class="'stockout-' + item.status">{{ getStockOutStatusLabel(item.status) }}</view>
         </view>
         <view class="item-body">
           <view class="info-line">
@@ -168,11 +168,11 @@
     <view class="action-section" v-if="showActions">
       <view class="action-btns">
         <u-button v-if="canEdit" type="primary" plain text="编辑" @click="goEdit"></u-button>
-        <u-button v-if="canSubmitAudit" type="warning" text="提交审核" @click="handleSubmitAudit"></u-button>
-        <u-button v-if="canAuditPass" type="success" text="审核通过" @click="handleAuditPass"></u-button>
-        <u-button v-if="canAuditReject" type="error" plain text="审核驳回" @click="handleAuditReject"></u-button>
-        <u-button v-if="canShipment" type="primary" text="出货" @click="goShipment"></u-button>
-        <u-button v-if="canToggleStatus" :type="planInfo.status === '0' ? 'error' : 'success'" plain :text="planInfo.status === '0' ? '停用' : '启用'" @click="handleToggleStatus"></u-button>
+        <u-button v-if="canSubmitAudit && checkPermi('business:plan:submitAudit')" type="warning" text="提交审核" @click="handleSubmitAudit"></u-button>
+        <u-button v-if="canAuditPass && checkPermi('business:plan:audit')" type="success" text="审核通过" @click="handleAuditPass"></u-button>
+        <u-button v-if="canAuditReject && checkPermi('business:plan:audit')" type="error" plain text="审核驳回" @click="handleAuditReject"></u-button>
+        <u-button v-if="canStockOut && checkPermi('business:stockPrepare:createStockOut')" type="primary" text="出库" @click="goShipment"></u-button>
+        <u-button v-if="canToggleStatus && checkPermi('business:plan:edit')" :type="planInfo.status === '0' ? 'error' : 'success'" plain :text="planInfo.status === '0' ? '停用' : '启用'" @click="handleToggleStatus"></u-button>
       </view>
     </view>
 
@@ -195,10 +195,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getPlan, submitAuditPlan, auditPlan, changePlanStatus } from '@/api/business/plan'
+import { checkPermi } from '@/utils/permission'
 
 const planInfo = ref({})
 const planItems = ref([])
-const planShipments = ref([])
+const planStockOuts = ref([])
 const planId = ref(null)
 const showRejectPopup = ref(false)
 const rejectReason = ref('')
@@ -216,16 +217,16 @@ const canSubmitAudit = computed(() => {
 const canAuditPass = computed(() => planInfo.value.auditStatus === '1')
 const canAuditReject = computed(() => planInfo.value.auditStatus === '1')
 const canToggleStatus = computed(() => planInfo.value.auditStatus === '2')
-const canShipment = computed(() => planInfo.value.auditStatus === '2' && parseFloat(planInfo.value.remainingAmount) > 0)
-const showActions = computed(() => canEdit.value || canSubmitAudit.value || canAuditPass.value || canAuditReject.value || canShipment.value || canToggleStatus.value)
+const canStockOut = computed(() => planInfo.value.auditStatus === '2' && parseFloat(planInfo.value.remainingAmount) > 0)
+const showActions = computed(() => canEdit.value || canSubmitAudit.value || canAuditPass.value || canAuditReject.value || canStockOut.value || canToggleStatus.value)
 
 function getAuditStatusLabel(status) {
   const map = { '0': '草稿', '1': '待审核', '2': '已审核', '3': '已完成', '4': '已驳回' }
   return map[String(status)] || '未知'
 }
 
-function getShipmentStatusLabel(status) {
-  const map = { '0': '待审核', '1': '已审核', '2': '已发货', '3': '已收货', '4': '已驳回' }
+function getStockOutStatusLabel(status) {
+  const map = { '0': '待确认', '1': '已确认(待发货)', '2': '已发货', '3': '已完成' }
   return map[String(status)] || '未知'
 }
 
@@ -256,7 +257,7 @@ async function loadDetail() {
     const data = response.data || response
     planInfo.value = data
     planItems.value = data.items || []
-    planShipments.value = data.shipments || []
+    planStockOuts.value = data.stockOuts || data.shipments || []
   } catch (e) {
     console.error('加载方案详情失败:', e)
     uni.showToast({ title: '加载失败', icon: 'none' })
@@ -385,12 +386,12 @@ page { background-color: #F5F7FA; }
   &.summary-line { margin-top: 4rpx; padding-top: 6rpx; }
 }
 
-.shipment-status { padding: 4rpx 12rpx; border-radius: 4rpx; font-size: 22rpx; font-weight: 500;
-  &.shipment-0 { background: #FFF7E8; color: #FF7D00; }
-  &.shipment-1 { background: #E8F0FE; color: #3D6DF7; }
-  &.shipment-2 { background: #E8FFEA; color: #00B42A; }
-  &.shipment-3 { background: #F0E8FF; color: #8B5CF6; }
-  &.shipment-4 { background: #FFECE8; color: #F53F3F; }
+.stockout-status { padding: 4rpx 12rpx; border-radius: 4rpx; font-size: 22rpx; font-weight: 500;
+  &.stockout-0 { background: #FFF7E8; color: #FF7D00; }
+  &.stockout-1 { background: #E8F0FE; color: #3D6DF7; }
+  &.stockout-2 { background: #E8FFEA; color: #00B42A; }
+  &.stockout-3 { background: #F0E8FF; color: #8B5CF6; }
+  &.stockout-4 { background: #FFECE8; color: #F53F3F; }
 }
 
 .action-section { position: fixed; left: 24rpx; right: 24rpx; bottom: 40rpx; background: #fff; border-radius: 16rpx; padding: 20rpx; box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.08); z-index: 100; }

@@ -20,6 +20,7 @@ class BizEmployeeConfigController
     {
         $service = new BizEmployeeConfigService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectConfigList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -102,8 +103,9 @@ class BizEmployeeConfigController
     public function search(Request $request)
     {
         $keyword = $request->input('keyword', '');
+        $params = ['login_user' => $request->loginUser];
         $service = new BizEmployeeConfigService();
-        $list = $service->searchEmployee($keyword);
+        $list = $service->searchEmployee($keyword, $params);
         return AjaxResult::success($list);
     }
 }

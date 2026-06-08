@@ -42,6 +42,7 @@ class FinReimbursementController
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->selectReimbursementList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

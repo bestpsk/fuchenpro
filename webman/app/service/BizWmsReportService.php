@@ -8,6 +8,7 @@ use app\model\BizStockOut;
 use app\model\BizStockOutItem;
 use app\model\BizInventory;
 use app\model\BizProduct;
+use app\service\DataScopeService;
 use support\Db;
 
 /**
@@ -32,6 +33,11 @@ class BizWmsReportService
         }
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
+        }
+        // 数据权限过滤
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('biz_stock_in.operator_id', $visibleUserIds);
         }
         $results = $query->groupBy([
                 'biz_stock_in_item.product_id',
@@ -73,6 +79,11 @@ class BizWmsReportService
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
         }
+        // 数据权限过滤
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('biz_stock_out.responsible_id', $visibleUserIds);
+        }
         $results = $query->groupBy([
                 'biz_stock_out_item.product_id',
                 'biz_stock_out_item.product_name',
@@ -102,6 +113,17 @@ class BizWmsReportService
             ->where('biz_product.status', '0');
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
+        }
+        // 数据权限过滤：非管理员只能查看其可见用户操作入库的产品
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereExists(function ($q) use ($visibleUserIds) {
+                $q->select(Db::raw(1))
+                    ->from('biz_stock_in_item')
+                    ->join('biz_stock_in', 'biz_stock_in_item.stock_in_id', '=', 'biz_stock_in.stock_in_id')
+                    ->whereColumn('biz_stock_in_item.product_id', 'biz_product.product_id')
+                    ->whereIn('biz_stock_in.operator_id', $visibleUserIds);
+            });
         }
         $products = $query->select([
                 'biz_product.product_id',
@@ -160,6 +182,11 @@ class BizWmsReportService
         if (!empty($params['flow_date_end'])) {
             $stockInItems->where('biz_stock_in.stock_in_date', '<=', $params['flow_date_end']);
         }
+        // 数据权限过滤
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $stockInItems->whereIn('biz_stock_in.operator_id', $visibleUserIds);
+        }
         $stockInList = $stockInItems->select([
                 'biz_stock_in.stock_in_no as doc_no',
                 'biz_stock_in.stock_in_date as flow_date',
@@ -182,6 +209,11 @@ class BizWmsReportService
         }
         if (!empty($params['flow_date_end'])) {
             $stockOutItems->where('biz_stock_out.stock_out_date', '<=', $params['flow_date_end']);
+        }
+        // 数据权限过滤
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds2 = DataScopeService::getVisibleUserIds($params['login_user']);
+            $stockOutItems->whereIn('biz_stock_out.responsible_id', $visibleUserIds2);
         }
         $stockOutList = $stockOutItems->select([
                 'biz_stock_out.stock_out_no as doc_no',

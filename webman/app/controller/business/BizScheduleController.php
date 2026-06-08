@@ -20,6 +20,7 @@ class BizScheduleController
     {
         $service = new BizScheduleService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectScheduleList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -40,6 +41,7 @@ class BizScheduleController
     {
         $service = new BizScheduleService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectScheduleByDateRange($params);
         return AjaxResult::success($result);
     }
@@ -49,6 +51,7 @@ class BizScheduleController
     {
         $service = new BizScheduleService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectScheduleDates($params);
         return AjaxResult::success($result);
     }
@@ -58,6 +61,7 @@ class BizScheduleController
     {
         $service = new BizScheduleService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectEmployeeSchedule($params);
         return AjaxResult::success($result);
     }
@@ -67,6 +71,7 @@ class BizScheduleController
     {
         $service = new BizScheduleService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectEnterpriseSchedule($params);
         return AjaxResult::success($result);
     }

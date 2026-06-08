@@ -108,6 +108,15 @@ class SysConfigService
         }
     }
 
+    /**
+     * 根据参数键名获取参数值，支持默认值
+     */
+    public static function getConfigValue(string $configKey, $default = null)
+    {
+        $value = self::selectConfigByKey($configKey);
+        return $value !== null && $value !== '' ? $value : $default;
+    }
+
     // 查询验证码是否启用
 
     public static function selectCaptchaEnabled()

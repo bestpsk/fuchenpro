@@ -4,6 +4,7 @@ namespace app\controller\wms;
 
 use support\Request;
 use app\service\BizStockOutService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -20,6 +21,7 @@ class BizStockOutController
     {
         $service = new BizStockOutService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectStockOutList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -30,7 +32,8 @@ class BizStockOutController
         $parts = explode('/', $request->path());
         $stockOutId = intval(end($parts));
         $service = new BizStockOutService();
-        $stockOut = $service->selectStockOutById($stockOutId);
+        $params['login_user'] = $request->loginUser;
+        $stockOut = $service->selectStockOutById($stockOutId, $params);
         if (!$stockOut) return AjaxResult::error('出库单不存在');
         return AjaxResult::success($stockOut);
     }
@@ -42,6 +45,9 @@ class BizStockOutController
         $realName = trim($request->loginUser->user->nick_name ?? '');
         $userName = trim($request->loginUser->user->user_name ?? '');
         $data['create_by'] = $realName ?: $userName;
+        $data['responsible_id'] = $request->loginUser->user->user_id;
+        $data['responsible_name'] = $realName ?: $userName;
+        $data['login_user'] = $request->loginUser;
         if (isset($data['items'])) {
             $data['items'] = convert_to_snake_case($data['items']);
         }
@@ -55,6 +61,7 @@ class BizStockOutController
     {
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         if (isset($data['items'])) {
             $data['items'] = convert_to_snake_case($data['items']);
         }
@@ -72,8 +79,9 @@ class BizStockOutController
             $stockOutIds = explode(',', $stockOutIds);
         }
         $stockOutIds = array_map('intval', array_filter($stockOutIds));
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockOutService();
-        $result = $service->deleteStockOutByIds($stockOutIds);
+        $result = $service->deleteStockOutByIds($stockOutIds, $params);
         if (!$result) return AjaxResult::error('删除失败，已确认的出库单不可删除');
         return AjaxResult::success();
     }
@@ -81,10 +89,14 @@ class BizStockOutController
     // 确认出库，从库存中扣减出库数量
     public function confirm(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:confirm')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $id = intval(end($parts));
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockOutService();
-        $result = $service->confirmStockOut($id);
+        $result = $service->confirmStockOut($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
         return AjaxResult::success($result['msg']);
     }
@@ -92,10 +104,43 @@ class BizStockOutController
     // 取消确认出库，将已扣减的数量归还库存
     public function cancelConfirm(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:cancelConfirm')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $id = intval(end($parts));
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockOutService();
-        $result = $service->cancelConfirmStockOut($id);
+        $result = $service->cancelConfirmStockOut($id, $params);
+        if (!$result['success']) return AjaxResult::error($result['msg']);
+        return AjaxResult::success($result['msg']);
+    }
+
+    public function ship(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:ship')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $parts = explode('/', $request->path());
+        $id = intval(end($parts));
+        $data = convert_to_snake_case($request->post());
+        $data['login_user'] = $request->loginUser;
+        $service = new BizStockOutService();
+        $result = $service->shipStockOut($id, $data);
+        if (!$result['success']) return AjaxResult::error($result['msg']);
+        return AjaxResult::success($result['msg']);
+    }
+
+    public function confirmReceipt(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:receipt')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $parts = explode('/', $request->path());
+        $id = intval(end($parts));
+        $params['login_user'] = $request->loginUser;
+        $service = new BizStockOutService();
+        $result = $service->confirmReceipt($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
         return AjaxResult::success($result['msg']);
     }

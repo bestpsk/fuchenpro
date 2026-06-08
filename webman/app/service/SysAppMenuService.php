@@ -32,15 +32,40 @@ class SysAppMenuService
         $sysMenus = SysMenu::whereIn('menu_id', $appMenus->keys())
             ->where('menu_type', 'C')
             ->where('status', '0')
-            ->get()
-            ->keyBy('menu_id');
+            ->whereIn('client_type', ['all', 'app'])
+            ->get();
+
+        // 按 menu_name 去重：同一菜单名可能存在 client_type='all' 和 'app' 两条记录
+        // 优先保留 client_type='app' 的记录
+        $dedupedMenus = [];
+        foreach ($sysMenus as $menu) {
+            $key = $menu->menu_name;
+            if (!isset($dedupedMenus[$key])) {
+                $dedupedMenus[$key] = $menu;
+            } elseif ($menu->client_type === 'app') {
+                $dedupedMenus[$key] = $menu;
+            }
+        }
+        $sysMenus = collect($dedupedMenus)->keyBy('menu_id');
 
         $parentIds = $sysMenus->pluck('parent_id')->unique()->filter()->values()->toArray();
         $parentMenus = SysMenu::whereIn('menu_id', $parentIds)
             ->where('menu_type', 'M')
             ->where('status', '0')
-            ->get()
-            ->keyBy('menu_id');
+            ->whereIn('client_type', ['all', 'app'])
+            ->get();
+
+        // 父级目录也按 menu_name 去重，优先保留 client_type='app'
+        $dedupedParents = [];
+        foreach ($parentMenus as $parent) {
+            $key = $parent->menu_name;
+            if (!isset($dedupedParents[$key])) {
+                $dedupedParents[$key] = $parent;
+            } elseif ($parent->client_type === 'app') {
+                $dedupedParents[$key] = $parent;
+            }
+        }
+        $parentMenus = collect($dedupedParents)->keyBy('menu_id');
 
         $parentAppMenus = SysAppMenu::whereIn('menu_id', $parentIds)->get()->keyBy('menu_id');
 

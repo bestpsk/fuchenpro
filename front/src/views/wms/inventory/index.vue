@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-hasPermi="['wms:inventory:list']">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="品名" prop="productName">
         <el-input v-model="queryParams.productName" placeholder="请输入品名" clearable style="width: 160px" @keyup.enter="handleQuery" />

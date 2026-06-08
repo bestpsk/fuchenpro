@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\FinReimbursement;
 use app\model\FinReimbursementItem;
+use app\service\DataScopeService;
 
 /**
  * 报销服务层，处理报销单的增删改查、审核流程和统计报表
@@ -41,6 +42,10 @@ class FinReimbursementService
         }
         if (!empty($params['reimbursement_no'])) {
             $query->where('reimbursement_no', 'like', '%' . $params['reimbursement_no'] . '%');
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);

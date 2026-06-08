@@ -15,6 +15,7 @@ class BizStockCheckItem extends Model
 
     protected $fillable = [
         'stock_check_id', 'product_id', 'product_name', 'spec', 'unit',
+        'unit_type', 'pack_qty', 'original_quantity',
         'system_quantity', 'actual_quantity', 'diff_quantity', 'remark'
     ];
 

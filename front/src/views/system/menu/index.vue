@@ -79,6 +79,13 @@
                <el-tag v-else-if="scope.row.menuType === 'F'" type="warning" size="small">按钮</el-tag>
             </template>
          </el-table-column>
+         <el-table-column prop="clientType" label="客户端" width="90" align="center">
+            <template #default="scope">
+               <el-tag v-if="scope.row.clientType === 'app'" type="warning" size="small">仅App</el-tag>
+               <el-tag v-else-if="scope.row.clientType === 'web'" type="primary" size="small">仅Web</el-tag>
+               <el-tag v-else type="info" size="small">全端</el-tag>
+            </template>
+         </el-table-column>
          <el-table-column prop="orderNum" label="排序" width="200">
             <template #default="scope">
                <el-input-number v-model="scope.row.orderNum" controls-position="right" :min="0" style="width: 88px" />
@@ -293,6 +300,23 @@
                      </el-radio-group>
                   </el-form-item>
                </el-col>
+               <el-col :span="12" v-if="form.menuType != 'F'">
+                  <el-form-item>
+                     <template #label>
+                        <span>
+                           <el-tooltip content="选择菜单在哪个客户端显示：全端=Web和App都显示，仅Web=只在Web端显示，仅App=只在App端显示" placement="top">
+                              <el-icon><question-filled /></el-icon>
+                           </el-tooltip>
+                           客户端类型
+                        </span>
+                     </template>
+                     <el-radio-group v-model="form.clientType">
+                        <el-radio value="all">全端</el-radio>
+                        <el-radio value="web">仅Web</el-radio>
+                        <el-radio value="app">仅App</el-radio>
+                     </el-radio-group>
+                  </el-form-item>
+               </el-col>
             </el-row>
          </el-form>
          <template #footer>
@@ -382,7 +406,8 @@ function reset() {
     isFrame: "1",
     isCache: "0",
     visible: "0",
-    status: "0"
+    status: "0",
+    clientType: "all"
   }
   proxy.resetForm("menuRef")
 }

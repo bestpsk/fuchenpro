@@ -42,11 +42,11 @@
           <text class="row-value">{{ getDeptNames(item.deptIds) }}</text>
         </view>
         <view class="card-actions">
-          <view class="action-btn action-edit" @click.stop="handleEdit(item)">
+          <view class="action-btn action-edit" v-if="checkPermi('business:attendance:config:edit')" @click.stop="handleEdit(item)">
             <u-icon name="edit-pen" size="14" color="#3D6DF7" />
             <text>编辑</text>
           </view>
-          <view class="action-btn action-delete" @click.stop="handleDelete(item)">
+          <view class="action-btn action-delete" v-if="checkPermi('business:attendance:config:remove')" @click.stop="handleDelete(item)">
             <u-icon name="trash" size="14" color="#f5222d" />
             <text>删除</text>
           </view>
@@ -58,7 +58,7 @@
       </view>
     </scroll-view>
 
-    <view class="fab-btn" @click="handleAdd">
+    <view class="fab-btn" v-if="checkPermi('business:attendance:config:add')" @click="handleAdd">
       <u-icon name="plus" size="28" color="#fff" />
     </view>
 
@@ -208,6 +208,7 @@ import { ref, computed, onMounted } from 'vue'
 import { listAttendanceConfig, getAttendanceConfig, addAttendanceConfig, updateAttendanceConfig, delAttendanceConfig, listAttendanceRule } from '@/api/attendance'
 import { listUser } from '@/api/system/user'
 import { getDeptTree } from '@/api/system/dept'
+import { checkPermi } from '@/utils/permission'
 
 const activeType = ref(0)
 const list = ref([])

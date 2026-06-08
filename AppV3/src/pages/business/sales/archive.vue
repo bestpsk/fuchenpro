@@ -12,7 +12,7 @@
     </view>
 
     <view class="toolbar">
-      <view class="tb-btn" @click="openAddDrawer"><u-icon name="plus" size="14" color="#fff"></u-icon><text>新增档案</text></view>
+      <view v-if="checkPermi('business:archive:add')" class="tb-btn" @click="openAddDrawer"><u-icon name="plus" size="14" color="#fff"></u-icon><text>新增档案</text></view>
       <scroll-view scroll-x class="tb-filter">
         <view class="filter-tags">
           <view class="ft" :class="{ active: !filterKey }" @click="switchFilter('')">全部</view>
@@ -32,7 +32,7 @@
             </view>
             <view class="arc-head-right">
               <text class="arc-op" v-if="item.operatorUserName">{{ item.operatorUserName }}</text>
-              <view class="arc-del" v-if="item.sourceType === '3'" @click="handleDelete(item)"><u-icon name="trash" size="16" color="#F53F3F"></u-icon></view>
+              <view class="arc-del" v-if="item.sourceType === '3' && checkPermi('business:archive:remove')" @click="handleDelete(item)"><u-icon name="trash" size="16" color="#F53F3F"></u-icon></view>
             </view>
           </view>
 
@@ -137,6 +137,7 @@ import { listEmployeeConfig } from '@/api/business/employeeConfig'
 import { getDicts } from '@/api/system/dict/data'
 import { useUserStore } from '@/store/modules/user'
 import config from '@/config'
+import { checkPermi } from '@/utils/permission'
 
 const userStore = useUserStore()
 

@@ -174,11 +174,11 @@
           <view class="card-footer">
             <view class="time-text">{{ formatTime(item.createTime) }}</view>
             <view class="action-btns">
-              <view class="action-btn edit" @click.stop="goEdit(item)">
+              <view class="action-btn edit" v-if="checkPermi('business:enterprise:edit')" @click.stop="goEdit(item)">
                 <u-icon name="edit-pen" size="14"></u-icon>
                 <text>编辑</text>
               </view>
-              <view class="action-btn delete" @click.stop="handleDelete(item)">
+              <view class="action-btn delete" v-if="checkPermi('business:enterprise:remove')" @click.stop="handleDelete(item)">
                 <u-icon name="trash" size="14"></u-icon>
                 <text>删除</text>
               </view>
@@ -203,7 +203,7 @@
       />
     </scroll-view>
 
-    <view class="fab-btn" @click="goAdd">
+    <view class="fab-btn" v-if="checkPermi('business:enterprise:add')" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
   </view>
@@ -217,6 +217,7 @@
  */
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listEnterprise, delEnterprise } from '@/api/business/enterprise'
+import { checkPermi } from '@/utils/permission'
 
 
 const enterpriseList = ref([])

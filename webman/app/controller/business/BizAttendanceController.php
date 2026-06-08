@@ -119,6 +119,7 @@ class BizAttendanceController
     {
         $service = new BizAttendanceRecordService();
         $params = $request->all();
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectRecordList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -141,6 +142,7 @@ class BizAttendanceController
     {
         $service = new BizAttendanceRuleService();
         $params = $request->all();
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectRuleList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

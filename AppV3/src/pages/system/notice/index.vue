@@ -24,19 +24,47 @@
           <view class="card-body">
             <text class="card-title">{{ item.noticeTitle }}</text>
           </view>
+          <view class="card-footer">
+            <view class="status-wrap">
+              <text v-if="item.status === '1'" class="status-text status-disabled">已关闭</text>
+              <text v-else class="status-text status-normal">正常</text>
+            </view>
+            <view class="action-btns">
+              <view v-if="checkPermi('system:notice:edit')" class="action-btn edit" @click.stop="goEdit(item)">
+                <u-icon name="edit-pen" size="14"></u-icon>
+                <text>编辑</text>
+              </view>
+              <view v-if="checkPermi('system:notice:remove')" class="action-btn delete" @click.stop="handleDelete(item)">
+                <u-icon name="trash" size="14"></u-icon>
+                <text>删除</text>
+              </view>
+              <view v-if="checkPermi('system:notice:list')" class="action-btn read-users" @click.stop="goReadUsers(item)">
+                <u-icon name="account" size="14"></u-icon>
+                <text>已读</text>
+              </view>
+              <view v-if="checkPermi('system:notice:edit')" class="action-btn switch-btn" @click.stop>
+                <u-switch v-model="item._statusOn" size="18" activeColor="#3D6DF7" inactiveColor="#C9CDD4" @change="handleStatusChange(item)"></u-switch>
+              </view>
+            </view>
+          </view>
           <view v-if="!item.isRead" class="unread-dot"></view>
         </view>
       </view>
       <u-empty v-else-if="!loading" mode="data" text="暂无通知公告" :marginTop="100"></u-empty>
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
+
+    <view v-if="checkPermi('system:notice:add')" class="fab-btn" @click="goAdd">
+      <u-icon name="plus" size="24" color="#fff"></u-icon>
+    </view>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { listNotice, markNoticeReadAll } from '@/api/system/notice'
+import { listNotice, delNotice, updateNotice, markNoticeReadAll } from '@/api/system/notice'
+import { checkPermi } from '@/utils/permission'
 
 const noticeList = ref([])
 const loading = ref(false)
@@ -55,7 +83,7 @@ async function getList(isRefresh = false) {
     const data = response.data || response
     const list = data.rows || []
     const total = data.total || 0
-    noticeList.value = isRefresh ? list : [...noticeList.value, ...list]
+    noticeList.value = isRefresh ? list.map(item => ({ ...item, _statusOn: item.status === '0' })) : [...noticeList.value, ...list.map(item => ({ ...item, _statusOn: item.status === '0' }))]
     loadStatus.value = noticeList.value.length >= total ? 'nomore' : 'loadmore'
   } catch (e) {
     console.error('获取通知列表失败:', e)
@@ -96,6 +124,49 @@ function clearSearch() {
 
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/system/notice/detail?noticeId=${item.noticeId}` })
+}
+
+function goAdd() {
+  uni.navigateTo({ url: '/pages/system/notice/form?mode=add' })
+}
+
+function goEdit(item) {
+  uni.navigateTo({ url: `/pages/system/notice/form?mode=edit&id=${item.noticeId}` })
+}
+
+function goReadUsers(item) {
+  uni.navigateTo({ url: `/pages/system/notice/readUsers?noticeId=${item.noticeId}` })
+}
+
+function handleDelete(item) {
+  uni.showModal({
+    title: '提示',
+    content: `是否确认删除公告"${item.noticeTitle}"?`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await delNotice(item.noticeId)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          getList(true)
+        } catch (e) {
+          console.error('删除失败:', e)
+        }
+      }
+    }
+  })
+}
+
+async function handleStatusChange(item) {
+  const newStatus = item._statusOn ? '0' : '1'
+  const text = newStatus === '0' ? '启用' : '关闭'
+  try {
+    await updateNotice({ noticeId: item.noticeId, status: newStatus })
+    item.status = newStatus
+    uni.showToast({ title: `${text}成功`, icon: 'success' })
+  } catch (e) {
+    console.error('状态变更失败:', e)
+    item._statusOn = !item._statusOn
+  }
 }
 
 function formatTime(time) {
@@ -166,5 +237,28 @@ page { background-color: #F5F7FA; }
 .card-body { padding-top: 4rpx; }
 .card-title { font-size: 28rpx; color: #1D2129; font-weight: 500; line-height: 1.5; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 
+.card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; }
+.status-wrap { flex-shrink: 0; }
+.status-text { font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 6rpx; }
+.status-normal { background: #E8FFEA; color: #00B42A; }
+.status-disabled { background: #F2F3F5; color: #86909C; }
+.action-btns { display: flex; align-items: center; gap: 12rpx; }
+.action-btn {
+  display: flex; align-items: center; gap: 4rpx; font-size: 22rpx;
+  padding: 6rpx 12rpx; border-radius: 8rpx;
+  &.edit { color: #3D6DF7; background: #E8F0FE; }
+  &.delete { color: #F53F3F; background: #FFF1F0; }
+  &.read-users { color: #FF7D00; background: #FFF7E8; }
+  &.switch-btn { padding: 0; background: transparent; }
+}
+
 .unread-dot { position: absolute; top: 24rpx; right: 24rpx; width: 16rpx; height: 16rpx; border-radius: 50%; background: #F53F3F; }
+
+.fab-btn {
+  position: fixed; right: 32rpx; bottom: 120rpx; width: 100rpx; height: 100rpx;
+  border-radius: 50%; background: linear-gradient(135deg, #3D6DF7, #5B8DEF);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(61, 109, 247, 0.4);
+  &:active { transform: scale(0.95); opacity: 0.9; }
+}
 </style>

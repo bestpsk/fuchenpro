@@ -5,6 +5,7 @@ namespace app\service;
 use support\Redis;
 use app\common\Constants;
 use app\common\LoginUser;
+use app\service\SysConfigService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -19,7 +20,7 @@ class TokenService
     public function __construct()
     {
         $this->secret = Constants::JWT_SECRET;
-        $this->expire = Constants::TOKEN_EXPIRE;
+        $this->expire = intval(SysConfigService::getConfigValue('sys.login.expireTime', Constants::TOKEN_EXPIRE));
     }
 
     // 创建JWT令牌，存入Redis并返回
@@ -144,13 +145,19 @@ class TokenService
             $hasRole = false;
             if ($loginUser->user && $loginUser->user->roles) {
                 foreach ($loginUser->user->roles as $role) {
-                    if (isset($role['role_id']) && $role['role_id'] == $roleId) {
+                    $roleData = is_array($role) ? $role : $role->toArray();
+                    if (isset($roleData['role_id']) && $roleData['role_id'] == $roleId) {
                         $hasRole = true;
                         break;
                     }
                 }
             }
             if ($hasRole) {
+                // 重新加载用户角色信息（含最新的data_scope）
+                $freshUser = \app\model\SysUser::with(['dept', 'roles'])->find($loginUser->userId);
+                if ($freshUser) {
+                    $loginUser->user = $freshUser;
+                }
                 $loginUser->permissions = $permissionService->getMenuPermission($loginUser->user);
                 $this->refreshToken($loginUser);
             }

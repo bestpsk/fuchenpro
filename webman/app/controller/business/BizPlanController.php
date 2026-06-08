@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizPlanService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -26,6 +27,7 @@ class BizPlanController
     public function enterpriseList(Request $request)
     {
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $this->planService->selectEnterpriseList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -34,6 +36,7 @@ class BizPlanController
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $this->planService->selectPlanList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -90,6 +93,7 @@ class BizPlanController
     // 提交方案审核
     public function submitAudit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:audit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $parts = explode('/', $request->path());
         $planId = intval(end($parts));
         $submitBy = $request->loginUser->user->user_name ?? '';
@@ -103,6 +107,7 @@ class BizPlanController
     // 审核方案（通过或驳回）
     public function audit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:audit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $data = convert_to_snake_case($request->post());
         $data['audit_by'] = $request->loginUser->user->user_name ?? '';
         $result = $this->planService->audit($data);
@@ -115,6 +120,9 @@ class BizPlanController
     // 变更方案状态
     public function changeStatus(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $planId = intval($data['plan_id'] ?? 0);
         $status = $data['status'] ?? '';

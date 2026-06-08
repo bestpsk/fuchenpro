@@ -158,9 +158,9 @@
     <view class="audit-section" v-if="canAudit && detailMode !== 'operation'">
       <view class="section-title">审核操作</view>
       <view class="audit-btns">
-        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0'" type="primary" text="企业审核" @click="handleEnterpriseAudit"></u-button>
-        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '1'" type="success" text="财务审核" @click="handleFinanceAudit"></u-button>
-        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0'" type="error" plain text="取消订单" @click="handleCancelOrder"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0' && checkPermi('business:sales:enterpriseAudit')" type="primary" text="企业审核" @click="handleEnterpriseAudit"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '1' && checkPermi('business:sales:financeAudit')" type="success" text="财务审核" @click="handleFinanceAudit"></u-button>
+        <u-button v-if="(orderInfo.orderStatus || orderInfo.status) === '0' && checkPermi('business:sales:cancel')" type="error" plain text="取消订单" @click="handleCancelOrder"></u-button>
       </view>
     </view>
   </view>
@@ -175,6 +175,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { getSalesOrder, enterpriseAudit, financeAudit, cancelOrder } from '@/api/business/salesOrder'
 import { getOperationRecord } from '@/api/business/operationRecord'
+import { checkPermi } from '@/utils/permission'
 
 const orderInfo = ref({})
 const orderItems = ref([])

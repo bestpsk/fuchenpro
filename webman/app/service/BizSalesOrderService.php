@@ -6,7 +6,12 @@ use app\model\BizSalesOrder;
 use app\model\BizOrderItem;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
+use app\model\BizCardItem;
 use app\service\BizCustomerArchiveService;
+use app\service\BizStockPrepareService;
+use app\service\DataScopeService;
+use app\service\SysConfigService;
+use support\Db;
 
 /**
  * 销售订单服务层，处理订单的增删改查、审核、自动生成客户套餐和写入客户档案
@@ -28,6 +33,10 @@ class BizSalesOrderService
         if (isset($params['finance_audit_status']) && $params['finance_audit_status'] !== '') $query->where('finance_audit_status', $params['finance_audit_status']);
         if (!empty($params['start_date'])) $query->where('create_time', '>=', $params['start_date'] . ' 00:00:00');
         if (!empty($params['end_date'])) $query->where('create_time', '<=', $params['end_date'] . ' 23:59:59');
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('creator_user_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->with('items')->orderBy('order_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -44,8 +53,9 @@ class BizSalesOrderService
     public function generateOrderNo()
     {
         $date = date('Ymd');
-        $lastOrder = BizSalesOrder::where('order_no', 'like', 'SO' . $date . '%')->orderBy('order_id', 'desc')->first();
-        $seq = $lastOrder ? intval(substr($lastOrder->order_no, -4)) + 1 : 1;
+        $key = 'order_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
         return 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
@@ -53,144 +63,195 @@ class BizSalesOrderService
 
     public function insertOrder($data, $items = [])
     {
-        $data['order_no'] = $this->generateOrderNo();
-        $data['create_time'] = date('Y-m-d H:i:s');
-        $data['enterprise_audit_status'] = '0';
-        $data['finance_audit_status'] = '0';
+        return Db::transaction(function () use ($data, $items) {
+            $data['order_no'] = $this->generateOrderNo();
+            $data['create_time'] = date('Y-m-d H:i:s');
+            $data['enterprise_audit_status'] = '0';
+            $data['finance_audit_status'] = '0';
 
-        $dealAmount = 0;
-        $paidAmount = 0;
-        $paymentMethodCount = [];
+            $dealAmount = 0;
+            $paidAmount = 0;
+            $paymentMethodCount = [];
 
-        $convertedItems = [];
-        foreach ($items as $item) {
-            $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
+            // 读取业务配置
+            $quantityEditable = SysConfigService::getConfigValue('biz.sales.packageQuantityEditable', 'true') !== 'false';
+            $dealAmountEditable = SysConfigService::getConfigValue('biz.sales.packageDealAmountEditable', 'true') !== 'false';
+            $paidAmountEditable = SysConfigService::getConfigValue('biz.sales.packagePaidAmountEditable', 'true') !== 'false';
 
-            if ($itemPaymentMethod === 'gift') {
-                $item['price'] = 0;
-                $item['deal_amount'] = 0;
-                $item['paid_amount'] = 0;
-                $item['paidAmount'] = 0;
-                $item['dealPrice'] = 0;
+            $convertedItems = [];
+            foreach ($items as $item) {
+                // 配置校验：如果品项关联了卡项，检查是否允许修改次数/金额
+                $cardItemId = $item['card_item_id'] ?? $item['cardItemId'] ?? null;
+                if (!empty($cardItemId)) {
+                    $cardItem = BizCardItem::find($cardItemId);
+                    if ($cardItem) {
+                        $itemQuantity = intval($item['count'] ?? $item['quantity'] ?? 1);
+                        $itemDealAmount = floatval($item['price'] ?? $item['deal_amount'] ?? $item['dealPrice'] ?? 0);
+                        $itemPaidAmount = floatval($item['paid_amount'] ?? $item['paidAmount'] ?? 0);
+                        // 如果不允许修改次数，校验提交的次数是否与默认次数一致
+                        if (!$quantityEditable && $itemQuantity != $cardItem->default_quantity) {
+                            throw new \Exception('系统配置不允许修改套餐次数');
+                        }
+                        // 如果不允许修改成交金额，校验提交的成交金额是否与建议价格一致
+                        if (!$dealAmountEditable && $itemDealAmount != $cardItem->suggested_price) {
+                            throw new \Exception('系统配置不允许修改套餐成交金额');
+                        }
+                        // 如果不允许修改实付金额，校验提交的实付金额是否与成交金额一致
+                        if (!$paidAmountEditable && $itemPaidAmount != $itemDealAmount) {
+                            throw new \Exception('系统配置不允许修改套餐实付金额');
+                        }
+                    }
+                }
+
+                $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
+
+                if ($itemPaymentMethod === 'gift') {
+                    $item['price'] = 0;
+                    $item['deal_amount'] = 0;
+                    $item['paid_amount'] = 0;
+                    $item['paidAmount'] = 0;
+                    $item['dealPrice'] = 0;
+                }
+
+                $quantity = intval($item['count'] ?? $item['quantity'] ?? 1);
+                $itemDealAmount = floatval($item['price'] ?? $item['deal_amount'] ?? $item['dealPrice'] ?? 0);
+                $itemPaidAmount = floatval($item['paid_amount'] ?? $item['paidAmount'] ?? 0);
+                $itemOwedAmount = $itemDealAmount - $itemPaidAmount;
+                $unitPrice = $quantity > 0 ? round($itemDealAmount / $quantity, 2) : 0;
+
+                $convertedItem = [
+                    'card_item_id' => $item['card_item_id'] ?? $item['cardItemId'] ?? null,
+                    'product_name' => $item['item_name'] ?? $item['product_name'] ?? $item['productName'] ?? '',
+                    'quantity' => $quantity,
+                    'deal_amount' => $itemDealAmount,
+                    'paid_amount' => $itemPaidAmount,
+                    'unit_price' => $unitPrice,
+                    'owed_amount' => $itemOwedAmount,
+                    'payment_method' => $itemPaymentMethod,
+                    'remark' => $item['remark'] ?? null,
+                    'create_time' => date('Y-m-d H:i:s')
+                ];
+                $convertedItems[] = $convertedItem;
+
+                $dealAmount += $itemDealAmount;
+                $paidAmount += $itemPaidAmount;
+                $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
             }
 
-            $quantity = intval($item['count'] ?? $item['quantity'] ?? 1);
-            $itemDealAmount = floatval($item['price'] ?? $item['deal_amount'] ?? $item['dealPrice'] ?? 0);
-            $itemPaidAmount = floatval($item['paid_amount'] ?? $item['paidAmount'] ?? 0);
-            $itemOwedAmount = $itemDealAmount - $itemPaidAmount;
-            $unitPrice = $quantity > 0 ? round($itemDealAmount / $quantity, 2) : 0;
+            $data['deal_amount'] = $dealAmount;
+            $data['paid_amount'] = $paidAmount;
+            $data['owed_amount'] = $dealAmount - $paidAmount;
 
-            $convertedItem = [
-                'product_name' => $item['item_name'] ?? $item['product_name'] ?? $item['productName'] ?? '',
-                'quantity' => $quantity,
-                'deal_amount' => $itemDealAmount,
-                'paid_amount' => $itemPaidAmount,
-                'unit_price' => $unitPrice,
-                'owed_amount' => $itemOwedAmount,
-                'payment_method' => $itemPaymentMethod,
-                'remark' => $item['remark'] ?? null,
-                'create_time' => date('Y-m-d H:i:s')
-            ];
-            $convertedItems[] = $convertedItem;
+            if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
+                arsort($paymentMethodCount);
+                $data['payment_method'] = array_key_first($paymentMethodCount);
+            }
 
-            $dealAmount += $itemDealAmount;
-            $paidAmount += $itemPaidAmount;
-            $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
-        }
+            if (!isset($data['order_status'])) {
+                $data['order_status'] = '0';
+            }
 
-        $data['deal_amount'] = $dealAmount;
-        $data['paid_amount'] = $paidAmount;
-        $data['owed_amount'] = $dealAmount - $paidAmount;
+            $order = BizSalesOrder::create($data);
 
-        if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
-            arsort($paymentMethodCount);
-            $data['payment_method'] = array_key_first($paymentMethodCount);
-        }
+            foreach ($convertedItems as $item) {
+                $item['order_id'] = $order->order_id;
+                BizOrderItem::create($item);
+            }
 
-        if (!isset($data['order_status'])) {
-            $data['order_status'] = '0';
-        }
+            if (!empty($convertedItems)) {
+                $this->generatePackage($order, $convertedItems);
+            }
 
-        $order = BizSalesOrder::create($data);
+            try {
+                $archiveService = new BizCustomerArchiveService();
+                $archiveService->insertArchiveFromOrder($order);
+            } catch (\Exception $e) {
+                \support\Log::error('写入开单档案失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            }
 
-        foreach ($convertedItems as $item) {
-            $item['order_id'] = $order->order_id;
-            BizOrderItem::create($item);
-        }
-
-        if (!empty($convertedItems)) {
-            $this->generatePackage($order, $convertedItems);
-        }
-
-        try {
-            $archiveService = new BizCustomerArchiveService();
-            $archiveService->insertArchiveFromOrder($order);
-        } catch (\Exception $e) {
-            \support\Log::error('写入开单档案失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-        }
-
-        return $order;
+            return $order;
+        });
     }
 
     // 更新销售订单信息
 
     public function updateOrder($data, $items = [])
     {
-        $data['update_time'] = date('Y-m-d H:i:s');
+        return Db::transaction(function () use ($data, $items) {
+            $order = BizSalesOrder::find($data['order_id']);
+            if (!$order) {
+                throw new \Exception('订单不存在');
+            }
+            if (in_array($order->enterprise_audit_status, ['1', '2']) || in_array($order->finance_audit_status, ['1', '2'])) {
+                throw new \Exception('订单已审核，不可修改');
+            }
 
-        if (!empty($items)) {
-            $dealAmount = 0;
-            $paidAmount = 0;
-            $paymentMethodCount = [];
-            foreach ($items as &$item) {
-                $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
-                if ($itemPaymentMethod === 'gift') {
-                    $item['deal_amount'] = 0;
-                    $item['paid_amount'] = 0;
-                    $item['owed_amount'] = 0;
-                    $item['unit_price'] = 0;
+            $data['update_time'] = date('Y-m-d H:i:s');
+
+            if (!empty($items)) {
+                $dealAmount = 0;
+                $paidAmount = 0;
+                $paymentMethodCount = [];
+                foreach ($items as &$item) {
+                    $itemPaymentMethod = $item['payment_method'] ?? $item['paymentMethod'] ?? 'cash';
+                    if ($itemPaymentMethod === 'gift') {
+                        $item['deal_amount'] = 0;
+                        $item['paid_amount'] = 0;
+                        $item['owed_amount'] = 0;
+                        $item['unit_price'] = 0;
+                    }
+                    $item['payment_method'] = $itemPaymentMethod;
+                    $dealAmount += floatval($item['deal_amount'] ?? 0);
+                    $paidAmount += floatval($item['paid_amount'] ?? 0);
+                    $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
                 }
-                $item['payment_method'] = $itemPaymentMethod;
-                $dealAmount += floatval($item['deal_amount'] ?? 0);
-                $paidAmount += floatval($item['paid_amount'] ?? 0);
-                $paymentMethodCount[$itemPaymentMethod] = ($paymentMethodCount[$itemPaymentMethod] ?? 0) + 1;
+                unset($item);
+                $data['deal_amount'] = $dealAmount;
+                $data['paid_amount'] = $paidAmount;
+                $data['owed_amount'] = $dealAmount - $paidAmount;
+                if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
+                    arsort($paymentMethodCount);
+                    $data['payment_method'] = array_key_first($paymentMethodCount);
+                }
             }
-            unset($item);
-            $data['deal_amount'] = $dealAmount;
-            $data['paid_amount'] = $paidAmount;
-            $data['owed_amount'] = $dealAmount - $paidAmount;
-            if (empty($data['payment_method']) && !empty($paymentMethodCount)) {
-                arsort($paymentMethodCount);
-                $data['payment_method'] = array_key_first($paymentMethodCount);
+
+            $result = BizSalesOrder::where('order_id', $data['order_id'])->update($data);
+
+            if (!empty($items)) {
+                BizOrderItem::where('order_id', $data['order_id'])->delete();
+                foreach ($items as $item) {
+                    $item['order_id'] = $data['order_id'];
+                    $item['create_time'] = date('Y-m-d H:i:s');
+                    BizOrderItem::create($item);
+                }
             }
-        }
 
-        $result = BizSalesOrder::where('order_id', $data['order_id'])->update($data);
-
-        if (!empty($items)) {
-            BizOrderItem::where('order_id', $data['order_id'])->delete();
-            foreach ($items as $item) {
-                $item['order_id'] = $data['order_id'];
-                $item['create_time'] = date('Y-m-d H:i:s');
-                BizOrderItem::create($item);
-            }
-        }
-
-        return $result;
+            return $result;
+        });
     }
 
     // 批量删除销售订单
 
     public function deleteOrderByIds($orderIds)
     {
-        BizOrderItem::whereIn('order_id', $orderIds)->delete();
-        return BizSalesOrder::whereIn('order_id', $orderIds)->delete();
+        return Db::transaction(function () use ($orderIds) {
+            BizOrderItem::whereIn('order_id', $orderIds)->delete();
+            return BizSalesOrder::whereIn('order_id', $orderIds)->delete();
+        });
     }
 
     // 企业审核订单
 
     public function enterpriseAudit($orderId, $auditBy)
     {
+        $order = BizSalesOrder::find($orderId);
+        if (!$order) {
+            throw new \Exception('订单不存在');
+        }
+        if ($order->enterprise_audit_status !== '0') {
+            throw new \Exception('订单已审核，不可重复审核');
+        }
+
         return BizSalesOrder::where('order_id', $orderId)->update([
             'enterprise_audit_status' => '1',
             'enterprise_audit_by' => $auditBy,
@@ -203,15 +264,39 @@ class BizSalesOrderService
 
     public function financeAudit($orderId, $auditBy)
     {
-        $order = BizSalesOrder::find($orderId);
-        if (!$order) return false;
-        if ($order->enterprise_audit_status !== '1') return false;
-        return BizSalesOrder::where('order_id', $orderId)->update([
-            'finance_audit_status' => '1',
-            'finance_audit_by' => $auditBy,
-            'finance_audit_time' => date('Y-m-d H:i:s'),
-            'order_status' => '2'
-        ]);
+        return Db::transaction(function () use ($orderId, $auditBy) {
+            $order = BizSalesOrder::where('order_id', $orderId)->lockForUpdate()->first();
+            if (!$order) return false;
+            if ($order->enterprise_audit_status !== '1') return false;
+            $result = BizSalesOrder::where('order_id', $orderId)->update([
+                'finance_audit_status' => '1',
+                'finance_audit_by' => $auditBy,
+                'finance_audit_time' => date('Y-m-d H:i:s'),
+                'order_status' => '2'
+            ]);
+            if ($result) {
+                try {
+                    $order = BizSalesOrder::with('items')->find($orderId);
+                    if ($order) {
+                        \support\Log::info('财务审核-开始生成企业库存', [
+                            'order_id' => $orderId,
+                            'order_no' => $order->order_no,
+                            'items_count' => $order->items->count(),
+                            'items_card_item_ids' => $order->items->pluck('card_item_id')->toArray(),
+                        ]);
+                        $prepareService = new BizStockPrepareService();
+                        $prepareResult = $prepareService->addToEnterprisePrepare($order);
+                        \support\Log::info('财务审核-企业库存生成结果', [
+                            'order_id' => $orderId,
+                            'prepare_result' => $prepareResult ? 'success: prepare_id=' . ($prepareResult->prepare_id ?? 'merged') : 'null',
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \support\Log::error('生成企业库存失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+                }
+            }
+            return $result;
+        });
     }
 
     public function cancelOrder($orderId)
@@ -266,6 +351,7 @@ class BizSalesOrderService
             $unitPrice = floatval($item['unit_price'] ?? ($quantity > 0 ? round($dealPrice / $quantity, 2) : 0));
             BizPackageItem::create([
                 'package_id' => $package->package_id,
+                'card_item_id' => $item['card_item_id'] ?? null,
                 'product_name' => $item['product_name'],
                 'unit_price' => $unitPrice,
                 'plan_price' => floatval($item['plan_price'] ?? $dealPrice),
@@ -283,8 +369,9 @@ class BizSalesOrderService
     private function generatePackageNo()
     {
         $date = date('Ymd');
-        $lastPackage = BizCustomerPackage::where('package_no', 'like', 'PK' . $date . '%')->orderBy('package_id', 'desc')->first();
-        $seq = $lastPackage ? intval(substr($lastPackage->package_no, -4)) + 1 : 1;
+        $key = 'package_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
         return 'PK' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 }

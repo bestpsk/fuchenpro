@@ -172,15 +172,15 @@
           <view class="card-footer">
             <view class="time-text">编号: {{ item.userId }}</view>
             <view class="action-btns">
-              <view v-if="item.userId !== 1" class="action-btn edit" @click.stop="goEdit(item)">
+              <view v-if="item.userId !== 1 && checkPermi('system:user:edit')" class="action-btn edit" @click.stop="goEdit(item)">
                 <u-icon name="edit-pen" size="14"></u-icon>
                 <text>编辑</text>
               </view>
-              <view v-if="item.userId !== 1" class="action-btn delete" @click.stop="handleDelete(item)">
+              <view v-if="item.userId !== 1 && checkPermi('system:user:remove')" class="action-btn delete" @click.stop="handleDelete(item)">
                 <u-icon name="trash" size="14"></u-icon>
                 <text>删除</text>
               </view>
-              <view v-if="item.userId !== 1" class="action-btn more" @click.stop="showMoreActions(item)">
+              <view v-if="item.userId !== 1 && (checkPermi('system:user:resetPwd') || checkPermi('system:user:edit'))" class="action-btn more" @click.stop="showMoreActions(item)">
                 <u-icon name="more-dot-fill" size="14"></u-icon>
                 <text>更多</text>
               </view>
@@ -212,7 +212,7 @@
       @select="onActionSelect"
     ></u-action-sheet>
 
-    <view class="fab-btn" @click="goAdd">
+    <view v-if="checkPermi('system:user:add')" class="fab-btn" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
   </view>
@@ -221,6 +221,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listUser, delUser, resetUserPwd, changeUserStatus, deptTreeSelect } from '@/api/system/user'
+import { checkPermi } from '@/utils/permission'
 
 
 const userList = ref([])
@@ -396,11 +397,15 @@ function handleDelete(item) {
 function showMoreActions(item) {
   currentUser.value = item
   const actionName = item.status === '0' ? '停用账号' : '启用账号'
-  actionSheetActions.value = [
-    { name: '重置密码', type: 'resetPwd' },
-    { name: '分配角色', type: 'authRole' },
-    { name: actionName, type: 'toggleStatus' }
-  ]
+  const actions = []
+  if (checkPermi('system:user:resetPwd')) {
+    actions.push({ name: '重置密码', type: 'resetPwd' })
+  }
+  if (checkPermi('system:user:edit')) {
+    actions.push({ name: '分配角色', type: 'authRole' })
+    actions.push({ name: actionName, type: 'toggleStatus' })
+  }
+  actionSheetActions.value = actions
   showActionSheet.value = true
 }
 

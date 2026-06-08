@@ -48,8 +48,8 @@
 
     <view class="action-section">
       <view class="action-btns">
-        <u-button type="primary" plain text="编辑" @click="goEdit"></u-button>
-        <u-button type="error" plain text="删除" @click="handleDelete"></u-button>
+        <u-button v-if="checkPermi('wms:supplier:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
+        <u-button v-if="checkPermi('wms:supplier:remove')" type="error" plain text="删除" @click="handleDelete"></u-button>
       </view>
     </view>
   </view>

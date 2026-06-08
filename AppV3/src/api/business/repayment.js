@@ -43,11 +43,13 @@ export function addRepayment(data) {
 
 /**
  * 审核还款记录，确认还款金额和信息的准确性
- * @param {string|number} id - 还款ID
+ * @param {object} data - 审核数据 { repaymentId, auditStatus, auditRemark }
+ *   auditStatus: '1'-通过, '2'-驳回
+ *   auditRemark: 驳回原因（驳回时必填）
  * @returns {Promise<void>}
  */
-export function auditRepayment(id) {
-  return request({ url: '/business/repayment/audit', method: 'put', data: { id } })
+export function auditRepayment(data) {
+  return request({ url: '/business/repayment/audit', method: 'post', data })
 }
 
 /**
@@ -56,5 +58,5 @@ export function auditRepayment(id) {
  * @returns {Promise<void>}
  */
 export function cancelRepayment(id) {
-  return request({ url: '/business/repayment/cancel', method: 'put', data: { id } })
+  return request({ url: '/business/repayment/cancel', method: 'post', data: { id } })
 }

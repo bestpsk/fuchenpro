@@ -285,7 +285,8 @@ INSERT INTO `sys_menu` (`menu_name`, `parent_id`, `order_num`, `path`, `componen
 ('入库修改', @stock_in_menu_id, 3, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:edit', '#', 'admin', NOW()),
 ('入库删除', @stock_in_menu_id, 4, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:remove', '#', 'admin', NOW()),
 ('入库确认', @stock_in_menu_id, 5, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:confirm', '#', 'admin', NOW()),
-('入库导出', @stock_in_menu_id, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:export', '#', 'admin', NOW());
+('入库取消确认', @stock_in_menu_id, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:cancelConfirm', '#', 'admin', NOW()),
+('入库导出', @stock_in_menu_id, 7, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockIn:export', '#', 'admin', NOW());
 
 -- 4.5 出库管理菜单
 INSERT INTO `sys_menu` (`menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`)
@@ -298,7 +299,10 @@ INSERT INTO `sys_menu` (`menu_name`, `parent_id`, `order_num`, `path`, `componen
 ('出库修改', @stock_out_menu_id, 3, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:edit', '#', 'admin', NOW()),
 ('出库删除', @stock_out_menu_id, 4, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:remove', '#', 'admin', NOW()),
 ('出库确认', @stock_out_menu_id, 5, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:confirm', '#', 'admin', NOW()),
-('出库导出', @stock_out_menu_id, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:export', '#', 'admin', NOW());
+('出库取消确认', @stock_out_menu_id, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:cancelConfirm', '#', 'admin', NOW()),
+('出库发货', @stock_out_menu_id, 7, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:ship', '#', 'admin', NOW()),
+('出库确认收货', @stock_out_menu_id, 8, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:receipt', '#', 'admin', NOW()),
+('出库导出', @stock_out_menu_id, 9, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'wms:stockOut:export', '#', 'admin', NOW());
 
 -- 4.6 库存查看菜单
 INSERT INTO `sys_menu` (`menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `perms`, `icon`, `create_by`, `create_time`)

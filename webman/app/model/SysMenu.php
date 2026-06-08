@@ -16,7 +16,7 @@ class SysMenu extends Model
     protected $fillable = [
         'menu_name', 'parent_id', 'order_num', 'path', 'component', 'query',
         'route_name', 'is_frame', 'is_cache', 'menu_type', 'visible', 'status',
-        'perms', 'icon', 'create_by', 'create_time', 'update_by', 'update_time', 'remark'
+        'client_type', 'perms', 'icon', 'create_by', 'create_time', 'update_by', 'update_time', 'remark'
     ];
 
     // 关联子菜单列表

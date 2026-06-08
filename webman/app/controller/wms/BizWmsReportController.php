@@ -18,6 +18,7 @@ class BizWmsReportController
     {
         $service = new BizWmsReportService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->stockInSummary($params);
         return AjaxResult::success($result);
     }
@@ -27,6 +28,7 @@ class BizWmsReportController
     {
         $service = new BizWmsReportService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->stockOutSummary($params);
         return AjaxResult::success($result);
     }
@@ -36,6 +38,7 @@ class BizWmsReportController
     {
         $service = new BizWmsReportService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->inventoryTurnover($params);
         return AjaxResult::success($result);
     }
@@ -45,6 +48,7 @@ class BizWmsReportController
     {
         $service = new BizWmsReportService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->productFlow($params);
         return AjaxResult::success($result);
     }

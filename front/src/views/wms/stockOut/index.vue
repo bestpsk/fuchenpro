@@ -11,7 +11,10 @@
       </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="请选择" clearable style="width: 120px">
-          <el-option v-for="dict in biz_doc_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+          <el-option label="待确认" value="0" />
+          <el-option label="已确认(待发货)" value="1" />
+          <el-option label="已发货" value="2" />
+          <el-option label="已完成" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="出库日期">
@@ -51,16 +54,38 @@
       </el-table-column>
       <el-table-column label="总金额" prop="totalAmount" min-width="100" align="right" />
       <el-table-column label="出库日期" prop="stockOutDate" min-width="100" align="center" />
-      <el-table-column label="状态" prop="status" min-width="80" align="center">
+      <el-table-column label="状态" prop="status" min-width="110" align="center">
         <template #default="scope">
-          <el-switch v-model="scope.row.status" active-value="1" inactive-value="0" @change="(val) => handleStatusChange(scope.row, val)" />
+          <el-tag :type="statusTagType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" min-width="200" align="center">
+      <el-table-column label="来源标识" min-width="100" align="center">
+        <template #default="scope">
+          <span v-if="scope.row.prepareId">备货出库</span>
+          <span v-else-if="scope.row.planId">方案出货</span>
+          <span v-else>手动创建</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="发货方式" min-width="90" align="center">
+        <template #default="scope">
+          {{ shipTypeLabel(scope.row.shipType) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="物流信息" min-width="160" align="center">
+        <template #default="scope">
+          <span v-if="scope.row.shipType == 2 && scope.row.logisticsCompany">{{ scope.row.logisticsCompany }} {{ scope.row.logisticsNo }}</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" min-width="260" align="center">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)">查看</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:stockOut:edit']">修改</el-button>
           <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:stockOut:remove']">删除</el-button>
+          <el-button link type="success" icon="Check" @click="handleConfirm(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:stockOut:confirm']">确认出库</el-button>
+          <el-button link type="warning" icon="RefreshLeft" @click="handleCancelConfirm(scope.row)" v-if="scope.row.status === '1'" v-hasPermi="['wms:stockOut:confirm']">取消确认</el-button>
+          <el-button link type="primary" icon="Van" @click="handleShip(scope.row)" v-if="scope.row.status === '1'" v-hasPermi="['wms:stockOut:ship']">发货</el-button>
+          <el-button link type="success" icon="CircleCheck" @click="handleConfirmReceipt(scope.row)" v-if="scope.row.status === '2'" v-hasPermi="['wms:stockOut:receipt']">确认收货</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -125,6 +150,20 @@
               <span v-else style="line-height: 32px">{{ form.enterpriseName || '-' }}</span>
             </el-form-item>
           </el-col>
+          <el-col :span="6" v-if="form.outTargetType === '1' && !isView">
+            <el-form-item label="发货方式" prop="shipType">
+              <el-select v-model="form.shipType" placeholder="请选择" style="width: 100%">
+                <el-option label="无需发货" value="0" />
+                <el-option label="自提" value="1" />
+                <el-option label="物流" value="2" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6" v-if="form.outTargetType === '1' && isView">
+            <el-form-item label="发货方式">
+              <span style="line-height: 32px">{{ shipTypeLabel(form.shipType) }}</span>
+            </el-form-item>
+          </el-col>
         </el-row>
         <el-row>
           <el-col :span="6">
@@ -135,6 +174,29 @@
           <el-col :span="18">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" placeholder="请输入备注" :disabled="isView" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row v-if="isView && form.shipType == 2 && (form.logisticsCompany || form.logisticsNo || form.shipDate || form.receiptDate)">
+          <el-col :span="6">
+            <el-form-item label="物流公司">
+              <span style="line-height: 32px">{{ form.logisticsCompany || '-' }}</span>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="物流单号">
+              <span style="line-height: 32px">{{ form.logisticsNo || '-' }}</span>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="发货日期">
+              <span style="line-height: 32px">{{ form.shipDate || '-' }}</span>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="收货日期">
+              <span style="line-height: 32px">{{ form.receiptDate || '-' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -204,6 +266,29 @@
       </template>
     </el-dialog>
 
+    <el-dialog title="发货" v-model="shipDialogOpen" width="500px" append-to-body>
+      <el-form ref="shipFormRef" :model="shipForm" :rules="shipRules" label-width="100px">
+        <el-form-item label="发货方式" prop="shipType">
+          <el-radio-group v-model="shipForm.shipType">
+            <el-radio label="1">自提(无需物流)</el-radio>
+            <el-radio label="2">物流发货</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <template v-if="shipForm.shipType === '2'">
+          <el-form-item label="物流公司" prop="logisticsCompany">
+            <el-input v-model="shipForm.logisticsCompany" placeholder="请输入物流公司" />
+          </el-form-item>
+          <el-form-item label="物流单号" prop="logisticsNo">
+            <el-input v-model="shipForm.logisticsNo" placeholder="请输入物流单号" />
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="submitShip">确 定</el-button>
+        <el-button @click="shipDialogOpen = false">取 消</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog title="打印预览" v-model="printPreview" width="900px" append-to-body>
       <div class="print-preview-content" id="print-content">
         <div class="print-container">
@@ -266,18 +351,14 @@
 </template>
 
 <script setup name="WmsStockOut">
-/**
- * @description 出库管理页面 - 出库单CRUD与确认/取消确认
- * @description 提供出库单增删改查、确认出库（扣减库存）、取消确认出库（归还库存）等功能
- */
-import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, confirmStockOutById, cancelConfirmStockOut } from "@/api/wms/stockOut"
+import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, confirmStockOutById, cancelConfirmStockOut, shipStockOut, confirmReceiptStockOut } from "@/api/wms/stockOut"
 import { ElMessageBox } from 'element-plus'
 import { searchProduct } from "@/api/wms/product"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchEmployee } from "@/api/business/employeeConfig"
 
 const { proxy } = getCurrentInstance()
-const { biz_stock_out_type, biz_doc_status, biz_product_unit, biz_product_spec } = useDict("biz_stock_out_type", "biz_doc_status", "biz_product_unit", "biz_product_spec")
+const { biz_stock_out_type, biz_product_unit, biz_product_spec } = useDict("biz_stock_out_type", "biz_product_unit", "biz_product_spec")
 
 const stockOutList = ref([])
 const open = ref(false)
@@ -296,6 +377,16 @@ const employeeOptions = ref([])
 const employeeLoading = ref(false)
 const productOptions = ref([])
 const productLoading = ref(false)
+const shipDialogOpen = ref(false)
+const currentShipRow = ref(null)
+const shipFormRef = ref(null)
+
+const shipForm = ref({ shipType: '1', logisticsCompany: '', logisticsNo: '' })
+const shipRules = {
+  shipType: [{ required: true, message: "请选择发货方式", trigger: "change" }],
+  logisticsCompany: [{ required: true, message: "请输入物流公司", trigger: "blur" }],
+  logisticsNo: [{ required: true, message: "请输入物流单号", trigger: "blur" }]
+}
 
 const data = reactive({
   form: { items: [] },
@@ -307,6 +398,19 @@ const data = reactive({
   }
 })
 const { queryParams, form, rules } = toRefs(data)
+
+function statusLabel(status) {
+  const map = { '0': '待确认', '1': '已确认(待发货)', '2': '已发货', '3': '已完成' }
+  return map[status] || '未知'
+}
+function statusTagType(status) {
+  const map = { '0': 'info', '1': 'warning', '2': '', '3': 'success' }
+  return map[status] || 'info'
+}
+function shipTypeLabel(shipType) {
+  const map = { '0': '无需发货', '1': '自提', '2': '物流' }
+  return map[shipType] || '-'
+}
 
 function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
 function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
@@ -443,43 +547,64 @@ function resetQuery() { dateRange.value = []; proxy.resetForm("queryRef"); handl
 function handleSelectionChange(selection) { ids.value = selection.map(item => item.stockOutId); multiple.value = !selection.length }
 
 function reset() {
-  form.value = { stockOutId: undefined, stockOutType: "1", outTargetType: "1", enterpriseId: undefined, enterpriseName: undefined, contactEmployeeId: undefined, contactEmployeeName: undefined, responsibleId: undefined, responsibleName: undefined, stockOutDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
+  form.value = { stockOutId: undefined, stockOutType: "1", outTargetType: "1", shipType: "2", enterpriseId: undefined, enterpriseName: undefined, contactEmployeeId: undefined, contactEmployeeName: undefined, responsibleId: undefined, responsibleName: undefined, stockOutDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
   enterpriseOptions.value = []; employeeOptions.value = []; productOptions.value = []
   proxy.resetForm("stockOutRef")
 }
 
 function handleAdd() { reset(); isView.value = false; dialogTitle.value = "新增出库单"; open.value = true }
-function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
+function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; if (!form.value.shipType) form.value.shipType = '2'; form.value.items.forEach(item => { item.quantity = item.originalQuantity || item.quantity; if (item.unitType === '1' && item.packQty > 1) { item._mainPrice = Math.round(parseFloat(item.salePrice) * item.packQty * 100) / 100; item.salePrice = item._mainPrice; } else { item._mainPrice = item.salePrice; } }); if (data.enterpriseId && data.enterpriseName) { enterpriseOptions.value = [{ enterpriseId: data.enterpriseId, enterpriseName: data.enterpriseName }] } if (data.contactEmployeeId && data.contactEmployeeName) { employeeOptions.value = [{ userId: data.contactEmployeeId, userName: data.contactEmployeeName }] } if (data.responsibleId && data.responsibleName) { if (!employeeOptions.value.find(e => e.userId === data.responsibleId)) { employeeOptions.value.push({ userId: data.responsibleId, userName: data.responsibleName }) } } form.value.items.forEach(item => { if (item.productId && item.productName && !productOptions.value.find(p => p.productId === item.productId)) { productOptions.value.push({ productId: item.productId, productName: item.productName, productCode: item.productCode || '' }) } }); isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
 function handleView(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; isView.value = true; dialogTitle.value = "查看出库单"; open.value = true }) }
-function handleConfirm(row) { proxy.$modal.confirm('确认出库后将减少库存数量，是否继续？').then(() => confirmStockOut(row.stockOutId)).then(() => { getList(); proxy.$modal.msgSuccess("出库确认成功") }).catch(() => {}) }
 
-function handleStatusChange(row, val) {
-  const action = val === '1' ? '确认出库' : '取消确认'
-  ElMessageBox.confirm(`确定要${action}该出库单吗？${val === '1' ? '\n确认后将扣减库存！' : '\n取消后将恢复库存！'}`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
+function handleConfirm(row) {
+  proxy.$modal.confirm('确认出库后将减少库存数量，是否继续？').then(() => {
+    return confirmStockOut(row.stockOutId)
   }).then(() => {
-    if (val === '1') {
-      confirmStockOutById(row.stockOutId).then(() => {
-        proxy.$modal.msgSuccess('出库确认成功')
+    proxy.$modal.msgSuccess("出库确认成功")
+    getList()
+  }).catch(() => {})
+}
+
+function handleCancelConfirm(row) {
+  proxy.$modal.confirm('确定要取消确认该出库单吗？取消后将恢复库存！').then(() => {
+    return cancelConfirmStockOut(row.stockOutId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('已取消确认')
+    getList()
+  }).catch(() => {})
+}
+
+function handleShip(row) {
+  currentShipRow.value = row
+  shipForm.value = { shipType: '1', logisticsCompany: '', logisticsNo: '' }
+  shipDialogOpen.value = true
+  nextTick(() => { shipFormRef.value?.clearValidate() })
+}
+
+function submitShip() {
+  shipFormRef.value.validate(valid => {
+    if (valid) {
+      const data = { ship_type: shipForm.value.shipType }
+      if (shipForm.value.shipType === '2') {
+        data.logistics_company = shipForm.value.logisticsCompany
+        data.logistics_no = shipForm.value.logisticsNo
+      }
+      shipStockOut(currentShipRow.value.stockOutId, data).then(() => {
+        proxy.$modal.msgSuccess('发货成功')
+        shipDialogOpen.value = false
         getList()
-      }).catch(() => {
-        row.status = '0'
-        proxy.$modal.msgError('操作失败')
-      })
-    } else {
-      cancelConfirmStockOut(row.stockOutId).then(() => {
-        proxy.$modal.msgSuccess('已取消确认')
-        getList()
-      }).catch(() => {
-        row.status = '1'
-        proxy.$modal.msgError('操作失败')
-      })
+      }).catch(() => {})
     }
-  }).catch(() => {
-    row.status = val === '1' ? '0' : '1'
   })
+}
+
+function handleConfirmReceipt(row) {
+  proxy.$modal.confirm('确认已收货？').then(() => {
+    return confirmReceiptStockOut(row.stockOutId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('确认收货成功')
+    getList()
+  }).catch(() => {})
 }
 
 function addItem() { form.value.items.push({ productId: undefined, productName: undefined, spec: undefined, unit: undefined, packQty: 1, unitType: '1', quantity: 1, salePrice: 0, salePriceSpec: 0, inventoryQty: undefined, amount: 0, remark: undefined }) }
@@ -516,7 +641,7 @@ function calcAmount(index) { const item = form.value.items[index]; item.amount =
 function onEnterpriseSelect(val) { const ent = enterpriseOptions.value.find(e => e.enterpriseId === val); if (ent) form.value.enterpriseName = ent.enterpriseName }
 function onEmployeeSelect(val) { const emp = employeeOptions.value.find(e => e.userId === val); if (emp) form.value.responsibleName = emp.userName }
 function onContactEmployeeSelect(val) { const emp = employeeOptions.value.find(e => e.userId === val); if (emp) form.value.contactEmployeeName = emp.userName }
-function onTargetTypeChange(val) { form.value.enterpriseId = undefined; form.value.enterpriseName = undefined; form.value.responsibleId = undefined; form.value.responsibleName = undefined; form.value.contactEmployeeId = undefined; form.value.contactEmployeeName = undefined }
+function onTargetTypeChange(val) { form.value.enterpriseId = undefined; form.value.enterpriseName = undefined; form.value.responsibleId = undefined; form.value.responsibleName = undefined; form.value.contactEmployeeId = undefined; form.value.contactEmployeeName = undefined; if (val === '1') { form.value.shipType = '2' } else { form.value.shipType = undefined } }
 function searchEnterpriseList(keyword) { enterpriseLoading.value = true; searchEnterprise(keyword).then(res => { enterpriseOptions.value = res.data || []; enterpriseLoading.value = false }) }
 function searchEmployeeList(keyword) { employeeLoading.value = true; searchEmployee(keyword).then(res => { employeeOptions.value = res.data || []; employeeLoading.value = false }) }
 function searchProductList(keyword) { productLoading.value = true; searchProduct(keyword).then(res => { productOptions.value = res.data || []; productLoading.value = false }) }
@@ -525,15 +650,17 @@ function submitForm() {
   proxy.$refs["stockOutRef"].validate(valid => {
     if (valid) {
       if (!form.value.items || form.value.items.length === 0) { proxy.$modal.msgWarning("请至少添加一条出库明细"); return }
-      
+
       const submitData = { ...form.value }
+      delete submitData.code
+      delete submitData.msg
       submitData.outTargetType = form.value.outTargetType || '1'
       submitData.enterpriseId = form.value.enterpriseId || null
       submitData.enterpriseName = form.value.enterpriseName || null
       submitData.contactEmployeeId = form.value.contactEmployeeId || null
       submitData.contactEmployeeName = form.value.contactEmployeeName || null
-      
-      if (form.value.stockInId != undefined) { updateStockOut(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() }) }
+
+      if (form.value.stockOutId != undefined) { updateStockOut(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() }) }
       else { addStockOut(submitData).then(() => { proxy.$modal.msgSuccess("新增成功"); open.value = false; getList() }) }
     }
   })

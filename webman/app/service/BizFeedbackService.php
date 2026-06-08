@@ -5,6 +5,7 @@ namespace app\service;
 use app\model\BizFeedback;
 use app\model\BizFeedbackReply;
 use app\model\SysUser;
+use app\service\DataScopeService;
 
 class BizFeedbackService
 {
@@ -22,6 +23,12 @@ class BizFeedbackService
         }
         if (!empty($params['title'])) {
             $query->where('title', 'like', '%' . $params['title'] . '%');
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
+                ->pluck('user_name')->toArray();
+            $query->whereIn('create_by', $visibleUserNames);
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);

@@ -13,6 +13,7 @@ class BizFeedbackController
     {
         $service = new BizFeedbackService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectFeedbackList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

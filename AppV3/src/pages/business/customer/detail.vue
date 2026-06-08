@@ -82,7 +82,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getCustomer, updateCustomer } from '@/api/business/customer'
+import { getCustomer, addCustomer, updateCustomer } from '@/api/business/customer'
 import { getDicts } from '@/api/system/dict/data'
 import config from '@/config'
 
@@ -153,7 +153,7 @@ async function loadDetail() {
       customerName: data.customerName || data.customer_name || '',
       phone: data.phone || '',
       wechat: data.wechat || '',
-      gender: String(data.gender ?? '2'),
+      gender: String(data.gender ?? '1'),
       age: data.age || null,
       tag: data.tag ? data.tag.split(',') : [],
       remark: data.remark || ''
@@ -208,6 +208,11 @@ async function submitForm() {
     return
   }
 
+  if (form.phone && !/^1[3-9]\d{9}$/.test(form.phone)) {
+    uni.showToast({ title: '手机号格式不正确', icon: 'none' })
+    return
+  }
+
   submitting.value = true
   try {
     const data = {
@@ -221,7 +226,11 @@ async function submitForm() {
       remark: form.remark || null
     }
 
-    await updateCustomer(data)
+    if (customerId.value) {
+      await updateCustomer(data)
+    } else {
+      await addCustomer(data)
+    }
 
     if (avatarTempFile.value) {
       await uploadAvatar()
@@ -240,14 +249,14 @@ async function submitForm() {
 function goBack() {
   const pages = getCurrentPages()
   if (pages.length > 1) uni.navigateBack()
-  else uni.redirectTo({ url: '/pages/business/sales/index' })
+  else uni.redirectTo({ url: '/pages/business/customer/index' })
 }
 
 onMounted(() => {
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const options = currentPage.options || {}
-  customerId.value = options.id ? parseInt(options.id) : null
+  customerId.value = options.customerId ? parseInt(options.customerId) : null
 
   loadCustomerTagDict()
 

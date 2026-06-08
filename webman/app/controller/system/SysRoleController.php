@@ -96,6 +96,11 @@ class SysRoleController
             $data['data_scope'] ?? '1',
             $data['dept_ids'] ?? []
         );
+
+        // 刷新在线用户缓存，使数据权限变更立即生效
+        $tokenService = new \app\service\TokenService();
+        $tokenService->refreshPermissionByRoleId($data['role_id'] ?? 0);
+
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 

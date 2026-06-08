@@ -3,6 +3,7 @@
 namespace app\service;
 
 use app\model\BizEmployeeConfig;
+use app\service\DataScopeService;
 use support\Db;
 
 /**
@@ -13,28 +14,38 @@ class BizEmployeeConfigService
     // 按条件分页查询员工排班配置列表
     public function selectConfigList($params = [])
     {
-        $query = BizEmployeeConfig::query()
-            ->leftJoin('sys_user_post as up', 'biz_employee_config.user_id', '=', 'up.user_id')
+        $query = Db::table('sys_user as su')
+            ->leftJoin('biz_employee_config as ec', 'su.user_id', '=', 'ec.user_id')
+            ->leftJoin('sys_user_post as up', 'su.user_id', '=', 'up.user_id')
             ->leftJoin('sys_post as p', 'up.post_id', '=', 'p.post_id')
-            ->leftJoin('sys_user as su', 'biz_employee_config.user_id', '=', 'su.user_id')
-            ->select('biz_employee_config.*', 'p.post_id', 'p.post_name', 'su.nick_name', 'su.phonenumber');
+            ->leftJoin('sys_dept as d', 'su.dept_id', '=', 'd.dept_id')
+            ->where('su.del_flag', '0')
+            ->where('su.status', '0')
+            ->select(
+                'su.user_id', 'su.user_name', 'su.nick_name', 'su.phonenumber',
+                'ec.config_id', 'ec.is_schedulable', 'ec.rest_dates', 'ec.status as config_status',
+                'p.post_id', 'p.post_name',
+                'd.dept_id', 'd.dept_name'
+            );
 
         if (!empty($params['user_name'])) {
-            $query->where('biz_employee_config.user_name', 'like', '%' . $params['user_name'] . '%');
+            $query->where('su.nick_name', 'like', '%' . $params['user_name'] . '%');
         }
         if (!empty($params['dept_name'])) {
-            $query->where('biz_employee_config.dept_name', 'like', '%' . $params['dept_name'] . '%');
+            $query->where('d.dept_name', 'like', '%' . $params['dept_name'] . '%');
         }
         if (isset($params['is_schedulable'])) {
-            $query->where('biz_employee_config.is_schedulable', $params['is_schedulable']);
-        }
-        if (!empty($params['status'])) {
-            $query->where('biz_employee_config.status', $params['status']);
+            $query->where('ec.is_schedulable', $params['is_schedulable']);
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
-        $result = $query->orderBy('biz_employee_config.config_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('su.user_id', $visibleUserIds);
+        }
+
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
+        $result = $query->orderBy('su.user_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
         foreach ($result->items() as $item) {
             if (empty($item->post_name)) {
@@ -52,6 +63,10 @@ class BizEmployeeConfigService
             } else {
                 $item->rest_dates = [];
             }
+            if (empty($item->is_schedulable)) {
+                $item->is_schedulable = '1';
+            }
+            $item->user_name = $item->nick_name ?: $item->user_name;
         }
 
         return $result;
@@ -82,23 +97,73 @@ class BizEmployeeConfigService
     public function updateConfig($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizEnterprise::where('config_id', $data['config_id'])->update($data);
+        return BizEmployeeConfig::where('config_id', $data['config_id'])->update($data);
     }
 
     public function updateSchedulable($userId, $isSchedulable)
     {
-        return BizEmployeeConfig::where('user_id', $userId)->update([
+        $config = BizEmployeeConfig::where('user_id', $userId)->first();
+        if ($config) {
+            return BizEmployeeConfig::where('user_id', $userId)->update([
+                'is_schedulable' => $isSchedulable,
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        $user = Db::table('sys_user')->where('user_id', $userId)->first();
+        if (!$user) return false;
+
+        $postInfo = Db::table('sys_user_post as up')
+            ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
+            ->where('up.user_id', $userId)->first();
+
+        $deptInfo = Db::table('sys_dept')->where('dept_id', $user->dept_id)->first();
+
+        return BizEmployeeConfig::create([
+            'user_id' => $userId,
+            'user_name' => $user->nick_name ?: $user->user_name,
+            'post_id' => $postInfo ? $postInfo->post_id : null,
+            'post_name' => $postInfo ? $postInfo->post_name : null,
+            'dept_id' => $user->dept_id,
+            'dept_name' => $deptInfo ? $deptInfo->dept_name : null,
             'is_schedulable' => $isSchedulable,
-            'update_time' => date('Y-m-d H:i:s')
-        ]);
+            'rest_dates' => json_encode([]),
+            'status' => '0',
+            'create_time' => date('Y-m-d H:i:s'),
+        ]) ? true : false;
     }
 
     public function updateRestDates($userId, $restDates)
     {
-        return BizEmployeeConfig::where('user_id', $userId)->update([
+        $config = BizEmployeeConfig::where('user_id', $userId)->first();
+        if ($config) {
+            return BizEmployeeConfig::where('user_id', $userId)->update([
+                'rest_dates' => json_encode($restDates, JSON_UNESCAPED_UNICODE),
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        $user = Db::table('sys_user')->where('user_id', $userId)->first();
+        if (!$user) return false;
+
+        $postInfo = Db::table('sys_user_post as up')
+            ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
+            ->where('up.user_id', $userId)->first();
+
+        $deptInfo = Db::table('sys_dept')->where('dept_id', $user->dept_id)->first();
+
+        return BizEmployeeConfig::create([
+            'user_id' => $userId,
+            'user_name' => $user->nick_name ?: $user->user_name,
+            'post_id' => $postInfo ? $postInfo->post_id : null,
+            'post_name' => $postInfo ? $postInfo->post_name : null,
+            'dept_id' => $user->dept_id,
+            'dept_name' => $deptInfo ? $deptInfo->dept_name : null,
+            'is_schedulable' => '1',
             'rest_dates' => json_encode($restDates, JSON_UNESCAPED_UNICODE),
-            'update_time' => date('Y-m-d H:i:s')
-        ]);
+            'status' => '0',
+            'create_time' => date('Y-m-d H:i:s'),
+        ]) ? true : false;
     }
 
     // 批量删除员工排班配置
@@ -123,21 +188,29 @@ class BizEmployeeConfigService
         return in_array($date, $restDates);
     }
 
-    public function searchEmployee($keyword = '')
+    public function searchEmployee($keyword = '', $params = [])
     {
-        $query = BizEmployeeConfig::query()
-            ->leftJoin('sys_user_post as up', 'biz_employee_config.user_id', '=', 'up.user_id')
+        $query = Db::table('sys_user as su')
+            ->leftJoin('sys_user_post as up', 'su.user_id', '=', 'up.user_id')
             ->leftJoin('sys_post as p', 'up.post_id', '=', 'p.post_id')
-            ->select('biz_employee_config.user_id', 'biz_employee_config.user_name', 'biz_employee_config.dept_name', 'p.post_name')
-            ->where('biz_employee_config.status', '0');
+            ->leftJoin('sys_dept as d', 'su.dept_id', '=', 'd.dept_id')
+            ->where('su.del_flag', '0')
+            ->where('su.status', '0')
+            ->select('su.user_id', 'su.nick_name as user_name', 'd.dept_name', 'p.post_name');
 
         if (!empty($keyword)) {
             $query->where(function ($q) use ($keyword) {
-                $q->where('biz_employee_config.user_name', 'like', '%' . $keyword . '%')
-                  ->orWhere('biz_employee_config.dept_name', 'like', '%' . $keyword . '%');
+                $q->where('su.nick_name', 'like', '%' . $keyword . '%')
+                  ->orWhere('su.user_name', 'like', '%' . $keyword . '%')
+                  ->orWhere('d.dept_name', 'like', '%' . $keyword . '%');
             });
         }
 
-        return $query->orderBy('biz_employee_config.user_id', 'desc')->limit(50)->get();
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('su.user_id', $visibleUserIds);
+        }
+
+        return $query->orderBy('su.user_id', 'desc')->limit(50)->get();
     }
 }

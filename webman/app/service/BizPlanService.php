@@ -5,6 +5,8 @@ namespace app\service;
 use app\model\BizPlan;
 use app\model\BizPlanItem;
 use app\model\BizEnterprise;
+use app\service\DataScopeService;
+use support\Db;
 
 /**
  * 方案服务层，处理方案的增删改查、审核流程、金额管理和出货关联
@@ -17,6 +19,11 @@ class BizPlanService
 
         if (!empty($params['enterprise_name'])) {
             $query->where('enterprise_name', 'like', '%' . $params['enterprise_name'] . '%');
+        }
+
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('server_user_id', $visibleUserIds);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);
@@ -48,6 +55,13 @@ class BizPlanService
             $query->where('status', $params['status']);
         }
 
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $enterpriseIds = BizEnterprise::whereIn('server_user_id', $visibleUserIds)
+                ->pluck('enterprise_id')->toArray();
+            $query->whereIn('enterprise_id', $enterpriseIds);
+        }
+
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('plan_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -62,7 +76,7 @@ class BizPlanService
     // 根据ID查询方案详情，含明细列表
     public function selectPlanById($planId)
     {
-        $plan = BizPlan::with(['items.product', 'enterprise', 'shipments.items'])->find($planId);
+        $plan = BizPlan::with(['items.product', 'enterprise'])->find($planId);
         if ($plan) {
             $plan->enterprise_name = $plan->enterprise ? $plan->enterprise->enterprise_name : null;
         }
@@ -71,76 +85,75 @@ class BizPlanService
 
     public function generatePlanNo()
     {
-        $today = date('Ymd');
-        $lastPlan = BizPlan::where('plan_no', 'like', 'PL' . $today . '%')
-            ->orderBy('plan_id', 'desc')
-            ->first();
-
-        if ($lastPlan) {
-            $lastSeq = intval(substr($lastPlan->plan_no, -3));
-            $seq = $lastSeq + 1;
-        } else {
-            $seq = 1;
-        }
-
-        return 'PL' . $today . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        $date = date('Ymd');
+        $key = 'plan_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
+        return 'PL' . $date . str_pad($seq, 3, '0', STR_PAD_LEFT);
     }
 
     // 新增方案，生成方案编号并计算金额
 
     public function insertPlan($data)
     {
-        $data['plan_no'] = $this->generatePlanNo();
-        $data['remaining_amount'] = $data['gift_amount'] ?? 0;
-        $data['shipped_amount'] = 0;
-        $data['audit_status'] = '0';
-        $data['create_time'] = date('Y-m-d H:i:s');
+        return Db::transaction(function () use ($data) {
+            $data['plan_no'] = $this->generatePlanNo();
+            $data['remaining_amount'] = $data['gift_amount'] ?? 0;
+            $data['shipped_amount'] = 0;
+            $data['audit_status'] = '0';
+            $data['create_time'] = date('Y-m-d H:i:s');
 
-        $items = $data['items'] ?? [];
-        unset($data['items']);
+            $items = $data['items'] ?? [];
+            unset($data['items']);
 
-        $plan = BizPlan::create($data);
+            $plan = BizPlan::create($data);
 
-        if (!empty($items)) {
-            $this->syncPlanItems($plan->plan_id, $items);
-        }
+            if (!empty($items)) {
+                $this->syncPlanItems($plan->plan_id, $items);
+            }
 
-        return $plan;
+            return $plan;
+        });
     }
 
     // 更新方案信息
 
     public function updatePlan($data)
     {
-        $plan = BizPlan::find($data['plan_id']);
-        if (!$plan) {
-            return false;
-        }
+        return Db::transaction(function () use ($data) {
+            $plan = BizPlan::find($data['plan_id']);
+            if (!$plan) {
+                return false;
+            }
 
-        if (in_array($plan->audit_status, ['2', '3'])) {
-            return false;
-        }
+            if (in_array($plan->audit_status, ['2', '3'])) {
+                return false;
+            }
 
-        $items = $data['items'] ?? [];
-        unset($data['items']);
+            $items = $data['items'] ?? [];
+            unset($data['items']);
 
-        $data['remaining_amount'] = ($data['gift_amount'] ?? $plan->gift_amount) - $plan->shipped_amount;
-        $data['update_time'] = date('Y-m-d H:i:s');
+            $data['remaining_amount'] = ($data['gift_amount'] ?? $plan->gift_amount) - $plan->shipped_amount;
+            if ($data['remaining_amount'] < 0) {
+                throw new \Exception('赠送金额不能小于已发货金额');
+            }
+            $data['update_time'] = date('Y-m-d H:i:s');
 
-        $fillable = [
-            'plan_name', 'commission_rate', 'plan_amount', 'gift_amount',
-            'remaining_amount', 'effective_date', 'expiry_date',
-            'status', 'remark', 'update_by', 'update_time'
-        ];
-        $updateData = array_intersect_key($data, array_flip($fillable));
+            $fillable = [
+                'plan_name', 'commission_rate', 'plan_amount', 'gift_amount',
+                'remaining_amount', 'effective_date', 'expiry_date',
+                'status', 'remark', 'update_by', 'update_time'
+            ];
+            $updateData = array_intersect_key($data, array_flip($fillable));
 
-        $result = BizPlan::where('plan_id', $data['plan_id'])->update($updateData);
+            $result = BizPlan::where('plan_id', $data['plan_id'])->update($updateData);
 
-        if (!empty($items)) {
-            $this->syncPlanItems($data['plan_id'], $items);
-        }
+            if (!empty($items)) {
+                $this->syncPlanItems($data['plan_id'], $items);
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     private function syncPlanItems($planId, $items)
@@ -162,14 +175,16 @@ class BizPlanService
 
     public function deletePlanByIds($planIds)
     {
-        foreach ($planIds as $planId) {
-            $plan = BizPlan::find($planId);
-            if ($plan && !in_array($plan->audit_status, ['0', '4'])) {
-                return false;
+        return Db::transaction(function () use ($planIds) {
+            foreach ($planIds as $planId) {
+                $plan = BizPlan::find($planId);
+                if ($plan && !in_array($plan->audit_status, ['0', '4'])) {
+                    throw new \Exception('方案"' . $plan->plan_name . '"不可删除');
+                }
             }
-        }
-        BizPlanItem::whereIn('plan_id', $planIds)->delete();
-        return BizPlan::whereIn('plan_id', $planIds)->delete();
+            BizPlanItem::whereIn('plan_id', $planIds)->delete();
+            return BizPlan::whereIn('plan_id', $planIds)->delete();
+        });
     }
 
     public function submitAudit($planId, $submitBy = '')
@@ -232,36 +247,25 @@ class BizPlanService
             return false;
         }
 
-        $shippedAmount = bcadd($plan->shipped_amount, $amount, 2);
-        $remainingAmount = bcsub($plan->gift_amount, $shippedAmount, 2);
-        $auditStatus = $plan->audit_status;
+        BizPlan::where('plan_id', $planId)->increment('shipped_amount', $amount);
+        BizPlan::where('plan_id', $planId)->decrement('remaining_amount', $amount);
 
-        if (bccomp($remainingAmount, 0, 2) <= 0) {
-            $remainingAmount = 0;
-            $auditStatus = '3';
+        // 刷新后检查是否需要更新状态
+        $plan->refresh();
+        if (bccomp($plan->remaining_amount, 0, 2) <= 0) {
+            BizPlan::where('plan_id', $planId)->update([
+                'remaining_amount' => 0,
+                'audit_status' => '3',
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
         }
 
-        return BizPlan::where('plan_id', $planId)->update([
-            'shipped_amount' => $shippedAmount,
-            'remaining_amount' => $remainingAmount,
-            'audit_status' => $auditStatus,
-            'update_time' => date('Y-m-d H:i:s')
-        ]);
+        return true;
     }
 
     public function updateItemShippedQuantity($planItemId, $quantity)
     {
-        $item = BizPlanItem::find($planItemId);
-        if (!$item) {
-            return false;
-        }
-
-        $shippedQty = $item->shipped_quantity + $quantity;
-        $remainingQty = $item->quantity - $shippedQty;
-
-        return BizPlanItem::where('item_id', $planItemId)->update([
-            'shipped_quantity' => $shippedQty,
-            'remaining_quantity' => max(0, $remainingQty)
-        ]);
+        BizPlanItem::where('item_id', $planItemId)->increment('shipped_quantity', $quantity);
+        return true;
     }
 }

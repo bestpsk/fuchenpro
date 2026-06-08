@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizRepaymentService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -20,6 +21,7 @@ class BizRepaymentController
     {
         $service = new BizRepaymentService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectRepaymentList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -83,6 +85,7 @@ class BizRepaymentController
     // 审核还款记录，审核通过后更新套餐还款状态
     public function audit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:audit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');
         if (!$repaymentId) {
             return AjaxResult::error('还款ID不能为空');
@@ -106,6 +109,7 @@ class BizRepaymentController
     // 取消还款记录，仅未审核的记录可取消
     public function cancel(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');
         if (!$repaymentId) {
             return AjaxResult::error('还款ID不能为空');

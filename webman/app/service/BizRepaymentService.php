@@ -8,6 +8,7 @@ use app\model\BizOrderItem;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\service\BizCustomerArchiveService;
+use app\service\DataScopeService;
 use support\Db;
 
 /**
@@ -50,6 +51,10 @@ class BizRepaymentService
         if (!empty($params['end_date'])) {
             $query->where('create_time', '<=', $params['end_date'] . ' 23:59:59');
         }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('creator_user_id', $visibleUserIds);
+        }
         
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -62,7 +67,7 @@ class BizRepaymentService
         return BizCustomerPackage::with('items')
             ->where('customer_id', $customerId)
             ->where('owed_amount', '>', 0)
-            ->where('status', '1')
+            ->whereIn('status', ['1', '2'])
             ->orderBy('create_time', 'desc')
             ->get();
     }
@@ -174,24 +179,26 @@ class BizRepaymentService
 
     public function auditRepayment($repaymentId, $auditBy)
     {
-        $repayment = BizRepaymentRecord::find($repaymentId);
-        if (!$repayment) {
-            return false;
-        }
-        
-        if ($repayment->status !== '0') {
-            return false;
-        }
-        
         Db::beginTransaction();
         try {
+            $repayment = BizRepaymentRecord::where('repayment_id', $repaymentId)->lockForUpdate()->first();
+            if (!$repayment) {
+                Db::rollBack();
+                return false;
+            }
+
+            if ($repayment->status !== '0') {
+                Db::rollBack();
+                return false;
+            }
+
             $repayment->status = '1';
             $repayment->audit_by = $auditBy;
             $repayment->audit_time = date('Y-m-d H:i:s');
             $repayment->save();
-            
+
             $this->updatePackageOwedAmount($repayment->package_id, $repayment->repayment_amount);
-            
+
             Db::commit();
             return true;
         } catch (\Exception $e) {
@@ -250,20 +257,18 @@ class BizRepaymentService
     private function generateRepaymentNo()
     {
         $date = date('Ymd');
-        $lastRecord = BizRepaymentRecord::where('repayment_no', 'like', 'RP' . $date . '%')
-            ->orderBy('repayment_id', 'desc')
-            ->first();
-        $seq = $lastRecord ? intval(substr($lastRecord->repayment_no, -4)) + 1 : 1;
+        $key = 'repayment_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
         return 'RP' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
     private function generateRepaymentOrderNo()
     {
         $date = date('Ymd');
-        $lastOrder = BizSalesOrder::where('order_no', 'like', 'SO' . $date . '%')
-            ->orderBy('order_id', 'desc')
-            ->first();
-        $seq = $lastOrder ? intval(substr($lastOrder->order_no, -4)) + 1 : 1;
+        $key = 'repayment_order_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
         return 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 }

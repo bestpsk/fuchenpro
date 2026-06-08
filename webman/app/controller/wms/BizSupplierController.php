@@ -19,6 +19,7 @@ class BizSupplierController
     {
         $service = new BizSupplierService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectSupplierList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -29,7 +30,8 @@ class BizSupplierController
         $parts = explode('/', $request->path());
         $supplierId = intval(end($parts));
         $service = new BizSupplierService();
-        $supplier = $service->selectSupplierById($supplierId);
+        $loginUser = $request->loginUser;
+        $supplier = $service->selectSupplierById($supplierId, $loginUser);
         if (!$supplier) return AjaxResult::error('供货商不存在');
         return AjaxResult::success($supplier);
     }
@@ -48,6 +50,7 @@ class BizSupplierController
     {
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         $service = new BizSupplierService();
         $result = $service->insertSupplier($data);
         return AjaxResult::toAjax($result ? 1 : 0);
@@ -58,6 +61,7 @@ class BizSupplierController
     {
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         $service = new BizSupplierService();
         $result = $service->updateSupplier($data);
         return AjaxResult::toAjax($result ? 1 : 0);
@@ -71,8 +75,9 @@ class BizSupplierController
             $supplierIds = explode(',', $supplierIds);
         }
         $supplierIds = array_map('intval', array_filter($supplierIds));
+        $params['login_user'] = $request->loginUser;
         $service = new BizSupplierService();
-        $result = $service->deleteSupplierByIds($supplierIds);
+        $result = $service->deleteSupplierByIds($supplierIds, $params);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 }

@@ -14,7 +14,7 @@ class BizPackageItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'package_id', 'product_name', 'unit_price', 'plan_price', 'deal_price',
+        'package_id', 'card_item_id', 'product_name', 'unit_price', 'plan_price', 'deal_price',
         'paid_amount', 'owed_amount',
         'total_quantity', 'used_quantity', 'remaining_quantity', 'remark'
     ];

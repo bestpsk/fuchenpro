@@ -50,7 +50,8 @@
             <view class="item-form">
               <view class="form-row">
                 <text class="form-label">名称</text>
-                <input class="form-input" type="text" v-model="item.productName" placeholder="品项名称" />
+                <input class="form-input" type="text" v-model="item.productName" placeholder="搜索卡项" @focus="openCardItemSearch(index)" readonly />
+                <u-icon name="search" size="16" color="#86909C" @click="openCardItemSearch(index)"></u-icon>
               </view>
               <view class="form-row">
                 <text class="form-label">付款方式</text>
@@ -64,11 +65,11 @@
               </view>
               <view class="form-row">
                 <text class="form-label">次数</text>
-                <input class="form-input" type="number" v-model="item.quantity" placeholder="1" @input="calcItemAuto(index)" />
+                <input class="form-input" type="number" v-model="item.quantity" placeholder="1" @input="calcItemAuto(index)" :disabled="!packageQuantityEditable" />
               </view>
               <view class="form-row">
                 <text class="form-label">成交金额</text>
-                <input class="form-input" type="digit" v-model="item.dealAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="item.paymentMethod === 'gift'" />
+                <input class="form-input" type="digit" v-model="item.dealAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="!packageDealAmountEditable || item.paymentMethod === 'gift'" />
               </view>
               <view class="form-row readonly">
                 <text class="form-label">单次价</text>
@@ -76,7 +77,7 @@
               </view>
               <view class="form-row">
                 <text class="form-label">实付金额</text>
-                <input class="form-input" type="digit" v-model="item.paidAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="item.paymentMethod === 'gift'" />
+                <input class="form-input" type="digit" v-model="item.paidAmount" placeholder="0.00" @input="calcItemAuto(index)" :disabled="!packagePaidAmountEditable || item.paymentMethod === 'gift'" />
               </view>
               <view class="form-row readonly">
                 <text class="form-label">欠款金额</text>
@@ -233,8 +234,83 @@
           </view>
         </view>
         <u-empty v-else mode="data" text="暂无欠款记录" :marginTop="40"></u-empty>
+
+        <view v-if="repaymentList.length > 0" class="repay-section">
+          <view class="repay-section-title">
+            <u-icon name="list" size="16" color="#3D6DF7"></u-icon>
+            <text class="section-label">还款记录</text>
+          </view>
+          <view class="record-list">
+            <view v-for="item in repaymentList" :key="item.repaymentId" class="record-card rc-repay-card" @click="openRepayDetailPopup(item)">
+              <view class="rc-header">
+                <view class="rc-header-left">
+                  <u-icon name="red-packet-fill" size="28" color="#3D6DF7"></u-icon>
+                  <text class="rc-no">¥{{ Number(item.repaymentAmount || 0).toFixed(2) }}</text>
+                </view>
+                <text class="rc-audit-tag" :class="getRepaymentStatusClass(item.status)">{{ getRepaymentStatusName(item.status) }}</text>
+              </view>
+
+              <view class="rc-repay-info">
+                <view class="rc-repay-row">
+                  <text class="rc-repay-label">套餐</text>
+                  <text class="rc-repay-value">{{ item.packageName || '-' }}</text>
+                </view>
+                <view class="rc-repay-row">
+                  <text class="rc-repay-label">方式</text>
+                  <text class="rc-repay-value">{{ getPaymentMethodName(item.paymentMethod) }}</text>
+                </view>
+              </view>
+
+              <view class="rc-divider"></view>
+
+              <view class="rc-repay-footer">
+                <text class="rc-time">{{ formatTimeShort(item.createTime) }}</text>
+                <view class="rc-repay-actions" v-if="item.status === '0' && checkPermi('business:repayment:audit')">
+                  <view class="rc-action-btn rc-btn-pass" @click.stop="handleAuditPass(item.repaymentId)">
+                    <u-icon name="checkmark" size="14" color="#fff"></u-icon>
+                    <text>通过</text>
+                  </view>
+                  <view class="rc-action-btn rc-btn-reject" @click.stop="openRejectPopup(item.repaymentId)">
+                    <u-icon name="close" size="14" color="#fff"></u-icon>
+                    <text>驳回</text>
+                  </view>
+                  <view class="rc-action-btn rc-btn-cancel" @click.stop="handleCancelRepayment(item.repaymentId)">
+                    <u-icon name="trash" size="14" color="#86909C"></u-icon>
+                    <text>取消</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
       </view>
     </view>
+
+    <u-popup :show="showCardItemSearch" mode="bottom" round="16" @close="closeCardItemSearch">
+      <view class="card-item-search-popup">
+        <view class="popup-header">
+          <text class="popup-title">选择卡项</text>
+          <view class="popup-close" @click="closeCardItemSearch">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+        <view class="popup-body">
+          <view class="search-bar">
+            <u-search v-model="cardItemKeyword" placeholder="搜索卡项名称" :showAction="false" @search="doSearchCardItem" @change="onCardItemKeywordChange"></u-search>
+          </view>
+          <view class="card-item-list">
+            <view v-for="item in cardItemSearchResults" :key="item.cardItemId" class="card-item-option" @click="selectCardItem(item)">
+              <view class="card-item-info">
+                <text class="card-item-name">{{ item.cardItemName }}</text>
+                <text class="card-item-meta">{{ item.defaultQuantity || 1 }}次 · ¥{{ item.suggestedPrice || 0 }}</text>
+              </view>
+              <u-icon name="plus-circle" size="22" color="#3D6DF7"></u-icon>
+            </view>
+            <u-empty v-if="cardItemSearchResults.length === 0 && cardItemKeyword" mode="search" text="未找到卡项" :marginTop="20"></u-empty>
+          </view>
+        </view>
+      </view>
+    </u-popup>
 
     <u-popup :show="showRepayPopup" mode="bottom" round="16" @close="closeRepayPopup">
       <view class="repay-popup">
@@ -278,6 +354,79 @@
         </view>
       </view>
     </u-popup>
+
+    <u-popup :show="showRepayDetailPopup" mode="bottom" round="16" @close="closeRepayDetailPopup">
+      <view class="repay-popup">
+        <view class="popup-header">
+          <text class="popup-title">还款详情</text>
+          <view class="popup-close" @click="closeRepayDetailPopup">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+        <view class="popup-body">
+          <view class="repay-info-row">
+            <text class="repay-label">还款金额</text>
+            <text class="repay-value" style="color: #3D6DF7; font-weight: 700;">¥{{ Number(repayDetail?.repaymentAmount || 0).toFixed(2) }}</text>
+          </view>
+          <view class="repay-info-row">
+            <text class="repay-label">支付方式</text>
+            <text class="repay-value">{{ getPaymentMethodName(repayDetail?.paymentMethod) }}</text>
+          </view>
+          <view class="repay-info-row">
+            <text class="repay-label">审核状态</text>
+            <text class="rc-audit-tag" :class="getRepaymentStatusClass(repayDetail?.status)">{{ getRepaymentStatusName(repayDetail?.status) }}</text>
+          </view>
+          <view class="repay-info-row">
+            <text class="repay-label">套餐名称</text>
+            <text class="repay-value">{{ repayDetail?.packageName || '-' }}</text>
+          </view>
+          <view class="repay-info-row">
+            <text class="repay-label">创建时间</text>
+            <text class="repay-value">{{ formatTime(repayDetail?.createTime) }}</text>
+          </view>
+          <view class="repay-info-row" v-if="repayDetail?.auditUserName">
+            <text class="repay-label">审核人</text>
+            <text class="repay-value">{{ repayDetail.auditUserName }}</text>
+          </view>
+          <view class="repay-info-row" v-if="repayDetail?.auditTime">
+            <text class="repay-label">审核时间</text>
+            <text class="repay-value">{{ formatTime(repayDetail.auditTime) }}</text>
+          </view>
+          <view class="repay-info-row" v-if="repayDetail?.auditRemark">
+            <text class="repay-label">审核备注</text>
+            <text class="repay-value" style="color: #F53F3F;">{{ repayDetail.auditRemark }}</text>
+          </view>
+          <view class="repay-info-row" v-if="repayDetail?.remark">
+            <text class="repay-label">备注</text>
+            <text class="repay-value">{{ repayDetail.remark }}</text>
+          </view>
+        </view>
+        <view class="popup-actions" v-if="repayDetail?.status === '0' && checkPermi('business:repayment:audit')">
+          <view class="detail-action-row">
+            <u-button type="success" text="通过" @click="handleAuditPass(repayDetail.repaymentId); closeRepayDetailPopup()"></u-button>
+            <u-button type="error" text="驳回" @click="closeRepayDetailPopup(); openRejectPopup(repayDetail.repaymentId)"></u-button>
+            <u-button type="info" text="取消" plain @click="handleCancelRepayment(repayDetail.repaymentId); closeRepayDetailPopup()"></u-button>
+          </view>
+        </view>
+      </view>
+    </u-popup>
+
+    <u-popup :show="showRejectPopup" mode="center" round="16" @close="showRejectPopup = false">
+      <view class="reject-popup">
+        <view class="popup-header">
+          <text class="popup-title">驳回原因</text>
+          <view class="popup-close" @click="showRejectPopup = false">
+            <u-icon name="close" size="20" color="#86909C"></u-icon>
+          </view>
+        </view>
+        <view class="popup-body">
+          <u-textarea v-model="rejectReason" placeholder="请输入驳回原因" :maxlength="200" height="80"></u-textarea>
+        </view>
+        <view class="popup-actions">
+          <u-button type="error" text="确认驳回" @click="handleAuditReject"></u-button>
+        </view>
+      </view>
+    </u-popup>
   </view>
 </template>
 
@@ -290,8 +439,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { getCustomer } from '@/api/business/customer'
 import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
-// import { listOperation } from '@/api/business/operationRecord'
-import { getOwedPackages, addRepayment } from '@/api/business/repayment'
+import { getOwedPackages, addRepayment, listRepayment, auditRepayment, cancelRepayment } from '@/api/business/repayment'
+import { searchCardItem } from '@/api/business/cardItem'
+import { getConfigKey } from '@/api/system/config'
+import { checkPermi } from '@/utils/permission'
 
 const currentTab = ref(0)
 /** Tab列表，有欠款时动态添加"还欠款"标签 */
@@ -312,10 +463,20 @@ const enterpriseName = ref('')
 
 const orderPackageName = ref('')
 const orderItems = ref([
-  { productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }
+  { cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }
 ])
 const orderRemark = ref('')
 const orderStoreDealer = ref('')
+
+const packageQuantityEditable = ref(true)
+const packageDealAmountEditable = ref(true)
+const packagePaidAmountEditable = ref(true)
+
+const showCardItemSearch = ref(false)
+const cardItemSearchIndex = ref(-1)
+const cardItemKeyword = ref('')
+const cardItemSearchResults = ref([])
+let cardItemSearchTimer = null
 
 /** 所有品项成交金额合计 */
 const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.dealAmount) || 0), 0))
@@ -345,7 +506,43 @@ function calcItemAuto(index) {
 
 /** 添加一个空白品项行 */
 function addOrderItemRow() {
-  orderItems.value.push({ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash' })
+  orderItems.value.push({ cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash' })
+}
+
+function openCardItemSearch(index) {
+  cardItemSearchIndex.value = index
+  cardItemKeyword.value = ''
+  cardItemSearchResults.value = []
+  showCardItemSearch.value = true
+}
+
+function closeCardItemSearch() {
+  showCardItemSearch.value = false
+  cardItemSearchIndex.value = -1
+}
+
+function onCardItemKeywordChange(val) {
+  if (cardItemSearchTimer) clearTimeout(cardItemSearchTimer)
+  cardItemSearchTimer = setTimeout(() => { doSearchCardItem() }, 500)
+}
+
+async function doSearchCardItem() {
+  if (!cardItemKeyword.value) { cardItemSearchResults.value = []; return }
+  try {
+    const res = await searchCardItem(cardItemKeyword.value)
+    cardItemSearchResults.value = res.data || []
+  } catch (e) { console.error('搜索卡项失败:', e) }
+}
+
+function selectCardItem(cardItem) {
+  const index = cardItemSearchIndex.value
+  if (index >= 0 && index < orderItems.value.length) {
+    orderItems.value[index].cardItemId = cardItem.cardItemId
+    orderItems.value[index].productName = cardItem.cardItemName
+    orderItems.value[index].quantity = cardItem.defaultQuantity || 1
+    orderItems.value[index].dealAmount = cardItem.suggestedPrice || 0
+  }
+  closeCardItemSearch()
 }
 
 /** 删除指定品项行 */
@@ -382,11 +579,18 @@ const repayAmount = ref('')
 const repayRemark = ref('')
 const repaySubmitting = ref(false)
 
+const repaymentList = ref([])
+const showRepayDetailPopup = ref(false)
+const repayDetail = ref(null)
+const showRejectPopup = ref(false)
+const rejectRepaymentId = ref(null)
+const rejectReason = ref('')
+
 /** Tab切换处理，切换到记录或还款时加载对应数据 */
 function onTabChange(e) {
   currentTab.value = e.index
   if (e.index === 1) loadOrders()
-  if (e.index === 2) loadOwedPackages()
+  if (e.index === 2) { loadOwedPackages(); loadRepaymentList() }
 }
 
 /** 加载客户信息，成功后自动加载欠款列表 */
@@ -429,6 +633,99 @@ async function loadOwedPackages() {
       currentTab.value = 0
     }
   } catch (e) { console.error('加载欠款列表失败:', e) }
+}
+
+/** 加载客户还款记录列表 */
+async function loadRepaymentList() {
+  if (!customerId.value) return
+  try {
+    const response = await listRepayment({ customerId: customerId.value, pageNum: 1, pageSize: 100 })
+    const data = response.data || response
+    repaymentList.value = data.rows || []
+  } catch (e) { console.error('加载还款记录失败:', e) }
+}
+
+/** 还款审核状态名称映射 */
+function getRepaymentStatusName(status) {
+  const map = { '0': '待审核', '1': '已通过', '2': '已驳回', '3': '已取消' }
+  return map[status] || '未知'
+}
+
+/** 还款审核状态样式类名映射 */
+function getRepaymentStatusClass(status) {
+  const map = { '0': 'audit-pending', '1': 'audit-pass', '2': 'audit-reject', '3': 'audit-cancel' }
+  return map[status] || ''
+}
+
+/** 审核通过还款 */
+async function handleAuditPass(repaymentId) {
+  try {
+    await auditRepayment({ repaymentId, auditStatus: '1' })
+    uni.showToast({ title: '审核通过', icon: 'success' })
+    loadRepaymentList()
+    loadOwedPackages()
+  } catch (e) {
+    console.error('审核失败:', e)
+    uni.showToast({ title: '审核失败', icon: 'none' })
+  }
+}
+
+/** 打开驳回弹窗 */
+function openRejectPopup(repaymentId) {
+  rejectRepaymentId.value = repaymentId
+  rejectReason.value = ''
+  showRejectPopup.value = true
+}
+
+/** 确认驳回还款 */
+async function handleAuditReject() {
+  if (!rejectReason.value.trim()) {
+    uni.showToast({ title: '请输入驳回原因', icon: 'none' })
+    return
+  }
+  try {
+    await auditRepayment({ repaymentId: rejectRepaymentId.value, auditStatus: '2', auditRemark: rejectReason.value })
+    uni.showToast({ title: '已驳回', icon: 'success' })
+    showRejectPopup.value = false
+    loadRepaymentList()
+    loadOwedPackages()
+  } catch (e) {
+    console.error('驳回失败:', e)
+    uni.showToast({ title: '驳回失败', icon: 'none' })
+  }
+}
+
+/** 取消还款 */
+async function handleCancelRepayment(repaymentId) {
+  uni.showModal({
+    title: '提示',
+    content: '确认取消该还款记录？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await cancelRepayment(repaymentId)
+          uni.showToast({ title: '已取消', icon: 'success' })
+          loadRepaymentList()
+          loadOwedPackages()
+        } catch (e) {
+          console.error('取消失败:', e)
+          uni.showToast({ title: '取消失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+/** 打开还款详情弹窗 */
+function openRepayDetailPopup(item) {
+  repayDetail.value = item
+  showRepayDetailPopup.value = true
+}
+
+/** 关闭还款详情弹窗 */
+function closeRepayDetailPopup() {
+  showRepayDetailPopup.value = false
+  repayDetail.value = null
 }
 
 /** 打开还款弹窗，初始化还款表单 */
@@ -476,12 +773,12 @@ async function submitRepay() {
       enterpriseId: selectedPackage.value.enterpriseId,
       enterpriseName: enterpriseName.value,
       storeId: storeId.value,
-      storeName: storeName.value,
-      autoAudit: true
+      storeName: storeName.value
     })
     uni.showToast({ title: '还款成功', icon: 'success' })
     closeRepayPopup()
     loadOwedPackages()
+    loadRepaymentList()
   } catch (e) {
     console.error('还款失败:', e)
     uni.showToast({ title: '还款失败', icon: 'none' })
@@ -499,7 +796,7 @@ async function submitOrder() {
 
   const validItems = orderItems.value.filter(i => i.productName)
   if (validItems.length === 0) {
-    uni.showToast({ title: '请添加品项并填写名称', icon: 'none' })
+    uni.showToast({ title: '请选择品项', icon: 'none' })
     return
   }
 
@@ -523,6 +820,7 @@ async function submitOrder() {
       storeDealer: orderStoreDealer.value,
       remark: orderRemark.value,
       items: validItems.map(i => ({
+        cardItemId: i.cardItemId,
         productName: i.productName,
         quantity: parseInt(i.quantity) || 1,
         dealAmount: parseFloat(i.dealAmount) || 0,
@@ -538,7 +836,7 @@ async function submitOrder() {
     }
 
     orderPackageName.value = ''
-    orderItems.value = [{ productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }]
+    orderItems.value = [{ cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }]
     orderRemark.value = ''
     orderStoreDealer.value = ''
   } catch (e) {
@@ -556,7 +854,7 @@ function getOrderStatusName(status) {
 }
 
 function getPaymentMethodName(method) {
-  const map = { cash: '现金', card: '耗卡', gift: '赠送' }
+  const map = { cash: '现金', card: '耗卡', gift: '赠送', wechat: '微信', alipay: '支付宝', bank: '银行卡' }
   return map[method] || method || '-'
 }
 
@@ -575,7 +873,23 @@ onMounted(() => {
   storeName.value = decodeURIComponent(options.storeName || '')
   enterpriseName.value = decodeURIComponent(options.enterpriseName || '')
   loadCustomer()
+  loadSalesConfig()
 })
+
+async function loadSalesConfig() {
+  try {
+    const [qtyRes, dealRes, paidRes] = await Promise.all([
+      getConfigKey('biz.sales.packageQuantityEditable'),
+      getConfigKey('biz.sales.packageDealAmountEditable'),
+      getConfigKey('biz.sales.packagePaidAmountEditable')
+    ])
+    packageQuantityEditable.value = qtyRes.data !== 'false'
+    packageDealAmountEditable.value = dealRes.data !== 'false'
+    packagePaidAmountEditable.value = paidRes.data !== 'false'
+  } catch (e) {
+    // 读取失败时使用默认值
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -712,4 +1026,42 @@ page { background-color: #F5F6F8; }
   }
 }
 .popup-actions { padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #F2F3F5; }
+
+.card-item-search-popup { background: #fff; border-radius: 20rpx 20rpx 0 0; max-height: 80vh; }
+.card-item-search-popup .popup-header { display: flex; justify-content: space-between; align-items: center; padding: 28rpx; border-bottom: 1rpx solid #F2F3F5; }
+.card-item-search-popup .popup-body { padding: 20rpx 28rpx; max-height: 60vh; overflow-y: auto; }
+.search-bar { margin-bottom: 16rpx; }
+.card-item-list { display: flex; flex-direction: column; gap: 12rpx; }
+.card-item-option { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 24rpx; background: #F7F8FA; border-radius: 12rpx; }
+.card-item-info { display: flex; flex-direction: column; gap: 6rpx; flex: 1; }
+.card-item-name { font-size: 28rpx; font-weight: 600; color: #1D2129; }
+.card-item-meta { font-size: 24rpx; color: #86909C; }
+
+.repay-section { margin-top: 24rpx; }
+.repay-section-title { display: flex; align-items: center; gap: 8rpx; margin-bottom: 16rpx; }
+
+.rc-repay-card { border-left: 6rpx solid #3D6DF7; }
+
+.rc-audit-tag { font-size: 20rpx; padding: 4rpx 14rpx; border-radius: 20rpx; font-weight: 500;
+  &.audit-pending { background: #FFF7E8; color: #FF7D00; }
+  &.audit-pass { background: #E8FFEA; color: #00B42A; }
+  &.audit-reject { background: #FEF2F2; color: #F53F3F; }
+  &.audit-cancel { background: #F2F3F5; color: #86909C; }
+}
+
+.rc-repay-info { display: flex; flex-direction: column; gap: 8rpx; padding: 8rpx 0; }
+.rc-repay-row { display: flex; align-items: center; gap: 12rpx; }
+.rc-repay-label { font-size: 24rpx; color: #86909C; width: 80rpx; min-width: 80rpx; }
+.rc-repay-value { font-size: 25rpx; color: #1D2129; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rc-repay-footer { display: flex; justify-content: space-between; align-items: center; }
+.rc-repay-actions { display: flex; align-items: center; gap: 12rpx; }
+.rc-action-btn { display: flex; align-items: center; gap: 4rpx; padding: 8rpx 18rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; }
+.rc-btn-pass { background: #00B42A; color: #fff; }
+.rc-btn-reject { background: #F53F3F; color: #fff; }
+.rc-btn-cancel { background: #F2F3F5; color: #86909C; }
+
+.reject-popup { background: #fff; border-radius: 20rpx; width: 600rpx; }
+.detail-action-row { display: flex; gap: 16rpx; }
+.detail-action-row :deep(.u-button) { flex: 1; }
 </style>

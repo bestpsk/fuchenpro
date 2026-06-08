@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizEnterpriseService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -19,6 +20,7 @@ class BizEnterpriseController
     {
         $service = new BizEnterpriseService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectEnterpriseList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -38,8 +40,9 @@ class BizEnterpriseController
     public function search(Request $request)
     {
         $keyword = $request->input('keyword', '');
+        $loginUser = $request->loginUser;
         $service = new BizEnterpriseService();
-        $result = $service->selectEnterpriseForSearch($keyword);
+        $result = $service->selectEnterpriseForSearch($keyword, $loginUser);
         return AjaxResult::success($result);
     }
 
@@ -76,6 +79,7 @@ class BizEnterpriseController
     // 变更企业状态（启用/停用）
     public function changeStatus(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:enterprise:edit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $data = convert_to_snake_case($request->post());
         $enterpriseId = intval($data['enterprise_id'] ?? 0);
         $status = $data['status'] ?? '';

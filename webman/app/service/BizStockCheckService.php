@@ -6,6 +6,8 @@ use app\model\BizStockCheck;
 use app\model\BizStockCheckItem;
 use app\model\BizInventory;
 use app\model\BizProduct;
+use app\service\DataScopeService;
+use support\Db;
 
 /**
  * 库存盘点服务层，处理盘点单的增删改查和确认，确认时按差异自动调整库存
@@ -28,6 +30,10 @@ class BizStockCheckService
         if (!empty($params['check_date_end'])) {
             $query->where('check_date', '<=', $params['check_date_end']);
         }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('operator_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('stock_check_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -35,7 +41,7 @@ class BizStockCheckService
 
     // 根据ID查询盘点单详情，含明细列表
 
-    public function selectStockCheckById($stockCheckId)
+    public function selectStockCheckById($stockCheckId, $params = [])
     {
         $stockCheck = BizStockCheck::find($stockCheckId);
         if ($stockCheck) {
@@ -75,6 +81,16 @@ class BizStockCheckService
         $totalQuantity = 0;
         $totalDiffQuantity = 0;
         foreach ($items as &$item) {
+            $unitType = $item['unit_type'] ?? '1';
+            $packQty = intval($item['pack_qty'] ?? 1);
+
+            if ($unitType === '1' && $packQty > 1) {
+                $item['original_quantity'] = intval($item['actual_quantity'] ?? 0);
+                $item['actual_quantity'] = intval($item['actual_quantity'] ?? 0) * $packQty;
+            } else {
+                $item['original_quantity'] = intval($item['actual_quantity'] ?? 0);
+            }
+
             $item['diff_quantity'] = intval($item['actual_quantity'] ?? 0) - intval($item['system_quantity'] ?? 0);
             $totalQuantity += intval($item['actual_quantity'] ?? 0);
             $totalDiffQuantity += $item['diff_quantity'];
@@ -82,11 +98,14 @@ class BizStockCheckService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_diff_quantity'] = $totalDiffQuantity;
-        $stockCheck = BizStockCheck::create($data);
-        foreach ($items as $item) {
-            $item['stock_check_id'] = $stockCheck->stock_check_id;
-            BizStockCheckItem::create($item);
-        }
+        $stockCheck = Db::transaction(function () use ($data, $items) {
+            $stockCheck = BizStockCheck::create($data);
+            foreach ($items as $item) {
+                $item['stock_check_id'] = $stockCheck->stock_check_id;
+                BizStockCheckItem::create($item);
+            }
+            return $stockCheck;
+        });
         return $stockCheck;
     }
 
@@ -108,6 +127,16 @@ class BizStockCheckService
         $totalQuantity = 0;
         $totalDiffQuantity = 0;
         foreach ($items as &$item) {
+            $unitType = $item['unit_type'] ?? '1';
+            $packQty = intval($item['pack_qty'] ?? 1);
+
+            if ($unitType === '1' && $packQty > 1) {
+                $item['original_quantity'] = intval($item['actual_quantity'] ?? 0);
+                $item['actual_quantity'] = intval($item['actual_quantity'] ?? 0) * $packQty;
+            } else {
+                $item['original_quantity'] = intval($item['actual_quantity'] ?? 0);
+            }
+
             $item['diff_quantity'] = intval($item['actual_quantity'] ?? 0) - intval($item['system_quantity'] ?? 0);
             $totalQuantity += intval($item['actual_quantity'] ?? 0);
             $totalDiffQuantity += $item['diff_quantity'];
@@ -115,18 +144,20 @@ class BizStockCheckService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_diff_quantity'] = $totalDiffQuantity;
-        BizStockCheck::where('stock_check_id', $stockCheckId)->update($data);
-        BizStockCheckItem::where('stock_check_id', $stockCheckId)->delete();
-        foreach ($items as $item) {
-            $item['stock_check_id'] = $stockCheckId;
-            BizStockCheckItem::create($item);
-        }
+        Db::transaction(function () use ($stockCheckId, $data, $items) {
+            BizStockCheck::where('stock_check_id', $stockCheckId)->update($data);
+            BizStockCheckItem::where('stock_check_id', $stockCheckId)->delete();
+            foreach ($items as $item) {
+                $item['stock_check_id'] = $stockCheckId;
+                BizStockCheckItem::create($item);
+            }
+        });
         return true;
     }
 
     // 批量删除盘点单
 
-    public function deleteStockCheckByIds($stockCheckIds)
+    public function deleteStockCheckByIds($stockCheckIds, $params = [])
     {
         foreach ($stockCheckIds as $id) {
             $stockCheck = BizStockCheck::find($id);
@@ -134,11 +165,13 @@ class BizStockCheckService
                 return false;
             }
         }
-        BizStockCheckItem::whereIn('stock_check_id', $stockCheckIds)->delete();
-        return BizStockCheck::whereIn('stock_check_id', $stockCheckIds)->delete();
+        return Db::transaction(function () use ($stockCheckIds) {
+            BizStockCheckItem::whereIn('stock_check_id', $stockCheckIds)->delete();
+            return BizStockCheck::whereIn('stock_check_id', $stockCheckIds)->delete();
+        });
     }
 
-    public function confirmStockCheck($stockCheckId)
+    public function confirmStockCheck($stockCheckId, $params = [])
     {
         $stockCheck = BizStockCheck::find($stockCheckId);
         if (!$stockCheck) {
@@ -151,32 +184,64 @@ class BizStockCheckService
         if ($items->isEmpty()) {
             return ['success' => false, 'msg' => '盘点单明细为空'];
         }
-        foreach ($items as $item) {
-            if ($item->diff_quantity == 0) {
-                continue;
-            }
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            if (!$inventory) {
-                $product = BizProduct::find($item->product_id);
-                $inventory = BizInventory::create([
-                    'product_id' => $item->product_id,
-                    'quantity' => 0,
-                    'warn_qty' => $product->warn_qty ?? 0,
-                    'create_time' => date('Y-m-d H:i:s'),
+        try {
+            Db::transaction(function () use ($stockCheckId, $items) {
+                foreach ($items as $item) {
+                    if ($item->diff_quantity == 0) {
+                        continue;
+                    }
+
+                    $unitType = $item->unit_type ?? '1';
+                    $packQty = intval($item->pack_qty ?? 1);
+                    $actualQuantity = intval($item->actual_quantity);
+
+                    if ($unitType === '1' && $packQty > 1) {
+                        $actualQuantity = intval($item->original_quantity ?? $item->actual_quantity) * $packQty;
+                    }
+
+                    $systemQuantity = intval($item->system_quantity);
+                    $diffQuantity = $actualQuantity - $systemQuantity;
+
+                    $inventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                    if (!$inventory) {
+                        $product = BizProduct::find($item->product_id);
+                        BizInventory::create([
+                            'product_id' => $item->product_id,
+                            'quantity' => 0,
+                            'warn_qty' => $product->warn_qty ?? 0,
+                            'create_time' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+
+                    if ($diffQuantity > 0) {
+                        BizInventory::where('product_id', $item->product_id)->increment('quantity', $diffQuantity, [
+                            'update_time' => date('Y-m-d H:i:s'),
+                        ]);
+                    } else {
+                        $absDiff = abs($diffQuantity);
+                        $currentInventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                        if ($currentInventory->quantity < $absDiff) {
+                            $product = BizProduct::find($item->product_id);
+                            $productName = $product ? $product->product_name : $item->product_id;
+                            throw new \Exception("产品【{$productName}】调整后库存为负数，当前库存：{$currentInventory->quantity}，调整数量：-{$absDiff}");
+                        }
+                        BizInventory::where('product_id', $item->product_id)->decrement('quantity', $absDiff, [
+                            'update_time' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+                }
+                BizStockCheck::where('stock_check_id', $stockCheckId)->update([
+                    'status' => '1',
+                    'update_time' => date('Y-m-d H:i:s'),
                 ]);
-            }
-            $inventory->quantity = $inventory->quantity + $item->diff_quantity;
-            $inventory->update_time = date('Y-m-d H:i:s');
-            $inventory->save();
+            });
+        } catch (\Exception $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
         }
-        BizStockCheck::where('stock_check_id', $stockCheckId)->update([
-            'status' => '1',
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
         return ['success' => true, 'msg' => '盘点确认成功'];
     }
 
-    public function loadInventoryData()
+    public function loadInventoryData($params = [])
     {
         $products = BizProduct::where('status', '0')->get();
         $items = [];
@@ -187,6 +252,7 @@ class BizStockCheckService
                 'product_name' => $product->product_name,
                 'spec' => $product->spec,
                 'unit' => $product->unit,
+                'unit_type' => '1',
                 'pack_qty' => $product->pack_qty ?? 1,
                 'system_quantity' => $inventory ? $inventory->quantity : 0,
                 'actual_quantity' => $inventory ? $inventory->quantity : 0,

@@ -65,6 +65,9 @@
               <view class="info-item"><text class="label">时间</text><text class="value">{{ formatTime(item.create_time || item.createTime) }}</text></view>
             </view>
           </view>
+          <view class="card-actions" v-if="checkPermi('business:sales:cancel') && ['0','1'].includes(String(item.order_status ?? item.orderStatus ?? item.status))">
+            <view class="action-btn cancel" @click.stop="cancelOrder(item)">取消订单</view>
+          </view>
         </view>
       </view>
       <u-empty v-else-if="!loading" mode="data" text="暂无订单数据" :marginTop="100"></u-empty>
@@ -75,8 +78,9 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listSalesOrder } from '@/api/business/salesOrder'
+import { listSalesOrder, cancelOrder as cancelOrderApi } from '@/api/business/salesOrder'
 import { useDictStore } from '@/store/modules/dict'
+import { checkPermi } from '@/utils/permission'
 
 
 const dictStore = useDictStore()
@@ -196,6 +200,24 @@ function goDetail(item) {
   }
 }
 
+async function cancelOrder(item) {
+  try {
+    uni.showModal({
+      title: '提示',
+      content: '确定要取消该订单吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          await cancelOrderApi(item.order_id || item.orderId)
+          uni.$u.toast('取消成功')
+          getList(true)
+        }
+      }
+    })
+  } catch (e) {
+    uni.$u.toast(e.message || '取消失败')
+  }
+}
+
 onMounted(() => { dictStore.loadDict('biz_source_type'); getList(true) })
 </script>
 
@@ -251,6 +273,10 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 
 .card-body { padding: 20rpx 0; border-top: 1rpx solid #F2F3F5; }
+.card-actions { display: flex; justify-content: flex-end; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; margin-top: 16rpx; }
+.action-btn { padding: 10rpx 24rpx; border-radius: 8rpx; font-size: 26rpx; font-weight: 500;
+  &.cancel { color: #F53F3F; background: #FFF2F0; }
+}
 .info-row { display: flex; margin-bottom: 16rpx; &:last-child { margin-bottom: 0; } }
 .info-item { flex: 1; display: flex; align-items: center; gap: 12rpx;
   .label { font-size: 24rpx; color: #86909C; min-width: 60rpx; }

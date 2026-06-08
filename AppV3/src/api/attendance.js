@@ -116,3 +116,19 @@ export function delAttendanceConfig(configIds) {
 export function listAttendanceRule(params) {
   return request({ url: '/business/attendance/rule/list', method: 'get', params })
 }
+
+export function getAttendanceRule(ruleId) {
+  return request({ url: '/business/attendance/rule/' + ruleId, method: 'get' })
+}
+
+export function addAttendanceRule(data) {
+  return request({ url: '/business/attendance/rule', method: 'post', data })
+}
+
+export function updateAttendanceRule(data) {
+  return request({ url: '/business/attendance/rule', method: 'put', data })
+}
+
+export function delAttendanceRule(ruleIds) {
+  return request({ url: '/business/attendance/rule/' + ruleIds, method: 'delete' })
+}

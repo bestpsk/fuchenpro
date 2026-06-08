@@ -4,6 +4,7 @@ namespace app\controller\wms;
 
 use support\Request;
 use app\service\BizStockCheckService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -20,6 +21,7 @@ class BizStockCheckController
     {
         $service = new BizStockCheckService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectStockCheckList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -30,7 +32,8 @@ class BizStockCheckController
         $parts = explode('/', $request->path());
         $stockCheckId = intval(end($parts));
         $service = new BizStockCheckService();
-        $stockCheck = $service->selectStockCheckById($stockCheckId);
+        $params['login_user'] = $request->loginUser;
+        $stockCheck = $service->selectStockCheckById($stockCheckId, $params);
         if (!$stockCheck) return AjaxResult::error('盘点单不存在');
         return AjaxResult::success($stockCheck);
     }
@@ -42,6 +45,7 @@ class BizStockCheckController
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $data['operator_id'] = $request->loginUser->userId ?? 0;
         $data['operator_name'] = $request->loginUser->user->nick_name ?? '';
+        $data['login_user'] = $request->loginUser;
         if (isset($data['items'])) {
             $data['items'] = convert_to_snake_case($data['items']);
         }
@@ -55,6 +59,7 @@ class BizStockCheckController
     {
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         if (isset($data['items'])) {
             $data['items'] = convert_to_snake_case($data['items']);
         }
@@ -72,8 +77,9 @@ class BizStockCheckController
             $stockCheckIds = explode(',', $stockCheckIds);
         }
         $stockCheckIds = array_map('intval', array_filter($stockCheckIds));
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockCheckService();
-        $result = $service->deleteStockCheckByIds($stockCheckIds);
+        $result = $service->deleteStockCheckByIds($stockCheckIds, $params);
         if (!$result) return AjaxResult::error('删除失败，已确认的盘点单不可删除');
         return AjaxResult::success();
     }
@@ -81,10 +87,14 @@ class BizStockCheckController
     // 确认盘点，按盘点差异（实盘数-系统数）自动调整库存
     public function confirm(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockCheck:confirm')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $id = intval(end($parts));
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockCheckService();
-        $result = $service->confirmStockCheck($id);
+        $result = $service->confirmStockCheck($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
         return AjaxResult::success($result['msg']);
     }
@@ -92,8 +102,9 @@ class BizStockCheckController
     // 加载当前所有货品的库存快照数据，用于新建盘点单时预填
     public function loadInventory(Request $request)
     {
+        $params['login_user'] = $request->loginUser;
         $service = new BizStockCheckService();
-        $items = $service->loadInventoryData();
+        $items = $service->loadInventoryData($params);
         return AjaxResult::success($items);
     }
 }

@@ -100,7 +100,7 @@
       <text class="empty-text">请先选择企业和门店</text>
     </view>
 
-    <view class="fab-btn" @click="goAddCustomer" v-if="currentStoreId">
+    <view class="fab-btn" @click="goAddCustomer" v-if="currentStoreId && checkPermi('business:customer:add')">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
 
@@ -221,6 +221,7 @@ import { getDicts } from '@/api/system/dict/data'
 import { listEnterprise } from '@/api/business/enterprise'
 import { searchStore } from '@/api/business/store'
 import { searchCustomer, addCustomer } from '@/api/business/customer'
+import { checkPermi } from '@/utils/permission'
 
 
 /** 本地存储键名，用于持久化企业和门店选择 */
@@ -438,7 +439,7 @@ function onCustomerSearch() {
 
 /** 跳转客户详情（订单页，不带storeId则只查看） */
 function goCustomerDetail(item) {
-  uni.navigateTo({ url: `/pages/business/customer/detail?id=${item.customerId}` })
+  uni.navigateTo({ url: `/pages/business/customer/detail?customerId=${item.customerId}` })
 }
 
 /** 跳转客户开单页，携带门店信息 */

@@ -7,6 +7,7 @@ use app\model\BizStockInItem;
 use app\model\BizInventory;
 use app\model\BizProduct;
 use app\model\SysUser;
+use app\service\DataScopeService;
 use support\Db;
 
 /**
@@ -36,6 +37,10 @@ class BizStockInService
         if (!empty($params['stock_in_date_end'])) {
             $query->where('stock_in_date', '<=', $params['stock_in_date_end']);
         }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('operator_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $list = $query->orderBy('stock_in_id', 'desc')
@@ -55,7 +60,7 @@ class BizStockInService
 
     // 根据ID查询入库单详情，含明细列表
 
-    public function selectStockInById($stockInId)
+    public function selectStockInById($stockInId, $params = [])
     {
         $stockIn = BizStockIn::find($stockInId);
         if ($stockIn) {
@@ -132,11 +137,14 @@ class BizStockInService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_amount'] = $totalAmount;
-        $stockIn = BizStockIn::create($data);
-        foreach ($items as $item) {
-            $item['stock_in_id'] = $stockIn->stock_in_id;
-            BizStockInItem::create($item);
-        }
+        $stockIn = Db::transaction(function () use ($data, $items) {
+            $stockIn = BizStockIn::create($data);
+            foreach ($items as $item) {
+                $item['stock_in_id'] = $stockIn->stock_in_id;
+                BizStockInItem::create($item);
+            }
+            return $stockIn;
+        });
         return $stockIn;
     }
 
@@ -178,18 +186,20 @@ class BizStockInService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_amount'] = $totalAmount;
-        BizStockIn::where('stock_in_id', $stockInId)->update($data);
-        BizStockInItem::where('stock_in_id', $stockInId)->delete();
-        foreach ($items as $item) {
-            $item['stock_in_id'] = $stockInId;
-            BizStockInItem::create($item);
-        }
+        Db::transaction(function () use ($stockInId, $data, $items) {
+            BizStockIn::where('stock_in_id', $stockInId)->update($data);
+            BizStockInItem::where('stock_in_id', $stockInId)->delete();
+            foreach ($items as $item) {
+                $item['stock_in_id'] = $stockInId;
+                BizStockInItem::create($item);
+            }
+        });
         return true;
     }
 
     // 批量删除入库单
 
-    public function deleteStockInByIds($stockInIds)
+    public function deleteStockInByIds($stockInIds, $params = [])
     {
         foreach ($stockInIds as $id) {
             $stockIn = BizStockIn::find($id);
@@ -197,11 +207,13 @@ class BizStockInService
                 return false;
             }
         }
-        BizStockInItem::whereIn('stock_in_id', $stockInIds)->delete();
-        return BizStockIn::whereIn('stock_in_id', $stockInIds)->delete();
+        return Db::transaction(function () use ($stockInIds) {
+            BizStockInItem::whereIn('stock_in_id', $stockInIds)->delete();
+            return BizStockIn::whereIn('stock_in_id', $stockInIds)->delete();
+        });
     }
 
-    public function confirmStockIn($stockInId)
+    public function confirmStockIn($stockInId, $params = [])
     {
         $stockIn = BizStockIn::find($stockInId);
         if (!$stockIn) {
@@ -214,31 +226,33 @@ class BizStockInService
         if ($items->isEmpty()) {
             return ['success' => false, 'msg' => '入库单明细为空'];
         }
-        foreach ($items as $item) {
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            if (!$inventory) {
-                $product = BizProduct::find($item->product_id);
-                $inventory = BizInventory::create([
-                    'product_id' => $item->product_id,
-                    'quantity' => 0,
-                    'warn_qty' => $product ? ($product->warn_qty ?? 0) : 0,
-                    'create_time' => date('Y-m-d H:i:s'),
+        Db::transaction(function () use ($stockInId, $items) {
+            foreach ($items as $item) {
+                $actualQty = intval($item->quantity);
+                $inventory = BizInventory::where('product_id', $item->product_id)->first();
+                if (!$inventory) {
+                    $product = BizProduct::find($item->product_id);
+                    BizInventory::create([
+                        'product_id' => $item->product_id,
+                        'quantity' => 0,
+                        'warn_qty' => $product ? ($product->warn_qty ?? 0) : 0,
+                        'create_time' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+                BizInventory::where('product_id', $item->product_id)->increment('quantity', $actualQty, [
+                    'last_stock_in_time' => date('Y-m-d H:i:s'),
+                    'update_time' => date('Y-m-d H:i:s'),
                 ]);
             }
-            $actualQty = intval($item->quantity);
-            $inventory->quantity = $inventory->quantity + $actualQty;
-            $inventory->last_stock_in_time = date('Y-m-d H:i:s');
-            $inventory->update_time = date('Y-m-d H:i:s');
-            $inventory->save();
-        }
-        BizStockIn::where('stock_in_id', $stockInId)->update([
-            'status' => '1',
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
+            BizStockIn::where('stock_in_id', $stockInId)->update([
+                'status' => '1',
+                'update_time' => date('Y-m-d H:i:s'),
+            ]);
+        });
         return ['success' => true, 'msg' => '入库确认成功'];
     }
 
-    public function cancelConfirmStockIn($stockInId)
+    public function cancelConfirmStockIn($stockInId, $params = [])
     {
         $stockIn = BizStockIn::find($stockInId);
         if (!$stockIn) {
@@ -249,21 +263,30 @@ class BizStockInService
         }
 
         $items = BizStockInItem::where('stock_in_id', $stockInId)->get();
-        foreach ($items as $item) {
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            if ($inventory) {
-                $actualQty = intval($item->quantity);
-                $inventory->quantity = max(0, $inventory->quantity - $actualQty);
-                $inventory->last_stock_in_time = date('Y-m-d H:i:s');
-                $inventory->update_time = date('Y-m-d H:i:s');
-                $inventory->save();
-            }
+        try {
+            Db::transaction(function () use ($stockInId, $items) {
+                foreach ($items as $item) {
+                    $actualQty = intval($item->quantity);
+                    $inventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                    if (!$inventory || $inventory->quantity < $actualQty) {
+                        $product = BizProduct::find($item->product_id);
+                        $productName = $product ? $product->product_name : $item->product_id;
+                        $currentQty = $inventory ? $inventory->quantity : 0;
+                        throw new \Exception("货品【{$productName}】库存不足，当前库存：{$currentQty}，需回退数量：{$actualQty}");
+                    }
+                    BizInventory::where('product_id', $item->product_id)->decrement('quantity', $actualQty, [
+                        'last_stock_in_time' => date('Y-m-d H:i:s'),
+                        'update_time' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+                BizStockIn::where('stock_in_id', $stockInId)->update([
+                    'status' => '0',
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
+            });
+        } catch (\Exception $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
         }
-
-        BizStockIn::where('stock_in_id', $stockInId)->update([
-            'status' => '0',
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
 
         return ['success' => true, 'msg' => '已取消确认'];
     }

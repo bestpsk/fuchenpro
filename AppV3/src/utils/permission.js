@@ -12,7 +12,7 @@ import { useUserStore } from '@/store/modules/user'
  */
 export function checkPermi(value) {
   const userStore = useUserStore()
-  const permissions = userStore.permissions
+  const permissions = userStore.permissions || []
   // 超级权限标识，拥有此标识的用户不受权限限制
   const allPermission = '*:*:*'
   const permissionList = typeof value === 'string' ? [value] : value
@@ -28,7 +28,7 @@ export function checkPermi(value) {
  */
 export function checkRole(value) {
   const userStore = useUserStore()
-  const roles = userStore.roles
+  const roles = userStore.roles || []
   // admin角色拥有所有权限，等同于超级管理员
   const superAdmin = 'admin'
   const roleList = typeof value === 'string' ? [value] : value

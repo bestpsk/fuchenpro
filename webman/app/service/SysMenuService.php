@@ -42,6 +42,7 @@ class SysMenuService
         if ($userId === 1) {
             $menus = SysMenu::where('menu_type', '!=', 'F')
                 ->where('status', '0')
+                ->whereIn('client_type', ['all', 'web'])
                 ->orderBy('order_num', 'asc')
                 ->get();
         } else {
@@ -52,6 +53,7 @@ class SysMenuService
                 ->where('sys_menu.status', '0')
                 ->where('sys_role.status', '0')
                 ->where('sys_menu.menu_type', '!=', 'F')
+                ->whereIn('sys_menu.client_type', ['all', 'web'])
                 ->select('sys_menu.*')
                 ->orderBy('sys_menu.order_num', 'asc')
                 ->get()

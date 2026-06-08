@@ -19,6 +19,7 @@ class BizStoreController
     {
         $service = new BizStoreService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectStoreList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -39,8 +40,9 @@ class BizStoreController
     {
         $keyword = $request->input('keyword', '');
         $enterpriseId = $request->input('enterpriseId', null);
+        $params = ['login_user' => $request->loginUser];
         $service = new BizStoreService();
-        $result = $service->selectStoreForSearch($keyword, $enterpriseId);
+        $result = $service->selectStoreForSearch($keyword, $enterpriseId, $params);
         return AjaxResult::success($result);
     }
 

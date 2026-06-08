@@ -51,7 +51,7 @@
       <el-table-column label="操作人" prop="operatorName" min-width="70" align="center" />
       <el-table-column label="状态" prop="status" min-width="65" align="center">
         <template #default="scope">
-          <el-switch v-model="scope.row.status" active-value="1" inactive-value="0" @change="(val) => handleStatusChange(scope.row, val)" />
+          <el-switch v-model="scope.row.status" active-value="1" inactive-value="0" @change="(val) => handleStatusChange(scope.row, val)" v-hasPermi="['wms:stockIn:confirm']" />
         </template>
       </el-table-column>
       <el-table-column label="创建时间" prop="createTime" min-width="130" align="center" />
@@ -472,6 +472,16 @@ function handleUpdate(row) {
   getStockIn(stockInId).then(async response => {
     form.value = response.data
     if (!form.value.items) form.value.items = []
+    form.value.items.forEach(item => {
+      if (item.unitType === '1' && item.packQty > 1) {
+        item._mainPrice = Math.round(parseFloat(item.purchasePrice) * item.packQty * 100) / 100
+        item.purchasePrice = item._mainPrice
+        item.originalQuantity = item.quantity
+        item.quantity = Math.round(item.quantity / item.packQty * 100) / 100
+      } else {
+        item._mainPrice = item.purchasePrice
+      }
+    })
     isView.value = false
     dialogTitle.value = "修改入库单"
     open.value = true

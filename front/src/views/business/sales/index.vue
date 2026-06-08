@@ -27,7 +27,7 @@
               <el-option label="2星及以上" value="2" />
               <el-option label="1星及以上" value="1" />
             </el-select>
-            <el-button v-if="currentEnterpriseId && storeOptions.length === 0" type="primary" plain icon="Plus" @click="handleQuickAddStore">创建门店</el-button>
+            <el-button v-if="currentEnterpriseId && storeOptions.length === 0" type="primary" plain icon="Plus" @click="handleQuickAddStore" v-hasPermi="['business:store:add']">创建门店</el-button>
           </div>
         </el-col>
       </el-row>
@@ -39,7 +39,7 @@
           <template #header>
             <div class="panel-header">
               <span>客户列表</span>
-              <el-button type="primary" link icon="Plus" @click="handleAddCustomer">新增</el-button>
+              <el-button type="primary" link icon="Plus" @click="handleAddCustomer" v-hasPermi="['business:customer:add']">新增</el-button>
             </div>
           </template>
           <el-input v-model="customerKeyword" placeholder="搜索客户" clearable prefix-icon="Search" @input="handleSearchCustomer" style="margin-bottom: 10px" />
@@ -51,7 +51,7 @@
                     {{ item.customerName ? item.customerName.charAt(0) : '' }}
                   </el-avatar>
                   <span class="customer-name">{{ item.customerName }}</span>
-                  <el-button link type="primary" icon="Edit" size="small" @click.stop="handleEditCustomer(item)" style="margin-left: 4px" />
+                  <el-button link type="primary" icon="Edit" size="small" @click.stop="handleEditCustomer(item)" style="margin-left: 4px" v-hasPermi="['business:customer:edit']" />
                 </div>
                 <div class="customer-tags">
                   <el-tag v-if="item.allExhausted" type="info" size="small">已用完</el-tag>
@@ -91,12 +91,17 @@
                   <span class="stat-label">套餐名称</span>
                   <el-input v-model="orderPackageName" placeholder="请输入套餐名称" clearable style="width: 240px; margin-left: 8px" />
                 </div>
-                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow">添加品项</el-button>
+                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:cardItem:edit']">添加品项</el-button>
               </div>
               <el-table :data="orderItems" border style="width: 100%" >
                 <el-table-column label="品项" min-width="80">
                   <template #default="scope">
-                    <el-input v-model="scope.row.productName" placeholder="品项名称" />
+                    <el-select v-model="scope.row.cardItemId" filterable remote :remote-method="handleSearchCardItem" :loading="cardItemSearchLoading" placeholder="搜索卡项" clearable style="width: 100%" @focus="handleCardItemFocus" @change="(val) => onCardItemSelect(scope.$index, val)">
+                      <el-option v-for="item in cardItemOptions" :key="item.cardItemId" :label="item.cardItemName" :value="item.cardItemId">
+                        <span>{{ item.cardItemName }}</span>
+                        <span style="float: right; color: #8492a6; font-size: 12px">{{ item.defaultQuantity }}次 ¥{{ item.suggestedPrice }}</span>
+                      </el-option>
+                    </el-select>
                   </template>
                 </el-table-column>
                 <el-table-column label="付款方式" width="120">
@@ -108,12 +113,12 @@
                 </el-table-column>
                 <el-table-column label="次数" width="100">
                   <template #default="scope">
-                    <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right"  style="width: 100%" />
+                    <el-input-number v-model="scope.row.quantity" :min="1" :disabled="!packageQuantityEditable" controls-position="right"  style="width: 100%" />
                   </template>
                 </el-table-column>
                 <el-table-column label="成交金额" width="140">
                   <template #default="scope">
-                    <el-input-number v-model="scope.row.dealAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="scope.row.paymentMethod === 'gift'" />
+                    <el-input-number v-model="scope.row.dealAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="!packageDealAmountEditable || scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
                 <el-table-column label="单次价" width="100" align="center">
@@ -123,7 +128,7 @@
                 </el-table-column>
                 <el-table-column label="实付金额" width="140">
                   <template #default="scope">
-                    <el-input-number v-model="scope.row.paidAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="scope.row.paymentMethod === 'gift'" />
+                    <el-input-number v-model="scope.row.paidAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="!packagePaidAmountEditable || scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
                 <el-table-column label="欠款金额" width="100" align="center">
@@ -133,7 +138,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="65" align="center">
                   <template #default="scope">
-                    <el-button link type="danger" icon="Delete" @click="orderItems.splice(scope.$index, 1)" />
+                    <el-button link type="danger" icon="Delete" @click="orderItems.splice(scope.$index, 1)" v-hasPermi="['business:salesOrder:add']" />
                   </template>
                 </el-table-column>
               </el-table>
@@ -148,7 +153,7 @@
               <el-row style="margin-top: 12px; text-align: right; background: var(--el-fill-color-lighter); padding: 10px 16px; border-radius: 4px">
                 <el-col :span="24">
                   <span style="margin-right: 12px">合计: <b style="color: #409eff">{{ totalDealAmount }}</b> 元</span>
-                  <el-button type="primary" @click="submitOrder">提交订单</el-button>
+                  <el-button type="primary" @click="submitOrder" v-hasPermi="['business:salesOrder:add']">提交订单</el-button>
                 </el-col>
               </el-row>
             </el-tab-pane>
@@ -256,7 +261,7 @@
                     <el-input v-model="operationForm.remark" type="textarea" :rows="2" />
                   </el-form-item>
                   <el-form-item style="text-align: right">
-                    <el-button type="primary" @click="submitOperation('0')">提交持卡操作</el-button>
+                    <el-button type="primary" @click="submitOperation('0')" v-hasPermi="['business:operation:add']">提交持卡操作</el-button>
                   </el-form-item>
                 </el-form>
               </el-drawer>
@@ -320,7 +325,7 @@
                     <el-input v-model="trialForm.remark" type="textarea" :rows="2" />
                   </el-form-item>
                   <el-form-item>
-                    <el-button type="warning" @click="submitOperation('1')">提交体验操作</el-button>
+                    <el-button type="warning" @click="submitOperation('1')" v-hasPermi="['business:operation:add']">提交体验操作</el-button>
                     <el-button @click="trialDrawerVisible = false">取消</el-button>
                   </el-form-item>
                 </el-form>
@@ -354,7 +359,7 @@
                   <el-table-column label="创建时间" prop="createTime" width="160" />
                   <el-table-column label="操作" width="100" align="center" fixed="right">
                     <template #default="scope">
-                      <el-button type="primary" size="small" @click="openRepayDialog(scope.row)">还款</el-button>
+                      <el-button type="primary" size="small" @click="openRepayDialog(scope.row)" v-hasPermi="['business:repayment:add']">还款</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -400,7 +405,7 @@
 
             <el-tab-pane label="档案" name="archive">
               <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
-                <el-button type="primary" size="small" icon="Plus" @click="handleAddArchive">新增档案</el-button>
+                <el-button type="primary" size="small" icon="Plus" @click="handleAddArchive" v-hasPermi="['business:archive:add']">新增档案</el-button>
                 <el-select v-model="archiveFilterType" placeholder="类型" clearable size="small" style="width: 100px" @change="loadArchiveList">
                   <el-option label="开单" value="0" />
                   <el-option label="操作" value="1" />
@@ -418,7 +423,7 @@
                       <el-tag v-if="item.archiveType" type="info" size="small" style="margin-left: 4px">{{ getArchiveTypeLabel(item.archiveType) }}</el-tag>
                       <span v-if="item.operatorUserName" class="archive-operator">{{ item.operatorUserName }}</span>
                     </div>
-                    <el-button v-if="item.sourceType === '3'" link type="danger" size="small" icon="Delete" @click="handleDeleteArchive(item)" />
+                    <el-button v-if="item.sourceType === '3'" link type="danger" size="small" icon="Delete" @click="handleDeleteArchive(item)" v-hasPermi="['business:archive:remove']" />
                   </div>
                   <div class="archive-card-body">
                     <div class="archive-main">
@@ -554,10 +559,7 @@
               </el-form-item>
               <el-form-item label="支付方式">
                 <el-select v-model="repayForm.paymentMethod" style="width: 100%">
-                  <el-option label="现金" value="cash" />
-                  <el-option label="微信" value="wechat" />
-                  <el-option label="支付宝" value="alipay" />
-                  <el-option label="银行卡" value="bank" />
+                  <el-option v-for="dict in biz_payment_method" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
               <el-form-item label="备注">
@@ -741,7 +743,9 @@ import { getPackageByCustomer } from "@/api/business/customerPackage"
 import { addOperation, listOperation } from "@/api/business/operationRecord"
 import { getOwedPackages, addRepayment, listRepayment, auditRepayment } from "@/api/business/repayment"
 import { listArchive, addArchive, deleteArchive } from "@/api/business/customerArchive"
+import { searchCardItem } from "@/api/business/cardItem"
 import { listUser } from "@/api/system/user"
+import { getConfigKey } from '@/api/system/config'
 import useUserStore from '@/store/modules/user'
 
 const userStore = useUserStore()
@@ -769,6 +773,8 @@ const orderItems = ref([])
 const orderStoreDealer = ref('')
 const orderCustomerFeedback = ref('')
 const orderPackageName = ref('')
+const cardItemOptions = ref([])
+const cardItemSearchLoading = ref(false)
 const orderRecordList = ref([])
 const operationRecordList = ref([])
 const orderRecordDateRange = ref([])
@@ -814,6 +820,10 @@ const archiveDateRange = ref([])
 const archiveDialogVisible = ref(false)
 const archiveForm = ref({})
 
+const packageQuantityEditable = ref(true)
+const packageDealAmountEditable = ref(true)
+const packagePaidAmountEditable = ref(true)
+
 const filteredPackageList = computed(() => {
   return packageList.value.filter(pkg => {
     if (pkg.status === '2' && !showExhaustedItems.value) return false
@@ -837,7 +847,7 @@ function parsePhotos(photoStr) {
 const customerRules = { customerName: [{ required: true, message: '客户姓名不能为空', trigger: 'blur' }] }
 const storeRules = { storeName: [{ required: true, message: '门店名称不能为空', trigger: 'blur' }] }
 
-const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (item.dealAmount || 0), 0))
+const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + parseFloat(item.dealAmount || 0), 0))
 const canAddOrderItem = computed(() => {
   const roles = userStore.roles
   return !roles.includes('mother') && !roles.includes('母亲')
@@ -848,7 +858,23 @@ onMounted(() => {
   loadUserList()
   operationForm.value.operatorUserId = userStore.id
   operationForm.value.operatorUserName = userStore.nickName || ''
+  loadSalesConfig()
 })
+
+async function loadSalesConfig() {
+  try {
+    const [qtyRes, dealRes, paidRes] = await Promise.all([
+      getConfigKey('biz.sales.packageQuantityEditable'),
+      getConfigKey('biz.sales.packageDealAmountEditable'),
+      getConfigKey('biz.sales.packagePaidAmountEditable')
+    ])
+    packageQuantityEditable.value = qtyRes.data !== 'false'
+    packageDealAmountEditable.value = dealRes.data !== 'false'
+    packagePaidAmountEditable.value = paidRes.data !== 'false'
+  } catch (e) {
+    // 读取失败时使用默认值（全部可编辑）
+  }
+}
 
 function loadEnterpriseList() {
   searchEnterpriseApi('').then(res => {
@@ -933,8 +959,41 @@ function handleSelectCustomer(item) {
 
 function addOrderItemRow() {
   orderItems.value.push({
-    productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash'
+    cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash'
   })
+}
+
+function handleCardItemFocus() {
+  if (cardItemOptions.value.length === 0) {
+    handleSearchCardItem('')
+  }
+}
+
+function handleSearchCardItem(keyword) {
+  cardItemSearchLoading.value = true
+  searchCardItem(keyword || '').then(res => {
+    cardItemOptions.value = res.data || []
+  }).finally(() => {
+    cardItemSearchLoading.value = false
+  })
+}
+
+function onCardItemSelect(index, cardItemId) {
+  const item = orderItems.value[index]
+  if (!cardItemId) {
+    item.cardItemId = null
+    item.productName = ''
+    item.quantity = 1
+    item.dealAmount = 0
+    return
+  }
+  const cardItem = cardItemOptions.value.find(c => c.cardItemId === cardItemId)
+  if (cardItem) {
+    item.cardItemId = cardItemId
+    item.productName = cardItem.cardItemName
+    item.quantity = cardItem.defaultQuantity || 1
+    item.dealAmount = cardItem.suggestedPrice || 0
+  }
 }
 
 function onItemPaymentMethodChange(index) {
@@ -947,7 +1006,7 @@ function onItemPaymentMethodChange(index) {
 function submitOrder() {
   if (orderItems.value.length === 0) return proxy.$modal.msgWarning('请添加品项')
   const hasEmpty = orderItems.value.some(i => !i.productName)
-  if (hasEmpty) return proxy.$modal.msgWarning('请填写品项名称')
+  if (hasEmpty) return proxy.$modal.msgWarning('请选择品项')
 
   const ent = enterpriseOptions.value.find(e => e.enterpriseId === currentEnterpriseId.value)
   const store = storeOptions.value.find(s => s.storeId === currentStoreId.value)
@@ -1159,8 +1218,8 @@ function getOperatorRealName(row) {
   if (userId) {
     const user = userOptions.value.find(u => u.userId === userId || u.id === userId)
     if (user) {
-      const name = user.nick_name || user.nickName || user.userName || user.nick_name
-      return name || '-'
+      const name = user.nickName || user.userName || '-'
+      return name
     }
   }
 

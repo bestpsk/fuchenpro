@@ -22,6 +22,7 @@ class BizCustomerController
     {
         $service = new BizCustomerService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectCustomerList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -46,7 +47,8 @@ class BizCustomerController
         $hasDeal = $request->input('hasDeal');
         $satisfaction = $request->input('satisfaction');
         $service = new BizCustomerService();
-        $result = $service->searchCustomer($keyword, $enterpriseId, $storeId, $hasDeal, $satisfaction);
+        $loginUser = $request->loginUser;
+        $result = $service->searchCustomer($keyword, $enterpriseId, $storeId, $hasDeal, $satisfaction, $loginUser);
         return AjaxResult::success($result);
     }
 

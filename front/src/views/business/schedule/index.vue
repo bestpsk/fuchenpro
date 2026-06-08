@@ -246,12 +246,12 @@
           </el-table-column>
           <el-table-column label="是否可排班" width="110" align="center">
             <template #default="scope">
-              <el-switch v-model="scope.row.isSchedulable" active-value="1" inactive-value="0" @change="handleSchedulableChange(scope.row)" />
+              <el-switch v-model="scope.row.isSchedulable" active-value="1" inactive-value="0" @change="handleSchedulableChange(scope.row)" v-hasPermi="['business:employeeConfig:edit']" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="130" align="center" fixed="right">
             <template #default="scope">
-              <el-button link type="primary" @click="handleRestDateConfig(scope.row)">配置休息日期</el-button>
+              <el-button link type="primary" @click="handleRestDateConfig(scope.row)" v-hasPermi="['business:employeeConfig:edit']">配置休息日期</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -591,6 +591,7 @@ function handleRowMouseDown(event, row, rowIndex) {
   if (!cell) return
 
   const day = parseInt(cell.getAttribute('data-day'))
+  if (activeTab.value === 'employee' && isRestDayForUser(row.userId, day)) return
   const schedule = row.schedules?.[day]
   if (!canSelectCell(schedule)) return
 
@@ -610,6 +611,10 @@ function handleCellEnter(rowIndex, day) {
 
   selectedDays.value.clear()
   for (let d = startDay; d <= endDay; d++) {
+    if (activeTab.value === 'employee' && isRestDayForUser(dragStartInfo.value.row.userId, d)) {
+      selectedDays.value.clear()
+      return
+    }
     const sched = dragStartInfo.value.row.schedules?.[d]
     if (!canSelectCell(sched)) {
       selectedDays.value.clear()
@@ -622,7 +627,7 @@ function handleCellEnter(rowIndex, day) {
 }
 
 function handleRowMouseUp() {
-  if (!isDragging.value || !dragStartInfo.value || selectedDays.value.size <= 1) {
+  if (!isDragging.value || !dragStartInfo.value || selectedDays.value.size < 1) {
     isDragging.value = false
     dragStartInfo.value = null
     dragEndInfo.value = null
@@ -825,8 +830,9 @@ async function loadRestDateMap() {
 }
 
 function isRestDayForUser(userId, day) {
+  if (!userId || !day) return false
   const dates = restDateMap.value[userId]
-  if (!dates) return false
+  if (!dates || !Array.isArray(dates)) return false
   const [y, m] = queryParams.value.yearMonth.split('-')
   return dates.includes(`${y}-${m}-${String(day).padStart(2, '0')}`)
 }

@@ -19,6 +19,7 @@ class BizProductController
     {
         $service = new BizProductService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectProductList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -29,7 +30,8 @@ class BizProductController
         $parts = explode('/', $request->path());
         $productId = intval(end($parts));
         $service = new BizProductService();
-        $product = $service->selectProductById($productId);
+        $loginUser = $request->loginUser;
+        $product = $service->selectProductById($productId, $loginUser);
         if (!$product) return AjaxResult::error('货品不存在');
         return AjaxResult::success($product);
     }
@@ -48,6 +50,7 @@ class BizProductController
     {
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         $service = new BizProductService();
         $result = $service->insertProduct($data);
         return AjaxResult::toAjax($result ? 1 : 0);
@@ -58,6 +61,7 @@ class BizProductController
     {
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
+        $data['login_user'] = $request->loginUser;
         $service = new BizProductService();
         $result = $service->updateProduct($data);
         return AjaxResult::toAjax($result ? 1 : 0);
@@ -71,8 +75,9 @@ class BizProductController
             $productIds = explode(',', $productIds);
         }
         $productIds = array_map('intval', array_filter($productIds));
+        $params['login_user'] = $request->loginUser;
         $service = new BizProductService();
-        $result = $service->deleteProductByIds($productIds);
+        $result = $service->deleteProductByIds($productIds, $params);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 }

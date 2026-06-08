@@ -81,6 +81,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getSupplier, addSupplier, updateSupplier } from '@/api/wms/supplier'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const mode = ref('add')
@@ -172,6 +173,26 @@ onMounted(() => {
   const options = currentPage.options || {}
   mode.value = options.mode || 'add'
   supplierId.value = options.id ? parseInt(options.id) : null
+
+  // 权限检查
+  if (mode.value === 'add' && !checkPermi('wms:supplier:add')) {
+    uni.showToast({ title: '无新增权限', icon: 'none' })
+    setTimeout(() => {
+      const pages = getCurrentPages()
+      if (pages.length > 1) uni.navigateBack()
+      else uni.redirectTo({ url: '/pages/wms/supplier/index' })
+    }, 1500)
+    return
+  }
+  if ((mode.value === 'edit' || mode.value === 'view') && !checkPermi('wms:supplier:edit')) {
+    uni.showToast({ title: '无编辑权限', icon: 'none' })
+    setTimeout(() => {
+      const pages = getCurrentPages()
+      if (pages.length > 1) uni.navigateBack()
+      else uni.redirectTo({ url: '/pages/wms/supplier/index' })
+    }, 1500)
+    return
+  }
 
   if (mode.value === 'add') {
     uni.setNavigationBarTitle({ title: '新增供货商' })

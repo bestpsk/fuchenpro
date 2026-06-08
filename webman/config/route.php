@@ -207,6 +207,17 @@ Route::post('/business/repayment/audit', [app\controller\business\BizRepaymentCo
 Route::post('/business/repayment/cancel', [app\controller\business\BizRepaymentController::class, 'cancel']);
 Route::get('/business/repayment/{repaymentId}', [app\controller\business\BizRepaymentController::class, 'getInfo']);
 
+Route::get('/business/cardItem/list', [app\controller\business\BizCardItemController::class, 'list']);
+Route::get('/business/cardItem/search', [app\controller\business\BizCardItemController::class, 'search']);
+Route::post('/business/cardItem', [app\controller\business\BizCardItemController::class, 'add']);
+Route::put('/business/cardItem', [app\controller\business\BizCardItemController::class, 'edit']);
+Route::delete('/business/cardItem', [app\controller\business\BizCardItemController::class, 'remove']);
+Route::get('/business/cardItem/{cardItemId}', [app\controller\business\BizCardItemController::class, 'getInfo']);
+
+Route::get('/business/stockPrepare/list', [app\controller\business\BizStockPrepareController::class, 'list']);
+Route::get('/business/stockPrepare/{prepareId}', [app\controller\business\BizStockPrepareController::class, 'getInfo']);
+Route::post('/business/stockPrepare/createStockOut', [app\controller\business\BizStockPrepareController::class, 'createStockOut']);
+
 Route::get('/business/archive/list', [app\controller\business\BizCustomerArchiveController::class, 'list']);
 Route::post('/business/archive/add', [app\controller\business\BizCustomerArchiveController::class, 'add']);
 Route::delete('/business/archive', [app\controller\business\BizCustomerArchiveController::class, 'remove']);
@@ -220,15 +231,6 @@ Route::post('/business/plan', [app\controller\business\BizPlanController::class,
 Route::put('/business/plan', [app\controller\business\BizPlanController::class, 'edit']);
 Route::delete('/business/plan', [app\controller\business\BizPlanController::class, 'remove']);
 Route::get('/business/plan/{planId}', [app\controller\business\BizPlanController::class, 'getInfo']);
-
-Route::get('/business/shipment/list', [app\controller\business\BizShipmentController::class, 'list']);
-Route::put('/business/shipment/audit', [app\controller\business\BizShipmentController::class, 'audit']);
-Route::put('/business/shipment/ship', [app\controller\business\BizShipmentController::class, 'ship']);
-Route::put('/business/shipment/confirmReceipt/{shipmentId}', [app\controller\business\BizShipmentController::class, 'confirmReceipt']);
-Route::post('/business/shipment', [app\controller\business\BizShipmentController::class, 'add']);
-Route::put('/business/shipment', [app\controller\business\BizShipmentController::class, 'edit']);
-Route::delete('/business/shipment', [app\controller\business\BizShipmentController::class, 'remove']);
-Route::get('/business/shipment/{shipmentId}', [app\controller\business\BizShipmentController::class, 'getInfo']);
 
 Route::get('/business/schedule/list', [app\controller\business\BizScheduleController::class, 'list']);
 Route::get('/business/schedule/calendar', [app\controller\business\BizScheduleController::class, 'calendar']);
@@ -335,6 +337,8 @@ Route::get('/wms/stockIn/{stockInId}', [app\controller\wms\BizStockInController:
 Route::get('/wms/stockOut/list', [app\controller\wms\BizStockOutController::class, 'list']);
 Route::put('/wms/stockOut/confirm/{id}', [app\controller\wms\BizStockOutController::class, 'confirm']);
 Route::put('/wms/stockOut/cancelConfirm/{id}', [app\controller\wms\BizStockOutController::class, 'cancelConfirm']);
+Route::put('/wms/stockOut/ship/{id}', [app\controller\wms\BizStockOutController::class, 'ship']);
+Route::put('/wms/stockOut/confirmReceipt/{id}', [app\controller\wms\BizStockOutController::class, 'confirmReceipt']);
 Route::post('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'add']);
 Route::put('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'edit']);
 Route::delete('/wms/stockOut', [app\controller\wms\BizStockOutController::class, 'remove']);

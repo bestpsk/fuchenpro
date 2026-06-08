@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizSalesOrderService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -20,6 +21,7 @@ class BizSalesOrderController
     {
         $service = new BizSalesOrderService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectOrderList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -91,6 +93,7 @@ class BizSalesOrderController
     // 企业审核销售订单
     public function enterpriseAudit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
@@ -101,6 +104,7 @@ class BizSalesOrderController
     // 财务审核销售订单
     public function financeAudit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:financeAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
@@ -110,6 +114,7 @@ class BizSalesOrderController
 
     public function cancel(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $service = new BizSalesOrderService();
         $result = $service->cancelOrder($orderId);

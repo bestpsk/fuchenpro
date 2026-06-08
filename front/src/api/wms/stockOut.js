@@ -43,3 +43,13 @@ export function confirmStockOutById(stockOutId) {
 export function cancelConfirmStockOut(stockOutId) {
   return request({ url: '/wms/stockOut/cancelConfirm/' + stockOutId, method: 'put' })
 }
+
+/** 发货 */
+export function shipStockOut(id, data) {
+  return request({ url: '/wms/stockOut/ship/' + id, method: 'put', data: data })
+}
+
+/** 确认收货 */
+export function confirmReceiptStockOut(id) {
+  return request({ url: '/wms/stockOut/confirmReceipt/' + id, method: 'put' })
+}

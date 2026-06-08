@@ -4,6 +4,9 @@ namespace app\service;
 
 use app\model\BizProduct;
 use app\model\BizInventory;
+use support\Db;
+use app\model\SysUser;
+use app\service\DataScopeService;
 
 /**
  * 货品服务层，处理货品的增删改查和搜索，新增货品时自动创建库存记录
@@ -29,6 +32,13 @@ class BizProductService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
+        // 数据权限过滤：非管理员只能查看其可见用户创建的产品
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
+                ->pluck('user_name')->toArray();
+            $query->whereIn('create_by', $visibleUserNames);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('product_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -44,9 +54,22 @@ class BizProductService
 
     // 根据ID查询产品详情
 
-    public function selectProductById($productId)
+    public function selectProductById($productId, $loginUser = null)
     {
-        return BizProduct::find($productId);
+        $product = BizProduct::find($productId);
+        if (!$product) {
+            return null;
+        }
+        // 数据权限校验：非管理员只能查看其可见用户创建的产品
+        if (!empty($loginUser) && !$loginUser->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
+            $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
+                ->pluck('user_name')->toArray();
+            if (!in_array($product->create_by, $visibleUserNames)) {
+                return null;
+            }
+        }
+        return $product;
     }
 
     // 搜索产品，返回简化列表供下拉选择
@@ -74,13 +97,16 @@ class BizProductService
     public function insertProduct($data)
     {
         $data['create_time'] = date('Y-m-d H:i:s');
-        $product = BizProduct::create($data);
-        BizInventory::create([
-            'product_id' => $product->product_id,
-            'quantity' => 0,
-            'warn_qty' => $data['warn_qty'] ?? 0,
-            'create_time' => date('Y-m-d H:i:s'),
-        ]);
+        $product = Db::transaction(function () use ($data) {
+            $product = BizProduct::create($data);
+            BizInventory::create([
+                'product_id' => $product->product_id,
+                'quantity' => 0,
+                'warn_qty' => $data['warn_qty'] ?? 0,
+                'create_time' => date('Y-m-d H:i:s'),
+            ]);
+            return $product;
+        });
         return $product;
     }
 
@@ -89,21 +115,25 @@ class BizProductService
     public function updateProduct($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        $result = BizProduct::where('product_id', $data['product_id'])->update($data);
-        if (isset($data['warn_qty'])) {
-            BizInventory::where('product_id', $data['product_id'])->update([
-                'warn_qty' => $data['warn_qty'],
-                'update_time' => date('Y-m-d H:i:s'),
-            ]);
-        }
-        return $result;
+        Db::transaction(function () use ($data) {
+            BizProduct::where('product_id', $data['product_id'])->update($data);
+            if (isset($data['warn_qty'])) {
+                BizInventory::where('product_id', $data['product_id'])->update([
+                    'warn_qty' => $data['warn_qty'],
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
+            }
+        });
+        return true;
     }
 
     // 批量删除产品
 
-    public function deleteProductByIds($productIds)
+    public function deleteProductByIds($productIds, $params = [])
     {
-        BizInventory::whereIn('product_id', $productIds)->delete();
-        return BizProduct::whereIn('product_id', $productIds)->delete();
+        return Db::transaction(function () use ($productIds) {
+            BizInventory::whereIn('product_id', $productIds)->delete();
+            return BizProduct::whereIn('product_id', $productIds)->delete();
+        });
     }
 }

@@ -47,8 +47,20 @@
             <text class="feedback-content">{{ item.content ? item.content.substring(0, 60) + (item.content.length > 60 ? '...' : '') : '-' }}</text>
           </view>
           <view class="card-footer">
-            <view class="type-tag" :class="'type-' + String(item.feedbackType)">{{ getTypeLabel(item.feedbackType) }}</view>
-            <text class="feedback-time">{{ formatTime(item.createTime) }}</text>
+            <view class="footer-left">
+              <view class="type-tag" :class="'type-' + String(item.feedbackType)">{{ getTypeLabel(item.feedbackType) }}</view>
+              <text class="feedback-time">{{ formatTime(item.createTime) }}</text>
+            </view>
+            <view class="action-btns">
+              <view v-if="checkPermi('admin:feedback:edit')" class="action-btn edit" @click.stop="goEdit(item)">
+                <u-icon name="edit-pen" size="14"></u-icon>
+                <text>编辑</text>
+              </view>
+              <view v-if="checkPermi('admin:feedback:remove')" class="action-btn delete" @click.stop="handleDelete(item)">
+                <u-icon name="trash" size="14"></u-icon>
+                <text>删除</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -64,8 +76,9 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listFeedback } from '@/api/admin/feedback'
+import { listFeedback, delFeedback } from '@/api/admin/feedback'
 import { getDicts } from '@/api/system/dictData'
+import { checkPermi } from '@/utils/permission'
 
 const feedbackList = ref([])
 const loading = ref(false)
@@ -140,6 +153,28 @@ function goDetail(item) {
   uni.navigateTo({ url: `/pages/admin/feedback/detail?id=${item.feedbackId}` })
 }
 
+function goEdit(item) {
+  uni.navigateTo({ url: `/pages/admin/feedback/form?mode=edit&id=${item.feedbackId}` })
+}
+
+function handleDelete(item) {
+  uni.showModal({
+    title: '提示',
+    content: `是否确认删除反馈"${item.title}"?`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await delFeedback(item.feedbackId)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          getList(true)
+        } catch (e) {
+          console.error('删除失败:', e)
+        }
+      }
+    }
+  })
+}
+
 function handleAdd() {
   uni.navigateTo({ url: '/pages/admin/feedback/form?mode=add' })
 }
@@ -194,12 +229,20 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .feedback-content { font-size: 26rpx; color: #4E5969; line-height: 1.6; }
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; }
+.footer-left { display: flex; align-items: center; gap: 12rpx; }
 .type-tag { padding: 2rpx 12rpx; border-radius: 6rpx; font-size: 22rpx; font-weight: 500;
   &.type-0 { background: #FFECE8; color: #F53F3F; }
   &.type-1 { background: #fff7e6; color: #fa8c16; }
   &.type-2 { background: #F2F3F5; color: #86909C; }
 }
 .feedback-time { font-size: 24rpx; color: #86909C; }
+.action-btns { display: flex; gap: 12rpx; }
+.action-btn {
+  display: flex; align-items: center; gap: 4rpx; font-size: 22rpx;
+  padding: 6rpx 12rpx; border-radius: 8rpx;
+  &.edit { color: #3D6DF7; background: #E8F0FE; }
+  &.delete { color: #F53F3F; background: #FFF1F0; }
+}
 
 .fab-btn { position: fixed; right: 40rpx; bottom: 80rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: #3D6DF7; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(61,109,247,0.35); z-index: 100;
   &:active { transform: scale(0.92); }

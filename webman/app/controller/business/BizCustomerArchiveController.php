@@ -20,6 +20,7 @@ class BizCustomerArchiveController
     {
         $service = new BizCustomerArchiveService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectArchiveList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

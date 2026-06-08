@@ -8,6 +8,7 @@ use app\model\BizOrderItem;
 use app\model\BizOperationRecord;
 use app\model\BizRepaymentRecord;
 use app\model\BizCustomer;
+use app\service\DataScopeService;
 
 /**
  * 客户档案服务层
@@ -27,6 +28,10 @@ class BizCustomerArchiveService
         if (!empty($params['archive_type'])) $query->where('archive_type', $params['archive_type']);
         if (!empty($params['start_date'])) $query->where('archive_date', '>=', $params['start_date']);
         if (!empty($params['end_date'])) $query->where('archive_date', '<=', $params['end_date']);
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('operator_user_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 50);
         $result = $query->orderBy('archive_date', 'desc')->orderBy('archive_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);

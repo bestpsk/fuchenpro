@@ -5,7 +5,14 @@
             <div class="head-container">
                <el-input v-model="menuName" placeholder="请输入菜单名称" clearable prefix-icon="Search" style="margin-bottom: 20px" />
             </div>
-            <el-tree ref="menuTreeRef" :data="menuOptions" :props="{ label: 'menuName', children: 'children' }" :expand-on-click-node="false" :filter-node-method="filterNode" node-key="menuId" highlight-current @node-click="handleNodeClick" />
+            <el-tree ref="menuTreeRef" :data="menuOptions" :props="{ label: 'menuName', children: 'children' }" :expand-on-click-node="false" :filter-node-method="filterNode" node-key="menuId" highlight-current @node-click="handleNodeClick">
+               <template #default="{ node, data }">
+                  <span style="display: flex; align-items: center; gap: 4px; font-size: 14px">
+                     <span>{{ node.label }}</span>
+                     <el-tag v-if="data.clientType === 'app'" type="warning" size="small" style="transform: scale(0.8)">App</el-tag>
+                  </span>
+               </template>
+            </el-tree>
          </el-col>
          <el-col :span="16">
             <div v-if="selectedMenu">
@@ -104,6 +111,7 @@ function buildTree(items, parentId) {
       menuType: item.menuType,
       path: item.path,
       icon: item.icon,
+      clientType: item.clientType || 'all',
       children: buildTree(items, item.menuId)
    })).filter(item => item.menuType === 'M' || item.menuType === 'C' || (item.children && item.children.length > 0))
 }

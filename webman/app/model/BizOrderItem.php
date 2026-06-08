@@ -14,7 +14,7 @@ class BizOrderItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'order_id', 'product_name', 'quantity',
+        'order_id', 'card_item_id', 'product_name', 'quantity',
         'deal_amount', 'paid_amount', 'unit_price', 'owed_amount', 'payment_method',
         'remark', 'create_time'
     ];

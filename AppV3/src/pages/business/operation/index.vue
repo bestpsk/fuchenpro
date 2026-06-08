@@ -37,6 +37,9 @@
               </view>
             </view>
           </view>
+          <view class="card-actions" v-if="checkPermi('business:operation:remove')">
+            <view class="action-btn delete" @click.stop="deleteOperation(item)">删除</view>
+          </view>
         </view>
       </view>
       <u-empty v-else-if="!loading" mode="data" text="暂无操作记录" :marginTop="100"></u-empty>
@@ -51,7 +54,8 @@
  * @description 展示操作记录列表，支持关键词搜索（客户名/操作类型）、分页加载、下拉刷新
  */
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listOperation } from '@/api/business/operationRecord'
+import { listOperation, delOperation } from '@/api/business/operationRecord'
+import { checkPermi } from '@/utils/permission'
 
 
 const operationList = ref([])
@@ -90,6 +94,24 @@ function handleSearch() { getList(true) }
 function onSearchInput() { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(() => handleSearch(), 500) }
 function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 
+async function deleteOperation(item) {
+  try {
+    uni.showModal({
+      title: '提示',
+      content: '确定要删除该操作记录吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          await delOperation(item.operationId || item.recordId)
+          uni.$u.toast('删除成功')
+          getList(true)
+        }
+      }
+    })
+  } catch (e) {
+    uni.$u.toast(e.message || '删除失败')
+  }
+}
+
 onMounted(() => { getList(true) })
 </script>
 
@@ -112,6 +134,10 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .time-text { font-size: 22rpx; color: #C9CDD4; }
 
 .card-body { padding: 20rpx 0; border-top: 1rpx solid #F2F3F5; }
+.card-actions { display: flex; justify-content: flex-end; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; margin-top: 16rpx; }
+.action-btn { padding: 10rpx 24rpx; border-radius: 8rpx; font-size: 26rpx; font-weight: 500;
+  &.delete { color: #F53F3F; background: #FFF2F0; }
+}
 .info-row { display: flex; margin-bottom: 12rpx; &:last-child { margin-bottom: 0; } }
 .info-item { flex: 1; display: flex; align-items: center; gap: 12rpx;
   &.full { flex: none; width: 100%; }

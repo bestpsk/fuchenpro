@@ -33,10 +33,4 @@ class BizPlan extends Model
     {
         return $this->hasMany(BizPlanItem::class, 'plan_id', 'plan_id');
     }
-
-    // 关联方案下的所有发货单
-    public function shipments()
-    {
-        return $this->hasMany(BizShipment::class, 'plan_id', 'plan_id');
-    }
 }

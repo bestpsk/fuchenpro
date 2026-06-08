@@ -21,6 +21,7 @@ class BizOperationRecordController
     {
         $service = new BizOperationRecordService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectRecordList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

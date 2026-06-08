@@ -8,6 +8,8 @@ use app\model\BizInventory;
 use app\model\BizProduct;
 use app\model\SysUser;
 use app\model\BizEnterprise;
+use app\service\DataScopeService;
+use support\Db;
 
 /**
  * 出库服务层，处理出库单的增删改查和确认，确认时校验库存并扣减
@@ -36,6 +38,10 @@ class BizStockOutService
         if (!empty($params['stock_out_date_end'])) {
             $query->where('stock_out_date', '<=', $params['stock_out_date_end']);
         }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('responsible_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $list = $query->orderBy('stock_out_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -56,7 +62,7 @@ class BizStockOutService
 
     // 根据ID查询出库单详情，含明细列表
 
-    public function selectStockOutById($stockOutId)
+    public function selectStockOutById($stockOutId, $params = [])
     {
         $stockOut = BizStockOut::find($stockOutId);
         if ($stockOut) {
@@ -167,11 +173,14 @@ class BizStockOutService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_amount'] = $totalAmount;
-        $stockOut = BizStockOut::create($data);
-        foreach ($items as $item) {
-            $item['stock_out_id'] = $stockOut->stock_out_id;
-            BizStockOutItem::create($item);
-        }
+        $stockOut = Db::transaction(function () use ($data, $items) {
+            $stockOut = BizStockOut::create($data);
+            foreach ($items as $item) {
+                $item['stock_out_id'] = $stockOut->stock_out_id;
+                BizStockOutItem::create($item);
+            }
+            return $stockOut;
+        });
         return $stockOut;
     }
 
@@ -213,18 +222,22 @@ class BizStockOutService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_amount'] = $totalAmount;
-        BizStockOut::where('stock_out_id', $stockOutId)->update($data);
-        BizStockOutItem::where('stock_out_id', $stockOutId)->delete();
-        foreach ($items as $item) {
-            $item['stock_out_id'] = $stockOutId;
-            BizStockOutItem::create($item);
-        }
+        $fillable = (new BizStockOut())->getFillable();
+        $filteredData = array_intersect_key($data, array_flip($fillable));
+        Db::transaction(function () use ($stockOutId, $filteredData, $items) {
+            BizStockOut::where('stock_out_id', $stockOutId)->update($filteredData);
+            BizStockOutItem::where('stock_out_id', $stockOutId)->delete();
+            foreach ($items as $item) {
+                $item['stock_out_id'] = $stockOutId;
+                BizStockOutItem::create($item);
+            }
+        });
         return true;
     }
 
     // 批量删除出库单
 
-    public function deleteStockOutByIds($stockOutIds)
+    public function deleteStockOutByIds($stockOutIds, $params = [])
     {
         foreach ($stockOutIds as $id) {
             $stockOut = BizStockOut::find($id);
@@ -232,75 +245,159 @@ class BizStockOutService
                 return false;
             }
         }
-        BizStockOutItem::whereIn('stock_out_id', $stockOutIds)->delete();
-        return BizStockOut::whereIn('stock_out_id', $stockOutIds)->delete();
+        return Db::transaction(function () use ($stockOutIds) {
+            BizStockOutItem::whereIn('stock_out_id', $stockOutIds)->delete();
+            return BizStockOut::whereIn('stock_out_id', $stockOutIds)->delete();
+        });
     }
 
-    public function confirmStockOut($stockOutId)
+    public function confirmStockOut($stockOutId, $params = [])
     {
         $stockOut = BizStockOut::find($stockOutId);
         if (!$stockOut) {
             return ['success' => false, 'msg' => '出库单不存在'];
         }
-        if ($stockOut->status === '1') {
+        if ($stockOut->status !== '0') {
             return ['success' => false, 'msg' => '出库单已确认，请勿重复操作'];
         }
         $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get();
         if ($items->isEmpty()) {
             return ['success' => false, 'msg' => '出库单明细为空'];
         }
-        foreach ($items as $item) {
-            $actualQty = intval($item->quantity);
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            if (!$inventory || $inventory->quantity < $actualQty) {
-                $product = BizProduct::find($item->product_id);
-                $productName = $product ? $product->product_name : $item->product_name;
-                $currentQty = $inventory ? $inventory->quantity : 0;
-                return ['success' => false, 'msg' => "货品【{$productName}】库存不足，当前库存：{$currentQty}，出库数量：{$actualQty}"];
-            }
+        try {
+            Db::transaction(function () use ($stockOutId, $stockOut, $items) {
+                foreach ($items as $item) {
+                    $actualQty = intval($item->quantity);
+                    $inventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                    if (!$inventory || $inventory->quantity < $actualQty) {
+                        $product = BizProduct::find($item->product_id);
+                        $productName = $product ? $product->product_name : $item->product_name;
+                        $currentQty = $inventory ? $inventory->quantity : 0;
+                        throw new \Exception("货品【{$productName}】库存不足，当前库存：{$currentQty}，出库数量：{$actualQty}");
+                    }
+                    BizInventory::where('product_id', $item->product_id)->decrement('quantity', $actualQty, [
+                        'last_stock_out_time' => date('Y-m-d H:i:s'),
+                        'update_time' => date('Y-m-d H:i:s'),
+                    ]);
+                    $updatedInventory = BizInventory::where('product_id', $item->product_id)->first();
+                    if ($updatedInventory->quantity < 0) {
+                        $product = BizProduct::find($item->product_id);
+                        $productName = $product ? $product->product_name : $item->product_name;
+                        throw new \Exception("货品【{$productName}】扣减后库存为负数，请检查库存数据");
+                    }
+                }
+                $newStatus = intval($stockOut->ship_type) === 0 ? '3' : '1';
+                BizStockOut::where('stock_out_id', $stockOutId)->update([
+                    'status' => $newStatus,
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
+            });
+        } catch (\Exception $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
         }
-        foreach ($items as $item) {
-            $actualQty = intval($item->quantity);
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            $inventory->quantity = $inventory->quantity - $actualQty;
-            $inventory->last_stock_out_time = date('Y-m-d H:i:s');
-            $inventory->update_time = date('Y-m-d H:i:s');
-            $inventory->save();
-        }
-        BizStockOut::where('stock_out_id', $stockOutId)->update([
-            'status' => '1',
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
         return ['success' => true, 'msg' => '出库确认成功'];
     }
 
-    public function cancelConfirmStockOut($stockOutId)
+    public function cancelConfirmStockOut($stockOutId, $params = [])
     {
         $stockOut = BizStockOut::find($stockOutId);
         if (!$stockOut) {
             return ['success' => false, 'msg' => '出库单不存在'];
         }
-        if ($stockOut->status === '0') {
-            return ['success' => false, 'msg' => '出库单未确认，无需取消'];
+        if ($stockOut->status !== '1' && !($stockOut->status === '3' && $stockOut->ship_type === '0')) {
+            return ['success' => false, 'msg' => '该出库单无法取消确认'];
         }
 
         $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get();
-        foreach ($items as $item) {
-            $actualQty = intval($item->quantity);
-            $inventory = BizInventory::where('product_id', $item->product_id)->first();
-            if ($inventory) {
-                $inventory->quantity = $inventory->quantity + $actualQty;
-                $inventory->last_stock_out_time = date('Y-m-d H:i:s');
-                $inventory->update_time = date('Y-m-d H:i:s');
-                $inventory->save();
+        Db::transaction(function () use ($stockOutId, $items) {
+            foreach ($items as $item) {
+                $actualQty = intval($item->quantity);
+                BizInventory::where('product_id', $item->product_id)->increment('quantity', $actualQty, [
+                    'last_stock_out_time' => date('Y-m-d H:i:s'),
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
             }
-        }
 
-        BizStockOut::where('stock_out_id', $stockOutId)->update([
-            'status' => '0',
-            'update_time' => date('Y-m-d H:i:s'),
-        ]);
+            BizStockOut::where('stock_out_id', $stockOutId)->update([
+                'status' => '0',
+                'ship_status' => '0',
+                'update_time' => date('Y-m-d H:i:s'),
+            ]);
+        });
 
         return ['success' => true, 'msg' => '已取消确认'];
+    }
+
+    public function shipStockOut($stockOutId, $data)
+    {
+        $stockOut = BizStockOut::find($stockOutId);
+        if (!$stockOut) {
+            return ['success' => false, 'msg' => '出库单不存在'];
+        }
+        if ($stockOut->status !== '1') {
+            return ['success' => false, 'msg' => '只有已确认待发货的出库单才能发货'];
+        }
+
+        $shipType = intval($data['ship_type'] ?? 1);
+        $updateData = [
+            'ship_type' => strval($shipType),
+            'ship_status' => '1',
+            'update_time' => date('Y-m-d H:i:s'),
+        ];
+
+        if ($shipType === 1) {
+            $updateData['status'] = '3';
+            $updateData['shipment_date'] = date('Y-m-d H:i:s');
+        } else if ($shipType === 2) {
+            $updateData['status'] = '2';
+            $updateData['logistics_company'] = $data['logistics_company'] ?? null;
+            $updateData['logistics_no'] = $data['logistics_no'] ?? null;
+            $updateData['shipment_date'] = date('Y-m-d H:i:s');
+        }
+
+        BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
+        return ['success' => true, 'msg' => '发货成功'];
+    }
+
+    public function confirmReceipt($stockOutId, $params = [])
+    {
+        $stockOut = BizStockOut::find($stockOutId);
+        if (!$stockOut) {
+            return ['success' => false, 'msg' => '出库单不存在'];
+        }
+        if ($stockOut->status !== '2') {
+            return ['success' => false, 'msg' => '只有已发货的出库单才能确认收货'];
+        }
+
+        $updateData = [
+            'status' => '3',
+            'ship_status' => '2',
+            'receipt_date' => date('Y-m-d H:i:s'),
+            'update_time' => date('Y-m-d H:i:s'),
+        ];
+
+        Db::transaction(function () use ($stockOutId, $stockOut, $updateData) {
+            if ($stockOut->plan_id) {
+                $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get();
+                $totalShippedAmount = floatval($stockOut->total_amount);
+                $plan = \app\model\BizPlan::find($stockOut->plan_id);
+                if ($plan) {
+                    $plan->shipped_amount = bcadd(floatval($plan->shipped_amount), $totalShippedAmount, 2);
+                    $plan->save();
+                }
+                foreach ($items as $item) {
+                    if ($item->plan_item_id) {
+                        $planItem = \app\model\BizPlanItem::find($item->plan_item_id);
+                        if ($planItem) {
+                            $planItem->shipped_quantity = intval($planItem->shipped_quantity) + intval($item->quantity);
+                            $planItem->save();
+                        }
+                    }
+                }
+            }
+
+            BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
+        });
+        return ['success' => true, 'msg' => '确认收货成功'];
     }
 }

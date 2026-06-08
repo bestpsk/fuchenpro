@@ -5,9 +5,6 @@ namespace app\service;
 use app\model\BizSalesOrder;
 use app\model\BizOrderItem;
 use app\model\BizOperationRecord;
-use app\model\SysUser;
-use app\model\SysDept;
-use app\model\SysRoleDept;
 
 class HomeStatsService
 {
@@ -16,58 +13,58 @@ class HomeStatsService
         $today = date('Y-m-d');
         $monthStart = date('Y-m-01');
 
-        $userIds = self::getVisibleUserIds($loginUser);
+        $userIds = DataScopeService::getVisibleUserIds($loginUser);
 
-        $todayDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $todayDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->whereDate('create_time', $today)
             ->distinct()->count('customer_id');
 
-        $monthDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $monthDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->where('create_time', '>=', $monthStart . ' 00:00:00')
             ->distinct()->count('customer_id');
 
-        $todayDealAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $todayDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->whereDate('create_time', $today)
             ->sum('deal_amount');
 
-        $monthDealAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $monthDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->where('create_time', '>=', $monthStart . ' 00:00:00')
             ->sum('deal_amount');
 
-        $todayPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $todayPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->whereDate('create_time', $today)
             ->sum('paid_amount');
 
-        $monthPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $monthPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->where('create_time', '>=', $monthStart . ' 00:00:00')
             ->sum('paid_amount');
 
-        $todayOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $todayOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->whereDate('create_time', $today)
             ->sum('owed_amount');
 
-        $monthOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+        $monthOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->where('create_time', '>=', $monthStart . ' 00:00:00')
             ->sum('owed_amount');
 
         $todayCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->whereDate('biz_sales_order.create_time', $today)
@@ -75,7 +72,7 @@ class HomeStatsService
             ->sum('biz_order_item.deal_amount');
 
         $monthCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
@@ -83,7 +80,7 @@ class HomeStatsService
             ->sum('biz_order_item.deal_amount');
 
         $todayCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->whereDate('biz_sales_order.create_time', $today)
@@ -91,7 +88,7 @@ class HomeStatsService
             ->sum('biz_order_item.deal_amount');
 
         $monthCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
@@ -99,7 +96,7 @@ class HomeStatsService
             ->sum('biz_order_item.deal_amount');
 
         $todayGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->whereDate('biz_sales_order.create_time', $today)
@@ -107,7 +104,7 @@ class HomeStatsService
             ->count();
 
         $monthGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '3'])
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
@@ -145,28 +142,28 @@ class HomeStatsService
         ];
 
         if ($startDate && $endDate) {
-            $customDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '3'])
+            $customDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
                 ->whereIn('source_type', ['0', '2'])
                 ->whereIn('creator_user_id', $userIds)
                 ->where('create_time', '>=', $startDate . ' 00:00:00')
                 ->where('create_time', '<=', $endDate . ' 23:59:59')
                 ->distinct()->count('customer_id');
 
-            $customDealAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+            $customDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
                 ->whereIn('source_type', ['0', '2'])
                 ->whereIn('creator_user_id', $userIds)
                 ->where('create_time', '>=', $startDate . ' 00:00:00')
                 ->where('create_time', '<=', $endDate . ' 23:59:59')
                 ->sum('deal_amount');
 
-            $customPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+            $customPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
                 ->whereIn('source_type', ['0', '2'])
                 ->whereIn('creator_user_id', $userIds)
                 ->where('create_time', '>=', $startDate . ' 00:00:00')
                 ->where('create_time', '<=', $endDate . ' 23:59:59')
                 ->sum('paid_amount');
 
-            $customOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '3'])
+            $customOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
                 ->whereIn('source_type', ['0', '2'])
                 ->whereIn('creator_user_id', $userIds)
                 ->where('create_time', '>=', $startDate . ' 00:00:00')
@@ -174,7 +171,7 @@ class HomeStatsService
                 ->sum('owed_amount');
 
             $customCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '3'])
+                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
                 ->whereIn('biz_sales_order.source_type', ['0', '2'])
                 ->whereIn('biz_sales_order.creator_user_id', $userIds)
                 ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
@@ -183,7 +180,7 @@ class HomeStatsService
                 ->sum('biz_order_item.deal_amount');
 
             $customCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '3'])
+                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
                 ->whereIn('biz_sales_order.source_type', ['0', '2'])
                 ->whereIn('biz_sales_order.creator_user_id', $userIds)
                 ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
@@ -192,7 +189,7 @@ class HomeStatsService
                 ->sum('biz_order_item.deal_amount');
 
             $customGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '3'])
+                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
                 ->whereIn('biz_sales_order.source_type', ['0', '2'])
                 ->whereIn('biz_sales_order.creator_user_id', $userIds)
                 ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
@@ -223,71 +220,5 @@ class HomeStatsService
         }
 
         return $result;
-    }
-
-    private static function getVisibleUserIds($loginUser)
-    {
-        $userId = $loginUser->userId;
-
-        if ($loginUser->isAdmin()) {
-            $allUserIds = SysUser::where('del_flag', '0')->where('status', '0')->pluck('user_id')->toArray();
-            return !empty($allUserIds) ? $allUserIds : [$userId];
-        }
-
-        $dataScope = self::getUserDataScope($loginUser);
-
-        switch ($dataScope) {
-            case '1':
-                $allUserIds = SysUser::where('del_flag', '0')->where('status', '0')->pluck('user_id')->toArray();
-                return !empty($allUserIds) ? $allUserIds : [$userId];
-
-            case '2':
-                $deptIds = self::getCustomDeptIds($loginUser);
-                if (empty($deptIds)) return [$userId];
-                $userIds = SysUser::whereIn('dept_id', $deptIds)->where('del_flag', '0')->pluck('user_id')->toArray();
-                return !empty($userIds) ? $userIds : [$userId];
-
-            case '3':
-                $userIds = SysUser::where('dept_id', $loginUser->deptId)->where('del_flag', '0')->pluck('user_id')->toArray();
-                return !empty($userIds) ? $userIds : [$userId];
-
-            case '4':
-                $deptIds = SysDept::where('dept_id', $loginUser->deptId)
-                    ->orWhereRaw("FIND_IN_SET(?, ancestors)", [$loginUser->deptId])
-                    ->pluck('dept_id')->toArray();
-                $userIds = SysUser::whereIn('dept_id', $deptIds)->where('del_flag', '0')->pluck('user_id')->toArray();
-                return !empty($userIds) ? $userIds : [$userId];
-
-            case '5':
-            default:
-                return [$userId];
-        }
-    }
-
-    private static function getUserDataScope($loginUser)
-    {
-        $roles = $loginUser->user->roles ?? [];
-        $minScope = '5';
-        foreach ($roles as $role) {
-            $dataScope = is_array($role) ? ($role['data_scope'] ?? '5') : ($role->data_scope ?? '5');
-            if ($dataScope < $minScope) {
-                $minScope = $dataScope;
-            }
-        }
-        return $minScope;
-    }
-
-    private static function getCustomDeptIds($loginUser)
-    {
-        $roles = $loginUser->user->roles ?? [];
-        $roleIds = [];
-        foreach ($roles as $role) {
-            $roleId = is_array($role) ? ($role['role_id'] ?? null) : ($role->role_id ?? null);
-            if ($roleId !== null) {
-                $roleIds[] = $roleId;
-            }
-        }
-        if (empty($roleIds)) return [];
-        return SysRoleDept::whereIn('role_id', $roleIds)->pluck('dept_id')->toArray();
     }
 }

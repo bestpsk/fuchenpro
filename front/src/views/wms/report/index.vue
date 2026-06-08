@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-hasPermi="['wms:report:list']">
     <el-tabs v-model="activeTab" @tab-click="handleTabClick">
       <el-tab-pane label="入库汇总" name="stockIn">
         <el-form :inline="true" :model="stockInQuery">

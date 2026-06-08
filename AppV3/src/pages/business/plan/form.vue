@@ -214,7 +214,7 @@
     </view>
 
     <view class="form-actions" v-else>
-      <u-button type="primary" plain text="编辑" @click="goEdit"></u-button>
+      <u-button v-if="checkPermi('business:plan:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
     </view>
   </view>
 </template>
@@ -223,6 +223,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { listPlan, listEnterprise, getPlan, addPlan, updatePlan } from '@/api/business/plan'
 import { listProduct } from '@/api/wms/product'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const mode = ref('add')

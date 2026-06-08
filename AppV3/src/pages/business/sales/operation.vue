@@ -49,7 +49,7 @@
             <text class="bar-count">已选 <text class="count-num">{{ selectedItems.length }}</text> 项</text>
             <text class="bar-total" v-if="selectedItems.length > 0">合计 ¥{{ getTotalPrice() }}</text>
           </view>
-          <button class="bar-btn" :class="{ active: selectedItems.length > 0 }" :disabled="selectedItems.length === 0" @click="openDetailDrawer">确认操作</button>
+          <button class="bar-btn" :class="{ active: selectedItems.length > 0 }" :disabled="selectedItems.length === 0" v-if="checkPermi('business:operation:add')" @click="openDetailDrawer">确认操作</button>
         </view>
       </view>
 
@@ -237,6 +237,7 @@ import { listEmployeeConfig } from '@/api/business/employeeConfig'
 import { useUserStore } from '@/store/modules/user'
 import upload from '@/utils/upload'
 import { useScrollHeight } from '@/utils/useScrollHeight'
+import { checkPermi } from '@/utils/permission'
 
 const userStore = useUserStore()
 

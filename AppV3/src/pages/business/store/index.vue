@@ -123,11 +123,11 @@
           <view class="card-footer">
             <view class="time-text">{{ formatTime(item.createTime) }}</view>
             <view class="action-btns">
-              <view class="action-btn edit" @click.stop="goEdit(item)">
+              <view class="action-btn edit" v-if="checkPermi('business:store:edit')" @click.stop="goEdit(item)">
                 <u-icon name="edit-pen" size="14"></u-icon>
                 <text>编辑</text>
               </view>
-              <view class="action-btn delete" @click.stop="handleDelete(item)">
+              <view class="action-btn delete" v-if="checkPermi('business:store:remove')" @click.stop="handleDelete(item)">
                 <u-icon name="trash" size="14"></u-icon>
                 <text>删除</text>
               </view>
@@ -139,7 +139,7 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <view class="fab-btn" @click="goAdd">
+    <view class="fab-btn" v-if="checkPermi('business:store:add')" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
   </view>
@@ -154,6 +154,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
+import { checkPermi } from '@/utils/permission'
 
 
 const storeList = ref([])

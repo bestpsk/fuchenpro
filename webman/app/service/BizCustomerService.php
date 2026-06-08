@@ -7,6 +7,8 @@ use app\model\BizSalesOrder;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\model\BizOperationRecord;
+use app\service\DataScopeService;
+
 
 /**
  * 客户服务层
@@ -25,6 +27,7 @@ class BizCustomerService
         if (!empty($params['phone'])) $query->where('phone', 'like', '%' . $params['phone'] . '%');
         if (!empty($params['tag'])) $query->where('tag', $params['tag']);
         if (!empty($params['status'])) $query->where('status', $params['status']);
+        DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -37,7 +40,7 @@ class BizCustomerService
     }
 
     // 搜索客户，附加成交状态、消费金额、套餐耗尽情况和平均满意度
-    public function searchCustomer($keyword, $enterpriseId, $storeId = null, $hasDeal = null, $satisfaction = null)
+    public function searchCustomer($keyword, $enterpriseId, $storeId = null, $hasDeal = null, $satisfaction = null, $loginUser = null)
     {
         $query = BizCustomer::query();
         $query->where('enterprise_id', $enterpriseId);
@@ -48,6 +51,7 @@ class BizCustomerService
                   ->orWhere('phone', 'like', '%' . $keyword . '%');
             });
         }
+        DataScopeService::applyUserScope($query, $loginUser, 'enterprise_id', 'enterprise');
         $customers = $query->where('status', '0')->orderBy('customer_name', 'asc')->limit(100)->get();
 
         $result = [];
@@ -55,11 +59,11 @@ class BizCustomerService
             $customerId = $customer->customer_id;
 
             $customerHasDeal = BizSalesOrder::where('customer_id', $customerId)
-                ->where('order_status', '1')->exists();
+                ->whereIn('order_status', ['1', '2'])->exists();
             $customer->has_deal = $customerHasDeal;
 
             $dealAmount = BizSalesOrder::where('customer_id', $customerId)
-                ->where('order_status', '1')
+                ->whereIn('order_status', ['1', '2'])
                 ->sum('deal_amount');
             $customer->deal_amount = round(floatval($dealAmount), 2);
 

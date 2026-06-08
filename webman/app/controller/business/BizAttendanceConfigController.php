@@ -25,6 +25,7 @@ class BizAttendanceConfigController
     public function list(Request $request)
     {
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->configService->selectConfigList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }

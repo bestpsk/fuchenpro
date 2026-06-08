@@ -5,6 +5,7 @@ namespace app\service;
 use app\model\BizSchedule;
 use app\model\SysUser;
 use app\model\BizEnterprise;
+use app\service\DataScopeService;
 use support\Db;
 
 /**
@@ -42,8 +43,10 @@ class BizScheduleService
             $query->where('status', $params['status']);
         }
 
-        $pageNum = intval($params['pageNum'] ?? 1);
-        $pageSize = intval($params['pageSize'] ?? 10);
+        DataScopeService::applyUserScope($query, $params['login_user'], 'user_id');
+
+        $pageNum = intval($params['page_num'] ?? 1);
+        $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('schedule_date', 'desc')->orderBy('schedule_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
         foreach ($result->items() as $item) {
@@ -87,6 +90,8 @@ class BizScheduleService
             $query->where('status', '0');
         }
 
+        DataScopeService::applyUserScope($query, $params['login_user'], 'user_id');
+
         return $query->get();
     }
 
@@ -99,6 +104,9 @@ class BizScheduleService
         }
         if (!empty($params['year_month'])) {
             $query->where('schedule_date', 'like', $params['year_month'] . '%');
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
         }
 
         return $query->pluck('schedule_date')->toArray();
@@ -114,15 +122,17 @@ class BizScheduleService
 
     public function insertScheduleBatch($dataList)
     {
-        $insertData = [];
-        $createTime = date('Y-m-d H:i:s');
-        
-        foreach ($dataList as $item) {
-            $item['create_time'] = $createTime;
-            $insertData[] = $item;
-        }
+        return Db::transaction(function () use ($dataList) {
+            $insertData = [];
+            $createTime = date('Y-m-d H:i:s');
 
-        return BizSchedule::insert($insertData);
+            foreach ($dataList as $item) {
+                $item['create_time'] = $createTime;
+                $insertData[] = $item;
+            }
+
+            return BizSchedule::insert($insertData);
+        });
     }
 
     // 更新日程信息
@@ -154,6 +164,7 @@ class BizScheduleService
         } else {
             $userQuery->where('status', '0');
         }
+        DataScopeService::applyUserScope($userQuery, $params['login_user'], 'user_id');
         
         $users = $userQuery->get();
         
@@ -165,6 +176,7 @@ class BizScheduleService
         if (!empty($params['purpose'])) {
             $scheduleQuery->where('purpose', $params['purpose']);
         }
+        DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
         
         $schedules = $scheduleQuery->get();
         
@@ -219,6 +231,7 @@ class BizScheduleService
         if (!empty($params['purpose'])) {
             $scheduleQuery->where('purpose', $params['purpose']);
         }
+        DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
         
         $schedules = $scheduleQuery->get();
 

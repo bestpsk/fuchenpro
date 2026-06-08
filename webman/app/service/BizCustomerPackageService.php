@@ -4,6 +4,8 @@ namespace app\service;
 
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
+use app\service\DataScopeService;
+
 
 /**
  * 客户套餐服务层
@@ -20,6 +22,7 @@ class BizCustomerPackageService
         if (!empty($params['enterprise_id'])) $query->where('enterprise_id', $params['enterprise_id']);
         if (!empty($params['store_id'])) $query->where('store_id', $params['store_id']);
         if (isset($params['status']) && $params['status'] !== '') $query->where('status', $params['status']);
+        DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->with('items')->orderBy('package_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -32,7 +35,7 @@ class BizCustomerPackageService
     }
 
     // 查询指定客户的所有套餐，可按状态筛选（0=未使用 1=使用中 2=已用完）
-    public function selectPackagesByCustomer($customerId, $status = null)
+    public function selectPackagesByCustomer($customerId, $status = null, $params = [])
     {
         $query = BizCustomerPackage::query();
         $query->where('customer_id', $customerId);
@@ -40,6 +43,9 @@ class BizCustomerPackageService
             $query->where('status', $status);
         } else {
             $query->whereIn('status', ['1', '2']);
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
         }
         return $query->with('items')->orderBy('package_id', 'desc')->get();
     }

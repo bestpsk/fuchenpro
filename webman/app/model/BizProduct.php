@@ -32,4 +32,10 @@ class BizProduct extends Model
     {
         return $this->hasOne(BizInventory::class, 'product_id', 'product_id');
     }
+
+    // 关联产品的入库明细
+    public function stockInItems()
+    {
+        return $this->hasMany(BizStockInItem::class, 'product_id', 'product_id');
+    }
 }

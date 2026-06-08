@@ -89,9 +89,9 @@
       </view>
 
       <view v-if="info.userId !== 1" class="bottom-actions">
-        <u-button type="primary" plain text="编辑" icon="edit-pen" @click="goEdit"></u-button>
-        <u-button type="warning" plain text="重置密码" icon="lock" @click="handleResetPwd"></u-button>
-        <u-button type="success" plain text="分配角色" icon="account" @click="goAuthRole"></u-button>
+        <u-button v-if="checkPermi('system:user:edit')" type="primary" plain text="编辑" icon="edit-pen" @click="goEdit"></u-button>
+        <u-button v-if="checkPermi('system:user:resetPwd')" type="warning" plain text="重置密码" icon="lock" @click="handleResetPwd"></u-button>
+        <u-button v-if="checkPermi('system:user:edit')" type="success" plain text="分配角色" icon="account" @click="goAuthRole"></u-button>
       </view>
     </template>
   </view>
@@ -100,6 +100,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getUser, resetUserPwd } from '@/api/system/user'
+import { checkPermi } from '@/utils/permission'
 
 const loading = ref(false)
 const info = ref({})

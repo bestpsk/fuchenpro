@@ -21,7 +21,7 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status">
         <template #default="scope">
-          <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="(val) => handleEnterpriseStatusChange(scope.row, val)" />
+          <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="(val) => handleEnterpriseStatusChange(scope.row, val)" v-hasPermi="['business:enterprise:edit']" />
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center">
@@ -163,7 +163,7 @@
         </el-table-column>
         <el-table-column label="启用" prop="status" align="center">
           <template #default="scope">
-            <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="(val) => handlePlanStatusChange(scope.row, val)" />
+            <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="(val) => handlePlanStatusChange(scope.row, val)" v-hasPermi="['business:plan:edit']" />
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="260">
@@ -173,7 +173,7 @@
             <el-button link type="primary" icon="Check" @click="handleSubmitAudit(scope.row)" v-hasPermi="['business:plan:submitAudit']" v-if="scope.row.auditStatus === '0' || scope.row.auditStatus === '4'">提交审核</el-button>
             <el-button link type="primary" icon="Select" @click="handleAuditPlan(scope.row, true)" v-hasPermi="['business:plan:audit']" v-if="scope.row.auditStatus === '1'">通过</el-button>
             <el-button link type="danger" icon="CloseBold" @click="handleAuditPlan(scope.row, false)" v-hasPermi="['business:plan:audit']" v-if="scope.row.auditStatus === '1'">驳回</el-button>
-            <el-button link type="primary" icon="Van" @click="handleCreateShipment(scope.row)" v-hasPermi="['business:shipment:add']" v-if="scope.row.auditStatus === '2'">出货</el-button>
+
           </template>
         </el-table-column>
       </el-table>
@@ -217,127 +217,32 @@
         <el-table-column label="已出数量" prop="shippedQuantity" width="80" align="center" />
         <el-table-column label="剩余数量" prop="remainingQuantity" width="80" align="center" />
       </el-table>
-      <el-divider content-position="left">出货记录</el-divider>
-      <el-table :data="currentPlan.shipments || []" border size="small">
-        <el-table-column label="出货单号" prop="shipmentNo" width="130" />
-        <el-table-column label="总数量" prop="totalQuantity" width="80" align="center" />
-        <el-table-column label="总金额" prop="totalAmount" width="100" align="right" />
-        <el-table-column label="出货状态" width="80" align="center">
-          <template #default="scope">
-            <el-tag :type="shipmentStatusType(scope.row.shipmentStatus)" size="small">{{ shipmentStatusLabel(scope.row.shipmentStatus) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="创建时间" prop="createTime" width="160" />
-      </el-table>
+
     </el-dialog>
 
-    <el-dialog title="新建出货单" v-model="shipmentOpen" width="950px" append-to-body>
-      <el-form ref="shipmentRef" :model="shipmentForm" :rules="shipmentRules" label-width="100px">
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="关联方案">
-              <el-input v-model="shipmentForm.planName" disabled />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="企业名称">
-              <el-input v-model="shipmentForm.enterpriseName" disabled />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="8">
-            <el-form-item label="收货人" prop="contactPerson">
-              <el-input v-model="shipmentForm.contactPerson" placeholder="收货人" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="收货电话" prop="contactPhone">
-              <el-input v-model="shipmentForm.contactPhone" placeholder="收货电话" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="收货地址" prop="shippingAddress">
-              <el-input v-model="shipmentForm.shippingAddress" placeholder="收货地址" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-divider content-position="left">出货明细</el-divider>
-        <el-table :data="shipmentForm.items" border style="width: 100%" size="small">
-          <el-table-column label="货品名称" width="150">
-            <template #default="scope">{{ scope.row.productName }}</template>
-          </el-table-column>
-          <el-table-column label="供货商" width="120">
-            <template #default="scope">{{ scope.row.supplierName || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="单位类型" width="80" align="center">
-            <template #default="scope">{{ scope.row.unitType === '1' ? '主单位整' : '副单位拆' }}</template>
-          </el-table-column>
-          <el-table-column label="换算" width="90">
-            <template #default="scope">
-              <span v-if="scope.row.packQty > 1">1{{ scope.row.unitLabel }}={{ scope.row.packQty }}{{ scope.row.specLabel }}</span>
-              <span v-else>-</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="数量" width="80">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.quantity" :min="1" :max="scope.row.maxQuantity" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
-            </template>
-          </el-table-column>
-          <el-table-column label="规格" width="60">
-            <template #default="scope">{{ scope.row.specLabel || '-' }}</template>
-          </el-table-column>
-          <el-table-column label="单价" width="80" align="right">
-            <template #default="scope">{{ scope.row.salePrice }}</template>
-          </el-table-column>
-          <el-table-column label="折扣单价" width="90">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.discountPrice" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentItemChange(scope.$index)" style="width: 100%" />
-            </template>
-          </el-table-column>
-          <el-table-column label="总金额" width="120" align="right">
-            <template #default="scope">
-              <el-input-number v-model="scope.row.amount" :precision="2" :min="0" controls-position="right" size="small" @change="onShipmentAmountChange(scope.$index)" style="width: 100%" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="60" align="center">
-            <template #default="scope">
-              <el-button link type="danger" icon="Delete" @click="removeShipmentItem(scope.$index)" />
-            </template>
-          </el-table-column>
-        </el-table>
-        <div style="margin-top: 10px; display: flex; justify-content: space-between">
-          <span>总金额: {{ shipmentTotalAmount }}</span>
-          <span>方案剩余金额: {{ shipmentForm.remainingAmount }}</span>
-        </div>
-        <el-row style="margin-top: 10px">
-          <el-col :span="24">
-            <el-form-item label="备注" prop="remark">
-              <el-input v-model="shipmentForm.remark" type="textarea" placeholder="请输入备注" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-      </el-form>
-      <template #footer>
-        <el-button type="primary" @click="submitShipmentForm">确 定</el-button>
-        <el-button @click="shipmentOpen = false">取 消</el-button>
-      </template>
-    </el-dialog>
+
   </div>
 </template>
 
 <script setup name="Plan">
 /**
- * @description 方案管理页面（企业维度）- 按企业查看/开方案/审核/出货
+ * @description 方案管理页面（企业维度）- 按企业查看/开方案/审核
  * @description 以企业为维度展示方案列表，提供方案开立（含品项明细/单位切换/金额计算）、
- * 方案审核/提交/状态切换、出货单创建等功能
+ * 方案审核/提交/状态切换等功能
  */
 import { listEnterprise, listPlan, getPlan, addPlan, updatePlan, delPlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
-import { addShipment } from "@/api/business/shipment"
 import { listProduct } from "@/api/wms/product"
 import { changeEnterpriseStatus } from "@/api/business/enterprise"
 
 const { proxy } = getCurrentInstance()
+const { biz_product_unit, biz_product_spec } = proxy.useDict("biz_product_unit", "biz_product_spec")
+
+function getUnitLabel(unit) {
+  return proxy.selectDictLabel(biz_product_unit.value, unit)
+}
+function getSpecLabel(spec) {
+  return proxy.selectDictLabel(biz_product_spec.value, spec)
+}
 
 const enterpriseList = ref([])
 const loading = ref(true)
@@ -351,27 +256,18 @@ const planListLoading = ref(false)
 const planDetailOpen = ref(false)
 const currentPlan = ref({})
 const currentEnterprise = ref({})
-const shipmentOpen = ref(false)
 const productOptions = ref([])
 
 const data = reactive({
   queryParams: { pageNum: 1, pageSize: 10, enterpriseName: undefined },
   planForm: {},
-  shipmentForm: {},
   planRules: {
     planName: [{ required: true, message: "方案名称不能为空", trigger: "blur" }],
     giftAmount: [{ required: true, message: "配赠金额不能为空", trigger: "blur" }]
-  },
-  shipmentRules: {
-    contactPerson: [{ required: true, message: "收货人不能为空", trigger: "blur" }]
   }
 })
 
-const { queryParams, planForm, shipmentForm, planRules, shipmentRules } = toRefs(data)
-
-const shipmentTotalAmount = computed(() => {
-  return (shipmentForm.value.items || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toFixed(2)
-})
+const { queryParams, planForm, planRules } = toRefs(data)
 
 function auditStatusType(status) {
   const map = { '0': 'info', '1': 'warning', '2': 'success', '3': '', '4': 'danger' }
@@ -380,16 +276,6 @@ function auditStatusType(status) {
 
 function auditStatusLabel(status) {
   const map = { '0': '草稿', '1': '待审核', '2': '已审核', '3': '已完成', '4': '已驳回' }
-  return map[status] || '未知'
-}
-
-function shipmentStatusType(status) {
-  const map = { '0': 'warning', '1': '', '2': 'info', '3': 'success', '4': 'danger' }
-  return map[status] || 'info'
-}
-
-function shipmentStatusLabel(status) {
-  const map = { '0': '待审核', '1': '已审核', '2': '已发货', '3': '已收货', '4': '已驳回' }
   return map[status] || '未知'
 }
 
@@ -481,10 +367,8 @@ function onProductSelect(index, productId) {
     item.unitType = '1'
     item._mainPrice = product.salePrice || 0
     item.salePrice = product.salePrice || 0
-    const unitMap = { '1': '箱', '2': '件', '3': '套', '4': '罐', '5': '盒', '6': '袋', '7': '包' }
-    const specMap = { '1': '支', '2': '瓶', '3': '件', '4': '套', '5': '片', '6': '个' }
-    item.unitLabel = unitMap[product.unit] || ''
-    item.specLabel = specMap[product.spec] || ''
+    item.unitLabel = getUnitLabel(product.unit)
+    item.specLabel = getSpecLabel(product.spec)
     onUnitTypeChange(index)
   }
 }
@@ -552,84 +436,6 @@ function handleViewPlanDetail(row) {
   getPlan(row.planId).then(res => {
     currentPlan.value = res.data
     planDetailOpen.value = true
-  })
-}
-
-function handleCreateShipment(row) {
-  getPlan(row.planId).then(res => {
-    const plan = res.data
-    shipmentForm.value = {
-      planId: plan.planId,
-      planName: plan.planName,
-      enterpriseId: plan.enterpriseId,
-      enterpriseName: plan.enterprise?.enterpriseName || '',
-      contactPerson: plan.enterprise?.bossName || '',
-      contactPhone: plan.enterprise?.phone || '',
-      shippingAddress: plan.enterprise?.address || '',
-      remainingAmount: plan.remainingAmount,
-      remark: undefined,
-      items: (plan.items || []).filter(item => item.remainingQuantity > 0).map(item => {
-        const unitMap = { '1': '箱', '2': '件', '3': '套', '4': '罐', '5': '盒', '6': '袋', '7': '包' }
-        const specMap = { '1': '支', '2': '瓶', '3': '件', '4': '套', '5': '片', '6': '个' }
-        return {
-          planItemId: item.itemId,
-          productId: item.productId,
-          productName: item.productName,
-          supplierId: item.supplierId,
-          supplierName: item.supplierName,
-          unitType: item.unitType,
-          packQty: item.packQty,
-          quantity: item.remainingQuantity,
-          maxQuantity: item.remainingQuantity,
-          spec: item.spec,
-          salePrice: item.salePrice,
-          discountPrice: item.salePrice,
-          amount: (parseFloat(item.salePrice) || 0) * item.remainingQuantity,
-          unitLabel: unitMap[item.product?.unit] || '',
-          specLabel: specMap[item.product?.spec] || ''
-        }
-      })
-    }
-    shipmentOpen.value = true
-  })
-}
-
-function onShipmentItemChange(index) {
-  const item = shipmentForm.value.items[index]
-  item.amount = (parseFloat(item.discountPrice) || 0) * (parseInt(item.quantity) || 0)
-}
-
-function onShipmentAmountChange(index) {
-  const item = shipmentForm.value.items[index]
-  const qty = parseInt(item.quantity) || 0
-  if (qty > 0) {
-    item.discountPrice = Math.round((parseFloat(item.amount) / qty) * 100) / 100
-  }
-}
-
-function removeShipmentItem(index) { shipmentForm.value.items.splice(index, 1) }
-
-function submitShipmentForm() {
-  if (!shipmentForm.value.items || shipmentForm.value.items.length === 0) {
-    proxy.$modal.msgWarning("请至少添加一条出货明细")
-    return
-  }
-  if (parseFloat(shipmentTotalAmount.value) > parseFloat(shipmentForm.value.remainingAmount)) {
-    proxy.$modal.msgWarning("出货总金额不能大于方案剩余金额")
-    return
-  }
-  proxy.$refs["shipmentRef"].validate(valid => {
-    if (valid) {
-      addShipment(shipmentForm.value).then(res => {
-        if (res.code === 200) {
-          proxy.$modal.msgSuccess("新建出货单成功")
-          shipmentOpen.value = false
-          handleViewPlans(currentEnterprise.value)
-        } else {
-          proxy.$modal.msgError(res.msg || "新建出货单失败")
-        }
-      })
-    }
   })
 }
 

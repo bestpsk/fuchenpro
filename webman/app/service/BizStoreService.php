@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\BizStore;
 use app\model\BizEnterprise;
+use app\service\DataScopeService;
 
 /**
  * 门店服务层，处理门店的增删改查和搜索，自动关联企业名称
@@ -29,6 +30,10 @@ class BizStoreService
         }
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('server_user_id', $visibleUserIds);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);
@@ -71,10 +76,10 @@ class BizStoreService
         return BizStore::where('store_id', $data['store_id'])->update($data);
     }
 
-    public function selectStoreForSearch($keyword, $enterpriseId = null)
+    public function selectStoreForSearch($keyword, $enterpriseId = null, $params = [])
     {
         $query = BizStore::query();
-        
+
         if (!empty($keyword)) {
             $query->where(function ($q) use ($keyword) {
                 $q->where('store_name', 'like', '%' . $keyword . '%')
@@ -85,7 +90,12 @@ class BizStoreService
         if (!empty($enterpriseId)) {
             $query->where('enterprise_id', $enterpriseId);
         }
-        
+
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('server_user_id', $visibleUserIds);
+        }
+
         return $query->where('status', '0')
                     ->orderBy('store_name', 'asc')
                     ->limit(50)

@@ -14,8 +14,9 @@ class BizStockOutItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'stock_out_id', 'product_id', 'product_name', 'spec', 'unit', 'unit_type', 'pack_qty',
-        'original_quantity', 'quantity', 'sale_price', 'amount', 'remark'
+        'stock_out_id', 'product_id', 'product_name', 'plan_item_id', 'supplier_id', 'supplier_name',
+        'spec', 'unit', 'unit_type', 'pack_qty',
+        'original_quantity', 'quantity', 'sale_price', 'discount_price', 'amount', 'remark'
     ];
 
     // 关联所属出库单

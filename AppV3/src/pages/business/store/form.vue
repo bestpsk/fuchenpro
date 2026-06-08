@@ -125,8 +125,8 @@
       <u-button type="primary" text="保存" :loading="submitting" @click="submitForm"></u-button>
     </view>
     <view class="form-actions" v-else>
-      <u-button type="primary" plain text="编辑" @click="goEdit"></u-button>
-      <u-button type="error" plain text="删除" @click="handleDelete"></u-button>
+      <u-button v-if="checkPermi('business:store:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
+      <u-button v-if="checkPermi('business:store:remove')" type="error" plain text="删除" @click="handleDelete"></u-button>
     </view>
   </view>
 </template>
@@ -140,6 +140,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getStore, addStore, updateStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const showEnterprisePicker = ref(false)

@@ -43,8 +43,8 @@ class SysUserService
 
         $query->where('del_flag', '0');
 
-        if (!empty($params['data_scope']) && !empty($params['login_user'])) {
-            $query = DataScopeService::applyDataScope($query, $params['login_user'], 'sys_dept', 'sys_user');
+        if (!empty($params['login_user'])) {
+            $query = DataScopeService::applyDataScope($query, $params['login_user'], 'sys_user', 'sys_user');
         }
 
         $pageNum = intval($params['page_num'] ?? 1);

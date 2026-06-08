@@ -42,16 +42,33 @@
     </view>
 
     <u-empty v-else-if="!loading" mode="data" text="反馈不存在" :marginTop="100"></u-empty>
+
+    <view v-if="detail" class="bottom-actions">
+      <view v-if="checkPermi('admin:feedback:reply')" class="action-btn reply" @click="goReply">
+        <u-icon name="chat" size="16"></u-icon>
+        <text>回复</text>
+      </view>
+      <view v-if="checkPermi('admin:feedback:edit')" class="action-btn edit" @click="goEdit">
+        <u-icon name="edit-pen" size="16"></u-icon>
+        <text>编辑</text>
+      </view>
+      <view v-if="checkPermi('admin:feedback:remove')" class="action-btn delete" @click="handleDelete">
+        <u-icon name="trash" size="16"></u-icon>
+        <text>删除</text>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFeedback } from '@/api/admin/feedback'
+import { getFeedback, delFeedback } from '@/api/admin/feedback'
 import { getDicts } from '@/api/system/dictData'
+import { checkPermi } from '@/utils/permission'
 
 const detail = ref(null)
 const loading = ref(false)
+const feedbackId = ref('')
 const typeOptions = ref([])
 const statusOptions = ref([])
 
@@ -90,18 +107,49 @@ async function loadDetail(id) {
   finally { loading.value = false }
 }
 
+function goReply() {
+  uni.navigateTo({ url: `/pages/admin/feedback/reply?feedbackId=${feedbackId.value}` })
+}
+
+function goEdit() {
+  uni.navigateTo({ url: `/pages/admin/feedback/form?mode=edit&id=${feedbackId.value}` })
+}
+
+function handleDelete() {
+  uni.showModal({
+    title: '提示',
+    content: `是否确认删除反馈"${detail.value?.title}"?`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await delFeedback(feedbackId.value)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          setTimeout(() => {
+            uni.navigateBack()
+          }, 1500)
+        } catch (e) {
+          console.error('删除失败:', e)
+        }
+      }
+    }
+  })
+}
+
 onMounted(() => {
   loadDicts()
   const pages = getCurrentPages()
   const page = pages[pages.length - 1]
   const id = page.options?.id || page.$page?.options?.id
-  if (id) loadDetail(id)
+  if (id) {
+    feedbackId.value = id
+    loadDetail(id)
+  }
 })
 </script>
 
 <style lang="scss" scoped>
 page { background-color: #F5F7FA; }
-.detail-container { padding: 24rpx; }
+.detail-container { padding: 24rpx; padding-bottom: 140rpx; }
 
 .detail-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; margin-bottom: 20rpx; }
 .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; padding-bottom: 20rpx; border-bottom: 1rpx solid #F2F3F5; }
@@ -128,4 +176,18 @@ page { background-color: #F5F7FA; }
 .reply-author { font-size: 26rpx; font-weight: 500; color: #1D2129; }
 .reply-time { font-size: 22rpx; color: #86909C; }
 .reply-content { font-size: 26rpx; color: #4E5969; line-height: 1.6; }
+
+.bottom-actions {
+  position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
+  justify-content: center; gap: 24rpx; padding: 20rpx 30rpx; padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: #fff; box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08); z-index: 100;
+}
+.action-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8rpx;
+  padding: 16rpx 32rpx; border-radius: 36rpx; font-size: 28rpx; font-weight: 500;
+  &.reply { color: #fff; background: linear-gradient(135deg, #3D6DF7, #5B8DEF); }
+  &.edit { color: #3D6DF7; background: #E8F0FE; }
+  &.delete { color: #F53F3F; background: #FFF1F0; }
+  &:active { opacity: 0.7; }
+}
 </style>

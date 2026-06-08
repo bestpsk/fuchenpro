@@ -122,8 +122,8 @@
     </view>
 
     <view class="form-actions" v-else>
-      <u-button type="primary" plain text="编辑" @click="goEdit"></u-button>
-      <u-button type="error" plain text="删除" @click="handleDelete"></u-button>
+      <u-button v-if="checkPermi('business:enterprise:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
+      <u-button v-if="checkPermi('business:enterprise:remove')" type="error" plain text="删除" @click="handleDelete"></u-button>
     </view>
   </view>
 </template>
@@ -136,6 +136,7 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { getEnterprise, addEnterprise, updateEnterprise, delEnterprise } from '@/api/business/enterprise'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const showTypePicker = ref(false)

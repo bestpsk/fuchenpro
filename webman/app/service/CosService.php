@@ -3,6 +3,7 @@
 namespace app\service;
 
 use Qcloud\Cos\Client;
+use app\service\SysConfigService;
 
 /**
  * 腾讯云COS对象存储服务层
@@ -17,7 +18,7 @@ class CosService
     // 初始化COS客户端配置
     public function __construct()
     {
-        $this->config = config('cos');
+        $this->config = $this->getConfig();
         if ($this->config['enabled'] && !empty($this->config['secret_id']) && !empty($this->config['secret_key'])) {
             $this->client = new Client([
                 'region' => $this->config['region'],
@@ -28,6 +29,23 @@ class CosService
                 ],
             ]);
         }
+    }
+
+    // 获取COS配置，优先从sys_config读取，降级到config/cos.php
+    private function getConfig(): array
+    {
+        $enabled = SysConfigService::getConfigValue('sys.cos.enabled');
+        if ($enabled !== null) {
+            return [
+                'enabled'    => $enabled === 'true',
+                'secret_id'  => SysConfigService::getConfigValue('sys.cos.secretId', ''),
+                'secret_key' => SysConfigService::getConfigValue('sys.cos.secretKey', ''),
+                'bucket'     => SysConfigService::getConfigValue('sys.cos.bucket', ''),
+                'region'     => SysConfigService::getConfigValue('sys.cos.region', 'ap-shanghai'),
+                'domain'     => SysConfigService::getConfigValue('sys.cos.domain', ''),
+            ];
+        }
+        return config('cos', []);
     }
 
     // 判断COS是否已启用且配置正确

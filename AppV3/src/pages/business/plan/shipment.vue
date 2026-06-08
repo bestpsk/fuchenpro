@@ -193,7 +193,7 @@
 
     <view class="form-actions">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
-      <u-button type="primary" text="提交" :loading="submitting" @click="submitForm"></u-button>
+      <u-button v-if="checkPermi('business:stockPrepare:createStockOut')" type="primary" text="提交" :loading="submitting" @click="submitForm"></u-button>
     </view>
   </view>
 </template>
@@ -201,8 +201,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getPlan } from '@/api/business/plan'
-import { addShipment } from '@/api/business/shipment'
+import { addStockOut } from '@/api/wms/stockOut'
 import { listProduct } from '@/api/wms/product'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const planId = ref(null)
@@ -460,31 +461,35 @@ async function submitForm() {
 
   submitting.value = true
   try {
+    const today = new Date().toISOString().slice(0, 10)
     const submitData = {
-      planId: form.planId,
+      stockOutType: 1,
+      outTargetType: 1,
       enterpriseId: form.enterpriseId,
       enterpriseName: form.enterpriseName,
+      planId: form.planId,
+      shipType: '2',
+      stockOutDate: today,
       contactPerson: form.contactPerson,
       contactPhone: form.contactPhone,
       shippingAddress: form.shippingAddress,
       remark: form.remark || undefined,
       items: form.items.map(item => ({
-        planItemId: item.planItemId || undefined,
         productId: item.productId,
         productName: item.productName,
-        supplierId: item.supplierId,
-        supplierName: item.supplierName || '',
+        productCode: item.productCode || '',
         unitType: item.unitType,
         packQty: item.packQty || 1,
         quantity: parseInt(item.quantity) || 0,
-        spec: item.spec || '',
-        salePrice: parseFloat(item.salePrice) || 0,
-        discountPrice: parseFloat(item.discountPrice) || 0,
-        amount: parseFloat(item.amount) || 0
+        price: parseFloat(item.discountPrice) || 0,
+        amount: parseFloat(item.amount) || 0,
+        supplierId: item.supplierId,
+        supplierName: item.supplierName || '',
+        planItemId: item.planItemId || undefined
       }))
     }
-    await addShipment(submitData)
-    uni.showToast({ title: '新建出货单成功', icon: 'success' })
+    await addStockOut(submitData)
+    uni.showToast({ title: '新建出库单成功', icon: 'success' })
     setTimeout(() => goBack(), 1500)
   } catch (e) {
     console.error('提交失败:', e)

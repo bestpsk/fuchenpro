@@ -19,6 +19,7 @@ class BizInventoryController
     {
         $service = new BizInventoryService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectInventoryList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -28,6 +29,7 @@ class BizInventoryController
     {
         $service = new BizInventoryService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectWarnList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -37,8 +39,9 @@ class BizInventoryController
     {
         $parts = explode('/', $request->path());
         $productId = intval(end($parts));
+        $params['login_user'] = $request->loginUser;
         $service = new BizInventoryService();
-        $inventory = $service->selectInventoryByProductId($productId);
+        $inventory = $service->selectInventoryByProductId($productId, $params);
         if (!$inventory) return AjaxResult::error('库存记录不存在');
         return AjaxResult::success($inventory);
     }

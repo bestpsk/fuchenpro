@@ -68,7 +68,7 @@
       <el-table-column label="状态" prop="status" width="70" align="center">
         <template #default="scope">
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
-            @change="(val) => handleStatusChange(scope.row, val)" />
+            @change="(val) => handleStatusChange(scope.row, val)" v-hasPermi="['wms:product:edit']" />
         </template>
       </el-table-column>
       <el-table-column label="操作" min-width="150" align="center">

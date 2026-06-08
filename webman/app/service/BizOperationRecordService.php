@@ -8,6 +8,8 @@ use app\model\BizCustomerPackage;
 use app\model\BizSalesOrder;
 use app\model\BizOrderItem;
 use app\service\BizCustomerArchiveService;
+use app\service\DataScopeService;
+use support\Db;
 
 /**
  * 操作记录服务层
@@ -32,6 +34,10 @@ class BizOperationRecordService
         if (!empty($params['product_name'])) $query->where('product_name', 'like', '%' . $params['product_name'] . '%');
         if (!empty($params['operator_user_id'])) $query->where('operator_user_id', $params['operator_user_id']);
         if (!empty($params['satisfaction'])) $query->where('satisfaction', $params['satisfaction']);
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('operator_user_id', $visibleUserIds);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $query->leftJoin('biz_customer_package as cp', 'biz_operation_record.package_id', '=', 'cp.package_id')
@@ -42,94 +48,107 @@ class BizOperationRecordService
     // 新增操作记录：自动生成批次号，套餐消费时扣减套餐项目次数并检查套餐是否用完，非套餐消费时清空套餐关联字段，最后写入客户档案
     public function insertRecord($data)
     {
-        $data['create_time'] = date('Y-m-d H:i:s');
-        if (empty($data['operation_date'])) $data['operation_date'] = date('Y-m-d');
-        if (empty($data['operation_type'])) $data['operation_type'] = '0';
+        return Db::transaction(function () use ($data) {
+            $data['create_time'] = date('Y-m-d H:i:s');
+            if (empty($data['operation_date'])) $data['operation_date'] = date('Y-m-d');
+            if (empty($data['operation_type'])) $data['operation_type'] = '0';
 
-        if (empty($data['operation_batch_id'])) {
-            $data['operation_batch_id'] = 'OB' . date('YmdHis') . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-        }
+            if (empty($data['operation_batch_id'])) {
+                $data['operation_batch_id'] = 'OB' . date('YmdHis') . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            }
 
-        if ($data['operation_type'] === '0' && !empty($data['package_item_id'])) {
-            $packageItem = BizPackageItem::find($data['package_item_id']);
-            if ($packageItem) {
-                if (empty($data['consume_amount'])) {
-                    $data['consume_amount'] = round($packageItem->unit_price * intval($data['operation_quantity'] ?? 1), 2);
-                }
-
-                $packageItem->used_quantity += intval($data['operation_quantity'] ?? 1);
-                $packageItem->remaining_quantity = $packageItem->total_quantity - $packageItem->used_quantity;
-                if ($packageItem->remaining_quantity < 0) $packageItem->remaining_quantity = 0;
-                $packageItem->save();
-
-                if ($packageItem->remaining_quantity <= 0) {
-                    $allUsed = BizPackageItem::where('package_id', $packageItem->package_id)
-                        ->where('remaining_quantity', '>', 0)->count();
-                    if ($allUsed === 0) {
-                        BizCustomerPackage::where('package_id', $packageItem->package_id)
-                            ->update(['status' => '1', 'update_time' => date('Y-m-d H:i:s')]);
+            if ($data['operation_type'] === '0' && !empty($data['package_item_id'])) {
+                $packageItem = BizPackageItem::find($data['package_item_id']);
+                if ($packageItem) {
+                    if (empty($data['consume_amount'])) {
+                        $data['consume_amount'] = round($packageItem->unit_price * intval($data['operation_quantity'] ?? 1), 2);
                     }
-                }
 
-                if (empty($data['enterprise_name']) || empty($data['store_name'])) {
-                    $package = BizCustomerPackage::find($packageItem->package_id);
-                    if ($package) {
-                        if (empty($data['enterprise_name'])) $data['enterprise_name'] = $package->enterprise_name ?? '';
-                        if (empty($data['store_name'])) $data['store_name'] = $package->store_name ?? '';
+                    $qty = intval($data['operation_quantity'] ?? 1);
+
+                    // 条件increment，原子检查+扣减
+                    $affected = BizPackageItem::where('item_id', $packageItem->item_id)
+                        ->whereRaw('used_quantity + ? <= total_quantity', [$qty])
+                        ->increment('used_quantity', $qty);
+                    if ($affected === 0) {
+                        throw new \Exception('套餐项目剩余次数不足');
+                    }
+
+                    // 更新 remaining_quantity
+                    $freshItem = BizPackageItem::find($packageItem->item_id);
+                    $remaining = $freshItem->total_quantity - $freshItem->used_quantity;
+                    if ($remaining < 0) $remaining = 0;
+                    BizPackageItem::where('item_id', $packageItem->item_id)->update(['remaining_quantity' => $remaining]);
+
+                    if ($remaining <= 0) {
+                        $allUsed = BizPackageItem::where('package_id', $packageItem->package_id)
+                            ->where('remaining_quantity', '>', 0)->count();
+                        if ($allUsed === 0) {
+                            BizCustomerPackage::where('package_id', $packageItem->package_id)
+                                ->update(['status' => '2', 'update_time' => date('Y-m-d H:i:s')]);
+                        }
+                    }
+
+                    if (empty($data['enterprise_name']) || empty($data['store_name'])) {
+                        $package = BizCustomerPackage::find($packageItem->package_id);
+                        if ($package) {
+                            if (empty($data['enterprise_name'])) $data['enterprise_name'] = $package->enterprise_name ?? '';
+                            if (empty($data['store_name'])) $data['store_name'] = $package->store_name ?? '';
+                        }
                     }
                 }
             }
-        }
 
-        if ($data['operation_type'] === '1') {
-            $data['package_id'] = null;
-            $data['package_no'] = null;
-            $data['package_item_id'] = null;
-            $data['consume_amount'] = 0;
-        }
+            if ($data['operation_type'] === '1') {
+                $data['package_id'] = null;
+                $data['package_no'] = null;
+                $data['package_item_id'] = null;
+                $data['consume_amount'] = 0;
+            }
 
-        if (empty($data['enterprise_id']) || empty($data['enterprise_name']) || empty($data['store_id']) || empty($data['store_name'])) {
-            if (!empty($data['customer_id'])) {
-                $customer = \app\model\BizCustomer::find($data['customer_id']);
-                if ($customer) {
-                    if (empty($data['enterprise_id'])) $data['enterprise_id'] = $customer->enterprise_id;
-                    if (empty($data['enterprise_name'])) $data['enterprise_name'] = $customer->enterprise_name ?? '';
-                    if (empty($data['store_id'])) $data['store_id'] = $customer->store_id;
-                    if (empty($data['store_name'])) $data['store_name'] = $customer->store_name ?? '';
+            if (empty($data['enterprise_id']) || empty($data['enterprise_name']) || empty($data['store_id']) || empty($data['store_name'])) {
+                if (!empty($data['customer_id'])) {
+                    $customer = \app\model\BizCustomer::find($data['customer_id']);
+                    if ($customer) {
+                        if (empty($data['enterprise_id'])) $data['enterprise_id'] = $customer->enterprise_id;
+                        if (empty($data['enterprise_name'])) $data['enterprise_name'] = $customer->enterprise_name ?? '';
+                        if (empty($data['store_id'])) $data['store_id'] = $customer->store_id;
+                        if (empty($data['store_name'])) $data['store_name'] = $customer->store_name ?? '';
+                    }
                 }
             }
-        }
 
-        $record = BizOperationRecord::create($data);
+            $record = BizOperationRecord::create($data);
 
-        try {
-            $this->createOperationOrder($record, $data);
-        } catch (\Exception $e) {
-            \support\Log::error('创建操作订单失败: ' . $e->getMessage(), [
-                'record_id' => $record->record_id ?? 'unknown',
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-        }
-
-        try {
-            $archiveService = new BizCustomerArchiveService();
-            $result = $archiveService->insertArchiveFromOperation($record);
-            if (!$result) {
-                \support\Log::warning('操作档案返回null', [
-                    'record_id' => $record->record_id,
-                    'customer_id' => $record->customer_id ?? 'NULL'
+            try {
+                $this->createOperationOrder($record, $data);
+            } catch (\Exception $e) {
+                \support\Log::error('创建操作订单失败: ' . $e->getMessage(), [
+                    'record_id' => $record->record_id ?? 'unknown',
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
                 ]);
             }
-        } catch (\Exception $e) {
-            \support\Log::error('写入操作档案失败: ' . $e->getMessage(), [
-                'record_id' => $record->record_id ?? 'unknown',
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-        }
 
-        return $record;
+            try {
+                $archiveService = new BizCustomerArchiveService();
+                $result = $archiveService->insertArchiveFromOperation($record);
+                if (!$result) {
+                    \support\Log::warning('操作档案返回null', [
+                        'record_id' => $record->record_id,
+                        'customer_id' => $record->customer_id ?? 'NULL'
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \support\Log::error('写入操作档案失败: ' . $e->getMessage(), [
+                    'record_id' => $record->record_id ?? 'unknown',
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+            }
+
+            return $record;
+        });
     }
 
     // 根据ID批量删除操作记录
@@ -239,7 +258,7 @@ class BizOperationRecordService
             'store_name' => $storeName,
             'deal_amount' => $amount,
             'paid_amount' => 0,
-            'owed_amount' => 0,
+            'owed_amount' => $amount,
             'order_status' => '1',
             'source_type' => '1',
             'operation_batch_id' => $record->operation_batch_id,
@@ -276,9 +295,9 @@ class BizOperationRecordService
     private function generateOperationOrderNo()
     {
         $date = date('Ymd');
-        $lastOrder = BizSalesOrder::where('order_no', 'like', 'OP' . $date . '%')
-            ->orderBy('order_id', 'desc')->first();
-        $seq = $lastOrder ? intval(substr($lastOrder->order_no, -4)) + 1 : 1;
+        $key = 'operation_order_no:' . $date;
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
         return 'OP' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 }

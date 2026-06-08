@@ -208,7 +208,7 @@
                 <el-option
                   v-for="item in userOptions"
                   :key="item.userId"
-                  :label="item.nickName || item.nickName || item.userName"
+                  :label="item.nickName || item.userName"
                   :value="item.userId"
                 />
               </el-select>
@@ -389,7 +389,7 @@ function handleEnterpriseChange(val) {
 function handleUserChange(val) {
   const user = userOptions.value.find(item => item.userId === val)
   if (user) {
-    form.value.serverUserName = user.nickName || user.nickName || user.userName
+    form.value.serverUserName = user.nick_name || user.nickName || user.userName
   }
 }
 

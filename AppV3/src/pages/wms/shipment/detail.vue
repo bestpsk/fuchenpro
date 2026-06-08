@@ -2,17 +2,21 @@
   <view class="detail-container">
     <view class="info-card">
       <view class="card-header-row">
-        <text class="shipment-no">{{ info.shipmentNo || '-' }}</text>
-        <view class="status-badge" :class="'status-' + String(info.shipmentStatus)">{{ getStatusLabel(info.shipmentStatus) }}</view>
+        <text class="shipment-no">{{ info.stockOutNo || '-' }}</text>
+        <view class="status-badge" :class="'status-' + String(info.status)">{{ getStatusLabel(info.status) }}</view>
       </view>
       <view class="info-body">
         <view class="info-row">
           <text class="info-label">企业</text>
-          <text class="info-value">{{ info.enterpriseName || (info.enterprise && info.enterprise.enterpriseName) || '-' }}</text>
+          <text class="info-value">{{ info.enterpriseName || '-' }}</text>
         </view>
-        <view class="info-row" v-if="info.plan && info.plan.planName">
-          <text class="info-label">方案</text>
-          <text class="info-value">{{ info.plan.planName }}</text>
+        <view class="info-row" v-if="info.planId">
+          <text class="info-label">关联方案</text>
+          <text class="info-value">{{ info.planName || '-' }}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">发货方式</text>
+          <text class="info-value">{{ getShipTypeLabel(info.shipType) }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">收货人</text>
@@ -42,12 +46,12 @@
       </view>
     </view>
 
-    <view class="info-card" v-if="shipmentItems.length > 0">
+    <view class="info-card" v-if="stockOutItems.length > 0">
       <view class="section-header">
-        <view class="card-title">出货明细</view>
-        <text class="item-count">{{ shipmentItems.length }}项</text>
+        <view class="card-title">出库明细</view>
+        <text class="item-count">{{ stockOutItems.length }}项</text>
       </view>
-      <view v-for="(item, idx) in shipmentItems" :key="idx" class="item-card">
+      <view v-for="(item, idx) in stockOutItems" :key="idx" class="item-card">
         <view class="item-header">
           <text class="item-index">{{ idx + 1 }}.</text>
           <text class="item-name">{{ item.productName || '-' }}</text>
@@ -66,15 +70,9 @@
           <view class="info-line">
             <view class="info-left">
               <text class="info-label">单价</text>
-              <text class="info-value">¥{{ formatAmount(item.salePrice) }}</text>
+              <text class="info-value">¥{{ formatAmount(item.price || item.salePrice) }}</text>
             </view>
             <view class="info-right">
-              <text class="info-label">折扣价</text>
-              <text class="info-value price">¥{{ formatAmount(item.discountPrice) }}</text>
-            </view>
-          </view>
-          <view class="info-line summary-line">
-            <view class="info-left">
               <text class="info-label">金额</text>
               <text class="info-value amount">¥{{ formatAmount(item.amount) }}</text>
             </view>
@@ -83,7 +81,7 @@
       </view>
     </view>
 
-    <view class="info-card" v-if="String(info.shipmentStatus) === '2' || String(info.shipmentStatus) === '3'">
+    <view class="info-card" v-if="String(info.shipType) === '2' && (String(info.status) === '2' || String(info.status) === '3')">
       <view class="card-title">物流信息</view>
       <view class="info-body">
         <view class="info-row">
@@ -94,9 +92,9 @@
           <text class="info-label">物流单号</text>
           <text class="info-value">{{ info.logisticsNo || '-' }}</text>
         </view>
-        <view class="info-row" v-if="info.shipmentDate">
+        <view class="info-row" v-if="info.shipDate">
           <text class="info-label">发货日期</text>
-          <text class="info-value">{{ info.shipmentDate }}</text>
+          <text class="info-value">{{ info.shipDate }}</text>
         </view>
         <view class="info-row" v-if="info.receiptDate">
           <text class="info-label">收货日期</text>
@@ -107,25 +105,11 @@
 
     <view class="action-section" v-if="showActions">
       <view class="action-btns">
-        <u-button v-if="canAuditPass" type="success" text="审核通过" @click="handleAuditPass"></u-button>
-        <u-button v-if="canAuditReject" type="error" plain text="审核驳回" @click="handleAuditReject"></u-button>
+        <u-button v-if="canConfirm" type="success" text="确认出库" @click="handleConfirm"></u-button>
         <u-button v-if="canShip" type="primary" text="发货" @click="showShipPopup = true"></u-button>
-        <u-button v-if="canConfirm" type="success" text="确认收货" @click="handleConfirmReceipt"></u-button>
+        <u-button v-if="canConfirmReceipt" type="success" text="确认收货" @click="handleConfirmReceipt"></u-button>
       </view>
     </view>
-
-    <u-popup :show="showRejectPopup" mode="center" round="16" @close="showRejectPopup = false">
-      <view class="popup-content">
-        <view class="popup-title">驳回原因</view>
-        <view class="popup-input-box">
-          <textarea class="popup-textarea" v-model="rejectReason" placeholder="请输入驳回原因" placeholder-class="field-placeholder" :maxlength="200" auto-height></textarea>
-        </view>
-        <view class="popup-actions">
-          <u-button type="info" plain text="取消" @click="showRejectPopup = false"></u-button>
-          <u-button type="error" text="确认驳回" @click="confirmReject"></u-button>
-        </view>
-      </view>
-    </u-popup>
 
     <u-popup :show="showShipPopup" mode="center" round="16" @close="showShipPopup = false">
       <view class="popup-content">
@@ -153,19 +137,24 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getShipment, auditShipment, shipShipment, confirmReceipt } from '@/api/business/shipment'
+import { onShow } from '@dcloudio/uni-app'
+import { getStockOut, confirmStockOut, shipStockOut, confirmReceipt } from '@/api/wms/stockOut'
+import { checkPermi } from '@/utils/permission'
 
 const info = ref({})
-const shipmentItems = ref([])
-const shipmentId = ref(null)
-const showRejectPopup = ref(false)
+const stockOutItems = ref([])
+const stockOutId = ref(null)
 const showShipPopup = ref(false)
-const rejectReason = ref('')
 const shipForm = reactive({ logisticsCompany: '', logisticsNo: '' })
 
 function getStatusLabel(status) {
-  const map = { '0': '待审核', '1': '已审核', '2': '已发货', '3': '已收货', '4': '已驳回' }
+  const map = { '0': '待确认', '1': '已确认(待发货)', '2': '已发货', '3': '已完成' }
   return map[String(status)] || '未知'
+}
+
+function getShipTypeLabel(shipType) {
+  const map = { '0': '无需发货', '1': '自提', '2': '物流' }
+  return map[String(shipType)] || '-'
 }
 
 function formatAmount(val) {
@@ -174,22 +163,21 @@ function formatAmount(val) {
   return num.toFixed(2)
 }
 
-const canAuditPass = computed(() => String(info.value.shipmentStatus) === '0')
-const canAuditReject = computed(() => String(info.value.shipmentStatus) === '0')
-const canShip = computed(() => String(info.value.shipmentStatus) === '1')
-const canConfirm = computed(() => String(info.value.shipmentStatus) === '2')
-const showActions = computed(() => canAuditPass.value || canAuditReject.value || canShip.value || canConfirm.value)
+const canConfirm = computed(() => String(info.value.status) === '0' && checkPermi('wms:stockOut:confirm'))
+const canShip = computed(() => String(info.value.status) === '1' && checkPermi('wms:stockOut:ship'))
+const canConfirmReceipt = computed(() => String(info.value.status) === '2' && checkPermi('wms:stockOut:confirmReceipt'))
+const showActions = computed(() => canConfirm.value || canShip.value || canConfirmReceipt.value)
 
 async function loadDetail() {
-  if (!shipmentId.value) return
+  if (!stockOutId.value) return
   try {
     uni.showLoading({ title: '加载中...' })
-    const response = await getShipment(shipmentId.value)
+    const response = await getStockOut(stockOutId.value)
     const data = response.data || response
     info.value = data
-    shipmentItems.value = data.items || []
+    stockOutItems.value = data.items || []
   } catch (e) {
-    console.error('加载出货详情失败:', e)
+    console.error('加载出库详情失败:', e)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally { uni.hideLoading() }
 }
@@ -198,38 +186,27 @@ function callPhone() {
   if (info.value.contactPhone) uni.makePhoneCall({ phoneNumber: info.value.contactPhone })
 }
 
-function handleAuditPass() {
-  uni.showModal({ title: '提示', content: '确认审核通过?', success: async (res) => {
+function handleConfirm() {
+  uni.showModal({ title: '提示', content: '确认出库后将减少库存数量，是否继续？', success: async (res) => {
     if (res.confirm) {
       try {
-        await auditShipment({ shipmentId: shipmentId.value, passed: true })
-        uni.showToast({ title: '审核通过', icon: 'success' })
+        await confirmStockOut(stockOutId.value)
+        uni.showToast({ title: '确认出库成功', icon: 'success' })
         loadDetail()
-      } catch (e) { console.error('审核失败:', e) }
+      } catch (e) { console.error('确认出库失败:', e) }
     }
   }})
-}
-
-function handleAuditReject() {
-  rejectReason.value = ''
-  showRejectPopup.value = true
-}
-
-async function confirmReject() {
-  if (!rejectReason.value.trim()) { uni.showToast({ title: '请输入驳回原因', icon: 'none' }); return }
-  try {
-    await auditShipment({ shipmentId: shipmentId.value, passed: false, auditRemark: rejectReason.value })
-    uni.showToast({ title: '已驳回', icon: 'success' })
-    showRejectPopup.value = false
-    loadDetail()
-  } catch (e) { console.error('驳回失败:', e) }
 }
 
 async function confirmShip() {
   if (!shipForm.logisticsCompany.trim()) { uni.showToast({ title: '请输入物流公司', icon: 'none' }); return }
   if (!shipForm.logisticsNo.trim()) { uni.showToast({ title: '请输入物流单号', icon: 'none' }); return }
   try {
-    await shipShipment({ shipmentId: shipmentId.value, logisticsCompany: shipForm.logisticsCompany, logisticsNo: shipForm.logisticsNo })
+    await shipStockOut(stockOutId.value, {
+      shipType: '2',
+      logisticsCompany: shipForm.logisticsCompany,
+      logisticsNo: shipForm.logisticsNo
+    })
     uni.showToast({ title: '发货成功', icon: 'success' })
     showShipPopup.value = false
     loadDetail()
@@ -237,11 +214,11 @@ async function confirmShip() {
 }
 
 function handleConfirmReceipt() {
-  uni.showModal({ title: '提示', content: '确认已收货？确认后将扣减库存和更新方案金额。', success: async (res) => {
+  uni.showModal({ title: '提示', content: '确认已收货？', success: async (res) => {
     if (res.confirm) {
       try {
-        await confirmReceipt(shipmentId.value)
-        uni.showToast({ title: '已确认收货', icon: 'success' })
+        await confirmReceipt(stockOutId.value)
+        uni.showToast({ title: '确认收货成功', icon: 'success' })
         loadDetail()
       } catch (e) { console.error('确认收货失败:', e) }
     }
@@ -251,8 +228,12 @@ function handleConfirmReceipt() {
 onMounted(() => {
   const pages = getCurrentPages()
   const options = pages[pages.length - 1].options || {}
-  shipmentId.value = options.id ? parseInt(options.id) : null
+  stockOutId.value = options.id ? parseInt(options.id) : null
   loadDetail()
+})
+
+onShow(() => {
+  if (stockOutId.value) loadDetail()
 })
 </script>
 
@@ -268,7 +249,6 @@ page { background-color: #F5F7FA; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
   &.status-2 { background: #e8f0fe; color: #3D6DF7; }
   &.status-3 { background: #F0E8FF; color: #8B5CF6; }
-  &.status-4 { background: #FFECE8; color: #F53F3F; }
 }
 
 .card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
@@ -295,10 +275,8 @@ page { background-color: #F5F7FA; }
   .info-right { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; margin-left: auto; }
   .info-label { color: #86909C; white-space: nowrap; font-size: 24rpx; }
   .info-value { color: #4E5969; font-size: 25rpx;
-    &.price { color: #FF6B35; font-weight: 500; }
     &.amount { color: #FF6B35; font-weight: 600; }
   }
-  &.summary-line { margin-top: 4rpx; padding-top: 6rpx; }
 }
 
 .action-section { position: fixed; left: 24rpx; right: 24rpx; bottom: 40rpx; background: #fff; border-radius: 16rpx; padding: 20rpx; box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06); z-index: 100; }
@@ -309,7 +287,6 @@ page { background-color: #F5F7FA; }
 .popup-content { padding: 30rpx; background: #fff; border-radius: 16rpx; width: 600rpx; }
 .popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; text-align: center; }
 .popup-input-box { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; margin-bottom: 16rpx; }
-.popup-textarea { width: 100%; min-height: 160rpx; font-size: 28rpx; color: #1D2129; line-height: 1.6; }
 .popup-input { width: 100%; font-size: 28rpx; color: #1D2129; height: 72rpx; }
 .popup-field { margin-bottom: 8rpx; }
 .popup-field-label { font-size: 26rpx; color: #4E5969; font-weight: 500; margin-bottom: 8rpx; }

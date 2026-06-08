@@ -102,7 +102,7 @@
           </el-table-column>
           <el-table-column label="实际数量" min-width="150" align="center">
             <template #default="scope">
-              <el-input-number v-if="!isView" v-model="scope.row.actualQuantity" :min="0" :step="scope.row.unitType === '1' ? (scope.row.packQty || 1) : 1" @change="calcDiff(scope.$index)" style="width: 100%" />
+              <el-input-number v-if="!isView" v-model="scope.row.actualQuantity" :min="0" :step="1" @change="calcDiff(scope.$index)" style="width: 100%" />
               <span v-else>{{ formatItemQuantity(scope.row, scope.row.actualQuantity) }}</span>
             </template>
           </el-table-column>
@@ -185,9 +185,10 @@ function formatItemQuantity(item, qty) {
   qty = qty || 0
   if (unitType === '1') {
     if (packQty > 1 && specLabel) {
-      const mainQty = qty / packQty
+      const mainQty = qty
+      const subQty = Math.round(qty * packQty)
       const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
-      return mainQtyStr + unitLabel + '（' + Math.round(qty) + specLabel + '）'
+      return mainQtyStr + unitLabel + '（' + subQty + specLabel + '）'
     } else if (unitLabel) {
       return qty + unitLabel
     } else {
@@ -211,10 +212,20 @@ function formatDiffQuantity(item) {
   const packQty = item.packQty || 1
   const unitLabel = getUnitLabel(item.unit)
   const specLabel = getSpecLabel(item.spec)
+  const unitType = item.unitType || '2'
   if (packQty > 1 && specLabel) {
-    const mainQty = diff / packQty
-    const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
-    return prefix + mainQtyStr + unitLabel + '（' + prefix + diff + specLabel + '）'
+    if (unitType === '1') {
+      // diff是主单位数量
+      const mainQty = diff
+      const subQty = Math.round(diff * packQty)
+      const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
+      return prefix + mainQtyStr + unitLabel + '（' + prefix + subQty + specLabel + '）'
+    } else {
+      // diff是副单位数量
+      const mainQty = diff / packQty
+      const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
+      return prefix + mainQtyStr + unitLabel + '（' + prefix + Math.round(diff) + specLabel + '）'
+    }
   } else if (unitLabel) {
     return prefix + diff + unitLabel
   } else {
@@ -248,7 +259,7 @@ function reset() {
 function handleAdd() {
   reset()
   loadInventoryData().then(res => {
-    form.value.items = (res.data || []).map(item => ({ ...item, unitType: item.unitType || '2', actualQuantity: item.systemQuantity, diffQuantity: 0 }))
+    form.value.items = (res.data || []).map(item => ({ ...item, unitType: item.unitType || '2', _prevUnitType: item.unitType || '2', actualQuantity: item.systemQuantity, diffQuantity: 0 }))
     isView.value = false; dialogTitle.value = "新增盘点单"; open.value = true
   })
 }
@@ -258,6 +269,7 @@ function handleUpdate(row) {
   getStockCheck(row.stockCheckId).then(response => {
     form.value = response.data
     if (!form.value.items) form.value.items = []
+    form.value.items.forEach(item => { item._prevUnitType = item.unitType || '2'; item._rawSystemQty = item.systemQuantity; item._rawActualQty = item.actualQuantity })
     isView.value = false; dialogTitle.value = "修改盘点单"; open.value = true
   })
 }
@@ -267,6 +279,7 @@ function handleView(row) {
   getStockCheck(row.stockCheckId).then(response => {
     form.value = response.data
     if (!form.value.items) form.value.items = []
+    form.value.items.forEach(item => { item._prevUnitType = item.unitType || '2' })
     isView.value = true; dialogTitle.value = "查看盘点单"; open.value = true
   })
 }
@@ -278,9 +291,35 @@ function handleConfirm(row) {
 function calcDiff(index) {
   const item = form.value.items[index]
   item.diffQuantity = item.actualQuantity - item.systemQuantity
+  // 同步更新备份字段（根据当前单位类型换算回副单位）
+  const packQty = item.packQty || 1
+  if (item.unitType === '1' && packQty > 1) {
+    item._rawActualQty = Math.round(item.actualQuantity * packQty * 100) / 100
+  } else {
+    item._rawActualQty = item.actualQuantity
+  }
 }
 
 function onUnitTypeChange(index) {
+  const item = form.value.items[index]
+  const newUnitType = item.unitType
+  const packQty = item.packQty || 1
+
+  // 从备份字段重新计算，避免反复乘除导致浮点精度丢失
+  const rawSystemQty = item._rawSystemQty
+  const rawActualQty = item._rawActualQty
+
+  if (newUnitType === '1') {
+    // 主单位：副单位数量除以packQty
+    item.systemQuantity = packQty > 1 ? Math.round(rawSystemQty / packQty * 100) / 100 : rawSystemQty
+    item.actualQuantity = packQty > 1 ? Math.round(rawActualQty / packQty * 100) / 100 : rawActualQty
+  } else {
+    // 副单位：直接使用备份值（备份值始终为副单位）
+    item.systemQuantity = rawSystemQty
+    item.actualQuantity = rawActualQty
+  }
+
+  item._prevUnitType = newUnitType
   calcDiff(index)
 }
 

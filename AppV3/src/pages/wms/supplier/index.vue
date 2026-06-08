@@ -63,7 +63,7 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <view class="fab-btn" @click="handleAdd">
+    <view v-if="checkPermi('wms:supplier:add')" class="fab-btn" @click="handleAdd">
       <u-icon name="plus" size="28" color="#fff"></u-icon>
     </view>
   </view>

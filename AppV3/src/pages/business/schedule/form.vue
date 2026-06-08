@@ -105,8 +105,8 @@
       <u-button type="primary" text="保存" :loading="submitting" @click="submitForm"></u-button>
     </view>
     <view class="form-actions" v-else>
-      <u-button type="primary" plain text="编辑" @click="goEdit"></u-button>
-      <u-button type="error" plain text="删除" @click="handleDelete"></u-button>
+      <u-button v-if="checkPermi('business:schedule:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
+      <u-button v-if="checkPermi('business:schedule:remove')" type="error" plain text="删除" @click="handleDelete"></u-button>
     </view>
   </view>
 </template>
@@ -122,6 +122,7 @@ import { getSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule
 import { listEnterprise } from '@/api/business/enterprise'
 import { listUser } from '@/api/system/user'
 import { getDicts } from '@/api/system/dict/data'
+import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const showUserPicker = ref(false)
@@ -377,12 +378,12 @@ function handleDelete() {
 function goEdit() { mode.value = 'edit'; uni.setNavigationBarTitle({ title: '编辑行程' }) }
 function goBack() { const pages = getCurrentPages(); if (pages.length > 1) uni.navigateBack(); else uni.redirectTo({ url: '/pages/business/schedule/index' }) }
 
-onMounted(() => {
+onMounted(async () => {
   const pages = getCurrentPages()
   const options = pages[pages.length - 1].options || {}
   mode.value = options.mode || 'add'
   scheduleId.value = options.id ? parseInt(options.id) : null
-  loadDictData()
+  await loadDictData()
   loadUserList()
   loadEnterpriseList()
   if (mode.value === 'view') { uni.setNavigationBarTitle({ title: '行程详情' }); loadDetail() }

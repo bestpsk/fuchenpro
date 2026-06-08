@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\BizEnterprise;
 use app\model\BizPlan;
+use app\service\DataScopeService;
 
 /**
  * 企业服务层，处理企业的增删改查、搜索和状态变更，支持拼音自动生成
@@ -32,6 +33,10 @@ class BizEnterpriseService
         }
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
+        }
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('server_user_id', $visibleUserIds);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);
@@ -80,7 +85,7 @@ class BizEnterpriseService
         return BizEnterprise::where('enterprise_id', $data['enterprise_id'])->update($data);
     }
 
-    public function selectEnterpriseForSearch($keyword)
+    public function selectEnterpriseForSearch($keyword, $loginUser = null)
     {
         $query = BizEnterprise::query();
         
@@ -89,6 +94,11 @@ class BizEnterpriseService
                 $q->where('enterprise_name', 'like', '%' . $keyword . '%')
                   ->orWhere('pinyin', 'like', '%' . $keyword . '%');
             });
+        }
+
+        if (!empty($loginUser) && !$loginUser->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
+            $query->whereIn('server_user_id', $visibleUserIds);
         }
         
         return $query->where('status', '0')
