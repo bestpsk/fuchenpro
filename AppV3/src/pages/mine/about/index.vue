@@ -2,7 +2,7 @@
   <view class="about-container">
     <view class="header-section uni-text-center">
       <image style="width: 150rpx; height: 150rpx" src="/static/logo.png" mode="widthFix" />
-      <view class="app-name">馥辰国际</view>
+      <view class="app-name">赛诺美生</view>
     </view>
 
     <view class="content-section">

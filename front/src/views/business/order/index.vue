@@ -43,6 +43,9 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:salesOrder:export']">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -300,6 +303,12 @@ function handleFinanceAudit(row) {
       row.financeAuditStatus = '0'
     })
   }
+}
+
+function handleExport() {
+  proxy.download("business/sales/export", {
+    ...queryParams.value,
+  }, `salesOrder_${new Date().getTime()}.xlsx`)
 }
 
 function handleCancel(row) {

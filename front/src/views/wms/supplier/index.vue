@@ -28,6 +28,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:supplier:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -207,6 +210,10 @@ function handleDelete(row) {
     getList()
     proxy.$modal.msgSuccess("删除成功")
   }).catch(() => {})
+}
+
+function handleExport() {
+  proxy.download("wms/supplier/export", { ...queryParams.value }, `供货商_${new Date().getTime()}.xlsx`)
 }
 
 function cancel() {

@@ -34,6 +34,17 @@
                />
             </el-select>
          </el-form-item>
+         <el-form-item label="登录来源" prop="loginSource">
+            <el-select
+               v-model="queryParams.loginSource"
+               placeholder="登录来源"
+               clearable
+               style="width: 240px"
+            >
+               <el-option label="Web端" value="web" />
+               <el-option label="App端" value="app" />
+            </el-select>
+         </el-form-item>
          <el-form-item label="登录时间" style="width: 308px">
             <el-date-picker
                v-model="dateRange"
@@ -107,6 +118,11 @@
             </template>
          </el-table-column>
          <el-table-column label="描述" align="center" prop="msg" :show-overflow-tooltip="true" />
+         <el-table-column label="登录来源" align="center" prop="loginSource" width="100">
+            <template #default="scope">
+               <el-tag :type="scope.row.loginSource === 'app' ? 'success' : ''">{{ scope.row.loginSource === 'app' ? 'App端' : 'Web端' }}</el-tag>
+            </template>
+         </el-table-column>
          <el-table-column label="访问时间" align="center" prop="loginTime" sortable="custom" :sort-orders="['descending', 'ascending']" width="180">
             <template #default="scope">
                <span>{{ parseTime(scope.row.loginTime) }}</span>
@@ -152,6 +168,7 @@ const queryParams = ref({
   ipaddr: undefined,
   userName: undefined,
   status: undefined,
+  loginSource: undefined,
   orderByColumn: undefined,
   isAsc: undefined
 })

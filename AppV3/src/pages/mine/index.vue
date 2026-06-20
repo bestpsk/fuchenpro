@@ -133,7 +133,7 @@ page {
 
 .header-section {
   background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
-  padding: 60rpx 30rpx 80rpx;
+  padding: 60rpx 30rpx 110rpx;
   color: white;
 }
 

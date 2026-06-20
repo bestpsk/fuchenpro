@@ -1,29 +1,61 @@
 <template>
   <view class="form-container">
     <view class="form-section">
-      <view class="form-field" @click="showUserPicker = mode !== 'view'">
-        <view class="field-input-box">
-          <u-icon name="account-fill" size="18" color="#86909C"></u-icon>
-          <input class="field-input" :value="form.userName" placeholder="* 员工姓名" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
-          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+      <!-- Enterprise mode: Enterprise → Employee(multi) → Date -->
+      <template v-if="formMode === 'enterprise'">
+        <view class="form-field" @click="showEnterprisePicker = mode !== 'view'">
+          <view class="field-input-box">
+            <u-icon name="home-fill" size="18" color="#86909C"></u-icon>
+            <input class="field-input" :value="form.enterpriseName" placeholder="* 企业" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+            <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
         </view>
-      </view>
 
-      <view class="form-field" @click="showEnterprisePicker = mode !== 'view'">
-        <view class="field-input-box">
-          <u-icon name="home-fill" size="18" color="#86909C"></u-icon>
-          <input class="field-input" :value="form.enterpriseName" placeholder="* 企业" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
-          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+        <view class="form-field" @click="showUserPicker = mode !== 'view'">
+          <view class="field-input-box">
+            <u-icon name="account-fill" size="18" color="#86909C"></u-icon>
+            <input class="field-input" :value="selectedUsersText" placeholder="* 选择员工（可多选）" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+            <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
         </view>
-      </view>
 
-      <view class="form-field" @click="openCalendar">
-        <view class="field-input-box">
-          <u-icon name="calendar" size="18" color="#86909C"></u-icon>
-          <input class="field-input" :value="dateRangeText" placeholder="* 选择日期范围" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
-          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+        <view class="form-item">
+          <view class="form-label"><u-icon name="calendar" size="16" color="#86909C" style="margin-right:6rpx"></u-icon>日期</view>
+          <view class="date-tags-row" v-if="form.selectedDates.length > 0">
+            <view class="date-tag" v-for="(date, idx) in form.selectedDates" :key="idx">{{ formatMonthDay(date) }}</view>
+          </view>
+          <view class="date-empty" v-else @click="openCalendar">* 选择日期</view>
+          <view class="date-edit-hint" v-if="mode !== 'view'" @click="openCalendar">点击修改日期</view>
         </view>
-      </view>
+      </template>
+
+      <!-- Employee mode: Employee → Enterprise → Date (original) -->
+      <template v-else>
+        <view class="form-field" @click="showUserPicker = mode !== 'view'">
+          <view class="field-input-box">
+            <u-icon name="account-fill" size="18" color="#86909C"></u-icon>
+            <input class="field-input" :value="form.userName" placeholder="* 员工姓名" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+            <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+
+        <view class="form-field" @click="showEnterprisePicker = mode !== 'view'">
+          <view class="field-input-box">
+            <u-icon name="home-fill" size="18" color="#86909C"></u-icon>
+            <input class="field-input" :value="form.enterpriseName" placeholder="* 企业" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+            <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+
+        <view class="form-item">
+          <view class="form-label"><u-icon name="calendar" size="16" color="#86909C" style="margin-right:6rpx"></u-icon>日期</view>
+          <view class="date-tags-row" v-if="form.selectedDates.length > 0">
+            <view class="date-tag" v-for="(date, idx) in form.selectedDates" :key="idx">{{ formatMonthDay(date) }}</view>
+          </view>
+          <view class="date-empty" v-else @click="openCalendar">* 选择日期范围</view>
+          <view class="date-edit-hint" v-if="mode !== 'view'" @click="openCalendar">点击修改日期</view>
+        </view>
+      </template>
 
       <view class="form-item">
         <view class="form-label">下店目的</view>
@@ -51,6 +83,7 @@
       </view>
     </view>
 
+    <!-- Employee picker popup (supports both single and multi-select) -->
     <u-popup :show="showUserPicker" mode="bottom" round="16" @close="showUserPicker = false">
       <view class="picker-popup">
         <view class="picker-header">
@@ -62,14 +95,24 @@
           <input class="picker-search-input" v-model="userSearchKeyword" placeholder="搜索员工姓名" placeholder-class="field-placeholder" @input="filterUserList" />
         </view>
         <scroll-view scroll-y class="picker-list">
-          <view v-for="item in filteredUserList" :key="item.userId" class="picker-item" @click="onUserConfirm(item)">
-            <text class="picker-item-text">{{ item.nickName || item.userName }}</text>
+          <view v-for="item in filteredUserList" :key="item.userId" class="picker-item" :class="{ 'picker-item-selected': formMode === 'enterprise' && isUserSelected(item.userId) }" @click="onUserConfirm(item)">
+            <view class="picker-item-content">
+              <view v-if="formMode === 'enterprise'" class="picker-checkbox" :class="{ checked: isUserSelected(item.userId) }">
+                <u-icon v-if="isUserSelected(item.userId)" name="checkmark" size="14" color="#fff"></u-icon>
+              </view>
+              <text class="picker-item-text">{{ item.nickName || item.userName }}</text>
+            </view>
           </view>
           <u-empty v-if="filteredUserList.length === 0" mode="data" text="暂无员工数据" :marginTop="40"></u-empty>
         </scroll-view>
+        <view v-if="formMode === 'enterprise'" class="picker-footer">
+          <text class="picker-footer-text">已选 {{ selectedUsers.length }} 人</text>
+          <view class="picker-footer-btn"><u-button type="primary" text="确认" size="small" @click="confirmUserMultiSelect" :disabled="selectedUsers.length === 0"></u-button></view>
+        </view>
       </view>
     </u-popup>
 
+    <!-- Enterprise picker popup -->
     <u-popup :show="showEnterprisePicker" mode="bottom" round="16" @close="showEnterprisePicker = false">
       <view class="picker-popup">
         <view class="picker-header">
@@ -116,6 +159,7 @@
  * @description 行程表单页 - 新增/编辑/查看行程
  * @description 支持三种模式（add/edit/view），包含员工选择器、企业选择器、
  * 日历多选日期、字典加载、日期冲突检测、批量新增多天行程等功能
+ * @description 支持企业排班模式（from=enterprise），字段顺序为企业→日期→员工（多选）
  */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from '@/api/business/schedule'
@@ -130,6 +174,7 @@ const showEnterprisePicker = ref(false)
 const showCalendarPicker = ref(false)
 const mode = ref('add')
 const scheduleId = ref(null)
+const formMode = ref('employee') // 'employee' or 'enterprise'
 
 const userList = ref([])
 const filteredUserList = ref([])
@@ -138,6 +183,7 @@ const userSearchKeyword = ref('')
 const enterpriseList = ref([])
 const filteredEnterpriseList = ref([])
 const enterpriseSearchKeyword = ref('')
+const selectedUsers = ref([]) // Multi-select users for enterprise mode
 
 const purposeColumns = ref([])
 const statusColumns = ref([])
@@ -163,34 +209,45 @@ const form = reactive({
   remark: ''
 })
 
-/** 选中日期的展示文本：1天显示"X月X日"，2-3天用顿号连接，超过3天显示"X月X日 等 N天" */
-const dateRangeText = computed(() => {
-  if (!form.selectedDates || form.selectedDates.length === 0) {
-    return ''
-  }
+/** 格式化日期为"X月X日" */
+function formatMonthDay(dateStr) {
+  if (!dateStr) return ''
+  const [year, month, day] = dateStr.split('-')
+  return `${parseInt(month)}月${parseInt(day)}日`
+}
 
-  const formatMonthDay = (dateStr) => {
-    const [year, month, day] = dateStr.split('-')
-    return `${parseInt(month)}月${parseInt(day)}日`
-  }
-
-  if (form.selectedDates.length === 1) {
-    return formatMonthDay(form.selectedDates[0])
-  }
-
-  if (form.selectedDates.length <= 3) {
-    return form.selectedDates.map(formatMonthDay).join('、')
-  }
-
-  return `${formatMonthDay(form.selectedDates[0])} 等 ${form.selectedDates.length} 天`
+const selectedUsersText = computed(() => {
+  if (formMode.value !== 'enterprise') return form.userName
+  if (selectedUsers.value.length === 0) return ''
+  const names = selectedUsers.value.map(u => u.userName)
+  if (names.length <= 3) return names.join('、')
+  return `${names.slice(0, 3).join('、')} 等${names.length}人`
 })
 
-/** 员工选择确认，更新表单并加载该员工已安排日期用于冲突检测 */
+/** 员工选择确认，企业模式支持多选，员工模式单选 */
 function onUserConfirm(item) {
-  form.userId = item.userId
-  form.userName = item.nickName || item.userName
+  if (formMode.value === 'enterprise') {
+    const idx = selectedUsers.value.findIndex(u => u.userId === item.userId)
+    if (idx >= 0) {
+      selectedUsers.value.splice(idx, 1)
+    } else {
+      selectedUsers.value.push({ userId: item.userId, userName: item.nickName || item.userName })
+    }
+  } else {
+    form.userId = item.userId
+    form.userName = item.nickName || item.userName
+    showUserPicker.value = false
+    loadBookedDates()
+  }
+}
+
+function isUserSelected(userId) {
+  return selectedUsers.value.some(u => u.userId === userId)
+}
+
+function confirmUserMultiSelect() {
   showUserPicker.value = false
-  loadBookedDates()
+  loadBookedDatesForAll()
 }
 
 /** 企业选择确认，更新表单中的企业ID和名称 */
@@ -203,7 +260,11 @@ function onEnterpriseConfirm(item) {
 /** 打开日历选择器，查看模式下禁用，需先选择员工才能打开 */
 async function openCalendar() {
   if (mode.value === 'view') return
-  if (!form.userId) {
+  if (formMode.value === 'employee' && !form.userId) {
+    uni.showToast({ title: '请先选择员工', icon: 'none' })
+    return
+  }
+  if (formMode.value === 'enterprise' && selectedUsers.value.length === 0) {
     uni.showToast({ title: '请先选择员工', icon: 'none' })
     return
   }
@@ -259,12 +320,34 @@ async function loadDictData() {
 
 /** 加载指定员工当月已安排的日期列表，用于日历冲突检测 */
 async function loadBookedDates() {
+  if (formMode.value === 'enterprise') {
+    await loadBookedDatesForAll()
+    return
+  }
   if (!form.userId) return
   try {
     const now = new Date()
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     const response = await getScheduleDates({ userId: form.userId, yearMonth })
     bookedDates.value = response.data || []
+  } catch (e) { console.error('加载已安排日期失败:', e) }
+}
+
+async function loadBookedDatesForAll() {
+  if (selectedUsers.value.length === 0) {
+    bookedDates.value = []
+    return
+  }
+  try {
+    const now = new Date()
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const allDates = new Set()
+    for (const user of selectedUsers.value) {
+      const response = await getScheduleDates({ userId: user.userId, yearMonth })
+      const dates = response.data || []
+      dates.forEach(d => allDates.add(d))
+    }
+    bookedDates.value = Array.from(allDates)
   } catch (e) { console.error('加载已安排日期失败:', e) }
 }
 
@@ -305,12 +388,17 @@ async function loadDetail() {
     const data = response.data || response
     const pItem = purposeColumns.value.find(p => p.value === String(data.purpose))
     const sItem = statusColumns.value.find(s => s.value === String(data.status))
+    // 读取列表页传递的分组日期数据
+    const groupData = uni.getStorageSync('scheduleGroupData')
+    const scheduleDates = (groupData && groupData.scheduleDates) ? groupData.scheduleDates : (data.scheduleDate ? [data.scheduleDate] : [])
+    uni.removeStorageSync('scheduleGroupData')
     Object.assign(form, {
       scheduleId: data.scheduleId,
       userId: data.userId || '',
       userName: data.userName || '',
       enterpriseId: data.enterpriseId || '',
       enterpriseName: data.enterpriseName || '',
+      selectedDates: scheduleDates,
       startDate: data.scheduleDate || '',
       endDate: data.scheduleDate || '',
       purpose: String(data.purpose || ''),
@@ -327,45 +415,98 @@ async function loadDetail() {
  * 提交行程表单，校验员工/企业/日期/目的必填后，
  * 检测选中日期是否与已安排日期冲突，
  * 新增模式调用批量新增接口，编辑模式调用更新接口
+ * 企业模式支持多员工批量提交
  */
 async function submitForm() {
-  if (!form.userName) { uni.showToast({ title: '请选择员工', icon: 'none' }); return }
-  if (!form.enterpriseId) { uni.showToast({ title: '请选择企业', icon: 'none' }); return }
-  if (!form.selectedDates || form.selectedDates.length === 0) { uni.showToast({ title: '请选择至少一个日期', icon: 'none' }); return }
-  if (!form.purpose) { uni.showToast({ title: '请选择下店目的', icon: 'none' }); return }
+  if (formMode.value === 'enterprise') {
+    if (!form.enterpriseId) { uni.showToast({ title: '请选择企业', icon: 'none' }); return }
+    if (!form.selectedDates || form.selectedDates.length === 0) { uni.showToast({ title: '请选择至少一个日期', icon: 'none' }); return }
+    if (selectedUsers.value.length === 0) { uni.showToast({ title: '请选择至少一个员工', icon: 'none' }); return }
+    if (!form.purpose) { uni.showToast({ title: '请选择下店目的', icon: 'none' }); return }
 
-  const conflictDates = form.selectedDates.filter(date => bookedDates.value.includes(date))
-  if (conflictDates.length > 0) {
-    uni.showModal({ title: '日期冲突', content: `以下日期已有安排：${conflictDates.join('、')}`, showCancel: false })
-    return
-  }
-
-  submitting.value = true
-  try {
-    const scheduleList = form.selectedDates.map(scheduleDate => ({
-      userId: form.userId,
-      userName: form.userName,
-      enterpriseId: form.enterpriseId,
-      enterpriseName: form.enterpriseName,
-      scheduleDate,
-      purpose: form.purpose,
-      status: form.status,
-      remark: form.remark
-    }))
-
-    if (form.scheduleId) {
-      await updateSchedule({ scheduleId: form.scheduleId, userId: form.userId, userName: form.userName, enterpriseId: form.enterpriseId, enterpriseName: form.enterpriseName, scheduleDate: form.startDate, purpose: form.purpose, status: form.status, remark: form.remark })
-      uni.showToast({ title: '修改成功', icon: 'success' })
-    } else {
-      await addScheduleBatch(scheduleList)
-      uni.showToast({ title: `新增成功（共${scheduleList.length}天）`, icon: 'success' })
+    const conflicts = []
+    for (const user of selectedUsers.value) {
+      try {
+        const now = new Date()
+        const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+        const response = await getScheduleDates({ userId: user.userId, yearMonth })
+        const userBooked = response.data || []
+        const conflictDates = form.selectedDates.filter(date => userBooked.includes(date))
+        if (conflictDates.length > 0) {
+          conflicts.push(`${user.userName}：${conflictDates.join('、')}`)
+        }
+      } catch (e) { console.error('检查冲突失败:', e) }
     }
-    setTimeout(() => goBack(), 1500)
-  } catch (e) {
-    console.error('提交失败:', e)
-    const msg = e?.msg || e?.message || '操作失败，请重试'
-    uni.showToast({ title: msg, icon: 'none', duration: 2000 })
-  } finally { submitting.value = false }
+
+    if (conflicts.length > 0) {
+      uni.showModal({ title: '日期冲突', content: `以下员工日期已有安排：\n${conflicts.join('\n')}`, showCancel: false })
+      return
+    }
+
+    submitting.value = true
+    try {
+      const scheduleList = []
+      for (const user of selectedUsers.value) {
+        for (const scheduleDate of form.selectedDates) {
+          scheduleList.push({
+            userId: user.userId,
+            userName: user.userName,
+            enterpriseId: form.enterpriseId,
+            enterpriseName: form.enterpriseName,
+            scheduleDate,
+            purpose: form.purpose,
+            status: form.status,
+            remark: form.remark
+          })
+        }
+      }
+      await addScheduleBatch(scheduleList)
+      uni.showToast({ title: `新增成功（${selectedUsers.value.length}人×${form.selectedDates.length}天）`, icon: 'success' })
+      setTimeout(() => goBack(), 1500)
+    } catch (e) {
+      console.error('提交失败:', e)
+      const msg = e?.msg || e?.message || '操作失败，请重试'
+      uni.showToast({ title: msg, icon: 'none', duration: 2000 })
+    } finally { submitting.value = false }
+  } else {
+    if (!form.userName) { uni.showToast({ title: '请选择员工', icon: 'none' }); return }
+    if (!form.enterpriseId) { uni.showToast({ title: '请选择企业', icon: 'none' }); return }
+    if (!form.selectedDates || form.selectedDates.length === 0) { uni.showToast({ title: '请选择至少一个日期', icon: 'none' }); return }
+    if (!form.purpose) { uni.showToast({ title: '请选择下店目的', icon: 'none' }); return }
+
+    const conflictDates = form.selectedDates.filter(date => bookedDates.value.includes(date))
+    if (conflictDates.length > 0) {
+      uni.showModal({ title: '日期冲突', content: `以下日期已有安排：${conflictDates.join('、')}`, showCancel: false })
+      return
+    }
+
+    submitting.value = true
+    try {
+      const scheduleList = form.selectedDates.map(scheduleDate => ({
+        userId: form.userId,
+        userName: form.userName,
+        enterpriseId: form.enterpriseId,
+        enterpriseName: form.enterpriseName,
+        scheduleDate,
+        purpose: form.purpose,
+        status: form.status,
+        remark: form.remark
+      }))
+
+      if (form.scheduleId) {
+        await updateSchedule({ scheduleId: form.scheduleId, userId: form.userId, userName: form.userName, enterpriseId: form.enterpriseId, enterpriseName: form.enterpriseName, scheduleDate: form.startDate, purpose: form.purpose, status: form.status, remark: form.remark })
+        uni.showToast({ title: '修改成功', icon: 'success' })
+      } else {
+        await addScheduleBatch(scheduleList)
+        uni.showToast({ title: `新增成功（共${scheduleList.length}天）`, icon: 'success' })
+      }
+      setTimeout(() => goBack(), 1500)
+    } catch (e) {
+      console.error('提交失败:', e)
+      const msg = e?.msg || e?.message || '操作失败，请重试'
+      uni.showToast({ title: msg, icon: 'none', duration: 2000 })
+    } finally { submitting.value = false }
+  }
 }
 
 function handleDelete() {
@@ -383,6 +524,17 @@ onMounted(async () => {
   const options = pages[pages.length - 1].options || {}
   mode.value = options.mode || 'add'
   scheduleId.value = options.id ? parseInt(options.id) : null
+
+  if (options.from === 'enterprise') {
+    formMode.value = 'enterprise'
+  }
+
+  // 预填企业信息（从企业排班Tab传入）
+  if (options.enterpriseId) {
+    form.enterpriseId = options.enterpriseId
+    form.enterpriseName = options.enterpriseName ? decodeURIComponent(options.enterpriseName) : ''
+  }
+
   await loadDictData()
   loadUserList()
   loadEnterpriseList()
@@ -497,6 +649,31 @@ page { background-color: #F5F7FA; }
   }
 }
 
+.date-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.date-tag {
+  padding: 8rpx 20rpx;
+  background: #F7F8FA;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #4E5969;
+}
+
+.date-empty {
+  font-size: 28rpx;
+  color: #C9CDD4;
+}
+
+.date-edit-hint {
+  font-size: 24rpx;
+  color: #3D6DF7;
+  margin-top: 12rpx;
+}
+
 .picker-popup {
   background: #fff;
   border-radius: 24rpx 24rpx 0 0;
@@ -551,6 +728,54 @@ page { background-color: #F5F7FA; }
 
   &:last-child { border-bottom: none; }
   &:active { background: #F7F8FA; }
+}
+
+.picker-item-selected {
+  background: #F5F7FA;
+}
+
+.picker-item-content {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.picker-checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 6rpx;
+  border: 2rpx solid #C9CDD4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &.checked {
+    background: #3D6DF7;
+    border-color: #3D6DF7;
+  }
+}
+
+.picker-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  border-top: 1rpx solid #F2F3F5;
+  background: #fff;
+}
+
+.picker-footer-text {
+  font-size: 26rpx;
+  color: #86909C;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.picker-footer-btn {
+  flex-shrink: 0;
+  width: auto;
 }
 
 .picker-item-text {

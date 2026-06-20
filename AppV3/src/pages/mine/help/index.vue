@@ -22,11 +22,11 @@ import { ref } from 'vue'
 /** 问题分类列表，包含标题和子问题（含解答内容） */
 const list = ref([
   {
-    title: '馥辰国际问题',
+    title: '赛诺美生问题',
     childList: [
-      { title: '馥辰国际开源吗？', content: '开源' },
-      { title: '馥辰国际可以商用吗？', content: '可以' },
-      { title: '馥辰国际官网地址多少？', content: 'https://fuchenpro.com' }
+      { title: '赛诺美生开源吗？', content: '开源' },
+      { title: '赛诺美生可以商用吗？', content: '可以' },
+      { title: '赛诺美生官网地址多少？', content: 'https://fuchenpro.com' }
     ]
   },
   {

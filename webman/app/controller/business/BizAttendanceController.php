@@ -7,6 +7,8 @@ use app\service\BizAttendanceRuleService;
 use app\service\BizAttendanceRecordService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizAttendanceRecord;
 
 /**
  * 考勤打卡控制器
@@ -122,6 +124,19 @@ class BizAttendanceController
         $params['login_user'] = $request->loginUser;
         $result = $service->selectRecordList($params);
         return TableDataInfo::result($result->items(), $result->total());
+    }
+
+    // 导出考勤记录Excel
+    public function exportRecord(Request $request)
+    {
+        $service = new BizAttendanceRecordService();
+        $params = $request->all();
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $service->selectRecordList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizAttendanceRecord::class);
+        return $excelUtil->exportExcel($list, '考勤记录');
     }
 
     // 根据ID获取考勤记录详情

@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\BizInventory;
 use app\model\BizProduct;
+use app\model\BizWarehouse;
 use app\service\DataScopeService;
 
 /**
@@ -33,6 +34,9 @@ class BizInventoryService
         if (isset($params['is_warn']) && $params['is_warn'] === '1') {
             $query->whereColumn('quantity', '<=', 'warn_qty');
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('warehouse_id', $params['warehouse_id']);
+        }
         // 数据权限过滤：非管理员只能查看其可见用户操作入库的产品库存
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
@@ -46,7 +50,28 @@ class BizInventoryService
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
-        return $query->orderBy('inventory_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        $result = $query->orderBy('inventory_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+
+        // Flatten product and warehouse fields to top level
+        foreach ($result->items() as $item) {
+            $product = $item->product;
+            $item->product_code = $product ? $product->product_code : '';
+            $item->product_name = $product ? $product->product_name : '';
+            $item->category = $product ? $product->category : '';
+            $item->purchase_price = $product ? $product->purchase_price : '';
+            $item->sale_price = $product ? $product->sale_price : '';
+            $item->unit = $product ? $product->unit : '';
+            $item->spec = $product ? $product->spec : '';
+            $item->pack_qty = $product ? $product->pack_qty : 1;
+
+            $warehouse = BizWarehouse::find($item->warehouse_id);
+            $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
+
+            // Hide the nested product relation to avoid data duplication
+            $item->setHidden(['product']);
+        }
+
+        return $result;
     }
 
     public function selectWarnList($params = [])
@@ -55,9 +80,12 @@ class BizInventoryService
         return $this->selectInventoryList($params);
     }
 
-    public function selectInventoryByProductId($productId, $params = [])
+    public function selectInventoryByProductId($productId, $warehouseId = null)
     {
-        $inventory = BizInventory::where('product_id', $productId)->with('product')->first();
-        return $inventory;
+        $query = BizInventory::where('product_id', $productId)->with('product');
+        if ($warehouseId !== null) {
+            $query->where('warehouse_id', $warehouseId);
+        }
+        return $query->first();
     }
 }

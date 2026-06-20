@@ -1,6 +1,14 @@
 <template>
   <view class="form-container">
     <view class="form-section">
+      <view class="form-field" @click="showWarehousePicker = true">
+        <view class="field-label"><text class="required">*</text> 仓库</view>
+        <view class="field-input-box picker-field">
+          <input class="field-input" :value="currentWarehouseName" placeholder="请选择仓库" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
+          <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+        </view>
+      </view>
+
       <view class="form-field" @click="showDatePicker = true">
         <view class="field-label"><text class="required">*</text> 盘点日期</view>
         <view class="field-input-box picker-field">
@@ -69,6 +77,8 @@
 
     <u-datetime-picker :show="showDatePicker" mode="date" @confirm="onDateConfirm" @cancel="showDatePicker = false" @close="showDatePicker = false"></u-datetime-picker>
 
+    <u-picker :show="showWarehousePicker" :columns="warehouseColumns" keyName="warehouseName" @confirm="onWarehouseConfirm" @cancel="showWarehousePicker = false" @close="showWarehousePicker = false"></u-picker>
+
     <view class="form-actions">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
       <u-button type="primary" text="保存" :loading="submitting" @click="submitForm"></u-button>
@@ -79,17 +89,28 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getStockCheck, addStockCheck, updateStockCheck, loadInventoryData } from '@/api/wms/stockCheck'
+import { useWarehouse } from '@/composables/useWarehouse'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const submitting = ref(false)
 const mode = ref('add')
 const stockCheckId = ref(null)
 const showDatePicker = ref(false)
+const showWarehousePicker = ref(false)
 const detailKeyword = ref('')
+
+const warehouseColumns = computed(() => [warehouseList.value])
+const currentWarehouseName = computed(() => {
+  const w = warehouseList.value.find(w => w.warehouseId === form.warehouseId)
+  return w ? w.warehouseName : ''
+})
 
 const form = reactive({
   stockCheckId: undefined,
   checkDate: '',
   remark: '',
+  warehouseId: undefined,
   items: []
 })
 
@@ -111,6 +132,19 @@ function onDateConfirm(e) {
   const date = new Date(e.value)
   form.checkDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
   showDatePicker.value = false
+}
+
+function onWarehouseConfirm(e) {
+  const warehouse = e.value[0]
+  if (warehouse && warehouse.warehouseId !== form.warehouseId) {
+    form.warehouseId = warehouse.warehouseId
+    currentWarehouseId.value = warehouse.warehouseId
+    showWarehousePicker.value = false
+    // 切换仓库后重新加载库存数据
+    loadInventory()
+  } else {
+    showWarehousePicker.value = false
+  }
 }
 
 function onActualChange(item) {
@@ -170,8 +204,8 @@ function onUnitTypeChange(item, type) {
 async function loadInventory() {
   try {
     uni.showLoading({ title: '加载库存数据...' })
-    const response = await loadInventoryData()
-    const data = response.data || response
+    const res = await loadInventoryData({ warehouse_id: currentWarehouseId.value })
+    const data = res.data || res
     const list = data.rows || data.items || data || []
     form.items = list.map(item => ({
       productId: item.productId,
@@ -201,6 +235,7 @@ async function loadDetail() {
       stockCheckId: data.stockCheckId,
       checkDate: data.checkDate || '',
       remark: data.remark || '',
+      warehouseId: data.warehouseId || undefined,
       items: (data.items || []).map(item => {
         const packQty = item.packQty || 1
         const unitType = item.unitType || '2'
@@ -232,12 +267,14 @@ async function loadDetail() {
 }
 
 async function submitForm() {
+  if (!form.warehouseId) { uni.showToast({ title: '请选择仓库', icon: 'none' }); return }
   if (!form.checkDate) { uni.showToast({ title: '请选择盘点日期', icon: 'none' }); return }
 
   submitting.value = true
   try {
     const formData = {
       checkDate: form.checkDate,
+      warehouseId: form.warehouseId,
       remark: form.remark.trim() || null,
       items: form.items.map(item => {
         const packQty = Number(item.packQty) || 1
@@ -277,7 +314,9 @@ function goBack() {
   else uni.redirectTo({ url: '/pages/wms/stockCheck/index' })
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadWarehouses()
+
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const options = currentPage.options || {}
@@ -287,6 +326,7 @@ onMounted(() => {
   if (mode.value === 'add') {
     uni.setNavigationBarTitle({ title: '新增盘点单' })
     form.checkDate = getToday()
+    form.warehouseId = currentWarehouseId.value
     loadInventory()
   } else if (mode.value === 'edit') {
     uni.setNavigationBarTitle({ title: '编辑盘点单' })

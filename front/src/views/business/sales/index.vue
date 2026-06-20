@@ -420,7 +420,7 @@
                     <div class="archive-card-left">
                       <span class="archive-date">{{ item.archiveDate }}</span>
                       <el-tag :type="getSourceTypeTagType(item.sourceType)" size="small">{{ getSourceTypeLabel(item.sourceType) }}</el-tag>
-                      <el-tag v-if="item.archiveType" type="info" size="small" style="margin-left: 4px">{{ getArchiveTypeLabel(item.archiveType) }}</el-tag>
+                      <el-tag v-if="item.archiveType && item.archiveType !== 'sales'" type="info" size="small" style="margin-left: 4px">{{ getArchiveTypeLabel(item.archiveType) }}</el-tag>
                       <span v-if="item.operatorUserName" class="archive-operator">{{ item.operatorUserName }}</span>
                     </div>
                     <el-button v-if="item.sourceType === '3'" link type="danger" size="small" icon="Delete" @click="handleDeleteArchive(item)" v-hasPermi="['business:archive:remove']" />
@@ -583,7 +583,7 @@
                 <el-col :span="12">
                   <el-form-item label="档案类型">
                     <el-select v-model="archiveForm.archiveType" placeholder="请选择档案类型" style="width: 100%">
-                      <el-option v-for="dict in biz_archive_type" :key="dict.value" :label="dict.label" :value="dict.value" />
+                      <el-option v-for="dict in biz_archive_type.filter(d => ['preparation', 'after_sales'].includes(d.value))" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                   </el-form-item>
                 </el-col>
@@ -993,6 +993,7 @@ function onCardItemSelect(index, cardItemId) {
     item.productName = cardItem.cardItemName
     item.quantity = cardItem.defaultQuantity || 1
     item.dealAmount = cardItem.suggestedPrice || 0
+    item.paidAmount = item.dealAmount
   }
 }
 
@@ -1033,6 +1034,7 @@ function submitOrder() {
     loadPackageList()
     loadOrderRecords()
     loadCustomerList()
+    loadArchiveList()
   })
 }
 
@@ -1142,6 +1144,7 @@ function submitOperation(operationType) {
       operationDrawerVisible.value = false
       loadPackageList()
       loadOperationRecords()
+      loadArchiveList()
     })
   } else {
     if (!trialForm.value.productName) return proxy.$modal.msgWarning('请输入操作项目')
@@ -1169,6 +1172,7 @@ function submitOperation(operationType) {
       showTrialForm.value = false
       trialDrawerVisible.value = false
       loadOperationRecords()
+      loadArchiveList()
     })
   }
 }
@@ -1289,6 +1293,7 @@ function submitRepay() {
     loadOwedPackages()
     loadRepaymentRecords()
     loadPackageList()
+    loadArchiveList()
   }).catch(() => {
     proxy.$modal.msgError('还款失败')
   }).finally(() => {
@@ -1376,7 +1381,7 @@ function handleAddArchive() {
     enterpriseId: currentEnterpriseId.value,
     storeId: currentStoreId.value,
     archiveDate: new Date().toISOString().slice(0, 10),
-    archiveType: 'sales',
+    archiveType: 'preparation',
     planItems: [{ name: '', quantity: 1 }],
     amount: 0,
     satisfaction: 5,

@@ -26,6 +26,9 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAddPlan" v-hasPermi="['business:plan:add']">新增方案</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:plan:export']">导出</el-button>
+      </el-col>
     </el-row>
 
     <el-table v-loading="loading" :data="planList">
@@ -51,6 +54,7 @@
       <el-table-column label="操作" align="center" width="240" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleViewPlanDetail(scope.row)">详情</el-button>
+          <el-button link type="warning" icon="Box" @click="handleOpenStockPrepare(scope.row)" v-hasPermi="['business:plan:edit']" :disabled="scope.row.auditStatus !== '2'">备货</el-button>
           <el-button link type="primary" icon="Edit" @click="handleEditPlan(scope.row)" v-hasPermi="['business:plan:edit']" v-if="scope.row.auditStatus === '0' || scope.row.auditStatus === '4'">编辑</el-button>
           <el-button link type="primary" icon="Check" @click="handleSubmitAudit(scope.row)" v-hasPermi="['business:plan:submitAudit']" v-if="scope.row.auditStatus === '0' || scope.row.auditStatus === '4'">提交审核</el-button>
           <el-button link type="primary" icon="Select" @click="handleAuditPlan(scope.row, true)" v-hasPermi="['business:plan:audit']" v-if="scope.row.auditStatus === '1'">通过</el-button>
@@ -211,21 +215,108 @@
         <el-descriptions-item label="审核时间">{{ currentPlan.auditTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="审核备注" :span="2">{{ currentPlan.auditRemark || '-' }}</el-descriptions-item>
       </el-descriptions>
-      <el-divider content-position="left">配赠明细</el-divider>
-      <el-table :data="currentPlan.items || []" border size="small">
-        <el-table-column label="货品名称" prop="productName" />
-        <el-table-column label="供货商" prop="supplierName" />
-        <el-table-column label="单位类型" width="80" align="center">
-          <template #default="scope">{{ scope.row.unitType === '1' ? '主单位整' : '副单位拆' }}</template>
-        </el-table-column>
-        <el-table-column label="数量" prop="quantity" width="80" align="center" />
-        <el-table-column label="规格" prop="spec" width="60" align="center" />
-        <el-table-column label="单价" prop="salePrice" width="90" align="right" />
-        <el-table-column label="总金额" prop="amount" width="100" align="right" />
-        <el-table-column label="已出数量" prop="shippedQuantity" width="80" align="center" />
-        <el-table-column label="剩余数量" prop="remainingQuantity" width="80" align="center" />
-      </el-table>
+      <el-tabs v-model="planDetailTab" style="margin-top: 12px;">
+        <el-tab-pane label="配赠明细" name="items">
+          <el-table :data="currentPlan.items || []" border size="small">
+            <el-table-column label="货品名称" prop="productName" />
+            <el-table-column label="供货商" prop="supplierName" />
+            <el-table-column label="单位类型" width="80" align="center">
+              <template #default="scope">{{ scope.row.unitType === '1' ? '主单位整' : '副单位拆' }}</template>
+            </el-table-column>
+            <el-table-column label="数量" prop="quantity" width="80" align="center" />
+            <el-table-column label="规格" prop="spec" width="60" align="center" />
+            <el-table-column label="单价" prop="salePrice" width="90" align="right" />
+            <el-table-column label="总金额" prop="amount" width="100" align="right" />
+            <el-table-column label="已出数量" prop="shippedQuantity" width="80" align="center" />
+            <el-table-column label="剩余数量" prop="remainingQuantity" width="80" align="center" />
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="备货记录" name="stockPrepare">
+          <el-table :data="stockPrepareList" border size="small" v-loading="stockPrepareLoading">
+            <el-table-column label="备货编号" prop="prepareNo" min-width="120" show-overflow-tooltip />
+            <el-table-column label="备货金额" prop="prepareAmount" width="100" align="right" />
+            <el-table-column label="状态" prop="status" width="90" align="center">
+              <template #default="scope">
+                <el-tag :type="scope.row.status === '0' ? 'warning' : scope.row.status === '1' ? 'success' : 'info'">
+                  {{ scope.row.status === '0' ? '备货中' : scope.row.status === '1' ? '已出库' : '已取消' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
 
+    </el-dialog>
+
+    <!-- 备货对话框 -->
+    <el-dialog title="方案备货" v-model="stockPrepareOpen" width="800px" append-to-body>
+      <div v-if="stockPrepareItems.length > 0">
+        <el-table :data="stockPrepareItems" border size="small">
+          <el-table-column label="货品名称" prop="productName" min-width="120" />
+          <el-table-column label="规格" prop="spec" width="80" align="center" />
+          <el-table-column label="单位" prop="unitLabel" width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" width="90" align="right" />
+          <el-table-column label="方案剩余数量" prop="remainingQuantity" width="110" align="center" />
+          <el-table-column label="本次备货数量" width="140" align="center">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.remainingQuantity" controls-position="right" size="small" style="width: 120px" @change="onStockPrepareQuantityChange" />
+            </template>
+          </el-table-column>
+          <el-table-column label="总价" width="100" align="right">
+            <template #default="scope">
+              {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div v-else>
+        <el-button type="primary" icon="Plus" @click="addStockPrepareManualItem">添加货品</el-button>
+        <el-table :data="stockPrepareManualItems" border size="small" style="margin-top: 10px" v-if="stockPrepareManualItems.length > 0">
+          <el-table-column label="货品名称" min-width="130">
+            <template #default="scope">
+              <el-select v-model="scope.row.productId" placeholder="选择货品" filterable remote :remote-method="searchProduct" @focus="() => searchProduct('')" @change="(val) => onStockPrepareProductSelect(scope.$index, val)" style="width: 100%">
+                <el-option v-for="p in productOptions" :key="p.productId" :label="p.productName" :value="p.productId" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="单位类型" width="120">
+            <template #default="scope">
+              <el-select v-model="scope.row.unitType" @change="onStockPrepareUnitTypeChange(scope.$index)" style="width: 100%">
+                <el-option label="主单位-整" value="1" />
+                <el-option label="副单位-拆" value="2" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="规格" prop="spec" width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" width="90" align="right" />
+          <el-table-column label="数量" width="120" align="center">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right" size="small" style="width: 100px" @change="onStockPrepareManualQuantityChange(scope.$index)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="总价" width="100" align="right">
+            <template #default="scope">
+              {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="60" align="center">
+            <template #default="scope">
+              <el-button link type="danger" icon="Delete" @click="stockPrepareManualItems.splice(scope.$index, 1)" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <el-descriptions :column="2" border size="small">
+        <el-descriptions-item label="方案配赠金额">{{ stockPreparePlan?.giftAmount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="剩余出货金额">
+          <span :style="{ color: stockPrepareRemainingAmount < 0 ? 'red' : '' }">{{ stockPrepareRemainingAmount.toFixed(2) }}</span>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button type="primary" @click="submitStockPrepare" :loading="stockPrepareSubmitting">确认备货</el-button>
+        <el-button @click="stockPrepareOpen = false">取 消</el-button>
+      </template>
     </el-dialog>
 
 
@@ -241,8 +332,12 @@
 import { listPlan, getPlan, addPlan, updatePlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
 import { listEnterprise } from "@/api/business/enterprise"
 import { listProduct } from "@/api/wms/product"
+import { createFromPlan, getActivePreparedAmount, listStockPrepare } from "@/api/business/stockPrepare"
+
+
 
 const { proxy } = getCurrentInstance()
+
 const { biz_product_unit, biz_product_spec } = useDict("biz_product_unit", "biz_product_spec")
 
 function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
@@ -261,6 +356,33 @@ const enterpriseSelectOpen = ref(false)
 const enterpriseList = ref([])
 const enterpriseLoading = ref(false)
 const enterpriseTotal = ref(0)
+const giftAmountManuallyModified = ref(false)
+
+// 备货相关
+const planDetailTab = ref('items')
+const stockPrepareOpen = ref(false)
+const stockPrepareItems = ref([])
+const stockPrepareManualItems = ref([])
+const stockPrepareActiveAmount = ref(0)
+const stockPrepareShippedAmount = ref(0)
+const stockPrepareSubmitting = ref(false)
+const stockPrepareList = ref([])
+const stockPrepareLoading = ref(false)
+const stockPreparePlan = ref(null)
+
+
+
+const stockPrepareTotalAmount = computed(() => {
+  if (stockPrepareItems.value.length > 0) {
+    return stockPrepareItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
+  }
+  return stockPrepareManualItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
+})
+
+const stockPrepareRemainingAmount = computed(() => {
+  const giftAmount = parseFloat(stockPreparePlan.value?.giftAmount) || 0
+  return giftAmount - stockPrepareActiveAmount.value - stockPrepareShippedAmount.value - stockPrepareTotalAmount.value
+})
 
 const data = reactive({
   queryParams: { pageNum: 1, pageSize: 10, enterpriseName: undefined, planName: undefined, auditStatus: undefined },
@@ -282,6 +404,12 @@ function auditStatusType(status) {
 function auditStatusLabel(status) {
   const map = { '0': '草稿', '1': '待审核', '2': '已审核', '3': '已完成', '4': '已驳回' }
   return map[status] || '未知'
+}
+
+function handleExport() {
+  proxy.download("business/plan/export", {
+    ...queryParams.value,
+  }, `plan_${new Date().getTime()}.xlsx`)
 }
 
 function getList() {
@@ -322,6 +450,7 @@ function handleEnterpriseSelect(row) {
 }
 
 function handleEditPlan(row) {
+  giftAmountManuallyModified.value = false
   getPlan(row.planId).then(res => {
     planForm.value = { ...res.data, items: (res.data.items || []).map(item => ({ ...item })) }
     planOpen.value = true
@@ -330,6 +459,7 @@ function handleEditPlan(row) {
 }
 
 function resetPlanForm() {
+  giftAmountManuallyModified.value = false
   planForm.value = {
     planId: undefined, enterpriseId: undefined, planName: undefined,
     commissionRate: 0, planAmount: 0, giftAmount: 0, remainingAmount: 0,
@@ -339,8 +469,22 @@ function resetPlanForm() {
 }
 
 function onGiftAmountChange() {
+  giftAmountManuallyModified.value = true
   planForm.value.remainingAmount = planForm.value.giftAmount
 }
+
+function calcGiftAmount() {
+  if (giftAmountManuallyModified.value) return
+  const planAmount = parseFloat(planForm.value.planAmount)
+  const commissionRate = parseFloat(planForm.value.commissionRate)
+  if (planAmount > 0 && commissionRate > 0) {
+    planForm.value.giftAmount = Math.round(planAmount * 100 / commissionRate * 100) / 100
+    planForm.value.remainingAmount = planForm.value.giftAmount
+  }
+}
+
+watch(() => planForm.value.planAmount, () => calcGiftAmount())
+watch(() => planForm.value.commissionRate, () => calcGiftAmount())
 
 function addPlanItem() {
   planForm.value.items.push({
@@ -439,8 +583,136 @@ function handlePlanStatusChange(row, val) {
 function handleViewPlanDetail(row) {
   getPlan(row.planId).then(res => {
     currentPlan.value = res.data
+    planDetailTab.value = 'items'
     planDetailOpen.value = true
+    loadStockPrepareList(row.planId)
   })
+}
+
+// 备货相关方法
+function loadStockPrepareList(planId) {
+  stockPrepareLoading.value = true
+  listStockPrepare({ planId }).then(res => {
+    stockPrepareList.value = res.rows || []
+    stockPrepareLoading.value = false
+  }).catch(() => { stockPrepareLoading.value = false })
+}
+
+function handleOpenStockPrepare(row) {
+  // 从列表行直接获取方案详情
+  getPlan(row.planId).then(res => {
+    const plan = res.data
+    stockPreparePlan.value = plan
+    const items = plan.items || []
+    if (items.length > 0) {
+      stockPrepareItems.value = items
+        .filter(item => (item.remainingQuantity || 0) > 0)
+        .map(item => ({
+          planItemId: item.planItemId,
+          productId: item.productId,
+          productName: item.productName,
+          spec: item.spec,
+          unitLabel: item.unitType === '1' ? '主单位整' : '副单位拆',
+          salePrice: item.salePrice,
+          remainingQuantity: item.remainingQuantity,
+          quantity: 0
+        }))
+      stockPrepareManualItems.value = []
+    } else {
+      stockPrepareItems.value = []
+      stockPrepareManualItems.value = []
+    }
+    // 获取活跃备货金额
+    getActivePreparedAmount(plan.planId).then(res2 => {
+      stockPrepareActiveAmount.value = res2.data?.activePreparedAmount || 0
+      stockPrepareShippedAmount.value = plan.shippedAmount || 0
+    }).catch(() => {
+      stockPrepareActiveAmount.value = 0
+      stockPrepareShippedAmount.value = 0
+    })
+    stockPrepareOpen.value = true
+  })
+}
+
+function onStockPrepareProductSelect(index, productId) {
+  const product = productOptions.value.find(p => p.productId === productId)
+  if (product) {
+    const item = stockPrepareManualItems.value[index]
+    item.productId = product.productId
+    item.productName = product.productName
+    item.packQty = product.packQty || 1
+    item.unitType = '1'
+    item._mainPrice = product.salePrice || 0
+    item.salePrice = product.salePrice || 0
+    item.unitLabel = getUnitLabel(product.unit)
+    item.specLabel = getSpecLabel(product.spec)
+    onStockPrepareUnitTypeChange(index)
+  }
+}
+
+function onStockPrepareUnitTypeChange(index) {
+  const item = stockPrepareManualItems.value[index]
+  const packQty = item.packQty || 1
+  if (item.unitType === '1') {
+    if (item._mainPrice) { item.salePrice = item._mainPrice }
+    item.spec = item.unitLabel || ''
+  } else {
+    if (!item._mainPrice && item.salePrice) { item._mainPrice = item.salePrice }
+    if (item._mainPrice && packQty > 0) { item.salePrice = Math.round((item._mainPrice / packQty) * 100) / 100 }
+    item.spec = item.specLabel || ''
+  }
+  onStockPrepareManualQuantityChange(index)
+}
+
+function onStockPrepareManualQuantityChange(index) {
+  if (stockPrepareRemainingAmount.value < 0) {
+    proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
+  }
+}
+
+function onStockPrepareQuantityChange() {
+  if (stockPrepareRemainingAmount.value < 0) {
+    proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
+  }
+}
+
+function addStockPrepareManualItem() {
+  stockPrepareManualItems.value.push({
+    productId: '',
+    unitType: '1',
+    spec: '',
+    salePrice: 0,
+    packQty: 1,
+    quantity: 0,
+  })
+}
+
+function submitStockPrepare() {
+  const items = stockPrepareItems.value.length > 0 ? stockPrepareItems.value : stockPrepareManualItems.value
+  const validItems = items.filter(item => item.quantity > 0)
+  if (validItems.length === 0) {
+    proxy.$modal.msgWarning('请至少选择一个货品且数量大于0')
+    return
+  }
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
+    proxy.$modal.msgWarning('本次备货总金额不能超过剩余可用金额')
+    return
+  }
+  stockPrepareSubmitting.value = true
+  const submitItems = validItems.map(item => ({
+    planItemId: item.planItemId,
+    productId: item.productId,
+    productName: item.productName,
+    spec: item.spec,
+    unitType: item.unitType,
+    salePrice: item.salePrice,
+    quantity: item.quantity
+  }))
+  createFromPlan(stockPreparePlan.value.planId, submitItems).then(() => {
+    proxy.$modal.msgSuccess('备货成功，已自动创建出库单')
+    stockPrepareOpen.value = false
+    getList()
+  }).catch(() => {}).finally(() => { stockPrepareSubmitting.value = false })
 }
 
 getList()

@@ -296,8 +296,8 @@ async function loadData() {
     console.log('[Record] Stats API返回:', statsRes)
     console.log('[Record] statsRes.data:', statsRes.data)
 
-    if (statsRes.data) {
-      const rawData = statsRes.data
+    if (statsRes.data || statsRes.normal !== undefined) {
+      const rawData = statsRes.data || statsRes
       stats.value = {
         normal: rawData.normal ?? rawData.normalCount ?? 0,
         late: rawData.late ?? rawData.lateCount ?? 0,

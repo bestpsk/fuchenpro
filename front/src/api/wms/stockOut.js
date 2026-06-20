@@ -30,8 +30,8 @@ export function delStockOut(stockOutIds) {
 }
 
 /** 确认出库，将出库数量从库存中扣减 */
-export function confirmStockOut(id) {
-  return request({ url: '/wms/stockOut/confirm/' + id, method: 'put' })
+export function confirmStockOut(id, warehouseId) {
+  return request({ url: '/wms/stockOut/confirm/' + id, method: 'put', data: { warehouseId } })
 }
 
 /** 根据出库单ID确认出库（与confirmStockOut功能相同，参数名不同） */

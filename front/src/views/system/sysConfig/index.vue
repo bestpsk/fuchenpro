@@ -77,6 +77,14 @@
                   </div>
                </el-form-item>
 
+               <el-divider content-position="left">考勤配置</el-divider>
+               <el-form-item label="允许手动输入打卡地址">
+                  <el-switch v-model="bizForm.allowManualAddress" />
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     关闭后，APP端考勤打卡定位失败时无法手动输入地址
+                  </div>
+               </el-form-item>
+
                <el-form-item>
                   <el-button type="primary" @click="saveBizConfig">保 存</el-button>
                </el-form-item>
@@ -116,7 +124,8 @@ const systemForm = reactive({
 const bizForm = reactive({
    packageQuantityEditable: true,
    packageDealAmountEditable: true,
-   packagePaidAmountEditable: true
+   packagePaidAmountEditable: true,
+   allowManualAddress: true
 })
 
 // 配置键名与表单字段的映射关系
@@ -133,7 +142,8 @@ const systemKeyMap = {
 const bizKeyMap = {
    'biz.sales.packageQuantityEditable': { field: 'packageQuantityEditable', type: 'boolean' },
    'biz.sales.packageDealAmountEditable': { field: 'packageDealAmountEditable', type: 'boolean' },
-   'biz.sales.packagePaidAmountEditable': { field: 'packagePaidAmountEditable', type: 'boolean' }
+   'biz.sales.packagePaidAmountEditable': { field: 'packagePaidAmountEditable', type: 'boolean' },
+   'biz.attendance.allowManualAddress': { field: 'allowManualAddress', type: 'boolean' }
 }
 
 /** 将配置值转换为表单字段类型 */

@@ -59,8 +59,17 @@ class BizEmployeeConfigController
     // 更新员工是否可排班状态
     public function updateSchedulable(Request $request)
     {
-        $userId = $request->input('userId');
-        $isSchedulable = $request->input('isSchedulable', '1');
+        $userId = $request->post('userId');
+        $isSchedulable = $request->post('isSchedulable', '1');
+        // 兼容 boolean/int/string 入参，统一转换为字符串 '0'/'1'
+        if (is_bool($isSchedulable)) {
+            $isSchedulable = $isSchedulable ? '1' : '0';
+        } else {
+            $isSchedulable = (string)$isSchedulable;
+            if ($isSchedulable !== '0' && $isSchedulable !== '1') {
+                $isSchedulable = '1';
+            }
+        }
         $service = new BizEmployeeConfigService();
         $result = $service->updateSchedulable($userId, $isSchedulable);
         return AjaxResult::toAjax($result ? 1 : 0);

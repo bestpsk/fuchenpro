@@ -25,6 +25,13 @@ class BizEnterpriseService
         if (!empty($params['phone'])) {
             $query->where('phone', 'like', '%' . $params['phone'] . '%');
         }
+        if (!empty($params['keyword'])) {
+            $query->where(function ($q) use ($params) {
+                $q->where('enterprise_name', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('boss_name', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('phone', 'like', '%' . $params['keyword'] . '%');
+            });
+        }
         if (!empty($params['enterprise_type'])) {
             $query->where('enterprise_type', $params['enterprise_type']);
         }

@@ -14,7 +14,7 @@ class BizStockCheck extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'stock_check_no', 'check_date', 'total_quantity', 'total_diff_quantity',
+        'stock_check_no', 'warehouse_id', 'check_date', 'total_quantity', 'total_diff_quantity',
         'operator_id', 'operator_name', 'status', 'remark',
         'create_by', 'create_time', 'update_by', 'update_time'
     ];

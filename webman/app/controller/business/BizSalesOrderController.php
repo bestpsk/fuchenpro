@@ -7,6 +7,8 @@ use app\service\BizSalesOrderService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizSalesOrder;
 
 /**
  * 销售订单控制器
@@ -120,5 +122,18 @@ class BizSalesOrderController
         $result = $service->cancelOrder($orderId);
         if (!$result) return AjaxResult::error('取消失败，仅待确认订单可取消');
         return AjaxResult::success('取消成功');
+    }
+
+    // 导出订单数据
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $service = new BizSalesOrderService();
+        $result = $service->selectOrderList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizSalesOrder::class);
+        return $excelUtil->exportExcel($list, '订单数据');
     }
 }

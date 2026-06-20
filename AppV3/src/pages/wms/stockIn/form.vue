@@ -11,10 +11,17 @@
         </view>
       </view>
 
-      <view class="form-field" @click="openSupplierPicker">
-        <view class="field-label">供货商</view>
+      <view class="form-field">
+        <view class="field-label">仓库</view>
+        <view class="field-input-box readonly">
+          <input class="field-input" :value="form.warehouseName" disabled :disabledColor="'transparent'" />
+        </view>
+      </view>
+
+      <view class="form-field" @click="stockInDatePickerModel = Date.now(); showStockInDatePicker = true">
+        <view class="field-label"><text class="required">*</text> 入库日期</view>
         <view class="field-input-box picker-field">
-          <input class="field-input" :value="form.supplierName" placeholder="请选择供货商" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
+          <input class="field-input" :value="form.stockInDate" placeholder="请选择入库日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
           <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
         </view>
       </view>
@@ -38,21 +45,15 @@
 
       <view v-if="form.items.length > 0" class="items-list">
         <view v-for="(item, index) in form.items" :key="index" class="item-card">
-          <view class="item-header">
+          <view class="item-header" @click="openProductPicker(index)">
             <text class="item-index">{{ index + 1 }}.</text>
-            <text class="item-name">{{ item.productName || '未选择货品' }}</text>
-            <view class="item-delete" @click="removeItem(index)">
+            <text class="item-name">{{ item.productName || '点击选择货品' }}</text>
+            <u-icon v-if="!item.productId" name="arrow-right" size="14" color="#C9CDD4" style="margin-right: 8rpx;"></u-icon>
+            <view class="item-delete" @click.stop="removeItem(index)">
               <u-icon name="trash" size="14" color="#F53F3F"></u-icon>
             </view>
           </view>
           <view class="item-body">
-            <view class="form-field mini" @click="openProductPicker(index)">
-              <view class="field-label">货品</view>
-              <view class="field-input-box picker-field mini">
-                <input class="field-input" :value="item.productName" placeholder="搜索选择货品" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
-                <u-icon name="arrow-right" size="12" color="#C9CDD4"></u-icon>
-              </view>
-            </view>
             <view class="item-row">
               <view class="form-field mini half">
                 <view class="field-label">单位类型</view>
@@ -83,12 +84,6 @@
               </view>
             </view>
             <view class="item-row">
-              <view class="form-field mini half">
-                <view class="field-label">金额</view>
-                <view class="field-input-box mini readonly">
-                  <input class="field-input amount-value" :value="formatAmount(item.amount)" disabled :disabledColor="'transparent'" />
-                </view>
-              </view>
               <view class="form-field mini half" @click="openDatePicker(index, 'productionDate')">
                 <view class="field-label">生产日期</view>
                 <view class="field-input-box picker-field mini">
@@ -96,8 +91,6 @@
                   <u-icon name="arrow-right" size="12" color="#C9CDD4"></u-icon>
                 </view>
               </view>
-            </view>
-            <view class="item-row">
               <view class="form-field mini half" @click="openDatePicker(index, 'expiryDate')">
                 <view class="field-label">有效期至</view>
                 <view class="field-input-box picker-field mini">
@@ -121,25 +114,6 @@
 
     <u-picker :show="showTypePicker" :columns="typeColumns" keyName="label" title="选择入库类型" @confirm="onTypeConfirm" @cancel="showTypePicker = false" @close="showTypePicker = false"></u-picker>
 
-    <u-popup :show="showSupplierPicker" mode="bottom" round="16" @close="showSupplierPicker = false">
-      <view class="picker-content">
-        <view class="picker-header">
-          <text class="picker-title">选择供货商</text>
-          <view class="picker-close" @click="showSupplierPicker = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
-        </view>
-        <view class="picker-search">
-          <u-icon name="search" size="14" color="#86909C"></u-icon>
-          <input class="picker-search-input" type="text" v-model="supplierKeyword" placeholder="搜索供货商名称" placeholder-class="search-placeholder" @input="onSupplierSearch" />
-        </view>
-        <scroll-view scroll-y class="picker-list" :style="{ height: '400rpx' }">
-          <view v-for="s in supplierOptions" :key="s.supplierId" class="picker-item" :class="{ active: form.supplierId === s.supplierId }" @click="selectSupplier(s)">
-            <text class="picker-item-text">{{ s.supplierName }}</text>
-          </view>
-          <u-empty v-if="supplierOptions.length === 0" mode="search" text="未找到供货商" :marginTop="40"></u-empty>
-        </scroll-view>
-      </view>
-    </u-popup>
-
     <u-popup :show="showProductPicker" mode="bottom" round="16" @close="showProductPicker = false">
       <view class="picker-content">
         <view class="picker-header">
@@ -160,7 +134,9 @@
       </view>
     </u-popup>
 
-    <u-datetime-picker :show="showDatePicker" mode="date" @confirm="onDateConfirm" @cancel="showDatePicker = false" @close="showDatePicker = false"></u-datetime-picker>
+    <u-datetime-picker :show="showDatePicker" mode="date" v-model="datePickerModel" @confirm="onDateConfirm" @cancel="showDatePicker = false" @close="showDatePicker = false"></u-datetime-picker>
+
+    <u-datetime-picker :show="showStockInDatePicker" mode="date" v-model="stockInDatePickerModel" @confirm="onStockInDateConfirm" @cancel="showStockInDatePicker = false" @close="showStockInDatePicker = false"></u-datetime-picker>
 
     <view class="form-actions">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
@@ -173,31 +149,34 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getStockIn, addStockIn, updateStockIn } from '@/api/wms/stockIn'
 import { searchProduct } from '@/api/wms/product'
-import { searchSupplier } from '@/api/wms/supplier'
+import { useWarehouse } from '@/composables/useWarehouse'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const submitting = ref(false)
 const mode = ref('add')
 const stockInId = ref(null)
 
 const showTypePicker = ref(false)
-const showSupplierPicker = ref(false)
 const showProductPicker = ref(false)
 const showDatePicker = ref(false)
+const showStockInDatePicker = ref(false)
 
-const supplierOptions = ref([])
-const supplierKeyword = ref('')
 const productOptions = ref([])
 const productKeyword = ref('')
 const currentEditIndex = ref(-1)
 const currentDateField = ref('')
 
-let supplierSearchTimer = null
 let productSearchTimer = null
 
+const datePickerModel = ref(Date.now())
+const stockInDatePickerModel = ref(Date.now())
+
 const form = reactive({
-  stockInType: '',
-  supplierId: undefined,
-  supplierName: '',
+  stockInType: '1',
+  warehouseId: undefined,
+  warehouseName: '',
+  stockInDate: '',
   remark: '',
   items: []
 })
@@ -229,29 +208,11 @@ function onTypeConfirm(e) {
   showTypePicker.value = false
 }
 
-function openSupplierPicker() {
-  supplierKeyword.value = ''
-  showSupplierPicker.value = true
-  loadSuppliers('')
-}
-
-async function loadSuppliers(keyword) {
-  try {
-    const response = await searchSupplier(keyword)
-    const data = response.data || response
-    supplierOptions.value = Array.isArray(data) ? data : (data.rows || data.items || [])
-  } catch (e) { console.error('搜索供货商失败:', e) }
-}
-
-function onSupplierSearch() {
-  if (supplierSearchTimer) clearTimeout(supplierSearchTimer)
-  supplierSearchTimer = setTimeout(() => loadSuppliers(supplierKeyword.value), 400)
-}
-
-function selectSupplier(s) {
-  form.supplierId = s.supplierId
-  form.supplierName = s.supplierName || ''
-  showSupplierPicker.value = false
+function onStockInDateConfirm(e) {
+  const timestamp = Number(e.value) || e.value
+  const date = new Date(timestamp)
+  form.stockInDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+  showStockInDatePicker.value = false
 }
 
 function openProductPicker(index) {
@@ -383,11 +344,13 @@ function calcItemAmount(index) {
 function openDatePicker(index, field) {
   currentEditIndex.value = index
   currentDateField.value = field
+  datePickerModel.value = Date.now()
   showDatePicker.value = true
 }
 
 function onDateConfirm(e) {
-  const date = new Date(e.value)
+  const timestamp = Number(e.value) || e.value
+  const date = new Date(timestamp)
   const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
   const index = currentEditIndex.value
   if (index >= 0 && index < form.items.length) {
@@ -403,8 +366,9 @@ async function loadDetail() {
     const response = await getStockIn(stockInId.value)
     const data = response.data || response
     form.stockInType = String(data.stockInType || '')
-    form.supplierId = data.supplierId
-    form.supplierName = data.supplierName || ''
+    form.warehouseId = data.warehouseId
+    form.warehouseName = data.warehouseName || ''
+    form.stockInDate = data.stockInDate ? String(data.stockInDate).substring(0, 10) : ''
     form.remark = data.remark || ''
     form.items = (data.items || []).map(item => {
       const unitType = item.unitType || '1'
@@ -445,6 +409,8 @@ async function loadDetail() {
 
 async function submitForm() {
   if (!form.stockInType) { uni.showToast({ title: '请选择入库类型', icon: 'none' }); return }
+  if (!form.warehouseId) { uni.showToast({ title: '请选择仓库', icon: 'none' }); return }
+  if (!form.stockInDate) { uni.showToast({ title: '请选择入库日期', icon: 'none' }); return }
   if (!form.items || form.items.length === 0) { uni.showToast({ title: '请至少添加一条入库明细', icon: 'none' }); return }
   const hasEmptyProduct = form.items.some(item => !item.productId)
   if (hasEmptyProduct) { uni.showToast({ title: '请为每条明细选择货品', icon: 'none' }); return }
@@ -455,8 +421,8 @@ async function submitForm() {
   try {
     const submitData = {
       stockInType: form.stockInType,
-      supplierId: form.supplierId || undefined,
-      supplierName: form.supplierName || undefined,
+      warehouseId: form.warehouseId,
+      stockInDate: form.stockInDate,
       remark: form.remark.trim() || undefined,
       items: form.items.map(item => {
         const packQty = item.packQty || 1
@@ -515,7 +481,8 @@ function goBack() {
   else uni.redirectTo({ url: '/pages/wms/stockIn/index' })
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadWarehouses()
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
   const options = currentPage.options || {}
@@ -524,6 +491,15 @@ onMounted(() => {
 
   if (mode.value === 'add') {
     uni.setNavigationBarTitle({ title: '新增入库单' })
+    // 默认仓库取入库管理当前选择的仓库
+    if (currentWarehouseId.value) {
+      form.warehouseId = currentWarehouseId.value
+      const wh = warehouseList.value.find(w => w.warehouseId === currentWarehouseId.value)
+      form.warehouseName = wh ? wh.warehouseName : ''
+    }
+    // 默认入库日期为当天
+    const now = new Date()
+    form.stockInDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0')
   } else if (mode.value === 'edit') {
     uni.setNavigationBarTitle({ title: '编辑入库单' })
     loadDetail()

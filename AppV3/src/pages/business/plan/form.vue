@@ -49,14 +49,14 @@
       </view>
 
       <view class="form-row">
-        <view class="form-field half-width" @click="mode !== 'view' && (showEffectivePicker = true)">
+        <view class="form-field half-width" @click="mode !== 'view' && (effectiveDatePickerModel = Date.now(), showEffectivePicker = true)">
           <view class="field-input-box">
             <u-icon name="calendar" size="16" color="#86909C"></u-icon>
             <input class="field-input" :value="form.effectiveDate" placeholder="生效日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
             <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
           </view>
         </view>
-        <view class="form-field half-width" @click="mode !== 'view' && (showExpiryPicker = true)">
+        <view class="form-field half-width" @click="mode !== 'view' && (expiryDatePickerModel = Date.now(), showExpiryPicker = true)">
           <view class="field-input-box">
             <u-icon name="calendar" size="16" color="#86909C"></u-icon>
             <input class="field-input" :value="form.expiryDate" placeholder="失效日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
@@ -109,6 +109,15 @@
               <text class="item-value price">¥{{ formatAmount(item.amount) }}</text>
             </view>
           </view>
+        </view>
+      </view>
+      <view v-if="form.items.length > 0" class="items-summary">
+        <view class="summary-row">
+          <text class="summary-label">明细总金额</text>
+          <text class="summary-value" :class="{ 'amount-warning': itemsTotalAmount > parseFloat(form.giftAmount) }">¥{{ formatAmount(itemsTotalAmount) }}</text>
+        </view>
+        <view class="summary-row" v-if="itemsTotalAmount > parseFloat(form.giftAmount || 0)">
+          <text class="summary-warning">明细总金额超过配赠金额</text>
         </view>
       </view>
       <view v-else class="empty-items">
@@ -205,8 +214,8 @@
 
     <u-picker :show="showUnitTypePicker" :columns="[[{ label: '主单位整', value: '1' }, { label: '副单位拆', value: '2' }]]" keyName="label" title="选择单位类型" @confirm="onUnitTypeConfirm" @cancel="showUnitTypePicker = false" @close="showUnitTypePicker = false"></u-picker>
 
-    <u-datetime-picker :show="showEffectivePicker" mode="date" @confirm="onEffectiveDateConfirm" @cancel="showEffectivePicker = false" @close="showEffectivePicker = false"></u-datetime-picker>
-    <u-datetime-picker :show="showExpiryPicker" mode="date" @confirm="onExpiryDateConfirm" @cancel="showExpiryPicker = false" @close="showExpiryPicker = false"></u-datetime-picker>
+    <u-datetime-picker :show="showEffectivePicker" mode="date" v-model="effectiveDatePickerModel" @confirm="onEffectiveDateConfirm" @cancel="showEffectivePicker = false" @close="showEffectivePicker = false"></u-datetime-picker>
+    <u-datetime-picker :show="showExpiryPicker" mode="date" v-model="expiryDatePickerModel" @confirm="onExpiryDateConfirm" @cancel="showExpiryPicker = false" @close="showExpiryPicker = false"></u-datetime-picker>
 
     <view class="form-actions" v-if="mode !== 'view'">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
@@ -220,8 +229,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { listPlan, listEnterprise, getPlan, addPlan, updatePlan } from '@/api/business/plan'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { listPlan, listEnterprise, getPlan, addPlan, updatePlan, submitAuditPlan } from '@/api/business/plan'
 import { listProduct } from '@/api/wms/product'
 import { checkPermi } from '@/utils/permission'
 
@@ -235,6 +244,8 @@ const showProductPicker = ref(false)
 const showUnitTypePicker = ref(false)
 const showEffectivePicker = ref(false)
 const showExpiryPicker = ref(false)
+const effectiveDatePickerModel = ref(Date.now())
+const expiryDatePickerModel = ref(Date.now())
 
 const enterpriseList = ref([])
 const enterpriseKeyword = ref('')
@@ -243,6 +254,7 @@ const searchProductKeyword = ref('')
 const editingItemIndex = ref(-1)
 
 let productSearchTimer = null
+const giftAmountManuallyModified = ref(false)
 
 const form = reactive({
   planId: undefined,
@@ -256,6 +268,7 @@ const form = reactive({
   effectiveDate: '',
   expiryDate: '',
   remark: '',
+  auditStatus: '',
   items: []
 })
 
@@ -281,6 +294,10 @@ const filteredEnterprises = computed(() => {
   return enterpriseList.value.filter(e => (e.enterpriseName || '').toLowerCase().includes(kw))
 })
 
+const itemsTotalAmount = computed(() => {
+  return (form.items || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+})
+
 function formatAmount(val) {
   const num = parseFloat(val)
   if (isNaN(num)) return '0.00'
@@ -288,10 +305,24 @@ function formatAmount(val) {
 }
 
 function onGiftAmountChange() {
+  giftAmountManuallyModified.value = true
   if (!form.planId) {
     form.remainingAmount = parseFloat(form.giftAmount) || 0
   }
 }
+
+function calcGiftAmount() {
+  if (giftAmountManuallyModified.value) return
+  const planAmount = parseFloat(form.planAmount)
+  const commissionRate = parseFloat(form.commissionRate)
+  if (planAmount > 0 && commissionRate > 0) {
+    form.giftAmount = String(Math.round(planAmount * 100 / commissionRate * 100) / 100)
+    form.remainingAmount = parseFloat(form.giftAmount) || 0
+  }
+}
+
+watch(() => form.planAmount, () => calcGiftAmount())
+watch(() => form.commissionRate, () => calcGiftAmount())
 
 async function loadEnterprises() {
   try {
@@ -404,19 +435,20 @@ function confirmItem() {
 }
 
 function onEffectiveDateConfirm(e) {
-  const date = new Date(e.value)
+  const date = new Date(Number(e.value))
   form.effectiveDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
   showEffectivePicker.value = false
 }
 
 function onExpiryDateConfirm(e) {
-  const date = new Date(e.value)
+  const date = new Date(Number(e.value))
   form.expiryDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
   showExpiryPicker.value = false
 }
 
 async function loadDetail() {
   if (!planId.value) return
+  giftAmountManuallyModified.value = false
   try {
     uni.showLoading({ title: '加载中...' })
     const response = await getPlan(planId.value)
@@ -433,6 +465,7 @@ async function loadDetail() {
       effectiveDate: data.effectiveDate || '',
       expiryDate: data.expiryDate || '',
       remark: data.remark || '',
+      auditStatus: data.auditStatus || '',
       items: (data.items || []).map(item => ({ ...item }))
     })
   } catch (e) {
@@ -473,15 +506,41 @@ async function submitForm() {
       }))
     }
 
+    let res
     if (formData.planId) {
-      await updatePlan(formData)
-      uni.showToast({ title: '修改成功', icon: 'success' })
+      res = await updatePlan(formData)
     } else {
       delete formData.planId
-      await addPlan(formData)
-      uni.showToast({ title: '新增成功', icon: 'success' })
+      res = await addPlan(formData)
     }
-    setTimeout(() => goBack(), 1500)
+
+    const savedPlanId = formData.planId || (res.data?.planId || res.data)
+    const isEdit = !!formData.planId
+    const canSubmit = !isEdit || form.auditStatus === '0' || form.auditStatus === '4'
+
+    if (canSubmit) {
+      uni.showModal({
+        title: '提示',
+        content: '保存成功，是否提交审核？',
+        success: async (modalRes) => {
+          if (modalRes.confirm) {
+            try {
+              await submitAuditPlan(savedPlanId || form.planId)
+              uni.showToast({ title: '提交审核成功', icon: 'success' })
+              setTimeout(() => goBack(), 1500)
+            } catch (e) {
+              uni.showToast({ title: '提交审核失败', icon: 'none' })
+              setTimeout(() => goBack(), 1500)
+            }
+          } else {
+            setTimeout(() => goBack(), 500)
+          }
+        }
+      })
+    } else {
+      uni.showToast({ title: '保存成功', icon: 'success' })
+      setTimeout(() => goBack(), 1500)
+    }
   } catch (e) {
     console.error('提交失败:', e)
     const msg = e?.msg || e?.message || '操作失败，请重试'
@@ -505,6 +564,7 @@ onMounted(() => {
   planId.value = options.id ? parseInt(options.id) : null
 
   if (mode.value === 'add') {
+    giftAmountManuallyModified.value = false
     uni.setNavigationBarTitle({ title: '新增方案' })
     loadEnterprises()
   } else if (mode.value === 'edit') {
@@ -560,6 +620,35 @@ page { background-color: #F5F7FA; }
 }
 .empty-items { padding: 40rpx 0; text-align: center; }
 .empty-text { font-size: 26rpx; color: #C9CDD4; }
+
+.items-summary {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  background: #F7F8FA;
+  border-radius: 12rpx;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 0;
+}
+.summary-label {
+  font-size: 26rpx;
+  color: #86909C;
+}
+.summary-value {
+  font-size: 28rpx;
+  color: #1D2129;
+  font-weight: 500;
+  &.amount-warning {
+    color: #F53F3F;
+  }
+}
+.summary-warning {
+  font-size: 24rpx;
+  color: #F53F3F;
+}
 
 .picker-content { padding: 30rpx; background: #fff; }
 .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }

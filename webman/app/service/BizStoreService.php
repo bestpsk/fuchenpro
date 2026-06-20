@@ -28,6 +28,12 @@ class BizStoreService
         if (!empty($params['phone'])) {
             $query->where('phone', 'like', '%' . $params['phone'] . '%');
         }
+        if (!empty($params['keyword'])) {
+            $query->where(function ($q) use ($params) {
+                $q->where('store_name', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('enterprise_name', 'like', '%' . $params['keyword'] . '%');
+            });
+        }
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
         }

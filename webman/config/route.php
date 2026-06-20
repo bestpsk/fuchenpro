@@ -124,6 +124,7 @@ Route::get('/monitor/logininfor/list', [app\controller\monitor\SysLogininforCont
 Route::get('/monitor/logininfor/unlock/{userName}', [app\controller\monitor\SysLogininforController::class, 'unlock']);
 Route::delete('/monitor/logininfor/clean', [app\controller\monitor\SysLogininforController::class, 'clean']);
 Route::delete('/monitor/logininfor', [app\controller\monitor\SysLogininforController::class, 'remove']);
+Route::post('/monitor/logininfor/export', [app\controller\monitor\SysLogininforController::class, 'export']);
 
 Route::get('/monitor/job/list', [app\controller\monitor\SysJobController::class, 'list']);
 Route::put('/monitor/job/changeStatus', [app\controller\monitor\SysJobController::class, 'changeStatus']);
@@ -165,6 +166,7 @@ Route::post('/business/enterprise', [app\controller\business\BizEnterpriseContro
 Route::put('/business/enterprise', [app\controller\business\BizEnterpriseController::class, 'edit']);
 Route::delete('/business/enterprise', [app\controller\business\BizEnterpriseController::class, 'remove']);
 Route::get('/business/enterprise/{enterpriseId}', [app\controller\business\BizEnterpriseController::class, 'getInfo']);
+Route::post('/business/enterprise/export', [app\controller\business\BizEnterpriseController::class, 'export']);
 
 Route::get('/business/store/list', [app\controller\business\BizStoreController::class, 'list']);
 Route::get('/business/store/search', [app\controller\business\BizStoreController::class, 'search']);
@@ -172,6 +174,7 @@ Route::post('/business/store', [app\controller\business\BizStoreController::clas
 Route::put('/business/store', [app\controller\business\BizStoreController::class, 'edit']);
 Route::delete('/business/store', [app\controller\business\BizStoreController::class, 'remove']);
 Route::get('/business/store/{storeId}', [app\controller\business\BizStoreController::class, 'getInfo']);
+Route::post('/business/store/export', [app\controller\business\BizStoreController::class, 'export']);
 
 Route::get('/business/customer/list', [app\controller\business\BizCustomerController::class, 'list']);
 Route::get('/business/customer/search', [app\controller\business\BizCustomerController::class, 'search']);
@@ -189,6 +192,7 @@ Route::get('/business/sales/{orderId}', [app\controller\business\BizSalesOrderCo
 Route::post('/business/sales/enterpriseAudit', [app\controller\business\BizSalesOrderController::class, 'enterpriseAudit']);
 Route::post('/business/sales/financeAudit', [app\controller\business\BizSalesOrderController::class, 'financeAudit']);
 Route::post('/business/sales/cancel', [app\controller\business\BizSalesOrderController::class, 'cancel']);
+Route::post('/business/sales/export', [app\controller\business\BizSalesOrderController::class, 'export']);
 
 Route::get('/business/package/list', [app\controller\business\BizCustomerPackageController::class, 'list']);
 Route::get('/business/package/byCustomer', [app\controller\business\BizCustomerPackageController::class, 'getByCustomer']);
@@ -213,10 +217,14 @@ Route::post('/business/cardItem', [app\controller\business\BizCardItemController
 Route::put('/business/cardItem', [app\controller\business\BizCardItemController::class, 'edit']);
 Route::delete('/business/cardItem', [app\controller\business\BizCardItemController::class, 'remove']);
 Route::get('/business/cardItem/{cardItemId}', [app\controller\business\BizCardItemController::class, 'getInfo']);
+Route::post('/business/cardItem/export', [app\controller\business\BizCardItemController::class, 'export']);
 
 Route::get('/business/stockPrepare/list', [app\controller\business\BizStockPrepareController::class, 'list']);
+Route::get('/business/stockPrepare/getActivePreparedAmount', [app\controller\business\BizStockPrepareController::class, 'getActivePreparedAmount']);
 Route::get('/business/stockPrepare/{prepareId}', [app\controller\business\BizStockPrepareController::class, 'getInfo']);
 Route::post('/business/stockPrepare/createStockOut', [app\controller\business\BizStockPrepareController::class, 'createStockOut']);
+Route::post('/business/stockPrepare/createFromPlan', [app\controller\business\BizStockPrepareController::class, 'createFromPlan']);
+Route::post('/business/stockPrepare/export', [app\controller\business\BizStockPrepareController::class, 'export']);
 
 Route::get('/business/archive/list', [app\controller\business\BizCustomerArchiveController::class, 'list']);
 Route::post('/business/archive/add', [app\controller\business\BizCustomerArchiveController::class, 'add']);
@@ -231,6 +239,7 @@ Route::post('/business/plan', [app\controller\business\BizPlanController::class,
 Route::put('/business/plan', [app\controller\business\BizPlanController::class, 'edit']);
 Route::delete('/business/plan', [app\controller\business\BizPlanController::class, 'remove']);
 Route::get('/business/plan/{planId}', [app\controller\business\BizPlanController::class, 'getInfo']);
+Route::post('/business/plan/export', [app\controller\business\BizPlanController::class, 'export']);
 
 Route::get('/business/schedule/list', [app\controller\business\BizScheduleController::class, 'list']);
 Route::get('/business/schedule/calendar', [app\controller\business\BizScheduleController::class, 'calendar']);
@@ -242,6 +251,7 @@ Route::post('/business/schedule/batch', [app\controller\business\BizScheduleCont
 Route::put('/business/schedule', [app\controller\business\BizScheduleController::class, 'edit']);
 Route::delete('/business/schedule', [app\controller\business\BizScheduleController::class, 'remove']);
 Route::get('/business/schedule/{scheduleId}', [app\controller\business\BizScheduleController::class, 'getInfo']);
+Route::post('/business/schedule/export', [app\controller\business\BizScheduleController::class, 'export']);
 
 Route::get('/business/employeeConfig/list', [app\controller\business\BizEmployeeConfigController::class, 'list']);
 Route::get('/business/employeeConfig/search', [app\controller\business\BizEmployeeConfigController::class, 'search']);
@@ -261,6 +271,7 @@ Route::post('/business/attendance/clockIn', [app\controller\business\BizAttendan
 Route::post('/business/attendance/clockOut', [app\controller\business\BizAttendanceController::class, 'clockOut']);
 Route::get('/business/attendance/monthStats', [app\controller\business\BizAttendanceController::class, 'monthStats']);
 Route::get('/business/attendance/record/list', [app\controller\business\BizAttendanceController::class, 'recordList']);
+Route::post('/business/attendance/record/export', [app\controller\business\BizAttendanceController::class, 'exportRecord']);
 Route::get('/business/attendance/record/{recordId}', [app\controller\business\BizAttendanceController::class, 'recordInfo']);
 Route::get('/business/attendance/rule/list', [app\controller\business\BizAttendanceController::class, 'ruleList']);
 Route::post('/business/attendance/rule', [app\controller\business\BizAttendanceController::class, 'addRule']);
@@ -309,6 +320,7 @@ Route::delete('/hr/salary', [app\controller\system\HrUserSalaryController::class
 // =============================================
 
 // 供货商管理
+Route::post('/wms/supplier/export', [app\controller\wms\BizSupplierController::class, 'export']);
 Route::get('/wms/supplier/list', [app\controller\wms\BizSupplierController::class, 'list']);
 Route::get('/wms/supplier/search', [app\controller\wms\BizSupplierController::class, 'search']);
 Route::post('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'add']);
@@ -316,7 +328,18 @@ Route::put('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'e
 Route::delete('/wms/supplier', [app\controller\wms\BizSupplierController::class, 'remove']);
 Route::get('/wms/supplier/{supplierId}', [app\controller\wms\BizSupplierController::class, 'getInfo']);
 
+// 仓库管理
+Route::get('/wms/warehouse/list', [app\controller\wms\BizWarehouseController::class, 'list']);
+Route::get('/wms/warehouse/getUserWarehouses', [app\controller\wms\BizWarehouseController::class, 'getUserWarehouses']);
+Route::get('/wms/warehouse/{warehouseId}/users', [app\controller\wms\BizWarehouseController::class, 'getWarehouseUsers']);
+Route::post('/wms/warehouse', [app\controller\wms\BizWarehouseController::class, 'add']);
+Route::put('/wms/warehouse', [app\controller\wms\BizWarehouseController::class, 'update']);
+Route::delete('/wms/warehouse', [app\controller\wms\BizWarehouseController::class, 'delete']);
+Route::post('/wms/warehouse/assignUsers', [app\controller\wms\BizWarehouseController::class, 'assignUsers']);
+Route::get('/wms/warehouse/{warehouseId}', [app\controller\wms\BizWarehouseController::class, 'getInfo']);
+
 // 货品管理
+Route::post('/wms/product/export', [app\controller\wms\BizProductController::class, 'export']);
 Route::get('/wms/product/list', [app\controller\wms\BizProductController::class, 'list']);
 Route::get('/wms/product/search', [app\controller\wms\BizProductController::class, 'search']);
 Route::post('/wms/product', [app\controller\wms\BizProductController::class, 'add']);
@@ -325,6 +348,7 @@ Route::delete('/wms/product', [app\controller\wms\BizProductController::class, '
 Route::get('/wms/product/{productId}', [app\controller\wms\BizProductController::class, 'getInfo']);
 
 // 入库管理
+Route::post('/wms/stockIn/export', [app\controller\wms\BizStockInController::class, 'export']);
 Route::get('/wms/stockIn/list', [app\controller\wms\BizStockInController::class, 'list']);
 Route::put('/wms/stockIn/confirm/{id}', [app\controller\wms\BizStockInController::class, 'confirm']);
 Route::put('/wms/stockIn/cancelConfirm/{id}', [app\controller\wms\BizStockInController::class, 'cancelConfirm']);
@@ -334,6 +358,7 @@ Route::delete('/wms/stockIn', [app\controller\wms\BizStockInController::class, '
 Route::get('/wms/stockIn/{stockInId}', [app\controller\wms\BizStockInController::class, 'getInfo']);
 
 // 出库管理
+Route::post('/wms/stockOut/export', [app\controller\wms\BizStockOutController::class, 'export']);
 Route::get('/wms/stockOut/list', [app\controller\wms\BizStockOutController::class, 'list']);
 Route::put('/wms/stockOut/confirm/{id}', [app\controller\wms\BizStockOutController::class, 'confirm']);
 Route::put('/wms/stockOut/cancelConfirm/{id}', [app\controller\wms\BizStockOutController::class, 'cancelConfirm']);
@@ -345,6 +370,7 @@ Route::delete('/wms/stockOut', [app\controller\wms\BizStockOutController::class,
 Route::get('/wms/stockOut/{stockOutId}', [app\controller\wms\BizStockOutController::class, 'getInfo']);
 
 // 库存查看
+Route::post('/wms/inventory/export', [app\controller\wms\BizInventoryController::class, 'export']);
 Route::get('/wms/inventory/list', [app\controller\wms\BizInventoryController::class, 'list']);
 Route::get('/wms/inventory/warn', [app\controller\wms\BizInventoryController::class, 'warn']);
 Route::get('/wms/inventory/{productId}', [app\controller\wms\BizInventoryController::class, 'getInfo']);
@@ -358,11 +384,27 @@ Route::put('/wms/stockCheck', [app\controller\wms\BizStockCheckController::class
 Route::delete('/wms/stockCheck', [app\controller\wms\BizStockCheckController::class, 'remove']);
 Route::get('/wms/stockCheck/{stockCheckId}', [app\controller\wms\BizStockCheckController::class, 'getInfo']);
 
+// 调拨管理
+Route::post('/wms/stockTransfer/export', [app\controller\wms\BizStockTransferController::class, 'export']);
+Route::get('/wms/stockTransfer/list', [app\controller\wms\BizStockTransferController::class, 'list']);
+Route::put('/wms/stockTransfer/confirm/{id}', [app\controller\wms\BizStockTransferController::class, 'confirm']);
+Route::put('/wms/stockTransfer/cancelConfirm/{id}', [app\controller\wms\BizStockTransferController::class, 'cancelConfirm']);
+Route::post('/wms/stockTransfer', [app\controller\wms\BizStockTransferController::class, 'add']);
+Route::put('/wms/stockTransfer', [app\controller\wms\BizStockTransferController::class, 'update']);
+Route::delete('/wms/stockTransfer', [app\controller\wms\BizStockTransferController::class, 'delete']);
+Route::get('/wms/stockTransfer/{transferId}', [app\controller\wms\BizStockTransferController::class, 'getInfo']);
+
 // 进销存报表
+Route::post('/wms/report/exportStockInSummary', [app\controller\wms\BizWmsReportController::class, 'exportStockInSummary']);
+Route::post('/wms/report/exportStockOutSummary', [app\controller\wms\BizWmsReportController::class, 'exportStockOutSummary']);
+Route::post('/wms/report/exportTurnover', [app\controller\wms\BizWmsReportController::class, 'exportTurnover']);
+Route::post('/wms/report/exportProductFlow', [app\controller\wms\BizWmsReportController::class, 'exportProductFlow']);
+Route::post('/wms/report/exportExpiryInventory', [app\controller\wms\BizWmsReportController::class, 'exportExpiryInventory']);
 Route::get('/wms/report/stockInSummary', [app\controller\wms\BizWmsReportController::class, 'stockInSummary']);
 Route::get('/wms/report/stockOutSummary', [app\controller\wms\BizWmsReportController::class, 'stockOutSummary']);
 Route::get('/wms/report/inventoryTurnover', [app\controller\wms\BizWmsReportController::class, 'inventoryTurnover']);
 Route::get('/wms/report/productFlow', [app\controller\wms\BizWmsReportController::class, 'productFlow']);
+Route::get('/wms/report/expiryInventory', [app\controller\wms\BizWmsReportController::class, 'expiryInventory']);
 
 // =============================================
 // 财务管理模块路由
@@ -388,6 +430,7 @@ Route::get('/finance/reimbursement/report/byCategory', [app\controller\finance\F
 Route::get('/finance/reimbursement/report/byDept', [app\controller\finance\FinReimbursementController::class, 'reportByDept']);
 Route::get('/finance/reimbursement/report/byUser', [app\controller\finance\FinReimbursementController::class, 'reportByUser']);
 Route::get('/finance/reimbursement/report/byExpenseType', [app\controller\finance\FinReimbursementController::class, 'reportByExpenseType']);
+Route::post('/finance/reimbursement/export', [app\controller\finance\FinReimbursementController::class, 'export']);
 
 Route::any('/{path:.+}', function ($request, $path) {
     return json(['code' => 404, 'msg' => '接口不存在']);

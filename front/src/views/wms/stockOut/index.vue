@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="出库单号" prop="stockOutNo">
         <el-input v-model="queryParams.stockOutNo" placeholder="请输入出库单号" clearable style="width: 160px" @keyup.enter="handleQuery" />
@@ -33,6 +34,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:stockOut:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -42,6 +46,11 @@
       <el-table-column label="出库类型" prop="stockOutType" width="90" align="center">
         <template #default="scope">
           <dict-tag :options="biz_stock_out_type" :value="scope.row.stockOutType" />
+        </template>
+      </el-table-column>
+      <el-table-column label="仓库" min-width="90" align="center">
+        <template #default="scope">
+          <span>{{ scope.row.warehouseName || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="出库企业" prop="enterpriseName" min-width="90" show-overflow-tooltip />
@@ -94,11 +103,18 @@
 
     <el-dialog :title="dialogTitle" v-model="open" width="80%" append-to-body>
       <el-form ref="stockOutRef" :model="form" :rules="rules" label-width="100px">
-        <el-row>
+        <el-row :gutter="0">
           <el-col :span="6">
             <el-form-item label="出库类型" prop="stockOutType">
               <el-select v-model="form.stockOutType" placeholder="请选择" :disabled="isView" style="width: 100%">
                 <el-option v-for="dict in biz_stock_out_type" :key="dict.value" :label="dict.label" :value="dict.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="仓库" prop="warehouseId">
+              <el-select v-model="form.warehouseId" placeholder="请选择仓库" :disabled="isView" style="width: 100%">
+                <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -112,66 +128,54 @@
           </el-col>
           <el-col :span="6" v-if="form.outTargetType === '1'">
             <el-form-item label="出库企业" prop="enterpriseId">
-              <template v-if="!isView">
-                <el-select v-model="form.enterpriseId" placeholder="搜索企业" filterable remote :remote-method="searchEnterpriseList" :loading="enterpriseLoading" style="width: 100%" @change="onEnterpriseSelect">
-                  <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
-                </el-select>
-              </template>
-              <span v-else style="line-height: 32px">{{ form.enterpriseName || '-' }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="6" v-if="form.outTargetType === '1'">
-            <el-form-item label="对接员工">
-              <template v-if="!isView">
-                <el-select v-model="form.contactEmployeeId" placeholder="选择对接员工(可选)" filterable remote :remote-method="searchEmployeeList" :loading="employeeLoading" style="width: 100%" @change="onContactEmployeeSelect">
-                  <el-option v-for="item in employeeOptions" :key="item.userId" :label="item.userName + (item.deptName ? '(' + item.deptName + ')' : '')" :value="item.userId" />
-                </el-select>
-              </template>
-              <span v-else style="line-height: 32px">{{ form.contactEmployeeName || '-' }}</span>
+              <el-select v-if="!isView" v-model="form.enterpriseId" placeholder="搜索企业" filterable remote :remote-method="searchEnterpriseList" :loading="enterpriseLoading" style="width: 100%" @change="onEnterpriseSelect">
+                <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
+              </el-select>
+              <el-input v-else :model-value="form.enterpriseName || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6" v-if="form.outTargetType === '2'">
             <el-form-item label="领用员工" prop="responsibleId">
-              <template v-if="!isView">
-                <el-select v-model="form.responsibleId" placeholder="搜索员工" filterable remote :remote-method="searchEmployeeList" :loading="employeeLoading" style="width: 100%" @change="onEmployeeSelect">
-                  <el-option v-for="item in employeeOptions" :key="item.userId" :label="item.userName + (item.deptName ? '(' + item.deptName + ')' : '')" :value="item.userId" />
-                </el-select>
-              </template>
-              <span v-else style="line-height: 32px">{{ form.responsibleName || '-' }}</span>
+              <el-select v-if="!isView" v-model="form.responsibleId" placeholder="搜索员工" filterable remote :remote-method="searchEmployeeList" :loading="employeeLoading" style="width: 100%" @change="onEmployeeSelect">
+                <el-option v-for="item in employeeOptions" :key="item.userId" :label="item.userName + (item.deptName ? '(' + item.deptName + ')' : '')" :value="item.userId" />
+              </el-select>
+              <el-input v-else :model-value="form.responsibleName || '-'" disabled />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="0">
+          <el-col :span="6" v-if="form.outTargetType === '1'">
+            <el-form-item label="对接员工">
+              <el-select v-if="!isView" v-model="form.contactEmployeeId" placeholder="选择对接员工(可选)" filterable remote :remote-method="searchEmployeeList" :loading="employeeLoading" style="width: 100%" @change="onContactEmployeeSelect">
+                <el-option v-for="item in employeeOptions" :key="item.userId" :label="item.userName + (item.deptName ? '(' + item.deptName + ')' : '')" :value="item.userId" />
+              </el-select>
+              <el-input v-else :model-value="form.contactEmployeeName || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6" v-if="form.outTargetType === '2'">
             <el-form-item label="目标企业">
-              <template v-if="!isView">
-                <el-select v-model="form.enterpriseId" placeholder="搜索企业(可选)" filterable remote :remote-method="searchEnterpriseList" :loading="enterpriseLoading" style="width: 100%" @change="onEnterpriseSelect">
-                  <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
-                </el-select>
-              </template>
-              <span v-else style="line-height: 32px">{{ form.enterpriseName || '-' }}</span>
+              <el-select v-if="!isView" v-model="form.enterpriseId" placeholder="搜索企业(可选)" filterable remote :remote-method="searchEnterpriseList" :loading="enterpriseLoading" style="width: 100%" @change="onEnterpriseSelect">
+                <el-option v-for="item in enterpriseOptions" :key="item.enterpriseId" :label="item.enterpriseName" :value="item.enterpriseId" />
+              </el-select>
+              <el-input v-else :model-value="form.enterpriseName || '-'" disabled />
             </el-form-item>
           </el-col>
-          <el-col :span="6" v-if="form.outTargetType === '1' && !isView">
+          <el-col :span="6">
             <el-form-item label="发货方式" prop="shipType">
-              <el-select v-model="form.shipType" placeholder="请选择" style="width: 100%">
+              <el-select v-if="!isView" v-model="form.shipType" placeholder="请选择" style="width: 100%">
                 <el-option label="无需发货" value="0" />
                 <el-option label="自提" value="1" />
                 <el-option label="物流" value="2" />
               </el-select>
+              <el-input v-else :model-value="shipTypeLabel(form.shipType)" disabled />
             </el-form-item>
           </el-col>
-          <el-col :span="6" v-if="form.outTargetType === '1' && isView">
-            <el-form-item label="发货方式">
-              <span style="line-height: 32px">{{ shipTypeLabel(form.shipType) }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
           <el-col :span="6">
             <el-form-item label="出库日期" prop="stockOutDate">
               <el-date-picker v-model="form.stockOutDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled="isView" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="18">
+          <el-col :span="6">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" placeholder="请输入备注" :disabled="isView" />
             </el-form-item>
@@ -181,22 +185,29 @@
         <el-row v-if="isView && form.shipType == 2 && (form.logisticsCompany || form.logisticsNo || form.shipDate || form.receiptDate)">
           <el-col :span="6">
             <el-form-item label="物流公司">
-              <span style="line-height: 32px">{{ form.logisticsCompany || '-' }}</span>
+              <el-input :model-value="form.logisticsCompany || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="物流单号">
-              <span style="line-height: 32px">{{ form.logisticsNo || '-' }}</span>
+              <el-input :model-value="form.logisticsNo || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="发货日期">
-              <span style="line-height: 32px">{{ form.shipDate || '-' }}</span>
+              <el-input :model-value="form.shipDate || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="收货日期">
-              <span style="line-height: 32px">{{ form.receiptDate || '-' }}</span>
+              <el-input :model-value="form.receiptDate || '-'" disabled />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row v-if="isView && form.shipmentImages" :gutter="20" style="margin-top: 10px">
+          <el-col :span="24">
+            <el-form-item label="发货图片">
+              <el-image v-for="(img, idx) in parseImages(form.shipmentImages)" :key="idx" :src="img" :preview-src-list="parseImages(form.shipmentImages)" style="width: 100px; height: 100px; margin-right: 8px" fit="cover" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -266,7 +277,7 @@
       </template>
     </el-dialog>
 
-    <el-dialog title="发货" v-model="shipDialogOpen" width="500px" append-to-body>
+    <el-dialog title="发货" v-model="shipDialogOpen" width="600px" append-to-body>
       <el-form ref="shipFormRef" :model="shipForm" :rules="shipRules" label-width="100px">
         <el-form-item label="发货方式" prop="shipType">
           <el-radio-group v-model="shipForm.shipType">
@@ -276,12 +287,22 @@
         </el-form-item>
         <template v-if="shipForm.shipType === '2'">
           <el-form-item label="物流公司" prop="logisticsCompany">
-            <el-input v-model="shipForm.logisticsCompany" placeholder="请输入物流公司" />
+            <el-select v-model="shipForm.logisticsCompany" placeholder="请选择物流公司" filterable style="width: 100%">
+              <el-option v-for="item in logistics_company" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
           </el-form-item>
           <el-form-item label="物流单号" prop="logisticsNo">
             <el-input v-model="shipForm.logisticsNo" placeholder="请输入物流单号" />
           </el-form-item>
         </template>
+        <el-form-item label="发货图片">
+          <el-upload :action="uploadUrl" list-type="picture-card" :file-list="shipFileList" :headers="uploadHeaders" :on-success="handleShipUploadSuccess" :on-remove="handleShipUploadRemove" :on-preview="handlePreview" accept="image/*">
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+        <el-form-item label="发货备注">
+          <el-input v-model="shipForm.remark" type="textarea" :rows="3" placeholder="请输入发货备注" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button type="primary" @click="submitShip">确 定</el-button>
@@ -347,18 +368,43 @@
         <el-button @click="printPreview = false">取消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog title="图片预览" v-model="previewVisible" width="600px" append-to-body>
+      <img :src="previewUrl" style="width: 100%" />
+    </el-dialog>
+
+    <!-- 出库仓库选择对话框 -->
+    <el-dialog title="选择出库仓库" v-model="confirmWarehouseDialogVisible" width="400px" append-to-body>
+      <el-form label-width="80px">
+        <el-form-item label="出库仓库">
+          <el-select v-model="confirmWarehouseId" placeholder="请选择仓库" style="width: 100%">
+            <el-option v-for="w in confirmWarehouseOptions" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="confirmWarehouseDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmWithWarehouse">确认出库</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="WmsStockOut">
 import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, confirmStockOutById, cancelConfirmStockOut, shipStockOut, confirmReceiptStockOut } from "@/api/wms/stockOut"
 import { ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
+import { getToken } from '@/utils/auth'
 import { searchProduct } from "@/api/wms/product"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchEmployee } from "@/api/business/employeeConfig"
+import { listWarehouse } from '@/api/wms/warehouse'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { useWarehouse } from '@/composables/useWarehouse'
 
 const { proxy } = getCurrentInstance()
-const { biz_stock_out_type, biz_product_unit, biz_product_spec } = useDict("biz_stock_out_type", "biz_product_unit", "biz_product_spec")
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
+const { biz_stock_out_type, biz_product_unit, biz_product_spec, logistics_company } = useDict("biz_stock_out_type", "biz_product_unit", "biz_product_spec", "logistics_company")
 
 const stockOutList = ref([])
 const open = ref(false)
@@ -380,17 +426,27 @@ const productLoading = ref(false)
 const shipDialogOpen = ref(false)
 const currentShipRow = ref(null)
 const shipFormRef = ref(null)
+const shipFileList = ref([])
+const previewVisible = ref(false)
+const previewUrl = ref('')
+const confirmWarehouseDialogVisible = ref(false)
+const confirmWarehouseId = ref(null)
+const confirmWarehouseOptions = ref([])
+const confirmingStockOutId = ref(null)
 
-const shipForm = ref({ shipType: '1', logisticsCompany: '', logisticsNo: '' })
+const uploadUrl = import.meta.env.VITE_APP_BASE_API + '/common/upload'
+const uploadHeaders = { Authorization: 'Bearer ' + getToken() }
+
+const shipForm = ref({ shipType: '2', logisticsCompany: '', logisticsNo: '', shipmentImages: '', remark: '' })
 const shipRules = {
   shipType: [{ required: true, message: "请选择发货方式", trigger: "change" }],
-  logisticsCompany: [{ required: true, message: "请输入物流公司", trigger: "blur" }],
+  logisticsCompany: [{ required: true, message: "请选择物流公司", trigger: "change" }],
   logisticsNo: [{ required: true, message: "请输入物流单号", trigger: "blur" }]
 }
 
 const data = reactive({
   form: { items: [] },
-  queryParams: { pageNum: 1, pageSize: 10, stockOutNo: undefined, stockOutType: undefined, status: undefined },
+  queryParams: { pageNum: 1, pageSize: 10, stockOutNo: undefined, stockOutType: undefined, status: undefined, warehouseId: undefined },
   rules: {
     stockOutType: [{ required: true, message: "出库类型不能为空", trigger: "change" }],
     stockOutDate: [{ required: true, message: "出库日期不能为空", trigger: "change" }],
@@ -412,8 +468,8 @@ function shipTypeLabel(shipType) {
   return map[shipType] || '-'
 }
 
-function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
-function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
+function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
+function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
 
 function formatQuantity(row) {
   const items = row.items || []
@@ -522,6 +578,7 @@ function getList() {
   loading.value = true
   const params = { ...queryParams.value }
   if (dateRange.value && dateRange.value.length === 2) { params.stockOutDateStart = dateRange.value[0]; params.stockOutDateEnd = dateRange.value[1] }
+  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
   listStockOut(params).then(async response => {
     const rows = response.rows || []
     if (rows.length > 0) {
@@ -546,19 +603,48 @@ function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { dateRange.value = []; proxy.resetForm("queryRef"); handleQuery() }
 function handleSelectionChange(selection) { ids.value = selection.map(item => item.stockOutId); multiple.value = !selection.length }
 
+function handleWarehouseChange(warehouseId) {
+  queryParams.value.warehouseId = warehouseId
+  handleQuery()
+}
+
 function reset() {
-  form.value = { stockOutId: undefined, stockOutType: "1", outTargetType: "1", shipType: "2", enterpriseId: undefined, enterpriseName: undefined, contactEmployeeId: undefined, contactEmployeeName: undefined, responsibleId: undefined, responsibleName: undefined, stockOutDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
+  form.value = { stockOutId: undefined, stockOutType: "1", outTargetType: "1", shipType: "2", warehouseId: currentWarehouseId.value, enterpriseId: undefined, enterpriseName: undefined, contactEmployeeId: undefined, contactEmployeeName: undefined, responsibleId: undefined, responsibleName: undefined, stockOutDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
   enterpriseOptions.value = []; employeeOptions.value = []; productOptions.value = []
   proxy.resetForm("stockOutRef")
 }
 
 function handleAdd() { reset(); isView.value = false; dialogTitle.value = "新增出库单"; open.value = true }
-function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; if (!form.value.shipType) form.value.shipType = '2'; form.value.items.forEach(item => { item.quantity = item.originalQuantity || item.quantity; if (item.unitType === '1' && item.packQty > 1) { item._mainPrice = Math.round(parseFloat(item.salePrice) * item.packQty * 100) / 100; item.salePrice = item._mainPrice; } else { item._mainPrice = item.salePrice; } }); if (data.enterpriseId && data.enterpriseName) { enterpriseOptions.value = [{ enterpriseId: data.enterpriseId, enterpriseName: data.enterpriseName }] } if (data.contactEmployeeId && data.contactEmployeeName) { employeeOptions.value = [{ userId: data.contactEmployeeId, userName: data.contactEmployeeName }] } if (data.responsibleId && data.responsibleName) { if (!employeeOptions.value.find(e => e.userId === data.responsibleId)) { employeeOptions.value.push({ userId: data.responsibleId, userName: data.responsibleName }) } } form.value.items.forEach(item => { if (item.productId && item.productName && !productOptions.value.find(p => p.productId === item.productId)) { productOptions.value.push({ productId: item.productId, productName: item.productName, productCode: item.productCode || '' }) } }); isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
+function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; form.value.shipType = String(form.value.shipType ?? '2'); form.value.items.forEach(item => { item.quantity = item.originalQuantity || item.quantity; if (item.unitType === '1' && item.packQty > 1) { item._mainPrice = Math.round(parseFloat(item.salePrice) * item.packQty * 100) / 100; item.salePrice = item._mainPrice; } else { item._mainPrice = item.salePrice; } }); if (data.enterpriseId && data.enterpriseName) { enterpriseOptions.value = [{ enterpriseId: data.enterpriseId, enterpriseName: data.enterpriseName }] } if (data.contactEmployeeId && data.contactEmployeeName) { employeeOptions.value = [{ userId: data.contactEmployeeId, userName: data.contactEmployeeName }] } if (data.responsibleId && data.responsibleName) { if (!employeeOptions.value.find(e => e.userId === data.responsibleId)) { employeeOptions.value.push({ userId: data.responsibleId, userName: data.responsibleName }) } } form.value.items.forEach(item => { if (item.productId && item.productName && !productOptions.value.find(p => p.productId === item.productId)) { productOptions.value.push({ productId: item.productId, productName: item.productName, productCode: item.productCode || '' }) } }); isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
 function handleView(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; isView.value = true; dialogTitle.value = "查看出库单"; open.value = true }) }
 
 function handleConfirm(row) {
+  if (!row.warehouseId) {
+    // 出库单未指定仓库，弹出仓库选择
+    confirmingStockOutId.value = row.stockOutId
+    confirmWarehouseId.value = null
+    listWarehouse({ status: '0' }).then(res => {
+      confirmWarehouseOptions.value = res.rows || res.data || []
+    }).catch(() => { confirmWarehouseOptions.value = [] })
+    confirmWarehouseDialogVisible.value = true
+    return
+  }
   proxy.$modal.confirm('确认出库后将减少库存数量，是否继续？').then(() => {
     return confirmStockOut(row.stockOutId)
+  }).then(() => {
+    proxy.$modal.msgSuccess("出库确认成功")
+    getList()
+  }).catch(() => {})
+}
+
+function confirmWithWarehouse() {
+  if (!confirmWarehouseId.value) {
+    proxy.$modal.msgWarning('请选择出库仓库')
+    return
+  }
+  confirmWarehouseDialogVisible.value = false
+  proxy.$modal.confirm('确认出库后将减少库存数量，是否继续？').then(() => {
+    return confirmStockOut(confirmingStockOutId.value, confirmWarehouseId.value)
   }).then(() => {
     proxy.$modal.msgSuccess("出库确认成功")
     getList()
@@ -576,9 +662,47 @@ function handleCancelConfirm(row) {
 
 function handleShip(row) {
   currentShipRow.value = row
-  shipForm.value = { shipType: '1', logisticsCompany: '', logisticsNo: '' }
+  shipForm.value = { shipType: '2', logisticsCompany: '', logisticsNo: '', shipmentImages: '', remark: '' }
+  shipFileList.value = []
   shipDialogOpen.value = true
   nextTick(() => { shipFormRef.value?.clearValidate() })
+}
+
+function handleShipUploadSuccess(response, file, fileList) {
+  if (response.code === 200) {
+    updateShipImages(fileList)
+  }
+}
+
+function handleShipUploadRemove(file, fileList) {
+  updateShipImages(fileList)
+}
+
+function updateShipImages(list) {
+  const urls = list.map(f => {
+    if (f.response && f.response.url) return f.response.url
+    if (f.response && f.response.data && f.response.data.url) return f.response.data.url
+    if (f.url && !f.url.startsWith('blob:')) return f.url
+    return ''
+  }).filter(url => url)
+  shipForm.value.shipmentImages = JSON.stringify(urls)
+}
+
+function handlePreview(file) {
+  const url = file.response?.url || file.response?.data?.url || file.url
+  if (url && !url.startsWith('blob:')) {
+    previewUrl.value = url
+    previewVisible.value = true
+  }
+}
+
+function parseImages(jsonStr) {
+  if (!jsonStr) return []
+  try {
+    const parsed = JSON.parse(jsonStr)
+    if (Array.isArray(parsed)) return parsed.filter(url => url && typeof url === 'string')
+    return []
+  } catch (e) { return [] }
 }
 
 function submitShip() {
@@ -589,6 +713,8 @@ function submitShip() {
         data.logistics_company = shipForm.value.logisticsCompany
         data.logistics_no = shipForm.value.logisticsNo
       }
+      if (shipForm.value.shipmentImages) data.shipment_images = shipForm.value.shipmentImages
+      if (shipForm.value.remark) data.remark = shipForm.value.remark
       shipStockOut(currentShipRow.value.stockOutId, data).then(() => {
         proxy.$modal.msgSuccess('发货成功')
         shipDialogOpen.value = false
@@ -677,7 +803,13 @@ function confirmPrint() {
   setTimeout(() => { printWindow.print(); printWindow.close() }, 100)
 }
 function getDictLabel(dict, value) { if (!dict) return value; const item = dict.find(d => d.value === value); return item ? item.label : value }
+function handleExport() {
+  proxy.download("wms/stockOut/export", { ...queryParams.value, warehouseId: currentWarehouseId.value }, `出库_${new Date().getTime()}.xlsx`)
+}
+
 function cancel() { open.value = false; reset() }
+
+onMounted(() => { loadWarehouses() })
 getList()
 </script>
 

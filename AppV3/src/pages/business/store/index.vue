@@ -7,7 +7,7 @@
           class="search-input"
           type="text"
           v-model="queryParams.keyword"
-          placeholder="搜索门店名称/负责人/电话"
+          placeholder="搜索门店名称/企业名称"
           placeholder-class="search-placeholder"
           confirm-type="search"
           @input="onSearchInput"
@@ -43,14 +43,11 @@
         <view class="popup-title">筛选条件</view>
         <view class="form-item">
           <view class="form-label">所属企业</view>
-          <view class="form-options">
-            <view
-              v-for="item in enterpriseOptions"
-              :key="item.enterpriseId"
-              class="option-tag"
-              :class="{ active: queryParams.enterpriseId === item.enterpriseId }"
-              @click="queryParams.enterpriseId = queryParams.enterpriseId === item.enterpriseId ? '' : item.enterpriseId"
-            >{{ item.enterpriseName }}</view>
+          <view class="form-select" @click="showEnterpriseSearchPopup = true">
+            <text :class="queryParams.enterpriseId ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.enterpriseId ? getEnterpriseName(queryParams.enterpriseId) : '请搜索选择企业' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
           </view>
         </view>
         <view class="form-item">
@@ -64,6 +61,26 @@
           <u-button type="info" plain text="重置" @click="resetFilter"></u-button>
           <u-button type="primary" text="确定" @click="confirmFilter"></u-button>
         </view>
+      </view>
+    </u-popup>
+
+    <u-popup :show="showEnterpriseSearchPopup" mode="bottom" round="16" @close="showEnterpriseSearchPopup = false">
+      <view class="picker-popup">
+        <view class="picker-header">
+          <text class="picker-title">选择企业</text>
+          <view class="picker-close" @click="showEnterpriseSearchPopup = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
+        </view>
+        <view class="picker-search">
+          <u-icon name="search" size="14" color="#86909C"></u-icon>
+          <input class="picker-search-input" v-model="enterpriseSearchKeyword" placeholder="搜索企业名称" placeholder-class="field-placeholder" confirm-type="search" @input="onEnterpriseSearchInput" @confirm="searchEnterpriseForFilter" />
+        </view>
+        <scroll-view scroll-y class="picker-list">
+          <view v-for="item in enterpriseSearchResults" :key="item.enterpriseId" class="picker-item" :class="{ active: queryParams.enterpriseId === item.enterpriseId }" @click="onFilterEnterpriseSelect(item)">
+            <text class="picker-item-text">{{ item.enterpriseName }}</text>
+            <u-icon v-if="queryParams.enterpriseId === item.enterpriseId" name="checkmark" size="18" color="#3D6DF7"></u-icon>
+          </view>
+          <u-empty v-if="enterpriseSearchResults.length === 0 && enterpriseSearchKeyword" mode="search" text="未找到匹配企业" :marginTop="40"></u-empty>
+        </scroll-view>
       </view>
     </u-popup>
 
@@ -152,6 +169,7 @@
  * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除门店
  */
 import { ref, reactive, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
 import { checkPermi } from '@/utils/permission'
@@ -163,6 +181,9 @@ const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const enterpriseOptions = ref([])
+const showEnterpriseSearchPopup = ref(false)
+const enterpriseSearchKeyword = ref('')
+const enterpriseSearchResults = ref([])
 
 let searchTimer = null
 
@@ -174,9 +195,6 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   keyword: '',
-  storeName: '',
-  managerName: '',
-  phone: '',
   enterpriseId: '',
   status: ''
 })
@@ -202,6 +220,37 @@ async function loadEnterpriseOptions() {
   }
 }
 
+let enterpriseSearchTimer = null
+
+function onEnterpriseSearchInput() {
+  if (enterpriseSearchTimer) clearTimeout(enterpriseSearchTimer)
+  enterpriseSearchTimer = setTimeout(() => searchEnterpriseForFilter(), 500)
+}
+
+async function searchEnterpriseForFilter() {
+  if (!enterpriseSearchKeyword.value) {
+    enterpriseSearchResults.value = []
+    return
+  }
+  try {
+    const response = await listEnterprise({ pageNum: 1, pageSize: 50, keyword: enterpriseSearchKeyword.value, status: '0' })
+    const data = response.data || response
+    enterpriseSearchResults.value = data.rows || []
+  } catch (e) {
+    console.error('搜索企业失败:', e)
+    enterpriseSearchResults.value = []
+  }
+}
+
+function onFilterEnterpriseSelect(item) {
+  if (queryParams.enterpriseId === item.enterpriseId) {
+    queryParams.enterpriseId = ''
+  } else {
+    queryParams.enterpriseId = item.enterpriseId
+  }
+  showEnterpriseSearchPopup.value = false
+}
+
 /** 加载门店列表，支持分页和关键词搜索（搜索时同时匹配门店名/负责人/电话），isRefresh为true时重置到第一页 */
 async function getList(isRefresh = false) {
   if (loading.value) return
@@ -210,8 +259,7 @@ async function getList(isRefresh = false) {
 
   try {
     const params = { ...queryParams }
-    if (params.keyword) { params.storeName = params.keyword; params.managerName = params.keyword; params.phone = params.keyword }
-    delete params.keyword
+    // keyword 直接传给后端，后端做 OR 模糊搜索（门店名/企业名）
 
     const response = await listStore(params)
     const data = response.data || response
@@ -249,7 +297,7 @@ function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 
 function toggleFilter() { showFilter.value = !showFilter.value }
 
-function resetFilter() { queryParams.enterpriseId = ''; queryParams.status = '' }
+function resetFilter() { queryParams.enterpriseId = ''; queryParams.status = ''; enterpriseSearchKeyword.value = ''; enterpriseSearchResults.value = [] }
 
 function confirmFilter() { showFilter.value = false; getList(true) }
 
@@ -294,6 +342,10 @@ function handleDelete(item) {
 
 onMounted(() => {
   loadEnterpriseOptions()
+  getList(true)
+})
+
+onShow(() => {
   getList(true)
 })
 </script>
@@ -375,4 +427,20 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .fab-btn { position: fixed; right: 32rpx; bottom: 120rpx; width: 100rpx; height: 100rpx; border-radius: 50%; background: linear-gradient(135deg, #FF6B35, #FF8F5E); display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 24rpx rgba(255,107,53,0.4);
   &:active { transform: scale(0.95); opacity: 0.9; }
 }
+
+.picker-popup { max-height: 70vh; display: flex; flex-direction: column; }
+.picker-header { display: flex; justify-content: space-between; align-items: center; padding: 30rpx; border-bottom: 1rpx solid #F2F3F5; }
+.picker-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.picker-close { padding: 8rpx; }
+.picker-search { display: flex; align-items: center; gap: 12rpx; margin: 20rpx 30rpx; padding: 0 20rpx; height: 72rpx; background: #F5F7FA; border-radius: 36rpx; }
+.picker-search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; }
+.picker-list { flex: 1; padding: 0 30rpx; max-height: 50vh; }
+.picker-item { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 0; border-bottom: 1rpx solid #F2F3F5;
+  &.active { background: #F5F7FA; }
+  &:last-child { border-bottom: none; }
+}
+.picker-item-text { font-size: 28rpx; color: #1D2129; }
+.form-select { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 24rpx; background: #F5F7FA; border-radius: 8rpx; }
+.selected-text { font-size: 26rpx; color: #1D2129; }
+.placeholder-text { font-size: 26rpx; color: #C9CDD4; }
 </style>

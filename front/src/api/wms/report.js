@@ -23,3 +23,8 @@ export function inventoryTurnover(query) {
 export function productFlow(query) {
   return request({ url: '/wms/report/productFlow', method: 'get', params: query })
 }
+
+/** 有效期盘点，统计货品有效期及到期状态 */
+export function expiryInventory(query) {
+  return request({ url: '/wms/report/expiryInventory', method: 'get', params: query })
+}

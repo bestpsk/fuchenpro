@@ -1,5 +1,12 @@
 <template>
   <view class="stock-container">
+    <view class="warehouse-row">
+      <WarehouseSelector @change="handleWarehouseChange" />
+      <view class="warn-switch-row">
+        <text class="warn-switch-label">仅看预警</text>
+        <u-switch v-model="warnOnly" activeColor="#3D6DF7" size="20" @change="onWarnSwitchChange"></u-switch>
+      </view>
+    </view>
     <view class="search-section">
       <view class="search-box">
         <u-icon name="search" size="16" color="#86909C"></u-icon>
@@ -11,10 +18,6 @@
           <u-icon name="list" size="12" :color="hasActiveFilters ? '#3D6DF7' : '#4E5969'"></u-icon>
           <text>筛选</text>
         </view>
-      </view>
-      <view class="warn-switch-row">
-        <text class="warn-switch-label">仅看预警</text>
-        <u-switch v-model="warnOnly" activeColor="#3D6DF7" size="20" @change="onWarnSwitchChange"></u-switch>
       </view>
     </view>
 
@@ -38,7 +41,10 @@
       <view v-if="inventoryList.length > 0" class="card-list">
         <view v-for="item in inventoryList" :key="item.productId" class="stock-card" @click="goDetail(item)">
           <view class="card-header">
-            <text class="product-name">{{ item.productName || '-' }}</text>
+            <view class="product-name-row">
+              <text class="product-name">{{ item.productName || '-' }}</text>
+              <text class="warehouse-tag" v-if="item.warehouseName">{{ item.warehouseName }}</text>
+            </view>
             <view class="status-badge" :class="isWarn(item) ? 'status-warn' : 'status-normal'">{{ isWarn(item) ? '预警' : '正常' }}</view>
           </view>
           <view class="card-body">
@@ -49,17 +55,27 @@
               </view>
               <view class="info-item">
                 <text class="info-label">类别</text>
-                <text class="info-value">{{ item.category || '-' }}</text>
+                <text class="info-value">{{ getCategoryLabel(item.category) }}</text>
               </view>
             </view>
             <view class="info-row">
               <view class="info-item">
                 <text class="info-label">库存数量</text>
-                <text class="info-value quantity">{{ item.quantityDisplay || item.quantity || 0 }}</text>
+                <text class="info-value quantity">{{ formatInventoryQty(item) }}</text>
               </view>
               <view class="info-item">
                 <text class="info-label">预警数量</text>
-                <text class="info-value">{{ item.warnQty ?? '-' }}</text>
+                <text class="info-value">{{ formatWarnQty(item) }}</text>
+              </view>
+            </view>
+            <view class="info-row">
+              <view class="info-item">
+                <text class="info-label">单位类型</text>
+                <text class="info-value">{{ getUnitTypeLabel(item) }}</text>
+              </view>
+              <view class="info-item" v-if="item.packQty && item.packQty > 1">
+                <text class="info-label">换算</text>
+                <text class="info-value">1{{ getUnitLabel(item) }}={{ item.packQty }}{{ getSpecLabel(item) }}</text>
               </view>
             </view>
             <view class="info-row">
@@ -70,6 +86,16 @@
               <view class="info-item">
                 <text class="info-label">出货价</text>
                 <text class="info-value price">¥{{ formatAmount(item.salePrice) }}</text>
+              </view>
+            </view>
+            <view class="info-row">
+              <view class="info-item">
+                <text class="info-label">最后入库</text>
+                <text class="info-value">{{ formatTime(item.lastStockInTime) }}</text>
+              </view>
+              <view class="info-item">
+                <text class="info-label">最后出库</text>
+                <text class="info-value">{{ formatTime(item.lastStockOutTime) }}</text>
               </view>
             </view>
           </view>
@@ -83,8 +109,14 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listInventory, listWarnInventory } from '@/api/wms/inventory'
 import { checkPermi } from '@/utils/permission'
+import { useWarehouse } from '@/composables/useWarehouse'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { getDicts } from '@/api/system/dictData'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const inventoryList = ref([])
 const loading = ref(false)
@@ -99,12 +131,9 @@ const hasActiveFilters = computed(() => queryParams.category !== '' && queryPara
 
 const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', category: '' })
 
-const categoryOptions = ref([
-  { label: '药品', value: '药品' },
-  { label: '器械', value: '器械' },
-  { label: '耗材', value: '耗材' },
-  { label: '其他', value: '其他' }
-])
+const categoryOptions = ref([])
+const unitOptions = ref([])
+const specOptions = ref([])
 
 function isWarn(item) {
   return item.quantity !== undefined && item.quantity !== null && item.warnQty !== undefined && item.warnQty !== null && item.quantity <= item.warnQty
@@ -116,6 +145,56 @@ function formatAmount(val) {
   return num.toFixed(2)
 }
 
+function getCategoryLabel(val) {
+  if (!val) return '-'
+  const opt = categoryOptions.value.find(o => o.value === String(val))
+  return opt ? opt.label : val
+}
+
+function getUnitLabel(item) {
+  if (!item.unit) return ''
+  const opt = unitOptions.value.find(o => o.value === String(item.unit))
+  return opt ? opt.label : item.unit
+}
+
+function getSpecLabel(item) {
+  if (!item.spec) return ''
+  const opt = specOptions.value.find(o => o.value === String(item.spec))
+  return opt ? opt.label : item.spec
+}
+
+function getUnitTypeLabel(item) {
+  if (item.packQty && item.packQty > 1) return '主单位(整)'
+  return '副单位(拆)'
+}
+
+function formatInventoryQty(item) {
+  const packQty = item.packQty || 1
+  const unitLabel = getUnitLabel(item)
+  const specLabel = getSpecLabel(item)
+  const qty = item.quantity || 0
+  if (packQty > 1 && specLabel) {
+    const mainQty = qty / packQty
+    const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
+    return mainQtyStr + unitLabel + '（' + qty + specLabel + '）'
+  } else if (unitLabel) {
+    return qty + unitLabel
+  } else {
+    return qty
+  }
+}
+
+function formatWarnQty(item) {
+  if (item.warnQty === undefined || item.warnQty === null || item.warnQty === '') return '-'
+  const specLabel = getSpecLabel(item)
+  return item.warnQty + (specLabel || '')
+}
+
+function formatTime(time) {
+  if (!time) return '-'
+  return String(time).substring(0, 16)
+}
+
 async function getList(isRefresh = false) {
   if (loading.value) return
   loading.value = true
@@ -123,6 +202,7 @@ async function getList(isRefresh = false) {
   try {
     const params = { pageNum: queryParams.pageNum, pageSize: queryParams.pageSize }
     if (queryParams.category !== '' && queryParams.category !== undefined) params.category = queryParams.category
+    if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
     if (queryParams.keyword) { params.productName = queryParams.keyword; params.productCode = queryParams.keyword }
     const apiFn = warnOnly.value ? listWarnInventory : listInventory
     const response = await apiFn(params)
@@ -145,11 +225,31 @@ function resetFilter() { queryParams.category = '' }
 function confirmFilter() { showFilter.value = false; getList(true) }
 function onWarnSwitchChange() { getList(true) }
 
+function handleWarehouseChange(warehouseId) {
+  queryParams.warehouseId = warehouseId
+  getList(true)
+}
+
+async function loadCategoryDict() {
+  try {
+    const [catRes, unitRes, specRes] = await Promise.all([
+      getDicts('biz_product_category'),
+      getDicts('biz_product_unit'),
+      getDicts('biz_product_spec')
+    ])
+    categoryOptions.value = (catRes.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
+    unitOptions.value = (unitRes.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
+    specOptions.value = (specRes.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  } catch (e) {
+    console.error('加载字典失败:', e)
+  }
+}
+
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/wms/stock/detail?productId=${item.productId}` })
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 权限检查
   if (!checkPermi('wms:inventory:list')) {
     uni.showToast({ title: '无库存查看权限', icon: 'none' })
@@ -160,6 +260,13 @@ onMounted(() => {
     }, 1500)
     return
   }
+  loadCategoryDict()
+  await loadWarehouses()
+  getList(true)
+})
+
+onShow(async () => {
+  await loadWarehouses()
   getList(true)
 })
 </script>
@@ -182,7 +289,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   }
 }
 
-.warn-switch-row { display: flex; align-items: center; justify-content: flex-end; margin-top: 16rpx; gap: 12rpx; }
+.warehouse-row { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 10rpx 20rpx; }
+.warn-switch-row { display: flex; align-items: center; gap: 12rpx; flex-shrink: 0; }
 .warn-switch-label { font-size: 26rpx; color: #4E5969; font-weight: 500; }
 
 .popup-content { padding: 30rpx; background: #fff; }
@@ -202,7 +310,9 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &:active { transform: scale(0.985); background: #FAFBFC; }
 }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.product-name { font-size: 30rpx; font-weight: 600; color: #1D2129; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 16rpx; }
+.product-name-row { display: flex; align-items: center; flex: 1; min-width: 0; gap: 12rpx; }
+.product-name { font-size: 30rpx; font-weight: 600; color: #1D2129; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.warehouse-tag { flex-shrink: 0; font-size: 20rpx; color: #3D6DF7; background: #e8f0fe; padding: 4rpx 12rpx; border-radius: 6rpx; white-space: nowrap; }
 .status-badge { padding: 4rpx 16rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500; flex-shrink: 0;
   &.status-normal { background: #e8f0fe; color: #00B42A; }
   &.status-warn { background: #FFECE8; color: #F53F3F; }
@@ -216,4 +326,5 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &.quantity { font-weight: 600; }
   &.price { color: #FF6B35; font-weight: 500; }
 }
+.unit-label { font-size: 22rpx; color: #86909C; margin-left: 4rpx; }
 </style>

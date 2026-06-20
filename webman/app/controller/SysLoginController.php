@@ -33,6 +33,7 @@ class SysLoginController
         $password = $request->post('password', '');
         $code = $request->post('code', '');
         $uuid = $request->post('uuid', '');
+        $loginSource = $request->header('x-login-source', 'web') === 'app' ? 'app' : 'web';
 
         $captchaEnabled = \app\service\SysConfigService::selectCaptchaEnabled();
         if ($captchaEnabled) {
@@ -63,18 +64,18 @@ class SysLoginController
         $user = $userService->selectUserByUserName($username);
 
         if (!$user) {
-            $this->recordLogininfor($username, false, '用户不存在');
+            $this->recordLogininfor($username, false, '用户不存在', $loginSource);
             return AjaxResult::error('用户不存在');
         }
 
         if ($user->status === '1') {
-            $this->recordLogininfor($username, false, '用户已被停用');
+            $this->recordLogininfor($username, false, '用户已被停用', $loginSource);
             return AjaxResult::error('用户已被停用，请联系管理员');
         }
 
         $pwdResult = PasswordService::validate($user, $password);
         if ($pwdResult !== true) {
-            $this->recordLogininfor($username, false, $pwdResult);
+            $this->recordLogininfor($username, false, $pwdResult, $loginSource);
             return AjaxResult::error($pwdResult);
         }
 
@@ -94,7 +95,7 @@ class SysLoginController
             'login_date' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->recordLogininfor($username, true, '登录成功');
+        $this->recordLogininfor($username, true, '登录成功', $loginSource);
 
         return AjaxResult::success('操作成功', ['token' => $token]);
     }
@@ -203,7 +204,7 @@ class SysLoginController
     }
 
     // 记录登录日志（用户名、IP地址、浏览器、操作系统、登录结果）
-    private function recordLogininfor($username, $success, $msg)
+    private function recordLogininfor($username, $success, $msg, $source = 'web')
     {
         try {
             $request = request();
@@ -219,6 +220,7 @@ class SysLoginController
                 'os' => UserAgentService::getOS($ua),
                 'status' => $success ? '0' : '1',
                 'msg' => $msg,
+                'login_source' => $source,
                 'login_time' => date('Y-m-d H:i:s'),
             ]);
         } catch (\Exception $e) {

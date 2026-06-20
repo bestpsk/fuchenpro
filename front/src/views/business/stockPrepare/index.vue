@@ -26,11 +26,21 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:stockPrepare:export']">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
     <el-table v-loading="loading" :data="stockPrepareList">
       <el-table-column label="企业名称" prop="enterpriseName" min-width="140" show-overflow-tooltip />
+      <el-table-column label="来源" width="140" align="center">
+        <template #default="scope">
+          <span v-if="scope.row.planId" class="link-type" @click="viewPlan(scope.row)">{{ scope.row.planNo }}</span>
+          <span v-else-if="scope.row.orderId">订单备货</span>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
       <el-table-column label="门店名称" prop="storeName" min-width="120" show-overflow-tooltip />
       <el-table-column label="货品种类数" width="100" align="center">
         <template #default="scope">
@@ -39,7 +49,7 @@
       </el-table-column>
       <el-table-column label="总数量（整）" width="130" align="center">
         <template #default="scope">
-          {{ formatMainQtyFromTotal(scope.row.totalQuantity, scope.row.items) }}
+          {{ calcMainTotalQty(scope.row.items, 'quantity') }}
         </template>
       </el-table-column>
       <el-table-column label="总金额" prop="totalAmount" width="110" align="right">
@@ -49,7 +59,7 @@
       </el-table-column>
       <el-table-column label="已出库数量（整）" width="140" align="center">
         <template #default="scope">
-          {{ formatMainQtyFromTotal(scope.row.shippedQuantity, scope.row.items) }}
+          {{ calcMainTotalQty(scope.row.items, 'shippedQuantity') }}
         </template>
       </el-table-column>
       <el-table-column label="已出库金额" prop="shippedAmount" width="110" align="right">
@@ -59,7 +69,7 @@
       </el-table-column>
       <el-table-column label="待出库数量（整）" width="140" align="center">
         <template #default="scope">
-          {{ formatMainQtyFromTotal(scope.row.pendingQuantity, scope.row.items) }}
+          {{ calcMainTotalQty(scope.row.items, 'remainingQuantity') }}
         </template>
       </el-table-column>
       <el-table-column label="待出库金额" prop="pendingAmount" width="110" align="right">
@@ -83,6 +93,10 @@
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <el-dialog title="备货详情" v-model="detailOpen" width="1400px" append-to-body>
+      <el-descriptions v-if="detailData.planId" :column="2" border size="small" style="margin-bottom: 16px;">
+        <el-descriptions-item label="方案编号">{{ detailData.planNo }}</el-descriptions-item>
+        <el-descriptions-item label="方案名称">{{ detailData.planName }}</el-descriptions-item>
+      </el-descriptions>
       <el-tabs v-model="detailActiveTab">
         <el-tab-pane label="库存明细" name="items">
           <el-table :data="detailData.items" border size="small">
@@ -130,7 +144,7 @@
             <el-table-column label="订单编号" prop="orderNo" width="160" />
             <el-table-column label="类别" prop="sourceType" width="80" align="center">
               <template #default="scope">
-                {{ scope.row.sourceType === '1' ? '开单' : scope.row.sourceType === '2' ? '操作' : scope.row.sourceType === '3' ? '还款' : scope.row.sourceType === '4' ? '手动' : '-' }}
+                {{ scope.row.sourceType === '0' ? '开单' : scope.row.sourceType === '1' ? '操作' : scope.row.sourceType === '2' ? '还款' : scope.row.sourceType === '3' ? '手动' : '-' }}
               </template>
             </el-table-column>
             <el-table-column label="客户姓名" prop="customerName" width="90" />
@@ -152,6 +166,13 @@
     </el-dialog>
 
     <el-dialog title="统一出货" v-model="stockOutOpen" width="1200px" append-to-body>
+      <el-form label-width="100px" style="margin-bottom: 12px">
+        <el-form-item label="出库仓库" v-if="warehouseList.length > 0">
+          <el-select v-model="stockOutWarehouseId" placeholder="请选择仓库" style="width: 240px">
+            <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+          </el-select>
+        </el-form-item>
+      </el-form>
       <el-table ref="stockOutTableRef" :data="stockOutDetails" border size="small">
         <el-table-column label="货品名称" prop="productName" min-width="140" />
         <el-table-column label="单位类型" width="120" align="center">
@@ -208,9 +229,11 @@
 import { listStockPrepare, getStockPrepare, createStockOutFromPrepare } from "@/api/business/stockPrepare"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchStore } from "@/api/business/store"
+import { useWarehouse } from '@/composables/useWarehouse'
 
 const { proxy } = getCurrentInstance()
 const { biz_stock_prepare_status, biz_product_unit, biz_product_spec } = useDict("biz_stock_prepare_status", "biz_product_unit", "biz_product_spec")
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const stockPrepareList = ref([])
 const loading = ref(true)
@@ -223,6 +246,7 @@ const stockOutOpen = ref(false)
 const stockOutDetails = ref([])
 const currentPrepareId = ref(undefined)
 const stockOutTableRef = ref(null)
+const stockOutWarehouseId = ref(null)
 
 const enterpriseOptions = ref([])
 const enterpriseLoading = ref(false)
@@ -245,8 +269,8 @@ const stockOutTotalAmount = computed(() => {
   return stockOutDetails.value.reduce((sum, item) => sum + parseFloat(item.outAmount || 0), 0).toFixed(2)
 })
 
-function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
-function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
+function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
+function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
 
 function formatMainQty(qty, packQty, unit, spec) {
   const unitLabel = getUnitLabel(unit)
@@ -326,6 +350,12 @@ function getList() {
   })
 }
 
+function handleExport() {
+  proxy.download("business/stockPrepare/export", {
+    ...queryParams.value,
+  }, `stockPrepare_${new Date().getTime()}.xlsx`)
+}
+
 function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { proxy.resetForm("queryRef"); handleQuery() }
 
@@ -335,6 +365,10 @@ function handleDetail(row) {
     detailActiveTab.value = 'items'
     detailOpen.value = true
   })
+}
+
+function viewPlan(row) {
+  proxy.$router.push({ path: '/business/planList', query: { planId: row.planId } })
 }
 
 function handleStockOut(row) {
@@ -351,6 +385,9 @@ function handleStockOut(row) {
       }
     })
     stockOutOpen.value = true
+    loadWarehouses().then(() => {
+      stockOutWarehouseId.value = currentWarehouseId.value
+    })
   })
 }
 
@@ -387,7 +424,11 @@ function submitStockOut() {
     proxy.$modal.msgWarning("请至少填写一项出库数量")
     return
   }
-  createStockOutFromPrepare({ prepareId: currentPrepareId.value, items }).then(() => {
+  if (warehouseList.value.length > 0 && !stockOutWarehouseId.value) {
+    proxy.$modal.msgWarning("请选择出库仓库")
+    return
+  }
+  createStockOutFromPrepare({ prepareId: currentPrepareId.value, items, warehouseId: stockOutWarehouseId.value }).then(() => {
     proxy.$modal.msgSuccess("出库单创建成功")
     stockOutOpen.value = false
     getList()

@@ -440,7 +440,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getCustomer } from '@/api/business/customer'
 import { addSalesOrder, listSalesOrder } from '@/api/business/salesOrder'
 import { getOwedPackages, addRepayment, listRepayment, auditRepayment, cancelRepayment } from '@/api/business/repayment'
-import { searchCardItem } from '@/api/business/cardItem'
+import { searchCardItem, listCardItem } from '@/api/business/cardItem'
 import { getConfigKey } from '@/api/system/config'
 import { checkPermi } from '@/utils/permission'
 
@@ -463,7 +463,7 @@ const enterpriseName = ref('')
 
 const orderPackageName = ref('')
 const orderItems = ref([
-  { cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0 }
+  { cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash' }
 ])
 const orderRemark = ref('')
 const orderStoreDealer = ref('')
@@ -477,6 +477,30 @@ const cardItemSearchIndex = ref(-1)
 const cardItemKeyword = ref('')
 const cardItemSearchResults = ref([])
 let cardItemSearchTimer = null
+
+// ==================== 卡项使用频次（localStorage） ====================
+const CARD_ITEM_FREQ_KEY = 'cardItemFrequency'
+
+function getCardItemFrequency() {
+  try {
+    return JSON.parse(uni.getStorageSync(CARD_ITEM_FREQ_KEY) || '{}')
+  } catch { return {} }
+}
+
+function updateCardItemFrequency(cardItemId, cardItemName) {
+  const freq = getCardItemFrequency()
+  if (!freq[cardItemId]) {
+    freq[cardItemId] = { cardItemId, cardItemName, count: 0 }
+  }
+  freq[cardItemId].count += 1
+  freq[cardItemId].cardItemName = cardItemName
+  uni.setStorageSync(CARD_ITEM_FREQ_KEY, JSON.stringify(freq))
+}
+
+function getFrequentCardItems(limit = 20) {
+  const freq = getCardItemFrequency()
+  return Object.values(freq).sort((a, b) => b.count - a.count).slice(0, limit)
+}
 
 /** 所有品项成交金额合计 */
 const totalDealAmount = computed(() => orderItems.value.reduce((sum, item) => sum + (parseFloat(item.dealAmount) || 0), 0))
@@ -509,11 +533,12 @@ function addOrderItemRow() {
   orderItems.value.push({ cardItemId: null, productName: '', quantity: 1, dealAmount: 0, paidAmount: 0, paymentMethod: 'cash' })
 }
 
-function openCardItemSearch(index) {
+async function openCardItemSearch(index) {
   cardItemSearchIndex.value = index
   cardItemKeyword.value = ''
-  cardItemSearchResults.value = []
   showCardItemSearch.value = true
+  // 默认加载常用卡项
+  await loadDefaultCardItems()
 }
 
 function closeCardItemSearch() {
@@ -526,8 +551,28 @@ function onCardItemKeywordChange(val) {
   cardItemSearchTimer = setTimeout(() => { doSearchCardItem() }, 500)
 }
 
+async function loadDefaultCardItems() {
+  try {
+    const res = await listCardItem({ pageNum: 1, pageSize: 20 })
+    const data = res.data || res
+    const items = data.rows || data || []
+    const freqMap = getCardItemFrequency()
+    cardItemSearchResults.value = items.sort((a, b) => {
+      const freqA = freqMap[a.cardItemId]?.count || 0
+      const freqB = freqMap[b.cardItemId]?.count || 0
+      if (freqA > 0 && freqB > 0) return freqB - freqA
+      if (freqA > 0) return -1
+      if (freqB > 0) return 1
+      return 0
+    })
+  } catch (e) { console.error('加载卡项列表失败:', e) }
+}
+
 async function doSearchCardItem() {
-  if (!cardItemKeyword.value) { cardItemSearchResults.value = []; return }
+  if (!cardItemKeyword.value) {
+    await loadDefaultCardItems()
+    return
+  }
   try {
     const res = await searchCardItem(cardItemKeyword.value)
     cardItemSearchResults.value = res.data || []
@@ -541,7 +586,10 @@ function selectCardItem(cardItem) {
     orderItems.value[index].productName = cardItem.cardItemName
     orderItems.value[index].quantity = cardItem.defaultQuantity || 1
     orderItems.value[index].dealAmount = cardItem.suggestedPrice || 0
+    orderItems.value[index].paidAmount = orderItems.value[index].dealAmount
   }
+  // 记录使用频次
+  updateCardItemFrequency(cardItem.cardItemId, cardItem.cardItemName)
   closeCardItemSearch()
 }
 
@@ -800,7 +848,7 @@ async function submitOrder() {
     return
   }
 
-  const hasInvalidAmount = validItems.some(i => (parseFloat(i.dealAmount) || 0) <= 0)
+  const hasInvalidAmount = validItems.some(i => i.paymentMethod !== 'gift' && (parseFloat(i.dealAmount) || 0) <= 0)
   if (hasInvalidAmount) {
     uni.showToast({ title: '请填写成交金额', icon: 'none' })
     return
@@ -824,7 +872,8 @@ async function submitOrder() {
         productName: i.productName,
         quantity: parseInt(i.quantity) || 1,
         dealAmount: parseFloat(i.dealAmount) || 0,
-        paidAmount: parseFloat(i.paidAmount) || 0
+        paidAmount: parseFloat(i.paidAmount) || 0,
+        paymentMethod: i.paymentMethod || 'cash'
       }))
     })
 

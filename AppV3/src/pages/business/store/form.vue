@@ -110,15 +110,24 @@
       </view>
     </view>
 
-    <u-picker
-      :show="showEnterprisePicker"
-      :columns="[enterpriseColumns]"
-      keyName="enterpriseName"
-      title="选择企业"
-      @confirm="onEnterpriseConfirm"
-      @cancel="showEnterprisePicker = false"
-      @close="showEnterprisePicker = false"
-    ></u-picker>
+    <u-popup :show="showEnterprisePicker" mode="bottom" round="16" @close="showEnterprisePicker = false">
+      <view class="picker-popup">
+        <view class="picker-header">
+          <text class="picker-title">选择企业</text>
+          <view class="picker-close" @click="showEnterprisePicker = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
+        </view>
+        <view class="picker-search">
+          <u-icon name="search" size="14" color="#86909C"></u-icon>
+          <input class="picker-search-input" v-model="enterpriseSearchKeyword" placeholder="搜索企业名称" placeholder-class="field-placeholder" confirm-type="search" @input="onEnterpriseSearchInput" @confirm="searchEnterpriseList" />
+        </view>
+        <scroll-view scroll-y class="picker-list">
+          <view v-for="item in enterpriseSearchResults" :key="item.enterpriseId" class="picker-item" @click="onEnterpriseSelect(item)">
+            <text class="picker-item-text">{{ item.enterpriseName }}</text>
+          </view>
+          <u-empty v-if="enterpriseSearchResults.length === 0 && enterpriseSearchKeyword" mode="search" text="未找到匹配企业" :marginTop="40"></u-empty>
+        </scroll-view>
+      </view>
+    </u-popup>
 
     <view class="form-actions" v-if="mode !== 'view'">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
@@ -139,7 +148,7 @@
  */
 import { ref, reactive, onMounted } from 'vue'
 import { getStore, addStore, updateStore, delStore } from '@/api/business/store'
-import { listEnterprise } from '@/api/business/enterprise'
+import { searchEnterprise } from '@/api/business/enterprise'
 import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
@@ -147,7 +156,8 @@ const showEnterprisePicker = ref(false)
 /** 页面模式：add/edit/view */
 const mode = ref('add')
 const storeId = ref(null)
-const enterpriseColumns = ref([])
+const enterpriseSearchKeyword = ref('')
+const enterpriseSearchResults = ref([])
 
 const form = reactive({
   storeId: undefined,
@@ -169,20 +179,32 @@ const form = reactive({
 })
 
 /** 企业选择确认，更新表单中的企业ID和名称 */
-function onEnterpriseConfirm(e) {
-  const item = e.value[0]
+function onEnterpriseSelect(item) {
   form.enterpriseId = item.enterpriseId
   form.enterpriseName = item.enterpriseName
   showEnterprisePicker.value = false
 }
 
-/** 加载企业列表供门店表单选择所属企业 */
-async function loadEnterpriseOptions() {
+let enterpriseSearchTimer = null
+
+function onEnterpriseSearchInput() {
+  if (enterpriseSearchTimer) clearTimeout(enterpriseSearchTimer)
+  enterpriseSearchTimer = setTimeout(() => searchEnterpriseList(), 500)
+}
+
+async function searchEnterpriseList() {
+  if (!enterpriseSearchKeyword.value) {
+    enterpriseSearchResults.value = []
+    return
+  }
   try {
-    const response = await listEnterprise({ pageNum: 1, pageSize: 1000, status: '0' })
+    const response = await searchEnterprise(enterpriseSearchKeyword.value)
     const data = response.data || response
-    enterpriseColumns.value = data.rows || []
-  } catch (e) { console.error('加载企业列表失败:', e) }
+    enterpriseSearchResults.value = Array.isArray(data) ? data : (data.rows || [])
+  } catch (e) {
+    console.error('搜索企业失败:', e)
+    enterpriseSearchResults.value = []
+  }
 }
 
 async function loadDetail() {
@@ -291,8 +313,6 @@ onMounted(() => {
   const options = pages[pages.length - 1].options || {}
   mode.value = options.mode || 'add'
   storeId.value = options.id ? parseInt(options.id) : null
-
-  loadEnterpriseOptions()
 
   if (mode.value === 'view') { uni.setNavigationBarTitle({ title: '门店详情' }); loadDetail() }
   else if (mode.value === 'edit') { uni.setNavigationBarTitle({ title: '编辑门店' }); loadDetail() }
@@ -432,4 +452,17 @@ page { background-color: #F5F7FA; }
 
   .u-button { flex: 1; height: 88rpx; border-radius: 44rpx; font-size: 30rpx; font-weight: 600; }
 }
+
+.picker-popup { max-height: 70vh; display: flex; flex-direction: column; }
+.picker-header { display: flex; justify-content: space-between; align-items: center; padding: 30rpx; border-bottom: 1rpx solid #F2F3F5; }
+.picker-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.picker-close { padding: 8rpx; }
+.picker-search { display: flex; align-items: center; gap: 12rpx; margin: 20rpx 30rpx; padding: 0 20rpx; height: 72rpx; background: #F5F7FA; border-radius: 36rpx; }
+.picker-search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; }
+.picker-list { flex: 1; padding: 0 30rpx; max-height: 50vh; }
+.picker-item { display: flex; justify-content: space-between; align-items: center; padding: 28rpx 0; border-bottom: 1rpx solid #F2F3F5;
+  &:last-child { border-bottom: none; }
+  &:active { background: #F5F7FA; }
+}
+.picker-item-text { font-size: 28rpx; color: #1D2129; }
 </style>

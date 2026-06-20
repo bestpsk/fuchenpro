@@ -216,6 +216,7 @@
  * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除企业
  */
 import { ref, reactive, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listEnterprise, delEnterprise } from '@/api/business/enterprise'
 import { checkPermi } from '@/utils/permission'
 
@@ -239,9 +240,6 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   keyword: '',
-  enterpriseName: '',
-  bossName: '',
-  phone: '',
   enterpriseType: '',
   enterpriseLevel: '',
   status: ''
@@ -289,12 +287,7 @@ async function getList(isRefresh = false) {
 
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.enterpriseName = params.keyword
-      params.bossName = params.keyword
-      params.phone = params.keyword
-    }
-    delete params.keyword
+    // keyword 直接传给后端，后端做 OR 模糊搜索
 
     const response = await listEnterprise(params)
     const data = response.data || response
@@ -417,6 +410,10 @@ function handleDelete(item) {
 }
 
 onMounted(() => {
+  getList(true)
+})
+
+onShow(() => {
   getList(true)
 })
 </script>

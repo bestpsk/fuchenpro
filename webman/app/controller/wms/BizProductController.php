@@ -5,7 +5,9 @@ namespace app\controller\wms;
 use support\Request;
 use app\service\BizProductService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\BizProduct;
 
 /**
  * 货品管理控制器
@@ -79,5 +81,27 @@ class BizProductController
         $service = new BizProductService();
         $result = $service->deleteProductByIds($productIds, $params);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出货品数据
+    public function export(Request $request)
+    {
+        $service = new BizProductService();
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $service->selectProductList($params);
+        $list = $result->items();
+        // 关联查询supplier_name
+        foreach ($list as $item) {
+            if (!empty($item->supplier_id)) {
+                $supplier = \app\model\BizSupplier::find($item->supplier_id);
+                $item->supplier_name = $supplier ? $supplier->supplier_name : '';
+            } else {
+                $item->supplier_name = '';
+            }
+        }
+        $excelUtil = new ExcelUtil(BizProduct::class);
+        return $excelUtil->exportExcel($list, '货品数据');
     }
 }

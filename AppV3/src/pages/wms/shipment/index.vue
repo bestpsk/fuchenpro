@@ -1,5 +1,6 @@
 <template>
   <view class="shipment-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <view class="search-section">
       <view class="search-box">
         <u-icon name="search" size="16" color="#86909C"></u-icon>
@@ -67,6 +68,7 @@
           </view>
           <view class="card-actions" v-if="hasActions(item)" @click.stop>
             <view v-if="canConfirm(item)" class="action-tag confirm" @click.stop="handleConfirm(item)">确认出库</view>
+            <view v-if="String(item.status) === '1'" class="action-tag cancel" @click.stop="handleCancelConfirm(item)">取消确认</view>
             <view v-if="canShip(item)" class="action-tag ship" @click.stop="handleShip(item)">发货</view>
             <view v-if="canConfirmReceipt(item)" class="action-tag receipt" @click.stop="handleConfirmReceipt(item)">确认收货</view>
             <view v-if="canEdit(item)" class="action-tag edit" @click.stop="goEdit(item)">编辑</view>
@@ -82,16 +84,40 @@
       <view class="popup-content">
         <view class="popup-title">填写物流信息</view>
         <view class="popup-field">
-          <view class="popup-field-label">物流公司</view>
-          <view class="popup-input-box">
-            <input class="popup-input" type="text" v-model="shipForm.logisticsCompany" placeholder="请输入物流公司" placeholder-class="field-placeholder" />
+          <view class="popup-field-label">发货方式</view>
+          <picker :range="['自提', '物流']" @change="handleShipTypeChange" :value="shipForm.shipTypeIndex">
+            <view class="form-picker">{{ shipForm.shipTypeIndex === 0 ? '自提' : '物流' }}</view>
+          </picker>
+        </view>
+        <view v-if="shipForm.shipTypeIndex === 1">
+          <view class="popup-field">
+            <view class="popup-field-label">物流公司</view>
+            <picker :range="logisticsCompanyOptions" @change="onLogisticsCompanyChange" :value="logisticsCompanyIndex">
+              <view class="form-picker">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
+            </picker>
+          </view>
+          <view class="popup-field">
+            <view class="popup-field-label">物流单号</view>
+            <view class="popup-input-box">
+              <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+            </view>
           </view>
         </view>
         <view class="popup-field">
-          <view class="popup-field-label">物流单号</view>
-          <view class="popup-input-box">
-            <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+          <view class="popup-field-label">发货凭证</view>
+          <view class="image-upload">
+            <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
+              <image :src="img" mode="aspectFill" @click="previewImage(img)" />
+              <view class="remove-btn" @click="removeImage(idx)">×</view>
+            </view>
+            <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
+              <text>+</text>
+            </view>
           </view>
+        </view>
+        <view class="popup-field">
+          <view class="popup-field-label">备注</view>
+          <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
         </view>
         <view class="popup-actions">
           <u-button type="info" plain text="取消" @click="showShipPopup = false"></u-button>
@@ -99,13 +125,38 @@
         </view>
       </view>
     </u-popup>
+
+    <u-popup :show="showConfirmWarehousePicker" mode="bottom" round="16" @close="showConfirmWarehousePicker = false">
+      <view class="picker-content">
+        <view class="picker-header">
+          <text class="picker-title">选择出库仓库</text>
+          <view class="picker-close" @click="showConfirmWarehousePicker = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
+        </view>
+        <picker :range="confirmWarehouseNames" @change="onConfirmWarehouseChange">
+          <view class="warehouse-picker-list">
+            <view v-for="(w, idx) in confirmWarehouseList" :key="w.warehouseId" class="warehouse-picker-item" @click="onConfirmWarehouseChange({ detail: { value: idx } })">
+              <text>{{ w.warehouseName }}</text>
+            </view>
+          </view>
+        </picker>
+      </view>
+    </u-popup>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listStockOut, delStockOut, confirmStockOut, shipStockOut, confirmReceipt } from '@/api/wms/stockOut'
+import { onShow } from '@dcloudio/uni-app'
+import { listStockOut, delStockOut, confirmStockOut, cancelConfirmStockOut, shipStockOut, confirmReceipt } from '@/api/wms/stockOut'
+import { getDicts } from '@/api/system/dictData'
+import { listWarehouse } from '@/api/wms/warehouse'
 import { checkPermi } from '@/utils/permission'
+import { useWarehouse } from '@/composables/useWarehouse'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { getToken } from '@/utils/auth'
+import config from '@/config'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const stockOutList = ref([])
 const loading = ref(false)
@@ -114,13 +165,19 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showShipPopup = ref(false)
 const currentShipItem = ref(null)
-const shipForm = reactive({ logisticsCompany: '', logisticsNo: '' })
+const shipForm = ref({ logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' })
+const showConfirmWarehousePicker = ref(false)
+const confirmWarehouseList = ref([])
+const confirmingStockOutId = ref(null)
+const confirmWarehouseNames = computed(() => confirmWarehouseList.value.map(w => w.warehouseName))
+const confirmWarehouseIndex = ref(0)
+const logisticsCompanyOptions = ref([])
 
 let searchTimer = null
 
 const hasActiveFilters = computed(() => (queryParams.status !== '' && queryParams.status !== undefined) || (queryParams.shipType !== '' && queryParams.shipType !== undefined))
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '', shipType: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '', shipType: '', warehouseId: '' })
 
 const statusOptions = ref([
   { label: '待确认', value: '0' },
@@ -172,6 +229,7 @@ async function getList(isRefresh = false) {
     if (queryParams.status !== '' && queryParams.status !== undefined) params.status = queryParams.status
     if (queryParams.shipType !== '' && queryParams.shipType !== undefined) params.shipType = queryParams.shipType
     if (queryParams.keyword) { params.stockOutNo = queryParams.keyword; params.enterpriseName = queryParams.keyword }
+    if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
     const response = await listStockOut(params)
     const data = response.data || response
     const list = data.rows || data.items || []
@@ -200,6 +258,12 @@ function goEdit(item) {
 }
 
 function handleConfirm(item) {
+  if (!item.warehouseId) {
+    // 出库单未指定仓库，弹出仓库选择
+    confirmingStockOutId.value = item.stockOutId
+    loadConfirmWarehouses()
+    return
+  }
   uni.showModal({ title: '提示', content: '确认出库后将减少库存数量，是否继续？', success: async (res) => {
     if (res.confirm) {
       try {
@@ -211,21 +275,69 @@ function handleConfirm(item) {
   }})
 }
 
+async function loadConfirmWarehouses() {
+  try {
+    const res = await listWarehouse({ status: '0' })
+    confirmWarehouseList.value = res.rows || res.data || []
+    if (confirmWarehouseList.value.length > 0) {
+      showConfirmWarehousePicker.value = true
+    } else {
+      uni.showToast({ title: '暂无可用仓库', icon: 'none' })
+    }
+  } catch (e) {
+    uni.showToast({ title: '加载仓库失败', icon: 'none' })
+  }
+}
+
+function onConfirmWarehouseChange(e) {
+  const idx = e.detail.value
+  const warehouse = confirmWarehouseList.value[idx]
+  if (!warehouse) return
+  showConfirmWarehousePicker.value = false
+  uni.showModal({ title: '提示', content: `确认从【${warehouse.warehouseName}】出库？`, success: async (res) => {
+    if (res.confirm) {
+      try {
+        await confirmStockOut(confirmingStockOutId.value, warehouse.warehouseId)
+        uni.showToast({ title: '确认出库成功', icon: 'success' })
+        getList(true)
+      } catch (e) { console.error('确认出库失败:', e) }
+    }
+  }})
+}
+
+function handleCancelConfirm(item) {
+  uni.showModal({
+    title: '提示',
+    content: '确认取消出库？取消后将恢复库存',
+    success: (res) => {
+      if (res.confirm) {
+        cancelConfirmStockOut(item.stockOutId).then(() => {
+          uni.showToast({ title: '取消确认成功', icon: 'success' })
+          getList()
+        })
+      }
+    }
+  })
+}
+
 function handleShip(item) {
   currentShipItem.value = item
-  shipForm.logisticsCompany = ''
-  shipForm.logisticsNo = ''
+  shipForm.value = { logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' }
   showShipPopup.value = true
 }
 
 async function confirmShip() {
-  if (!shipForm.logisticsCompany.trim()) { uni.showToast({ title: '请输入物流公司', icon: 'none' }); return }
-  if (!shipForm.logisticsNo.trim()) { uni.showToast({ title: '请输入物流单号', icon: 'none' }); return }
+  if (shipForm.value.shipTypeIndex === 1) {
+    if (!shipForm.value.logisticsCompany.trim()) { uni.showToast({ title: '请选择物流公司', icon: 'none' }); return }
+    if (!shipForm.value.logisticsNo.trim()) { uni.showToast({ title: '请输入物流单号', icon: 'none' }); return }
+  }
   try {
     await shipStockOut(currentShipItem.value.stockOutId, {
-      shipType: '2',
-      logisticsCompany: shipForm.logisticsCompany,
-      logisticsNo: shipForm.logisticsNo
+      ship_type: String(shipForm.value.shipTypeIndex + 1),
+      logistics_company: shipForm.value.logisticsCompany,
+      logistics_no: shipForm.value.logisticsNo,
+      shipment_images: JSON.stringify(shipForm.value.shipmentImages),
+      remark: shipForm.value.remark
     })
     uni.showToast({ title: '发货成功', icon: 'success' })
     showShipPopup.value = false
@@ -257,7 +369,64 @@ function handleDelete(item) {
   }})
 }
 
-onMounted(() => { getList(true) })
+function handleShipTypeChange(e) {
+  shipForm.value.shipTypeIndex = e.detail.value
+}
+
+const logisticsCompanyIndex = computed(() => {
+  const idx = logisticsCompanyOptions.value.indexOf(shipForm.value.logisticsCompany)
+  return idx >= 0 ? idx : 0
+})
+
+function onLogisticsCompanyChange(e) {
+  shipForm.value.logisticsCompany = logisticsCompanyOptions.value[e.detail.value] || ''
+}
+
+function chooseImage() {
+  uni.chooseImage({
+    count: 5 - shipForm.value.shipmentImages.length,
+    success: (res) => {
+      res.tempFilePaths.forEach(path => {
+        uni.uploadFile({
+          url: config.baseUrl + '/common/upload',
+          filePath: path,
+          name: 'file',
+          header: { Authorization: 'Bearer ' + getToken() },
+          success: (uploadRes) => {
+            const data = JSON.parse(uploadRes.data)
+            if (data.code === 200) {
+              shipForm.value.shipmentImages.push(data.url || data.fileName)
+            }
+          }
+        })
+      })
+    }
+  })
+}
+
+function removeImage(idx) {
+  shipForm.value.shipmentImages.splice(idx, 1)
+}
+
+function previewImage(url) {
+  uni.previewImage({ urls: [url], current: url })
+}
+
+function handleWarehouseChange(warehouseId) {
+  queryParams.warehouseId = warehouseId
+  getList()
+}
+
+onMounted(() => {
+  getList(true)
+  getDicts('logistics_company').then(res => {
+    logisticsCompanyOptions.value = (res.data || []).map(d => d.dictLabel)
+  }).catch(() => { logisticsCompanyOptions.value = [] })
+})
+
+onShow(() => {
+  loadWarehouses()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -293,6 +462,17 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .popup-input-box { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; margin-bottom: 16rpx; }
 .popup-input { width: 100%; font-size: 28rpx; color: #1D2129; height: 72rpx; }
 
+.form-picker { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; margin-bottom: 16rpx; }
+.form-textarea { width: 100%; background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; min-height: 120rpx; box-sizing: border-box; }
+.image-upload { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 16rpx; }
+.upload-item { position: relative; width: 140rpx; height: 140rpx; border-radius: 12rpx; overflow: hidden;
+  image { width: 100%; height: 100%; }
+  .remove-btn { position: absolute; top: 0; right: 0; width: 36rpx; height: 36rpx; background: rgba(0,0,0,0.5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24rpx; border-radius: 0 0 0 12rpx; }
+}
+.upload-add { width: 140rpx; height: 140rpx; border: 2rpx dashed #C9CDD4; border-radius: 12rpx; display: flex; align-items: center; justify-content: center;
+  text { font-size: 48rpx; color: #C9CDD4; }
+}
+
 .list-scroll { flex: 1; overflow: hidden; padding: 12rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 16rpx; }
 
@@ -321,9 +501,19 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .card-actions { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; }
 .action-tag { padding: 8rpx 20rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500;
   &.confirm { background: #E8F8F0; color: #00B42A; }
+  &.cancel { background: #FFF1E8; color: #FF7D00; }
   &.ship { background: #E8F0FE; color: #3D6DF7; }
   &.receipt { background: #F0E8FF; color: #8B5CF6; }
   &.edit { background: #FFF7E8; color: #FF7D00; }
   &.delete { background: #FFECE8; color: #F53F3F; }
 }
+
+.warehouse-picker-list { padding: 20rpx 0; }
+.warehouse-picker-item { padding: 24rpx 30rpx; font-size: 28rpx; color: #1D2129; border-bottom: 1rpx solid #F2F3F5;
+  &:active { background: #F5F7FA; }
+}
+.picker-content { padding: 30rpx; background: #fff; }
+.picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.picker-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.picker-close { padding: 8rpx; }
 </style>

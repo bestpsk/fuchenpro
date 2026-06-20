@@ -2,7 +2,7 @@
   <view class="normal-login-container">
     <view class="logo-content">
       <image style="width: 100rpx; height: 100rpx" src="/static/logo.png" mode="widthFix" />
-      <text class="title">馥辰国际注册</text>
+      <text class="title">赛诺美生注册</text>
     </view>
     <view class="login-form-content">
       <view class="input-item">

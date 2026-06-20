@@ -154,7 +154,7 @@
           <view class="enterprise-header">
             <u-icon name="home-fill" size="16" color="#3D6DF7"></u-icon>
             <text class="enterprise-name">{{ group.enterpriseName }}</text>
-            <text class="enterprise-count">{{ group.schedules.length }}条排班</text>
+            <text class="enterprise-count">{{ group.schedules.length }}人</text>
           </view>
           <view v-for="(item, idx) in group.schedules" :key="idx" class="schedule-card enterprise-schedule-card">
             <view class="card-header">
@@ -166,13 +166,17 @@
             </view>
             <view class="card-body">
               <view class="info-row">
-                <view class="info-item">
+                <view class="info-item full">
                   <text class="label">目的</text>
                   <text class="value purpose-text">{{ getPurposeName(item.purpose) }}</text>
                 </view>
-                <view class="info-item">
-                  <text class="label">日期</text>
-                  <text class="value">{{ item.scheduleDate }}</text>
+              </view>
+              <view class="date-tags-row">
+                <view class="date-tag" v-for="(date, dIdx) in item.scheduleDates" :key="dIdx">
+                  {{ formatDay(date) }}
+                </view>
+                <view class="date-tag more" v-if="item.scheduleDates.length > 6">
+                  +{{ item.scheduleDates.length - 6 }}
                 </view>
               </view>
               <view class="info-row" v-if="item.remark">
@@ -233,24 +237,11 @@
     </scroll-view>
 
     <!-- FAB: 仅在员工行程Tab显示 -->
-    <view class="fab-btn" v-if="currentTab === 0 && checkPermi('business:schedule:add')" @click="goAdd">
+    <view class="fab-btn" v-if="(currentTab === 0 || currentTab === 1) && checkPermi('business:schedule:add')" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
 
-    <!-- 休息日期配置弹窗 -->
-    <u-popup :show="showRestDatePopup" mode="bottom" round="16" @close="showRestDatePopup = false">
-      <view class="rest-date-popup">
-        <view class="popup-title-row">
-          <text class="popup-title">配置休息日期</text>
-          <text class="popup-subtitle">{{ currentConfigUser.userName }}</text>
-        </view>
-        <view class="rest-date-tip">点击日期可选择/取消休息日，支持多选</view>
-        <view class="popup-actions">
-          <u-button type="info" plain text="取消" @click="showRestDatePopup = false"></u-button>
-          <u-button type="primary" text="保存" :loading="restDateSaving" @click="saveRestDatesAction"></u-button>
-        </view>
-      </view>
-    </u-popup>
+    <!-- 休息日期配置日历 -->
     <u-calendar
       :show="showRestDateCalendar"
       mode="multiple"
@@ -311,9 +302,9 @@ function onMonthConfirm(e) {
 
 const purposeOptions = ref([
   { label: '爆卡', value: '1' },
-  { label: '启动销售', value: '2' },
-  { label: '售后服务', value: '3' },
-  { label: '洽谈业务', value: '4' }
+  { label: '销售', value: '2' },
+  { label: '售后', value: '3' },
+  { label: '业务', value: '4' }
 ])
 
 const statusOptions = ref([
@@ -354,8 +345,6 @@ const queryParams = reactive({
   pageSize: 20,
   keyword: '',
   yearMonth: new Date().toISOString().slice(0, 7),
-  userName: '',
-  enterpriseName: '',
   purpose: '',
   status: ''
 })
@@ -407,8 +396,8 @@ async function getList(isRefresh = false) {
     const startDate = `${year}-${month}-01`
     const endDate = `${year}-${month}-${new Date(year, month, 0).getDate()}`
     const params = { ...queryParams, startDate, endDate }
-    if (params.keyword) { params.userName = params.keyword; params.enterpriseName = params.keyword }
-    delete params.keyword; delete params.yearMonth
+    // keyword 直接传给后端，后端做 OR 模糊搜索（员工名/企业名）
+    delete params.yearMonth
 
     const response = await listSchedule(params)
     const data = response.data || response
@@ -451,13 +440,23 @@ function confirmFilter() { showFilter.value = false; getList(true) }
 function clearFilter(field) { queryParams[field] = ''; getList(true) }
 
 function goDetail(item) {
+  uni.setStorageSync('scheduleGroupData', { scheduleIds: item.scheduleIds, scheduleDates: item.scheduleDates })
   uni.navigateTo({ url: `/pages/business/schedule/form?id=${item.scheduleIds[0]}&mode=view` })
 }
 function goEdit(item) {
+  uni.setStorageSync('scheduleGroupData', { scheduleIds: item.scheduleIds, scheduleDates: item.scheduleDates })
   uni.navigateTo({ url: `/pages/business/schedule/form?id=${item.scheduleIds[0]}&mode=edit` })
 }
 function goAdd() {
-  uni.navigateTo({ url: '/pages/business/schedule/form?mode=add' })
+  let url = '/pages/business/schedule/form?mode=add'
+  if (currentTab.value === 1) {
+    url += '&from=enterprise'
+    if (enterpriseScheduleList.value.length === 1) {
+      const ent = enterpriseScheduleList.value[0]
+      url += `&enterpriseId=${ent.enterpriseId}&enterpriseName=${encodeURIComponent(ent.enterpriseName)}`
+    }
+  }
+  uni.navigateTo({ url })
 }
 
 function handleDelete(item) {
@@ -482,30 +481,54 @@ async function getEnterpriseList() {
   enterpriseLoading.value = true
   try {
     const [year, month] = queryParams.yearMonth.split('-')
-    const params = { yearMonth: queryParams.yearMonth }
+    const startDate = `${year}-${month}-01`
+    const endDate = `${year}-${month}-${new Date(year, month, 0).getDate()}`
+    const params = { startDate, endDate }
     if (enterpriseSearchKeyword.value) {
-      params.enterpriseName = enterpriseSearchKeyword.value
-      params.userName = enterpriseSearchKeyword.value
+      params.keyword = enterpriseSearchKeyword.value
     }
     const response = await getEnterpriseSchedule(params)
     const data = response.data || response
     const list = Array.isArray(data) ? data : (data.rows || [])
 
-    // 按企业分组
-    const groupMap = new Map()
-    list.forEach(item => {
-      const eid = item.enterpriseId || 'unknown'
-      if (!groupMap.has(eid)) {
-        groupMap.set(eid, {
-          enterpriseId: eid,
-          enterpriseName: item.enterpriseName || '未知企业',
-          schedules: []
-        })
-      }
-      groupMap.get(eid).schedules.push(item)
-    })
+    // 后端已按企业分组，schedules 是日期键值对映射 { day: scheduleObj }
+    // 需要将 schedules 映射转为数组
+    enterpriseScheduleList.value = list.map(group => {
+      const scheduleMap = group.schedules || {}
+      const rawSchedules = Object.values(scheduleMap).flat().map(s => ({
+        ...s,
+        scheduleDate: s.scheduleDate || s.schedule_date || ''
+      }))
 
-    enterpriseScheduleList.value = Array.from(groupMap.values())
+      // Group by userId to merge same employee's dates
+      const employeeMap = new Map()
+      rawSchedules.forEach(s => {
+        const userId = s.userId || s.user_id
+        const key = `${userId}_${s.purpose || ''}_${s.status || ''}`
+        if (!employeeMap.has(key)) {
+          employeeMap.set(key, {
+            ...s,
+            scheduleDates: [s.scheduleDate]
+          })
+        } else {
+          const existing = employeeMap.get(key)
+          if (!existing.scheduleDates.includes(s.scheduleDate)) {
+            existing.scheduleDates.push(s.scheduleDate)
+          }
+        }
+      })
+
+      const schedules = Array.from(employeeMap.values()).map(item => ({
+        ...item,
+        scheduleDates: [...new Set(item.scheduleDates)].sort()
+      }))
+
+      return {
+        enterpriseId: group.enterpriseId || group.enterprise_id,
+        enterpriseName: group.enterpriseName || group.enterprise_name || '未知企业',
+        schedules
+      }
+    })
   } catch (e) {
     console.error('获取企业排班失败:', e)
     enterpriseScheduleList.value = []
@@ -525,9 +548,7 @@ const employeeConfigList = ref([])
 const configLoading = ref(false)
 const configRefreshing = ref(false)
 const showConfigFilter = ref(false)
-const showRestDatePopup = ref(false)
 const showRestDateCalendar = ref(false)
-const restDateSaving = ref(false)
 const currentConfigUser = ref({})
 const tempRestDates = ref([])
 
@@ -568,7 +589,7 @@ function onConfigRefresh() {
 
 async function handleSchedulableChange(row) {
   try {
-    await updateSchedulable(row.userId, row.isSchedulable === '1' || row.isSchedulable === true)
+    await updateSchedulable(row.userId, row.isSchedulable)
     uni.showToast({ title: '更新成功', icon: 'success' })
   } catch (e) {
     // 回滚
@@ -580,8 +601,7 @@ async function handleSchedulableChange(row) {
 function openRestDateConfig(row) {
   currentConfigUser.value = row
   tempRestDates.value = []
-  showRestDatePopup.value = true
-  // 加载已有休息日期
+  // 加载已有休息日期后打开日历
   getRestDates(row.userId).then(response => {
     const dates = response.data || []
     tempRestDates.value = dates
@@ -591,37 +611,28 @@ function openRestDateConfig(row) {
   })
 }
 
-function onRestDateConfirm(e) {
-  // u-calendar confirm 返回选中的日期数组
-  // e 可能是字符串数组，也可能是 { year, month, day } 对象数组
+async function onRestDateConfirm(e) {
+  // u-calendar confirm returns selected dates array
   const items = Array.isArray(e) ? e : (e ? [e] : [])
-  tempRestDates.value = items.map(d => {
+  const selectedDates = items.map(d => {
     if (typeof d === 'string') return d
-    // 处理 { year, month, day } 对象格式
     if (d && typeof d === 'object' && d.year !== undefined) {
       return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
     }
-    // 处理 Date 对象
     if (d instanceof Date) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     }
     return String(d)
   })
-}
 
-async function saveRestDatesAction() {
-  restDateSaving.value = true
+  // Save rest dates directly
   try {
-    await saveRestDates(currentConfigUser.value.userId, tempRestDates.value)
+    await saveRestDates(currentConfigUser.value.userId, selectedDates)
     uni.showToast({ title: '保存成功', icon: 'success' })
-    showRestDatePopup.value = false
     showRestDateCalendar.value = false
-    // 刷新配置列表
     queryConfig()
-  } catch (e) {
+  } catch (err) {
     uni.showToast({ title: '保存失败', icon: 'none' })
-  } finally {
-    restDateSaving.value = false
   }
 }
 
@@ -749,11 +760,4 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .schedulable-yes { font-size: 24rpx; color: #00B42A; font-weight: 500; }
 .schedulable-no { font-size: 24rpx; color: #F53F3F; font-weight: 500; }
 .rest-dates-wrap { display: flex; flex-wrap: wrap; gap: 8rpx; }
-
-/* 休息日期弹窗 */
-.rest-date-popup { padding: 30rpx; background: #fff; min-height: 600rpx; }
-.popup-title-row { display: flex; align-items: baseline; gap: 16rpx; margin-bottom: 12rpx; }
-.popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
-.popup-subtitle { font-size: 26rpx; color: #86909C; }
-.rest-date-tip { font-size: 24rpx; color: #86909C; margin-bottom: 20rpx; }
 </style>

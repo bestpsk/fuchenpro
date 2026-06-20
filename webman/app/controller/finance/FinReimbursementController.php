@@ -5,7 +5,9 @@ namespace app\controller\finance;
 use support\Request;
 use app\service\FinReimbursementService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\FinReimbursement;
 use app\model\SysDept;
 
 /**
@@ -172,5 +174,17 @@ class FinReimbursementController
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByExpenseType($params);
         return AjaxResult::success('', $result);
+    }
+
+    // 导出报销数据为Excel文件
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['page_size'] = 10000;
+        $result = $this->service->selectReimbursementList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(FinReimbursement::class);
+        return $excelUtil->exportExcel($list, '报销数据');
     }
 }

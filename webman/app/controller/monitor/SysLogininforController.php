@@ -4,6 +4,7 @@ namespace app\controller\monitor;
 
 use support\Request;
 use app\service\SysLogininforService;
+use app\model\SysLogininfor;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -25,7 +26,8 @@ class SysLogininforController
     // 批量删除登录日志
     public function remove(Request $request)
     {
-        $infoIds = explode(',', $request->input('infoIds', ''));
+        $infoIds = $request->input('infoIds', '') ?: $request->input('infoId', '');
+        $infoIds = explode(',', $infoIds);
         $infoIds = array_map('intval', array_filter($infoIds));
         $service = new SysLogininforService();
         return AjaxResult::toAjax($service->deleteLogininforByIds($infoIds) ? 1 : 0);
@@ -47,5 +49,18 @@ class SysLogininforController
         $service = new SysLogininforService();
         $service->unlock($userName);
         return AjaxResult::success();
+    }
+
+    // 导出登录日志为Excel
+    public function export(Request $request)
+    {
+        $params = $request->all();
+        $params['pageSize'] = 10000;
+        $service = new SysLogininforService();
+        $result = $service->selectLogininforList($params);
+        $list = $result->items();
+
+        $excelUtil = new \app\common\ExcelUtil(SysLogininfor::class);
+        return $excelUtil->exportExcel($list, '登录日志');
     }
 }

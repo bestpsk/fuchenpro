@@ -258,7 +258,7 @@ function getTagLabel(value) {
 function getAvatarUrl(avatar) {
   if (!avatar || avatar === '') return ''
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar
-  return config.baseUrl + avatar
+  return config.appInfo.site_url + avatar
 }
 
 /** 将当前选中的企业和门店信息保存到本地存储，刷新后可恢复 */

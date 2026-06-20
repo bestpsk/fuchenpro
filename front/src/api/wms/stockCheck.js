@@ -35,6 +35,6 @@ export function confirmStockCheck(id) {
 }
 
 /** 加载当前库存数据到盘点单（用于新建盘点时自动填充当前库存） */
-export function loadInventoryData() {
-  return request({ url: '/wms/stockCheck/loadInventory', method: 'get' })
+export function loadInventoryData(warehouseId) {
+  return request({ url: '/wms/stockCheck/loadInventory', method: 'get', params: { warehouse_id: warehouseId } })
 }

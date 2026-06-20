@@ -10,6 +10,8 @@ use app\model\BizCardItemProduct;
 use app\model\BizStockOut;
 use app\model\BizStockOutItem;
 use app\model\BizProduct;
+use app\model\BizPlan;
+use app\model\BizPlanItem;
 use app\model\BizSalesOrder;
 use app\service\DataScopeService;
 use support\Db;
@@ -35,16 +37,30 @@ class BizStockPrepareService
         if (!empty($params['prepare_no'])) {
             $query->where('prepare_no', 'like', '%' . $params['prepare_no'] . '%');
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('warehouse_id', $params['warehouse_id']);
+        }
         DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->with('items.product', 'orders')->orderBy('prepare_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
         // 补全字段
+        // 批量获取方案信息，避免N+1查询
+        $planIds = $result->pluck('plan_id')->filter()->unique()->toArray();
+        $plans = BizPlan::whereIn('plan_id', $planIds)->get()->keyBy('plan_id');
+
         foreach ($result as $item) {
             $item->product_count = $item->items ? $item->items->count() : 0;
             $item->pending_quantity = $item->remaining_quantity;
             $item->pending_amount = $item->remaining_amount;
+            // 补全方案关联信息
+            $item->planId = $item->plan_id;
+            $item->planNo = $item->plan_no;
+            if ($item->plan_id) {
+                $plan = $plans->get($item->plan_id);
+                $item->planName = $plan ? $plan->plan_name : '';
+            }
         }
 
         return $result;
@@ -59,6 +75,13 @@ class BizStockPrepareService
         $prepare->product_count = $prepare->items ? $prepare->items->count() : 0;
         $prepare->pending_quantity = $prepare->remaining_quantity;
         $prepare->pending_amount = $prepare->remaining_amount;
+        // 补全方案关联信息
+        $prepare->planId = $prepare->plan_id;
+        $prepare->planNo = $prepare->plan_no;
+        if ($prepare->plan_id) {
+            $plan = BizPlan::where('plan_id', $prepare->plan_id)->first();
+            $prepare->planName = $plan ? $plan->plan_name : '';
+        }
 
         // 补全items字段
         if ($prepare->items) {
@@ -69,6 +92,7 @@ class BizStockPrepareService
             foreach ($prepare->items as $item) {
                 $product = $item->product;
                 $item->prepare_item_id = $item->item_id;
+                $item->planItemId = $item->plan_item_id;
                 $item->product_code = $product ? $product->product_code : '';
                 $item->unit_label = isset($unitDicts[$item->unit]) ? $unitDicts[$item->unit] : '';
                 $item->spec_label = isset($specDicts[$item->spec]) ? $specDicts[$item->spec] : '';
@@ -285,9 +309,9 @@ class BizStockPrepareService
         });
     }
 
-    public function createStockOutFromPrepare($prepareId, $items)
+    public function createStockOutFromPrepare($prepareId, $items, $warehouseId = null, $loginUser = null)
     {
-        return Db::transaction(function () use ($prepareId, $items) {
+        return Db::transaction(function () use ($prepareId, $items, $warehouseId, $loginUser) {
             $prepare = BizStockPrepare::find($prepareId);
             if (!$prepare) {
                 return ['success' => false, 'msg' => '备货记录不存在'];
@@ -337,6 +361,8 @@ class BizStockPrepareService
                 return ['success' => false, 'msg' => '出库数量不能为0'];
             }
 
+            // warehouse_id 允许为空，在出库管理确认时再选择仓库
+
             $stockOutNo = $this->generateStockOutNo();
             $totalAmount = 0;
             $stockOutItemsData = [];
@@ -355,6 +381,7 @@ class BizStockPrepareService
                 $stockOutItemsData[] = [
                     'product_id' => $prepareItem->product_id,
                     'product_name' => $prepareItem->product_name,
+                    'plan_item_id' => $prepareItem->plan_item_id,
                     'spec' => $product ? $product->spec : '',
                     'unit' => $product ? $product->unit : '',
                     'unit_type' => $unitType,
@@ -372,13 +399,17 @@ class BizStockPrepareService
                 'stock_out_type' => '1',
                 'out_target_type' => '1',
                 'prepare_id' => $prepareId,
+                'plan_id' => $prepare->plan_id,
+                'warehouse_id' => $warehouseId,
                 'enterprise_id' => $prepare->enterprise_id,
                 'enterprise_name' => $prepare->enterprise_name,
+                'responsible_id' => $loginUser ? ($loginUser->user->user_id ?? null) : ($prepare->creator_user_id ?? null),
+                'responsible_name' => $loginUser ? ($loginUser->user->nick_name ?? $loginUser->user->user_name ?? '') : ($prepare->create_by ?? ''),
                 'total_quantity' => $totalShipQuantity,
                 'total_amount' => $totalAmount,
                 'stock_out_date' => date('Y-m-d'),
                 'status' => '0',
-                'ship_type' => '1',
+                'ship_type' => '2',
                 'remark' => null,
                 'create_by' => $prepare->create_by,
                 'create_time' => date('Y-m-d H:i:s'),
@@ -439,5 +470,131 @@ class BizStockPrepareService
         $seq = \support\Redis::incr($key);
         \support\Redis::expire($key, 86400);
         return 'CK' . $date . str_pad($seq, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * 从方案创建备货记录（分批次备货）
+     * @param int $planId 方案ID
+     * @param array $items 备货明细数组，每项含：productId, quantity, planItemId(可选), unitType(可选)
+     * @return bool
+     */
+    public function createFromPlan($planId, $items, $loginUser = null)
+    {
+        // 3.1 校验方案存在且 audit_status=2
+        $plan = BizPlan::find($planId);
+        if (!$plan) {
+            throw new \Exception('方案不存在');
+        }
+        if ($plan->audit_status != 2) {
+            throw new \Exception('方案未审核通过，无法备货');
+        }
+
+        // 3.2 校验备货金额
+        $planService = new BizPlanService();
+        $activePreparedAmount = $planService->getActivePreparedAmount($planId);
+
+        // 计算本次备货总金额
+        $totalAmount = 0;
+        $totalQuantity = 0;
+        $prepareItems = [];
+
+        foreach ($items as $item) {
+            $product = BizProduct::find($item['productId']);
+            if (!$product) {
+                throw new \Exception('货品不存在：' . ($item['productId'] ?? ''));
+            }
+
+            $unitType = $item['unitType'] ?? '1';
+            $packQty = $product->pack_qty ?? 1;
+            $salePrice = $unitType === '1' ? $product->sale_price : $product->sale_price_spec;
+
+            // 数量统一转为最小单位
+            $quantity = $item['quantity'];
+            if ($unitType === '1') {
+                $quantity = $item['quantity'] * $packQty;
+            }
+
+            $amount = $quantity * $salePrice; // 金额按对应单价计算
+
+            // 3.5 如果方案有配赠明细，校验 plan_item_id 和数量
+            $planItemId = $item['planItemId'] ?? null;
+            if ($planItemId) {
+                $planItem = BizPlanItem::find($planItemId);
+                if (!$planItem || $planItem->plan_id != $planId) {
+                    throw new \Exception('方案明细不存在或不属于该方案');
+                }
+                if ($quantity > $planItem->remaining_quantity) {
+                    throw new \Exception('备货数量超过方案明细剩余数量：' . $product->product_name);
+                }
+            }
+
+            $totalAmount += $amount;
+            $totalQuantity += $quantity;
+
+            $prepareItems[] = [
+                'plan_item_id' => $planItemId,
+                'product_id' => $product->product_id,
+                'product_name' => $product->product_name,
+                'unit' => $product->unit,
+                'spec' => $product->spec,
+                'unit_type' => $unitType,
+                'pack_qty' => $packQty,
+                'sale_price' => $product->sale_price_spec, // 统一用最小单位单价
+                'quantity' => $quantity,
+                'amount' => $amount,
+                'remaining_quantity' => $quantity,
+                'remaining_amount' => $amount,
+                'shipped_quantity' => 0,
+                'shipped_amount' => 0,
+            ];
+        }
+
+        if ($totalAmount + $activePreparedAmount + $plan->shipped_amount > $plan->gift_amount) {
+            throw new \Exception('备货总金额超过方案配赠金额剩余额度');
+        }
+
+        // 3.3 创建备货主表
+        $prepareNo = $this->generatePrepareNo();
+        $prepare = BizStockPrepare::create([
+            'prepare_no' => $prepareNo,
+            'plan_id' => $planId,
+            'plan_no' => $plan->plan_no,
+            'enterprise_id' => $plan->enterprise_id,
+            'enterprise_name' => $plan->enterprise->enterprise_name ?? '',
+            'warehouse_id' => null,
+            'total_quantity' => $totalQuantity,
+            'total_amount' => $totalAmount,
+            'remaining_quantity' => $totalQuantity,
+            'remaining_amount' => $totalAmount,
+            'shipped_quantity' => 0,
+            'shipped_amount' => 0,
+            'status' => '0',
+            'create_by' => $loginUser ? ($loginUser->user->user_name ?? '') : ($plan->create_by ?? ''),
+            'creator_user_id' => $loginUser ? ($loginUser->user->user_id ?? null) : null,
+            'create_time' => date('Y-m-d H:i:s'),
+        ]);
+
+        // 3.4 创建备货明细
+        $createdItems = [];
+        foreach ($prepareItems as $item) {
+            $item['prepare_id'] = $prepare->prepare_id;
+            $createdItem = BizStockPrepareItem::create($item);
+            $createdItems[] = $createdItem;
+        }
+
+        // 3.5 自动创建出库单（不选仓库，仓库在出库管理确认时选择）
+        $stockOutItems = [];
+        foreach ($createdItems as $createdItem) {
+            $stockOutItems[] = [
+                'item_id' => $createdItem->item_id,
+                'unit_type' => $createdItem->unit_type ?? '1',
+                'original_quantity' => $createdItem->unit_type === '1' && intval($createdItem->pack_qty) > 1
+                    ? intval($createdItem->quantity) / intval($createdItem->pack_qty)
+                    : intval($createdItem->quantity),
+            ];
+        }
+        $this->createStockOutFromPrepare($prepare->prepare_id, $stockOutItems, null, $loginUser);
+
+        return true;
     }
 }

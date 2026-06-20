@@ -15,6 +15,16 @@
     </view>
 
     <view class="filter-section">
+      <view class="warehouse-filter" v-if="warehouseList.length > 1">
+        <scroll-view scroll-x class="warehouse-scroll">
+          <view class="warehouse-tags">
+            <view v-for="item in warehouseList" :key="item.warehouseId" class="warehouse-tag" :class="{ active: currentWarehouseId === item.warehouseId }" @click="onWarehouseChange(item.warehouseId)">
+              <text>{{ item.warehouseName }}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
       <view class="date-range-picker">
         <view class="date-item" @click="showStartDatePicker = true">
           <u-icon name="calendar" size="14" color="#86909C"></u-icon>
@@ -50,49 +60,18 @@
           </view>
         </view>
       </view>
-    </view>
 
-    <u-datetime-picker
-      :show="showStartDatePicker"
-      v-model="startDatePickerValue"
-      mode="date"
-      title="选择开始日期"
-      @confirm="onStartDateConfirm"
-      @cancel="showStartDatePicker = false"
-      @close="showStartDatePicker = false"
-    ></u-datetime-picker>
-
-    <u-datetime-picker
-      :show="showEndDatePicker"
-      v-model="endDatePickerValue"
-      mode="date"
-      title="选择结束日期"
-      @confirm="onEndDateConfirm"
-      @cancel="showEndDatePicker = false"
-      @close="showEndDatePicker = false"
-    ></u-datetime-picker>
-
-    <u-popup :show="showProductPicker" mode="bottom" round="16" @close="showProductPicker = false">
-      <view class="product-picker-content">
-        <view class="picker-header">
-          <text class="picker-title">搜索货品</text>
-          <view class="picker-close" @click="showProductPicker = false">
-            <u-icon name="close" size="18" color="#86909C"></u-icon>
+      <view v-if="currentTab === 4" class="expiry-status-filter">
+        <view class="expiry-status-input-box" @click="showExpiryStatusPicker = true">
+          <u-icon name="list" size="14" color="#86909C"></u-icon>
+          <text v-if="expiryStatusFilter" class="expiry-status-selected">{{ getExpiryStatusText(expiryStatusFilter) }}</text>
+          <text v-else class="expiry-status-placeholder">到期状态筛选</text>
+          <view v-if="expiryStatusFilter" class="clear-btn" @click.stop="expiryStatusFilter = ''; loadExpiryData()">
+            <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
           </view>
         </view>
-        <view class="picker-search">
-          <u-icon name="search" size="14" color="#86909C"></u-icon>
-          <input class="picker-search-input" type="text" v-model="productKeyword" placeholder="输入货品名称搜索" placeholder-class="field-placeholder" confirm-type="search" @input="onProductSearchInput" @confirm="searchProductList" />
-        </view>
-        <scroll-view scroll-y class="picker-list">
-          <view v-for="item in productOptions" :key="item.productId" class="picker-item" :class="{ active: selectedProduct && selectedProduct.productId === item.productId }" @click="onSelectProduct(item)">
-            <text class="picker-item-name">{{ item.productName }}</text>
-            <u-icon v-if="selectedProduct && selectedProduct.productId === item.productId" name="checkmark" size="16" color="#3D6DF7"></u-icon>
-          </view>
-          <u-empty v-if="productOptions.length === 0 && !productSearchLoading" mode="search" text="未找到货品" :marginTop="40"></u-empty>
-        </scroll-view>
       </view>
-    </u-popup>
+    </view>
 
     <scroll-view scroll-y class="content-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <!-- Tab 1: 入库汇总 -->
@@ -116,12 +95,12 @@
             <view class="summary-row">
               <view class="summary-item">
                 <text class="summary-label">总数量</text>
-                <text class="summary-value">{{ stockInSummary.totalQuantity }}</text>
+                <text class="summary-value">{{ stockInSummaryData.totalQuantity }}</text>
               </view>
               <view class="summary-divider"></view>
               <view class="summary-item">
                 <text class="summary-label">总金额</text>
-                <text class="summary-value amount">¥{{ formatAmount(stockInSummary.totalAmount) }}</text>
+                <text class="summary-value amount">¥{{ formatAmount(stockInSummaryData.totalAmount) }}</text>
               </view>
             </view>
           </view>
@@ -150,12 +129,12 @@
             <view class="summary-row">
               <view class="summary-item">
                 <text class="summary-label">总数量</text>
-                <text class="summary-value">{{ stockOutSummary.totalQuantity }}</text>
+                <text class="summary-value">{{ stockOutSummaryData.totalQuantity }}</text>
               </view>
               <view class="summary-divider"></view>
               <view class="summary-item">
                 <text class="summary-label">总金额</text>
-                <text class="summary-value amount">¥{{ formatAmount(stockOutSummary.totalAmount) }}</text>
+                <text class="summary-value amount">¥{{ formatAmount(stockOutSummaryData.totalAmount) }}</text>
               </view>
             </view>
           </view>
@@ -223,23 +202,119 @@
         <u-loadmore v-if="flowList.length > 0" :status="flowLoadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
       </view>
 
+      <!-- Tab 5: 有效期盘点 -->
+      <view v-if="currentTab === 4" class="tab-content">
+        <view v-if="expiryList.length > 0" class="card-list">
+          <view v-for="(item, idx) in expiryList" :key="idx" class="report-card expiry-card">
+            <view class="card-header-row">
+              <text class="card-product-name">{{ item.productName || '-' }}</text>
+              <view class="expiry-status-badge" :style="{ backgroundColor: getExpiryStatusColor(item.expiryStatus) + '1A', color: getExpiryStatusColor(item.expiryStatus) }">{{ item.expiryStatusText || item.expiryStatus || '-' }}</view>
+            </view>
+            <view class="card-row">
+              <text class="card-label">入库单号</text>
+              <text class="card-value">{{ item.orderNo || '-' }}</text>
+            </view>
+            <view class="card-row">
+              <text class="card-label">批次数量</text>
+              <text class="card-value bold">{{ item.batchQuantity || 0 }}</text>
+            </view>
+            <view class="card-row">
+              <text class="card-label">生产日期</text>
+              <text class="card-value">{{ formatDate(item.productionDate) }}</text>
+            </view>
+            <view class="card-row">
+              <text class="card-label">有效期至</text>
+              <text class="card-value">{{ formatDate(item.expiryDate) }}</text>
+            </view>
+            <view class="card-row">
+              <text class="card-label">剩余天数</text>
+              <text class="card-value bold" :style="{ color: getExpiryStatusColor(item.expiryStatus) }">{{ item.remainingDays != null ? item.remainingDays + '天' : '-' }}</text>
+            </view>
+          </view>
+        </view>
+        <u-empty v-else-if="!loading" mode="data" text="暂无有效期盘点数据" :marginTop="100"></u-empty>
+      </view>
+
       <view class="bottom-spacer"></view>
     </scroll-view>
   </view>
+
+  <u-datetime-picker
+    :show="showStartDatePicker"
+    v-model="startDatePickerValue"
+    mode="date"
+    title="选择开始日期"
+    @confirm="onStartDateConfirm"
+    @cancel="showStartDatePicker = false"
+    @close="showStartDatePicker = false"
+  ></u-datetime-picker>
+
+  <u-datetime-picker
+    :show="showEndDatePicker"
+    v-model="endDatePickerValue"
+    mode="date"
+    title="选择结束日期"
+    @confirm="onEndDateConfirm"
+    @cancel="showEndDatePicker = false"
+    @close="showEndDatePicker = false"
+  ></u-datetime-picker>
+
+  <u-popup :show="showProductPicker" mode="bottom" round="16" @close="showProductPicker = false">
+    <view class="product-picker-content">
+      <view class="picker-header">
+        <text class="picker-title">搜索货品</text>
+        <view class="picker-close" @click="showProductPicker = false">
+          <u-icon name="close" size="18" color="#86909C"></u-icon>
+        </view>
+      </view>
+      <view class="picker-search">
+        <u-icon name="search" size="14" color="#86909C"></u-icon>
+        <input class="picker-search-input" type="text" v-model="productKeyword" placeholder="输入货品名称搜索" placeholder-class="field-placeholder" confirm-type="search" @input="onProductSearchInput" @confirm="searchProductList" />
+      </view>
+      <scroll-view scroll-y class="picker-list">
+        <view v-for="item in productOptions" :key="item.productId" class="picker-item" :class="{ active: selectedProduct && selectedProduct.productId === item.productId }" @click="onSelectProduct(item)">
+          <text class="picker-item-name">{{ item.productName }}</text>
+          <u-icon v-if="selectedProduct && selectedProduct.productId === item.productId" name="checkmark" size="16" color="#3D6DF7"></u-icon>
+        </view>
+        <u-empty v-if="productOptions.length === 0 && !productSearchLoading" mode="search" text="未找到货品" :marginTop="40"></u-empty>
+      </scroll-view>
+    </view>
+  </u-popup>
+
+  <u-popup :show="showExpiryStatusPicker" mode="bottom" round="16" @close="showExpiryStatusPicker = false">
+    <view class="expiry-picker-content">
+      <view class="picker-header">
+        <text class="picker-title">选择到期状态</text>
+        <view class="picker-close" @click="showExpiryStatusPicker = false">
+          <u-icon name="close" size="18" color="#86909C"></u-icon>
+        </view>
+      </view>
+      <scroll-view scroll-y class="picker-list">
+        <view v-for="item in expiryStatusOptions" :key="item.value" class="picker-item" :class="{ active: expiryStatusFilter === item.value }" @click="onSelectExpiryStatus(item.value)">
+          <text class="picker-item-name">{{ item.label }}</text>
+          <u-icon v-if="expiryStatusFilter === item.value" name="checkmark" size="16" color="#3D6DF7"></u-icon>
+        </view>
+      </scroll-view>
+    </view>
+  </u-popup>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow } from '@/api/wms/report'
+import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow, expiryInventory } from '@/api/wms/report'
 import { searchProduct } from '@/api/wms/product'
+import { useWarehouse } from '@/composables/useWarehouse'
 import { checkPermi } from '@/utils/permission'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const currentTab = ref(0)
 const tabList = ref([
   { name: '入库汇总' },
   { name: '出库汇总' },
   { name: '库存周转' },
-  { name: '货品流水' }
+  { name: '货品流水' },
+  { name: '有效期盘点' }
 ])
 
 const loading = ref(false)
@@ -266,7 +341,7 @@ let productSearchTimer = null
 
 // Tab 1: 入库汇总
 const stockInList = ref([])
-const stockInSummary = computed(() => {
+const stockInSummaryData = computed(() => {
   const totalQuantity = stockInList.value.reduce((s, i) => s + (parseFloat(i.totalQuantity) || 0), 0)
   const totalAmount = stockInList.value.reduce((s, i) => s + (parseFloat(i.totalAmount) || 0), 0)
   return { totalQuantity, totalAmount }
@@ -274,7 +349,7 @@ const stockInSummary = computed(() => {
 
 // Tab 2: 出库汇总
 const stockOutList = ref([])
-const stockOutSummary = computed(() => {
+const stockOutSummaryData = computed(() => {
   const totalQuantity = stockOutList.value.reduce((s, i) => s + (parseFloat(i.totalQuantity) || 0), 0)
   const totalAmount = stockOutList.value.reduce((s, i) => s + (parseFloat(i.totalAmount) || 0), 0)
   return { totalQuantity, totalAmount }
@@ -289,6 +364,18 @@ const flowPageNum = ref(1)
 const flowPageSize = ref(10)
 const flowTotal = ref(0)
 const flowLoadStatus = ref('loadmore')
+
+// Tab 5: 有效期盘点
+const expiryList = ref([])
+const expiryStatusFilter = ref('')
+const showExpiryStatusPicker = ref(false)
+const expiryStatusOptions = [
+  { label: '已过期', value: 'expired' },
+  { label: '30天内到期', value: '30' },
+  { label: '60天内到期', value: '60' },
+  { label: '90天内到期', value: '90' },
+  { label: '正常', value: 'normal' }
+]
 
 function formatDateFromTimestamp(ts) {
   const date = new Date(ts)
@@ -324,6 +411,11 @@ function onTabChange(item) {
   loadData()
 }
 
+function onWarehouseChange(warehouseId) {
+  currentWarehouseId.value = warehouseId
+  loadData(true)
+}
+
 function handleQuery() {
   if (!startDate.value || !endDate.value) {
     uni.showToast({ title: '请选择完整日期范围', icon: 'none' })
@@ -354,6 +446,7 @@ async function loadData(isRefresh = false) {
   loading.value = true
 
   const params = { startDate: startDate.value, endDate: endDate.value }
+  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
 
   try {
     if (currentTab.value === 0) {
@@ -382,6 +475,8 @@ async function loadData(isRefresh = false) {
       flowList.value = isRefresh ? list : [...flowList.value, ...list]
       flowTotal.value = total
       flowLoadStatus.value = flowList.value.length >= total ? 'nomore' : 'loadmore'
+    } else if (currentTab.value === 4) {
+      loadExpiryData()
     }
   } catch (e) {
     console.error('加载报表数据失败:', e)
@@ -439,6 +534,36 @@ function clearProduct() {
   loadData(true)
 }
 
+function loadExpiryData() {
+  const params = {}
+  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
+  if (expiryStatusFilter.value) params.expiryStatus = expiryStatusFilter.value
+  expiryInventory(params).then(res => {
+    expiryList.value = res.data || []
+  })
+}
+
+function getExpiryStatusColor(status) {
+  switch (status) {
+    case 'expired': return '#F56C6C'
+    case '30': return '#E6A23C'
+    case '60': return '#e6a23c'
+    case '90': return '#409EFF'
+    default: return '#67C23A'
+  }
+}
+
+function getExpiryStatusText(value) {
+  const option = expiryStatusOptions.find(o => o.value === value)
+  return option ? option.label : value
+}
+
+function onSelectExpiryStatus(value) {
+  expiryStatusFilter.value = value
+  showExpiryStatusPicker.value = false
+  loadExpiryData()
+}
+
 onMounted(() => {
   // 权限检查
   if (!checkPermi('wms:report:list')) {
@@ -450,6 +575,7 @@ onMounted(() => {
     }, 1500)
     return
   }
+  loadWarehouses()
   initDefaultDateRange()
   loadData()
 })
@@ -472,6 +598,18 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .filter-section {
   flex-shrink: 0;
   margin-top: 20rpx;
+}
+
+.warehouse-filter { margin-bottom: 16rpx; }
+.warehouse-scroll { white-space: nowrap; }
+.warehouse-tags { display: inline-flex; gap: 16rpx; padding: 4rpx 0; }
+.warehouse-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 12rpx 28rpx; background: #fff; border-radius: 28rpx;
+  font-size: 26rpx; color: #4E5969; border: 2rpx solid #E5E6EB;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); white-space: nowrap;
+  transition: all 0.2s;
+  &.active { background: #3D6DF7; color: #fff; border-color: #3D6DF7; }
 }
 
 .date-range-picker {
@@ -533,6 +671,35 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 .product-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
 .product-placeholder { flex: 1; font-size: 28rpx; color: #C9CDD4; }
+
+.expiry-status-filter { margin-top: 16rpx; }
+.expiry-status-input-box {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  height: 72rpx;
+  gap: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.expiry-status-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
+.expiry-status-placeholder { flex: 1; font-size: 28rpx; color: #C9CDD4; }
+
+.expiry-picker-content {
+  background: #fff;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.expiry-status-badge {
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
 .product-picker-content {
   background: #fff;

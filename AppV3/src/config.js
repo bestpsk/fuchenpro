@@ -8,7 +8,7 @@ export default {
   baseUrl: '/prod-api',
   /** 应用基本信息，用于关于页面、登录页等处展示 */
   appInfo: {
-    name: "馥辰国际",
+    name: "赛诺美生",
     version: "1.0.0",
     logo: "/static/logo.png",
     site_url: "https://fuchenpro.com",

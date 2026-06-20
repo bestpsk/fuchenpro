@@ -1,5 +1,6 @@
 <template>
   <view class="stockcheck-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <view class="search-section">
       <view class="search-box">
         <u-icon name="search" size="16" color="#86909C"></u-icon>
@@ -71,8 +72,13 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listStockCheck, delStockCheck, confirmStockCheck } from '@/api/wms/stockCheck'
 import { checkPermi } from '@/utils/permission'
+import { useWarehouse } from '@/composables/useWarehouse'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const stockCheckList = ref([])
 const loading = ref(false)
@@ -84,7 +90,7 @@ let searchTimer = null
 
 const hasActiveFilters = computed(() => queryParams.status !== '' && queryParams.status !== undefined)
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '', warehouseId: undefined })
 
 const statusOptions = ref([
   { label: '待确认', value: '0' },
@@ -114,6 +120,7 @@ async function getList(isRefresh = false) {
     const params = { pageNum: queryParams.pageNum, pageSize: queryParams.pageSize }
     if (queryParams.status !== '' && queryParams.status !== undefined) params.status = queryParams.status
     if (queryParams.keyword) params.stockCheckNo = queryParams.keyword
+    if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
     const response = await listStockCheck(params)
     const data = response.data || response
     const list = data.rows || data.items || []
@@ -169,7 +176,16 @@ function handleDelete(item) {
   }})
 }
 
+function handleWarehouseChange(warehouseId) {
+  queryParams.warehouseId = warehouseId
+  getList(true)
+}
+
 onMounted(() => { getList(true) })
+
+onShow(() => {
+  loadWarehouses()
+})
 </script>
 
 <style lang="scss" scoped>

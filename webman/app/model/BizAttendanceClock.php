@@ -29,7 +29,6 @@ class BizAttendanceClock extends Model
     ];
 
     protected $casts = [
-        'clock_time' => 'datetime',
         'latitude' => 'decimal:7',
         'longitude' => 'decimal:7',
     ];

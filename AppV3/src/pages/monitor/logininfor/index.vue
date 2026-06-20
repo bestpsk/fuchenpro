@@ -35,6 +35,14 @@
             <u-icon name="close" size="12"></u-icon>
           </view>
           <view
+            v-if="queryParams.loginSource"
+            class="filter-tag active"
+            @click="clearFilter('loginSource')"
+          >
+            <text>{{ queryParams.loginSource === 'app' ? 'App端' : 'Web端' }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+          <view
             v-if="queryParams.beginTime"
             class="filter-tag active"
             @click="clearFilter('date')"
@@ -62,6 +70,21 @@
               :class="{ active: queryParams.status === '1' }"
               @click="queryParams.status = queryParams.status === '1' ? '' : '1'"
             >失败</view>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">登录来源</view>
+          <view class="form-options">
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.loginSource === 'web' }"
+              @click="queryParams.loginSource = queryParams.loginSource === 'web' ? '' : 'web'"
+            >Web端</view>
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.loginSource === 'app' }"
+              @click="queryParams.loginSource = queryParams.loginSource === 'app' ? '' : 'app'"
+            >App端</view>
           </view>
         </view>
         <view class="form-item">
@@ -147,10 +170,26 @@
                 <text class="value">{{ item.msg || '-' }}</text>
               </view>
             </view>
+            <view class="info-row">
+              <view class="info-item">
+                <text class="label">登录来源</text>
+                <text class="value">{{ item.loginSource === 'app' ? 'App端' : 'Web端' }}</text>
+              </view>
+            </view>
           </view>
 
           <view class="card-footer">
             <text class="time-text">{{ formatTime(item.loginTime) }}</text>
+            <view class="action-btns">
+              <view v-if="checkPermi('monitor:logininfor:remove')" class="action-btn delete" @click.stop="handleDelete(item)">
+                <u-icon name="trash" size="14"></u-icon>
+                <text>删除</text>
+              </view>
+              <view v-if="checkPermi('monitor:logininfor:unlock')" class="action-btn unlock" @click.stop="handleUnlock(item)">
+                <u-icon name="lock" size="14"></u-icon>
+                <text>解锁</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -170,12 +209,15 @@
         :marginTop="20"
       />
     </scroll-view>
+    <view v-if="checkPermi('monitor:logininfor:remove')" class="clean-bar">
+      <u-button type="error" plain text="清空日志" @click="handleClean" customStyle="height:72rpx; border-radius:36rpx;"></u-button>
+    </view>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listLogininfor, delLogininfor, cleanLogininfor } from '@/api/monitor/logininfor'
+import { listLogininfor, delLogininfor, cleanLogininfor, unlockLogininfor } from '@/api/monitor/logininfor'
 import { checkPermi } from '@/utils/permission'
 
 const dataList = ref([])
@@ -189,7 +231,7 @@ const showEndDatePicker = ref(false)
 let searchTimer = null
 
 const hasActiveFilters = computed(() => {
-  return (queryParams.status !== '' && queryParams.status !== undefined) || queryParams.beginTime
+  return (queryParams.status !== '' && queryParams.status !== undefined) || queryParams.loginSource || queryParams.beginTime
 })
 
 const queryParams = reactive({
@@ -199,6 +241,7 @@ const queryParams = reactive({
   userName: '',
   ipaddr: '',
   status: '',
+  loginSource: '',
   beginTime: '',
   endTime: ''
 })
@@ -264,6 +307,7 @@ function toggleFilter() {
 
 function resetFilter() {
   queryParams.status = ''
+  queryParams.loginSource = ''
   queryParams.beginTime = ''
   queryParams.endTime = ''
 }
@@ -276,6 +320,8 @@ function confirmFilter() {
 function clearFilter(field) {
   if (field === 'status') {
     queryParams.status = ''
+  } else if (field === 'loginSource') {
+    queryParams.loginSource = ''
   } else if (field === 'date') {
     queryParams.beginTime = ''
     queryParams.endTime = ''
@@ -305,6 +351,59 @@ function formatDate(date) {
 function formatTime(time) {
   if (!time) return ''
   return String(time).substring(0, 16)
+}
+
+function handleDelete(item) {
+  uni.showModal({
+    title: '提示',
+    content: '是否确认删除该登录日志?',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await delLogininfor(item.infoId)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          getList(true)
+        } catch (e) {
+          console.error('删除失败:', e)
+        }
+      }
+    }
+  })
+}
+
+function handleClean() {
+  uni.showModal({
+    title: '提示',
+    content: '是否确认清空所有登录日志?',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await cleanLogininfor()
+          uni.showToast({ title: '清空成功', icon: 'success' })
+          getList(true)
+        } catch (e) {
+          console.error('清空失败:', e)
+        }
+      }
+    }
+  })
+}
+
+function handleUnlock(item) {
+  uni.showModal({
+    title: '提示',
+    content: `是否确认解锁用户"${item.userName}"?`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await unlockLogininfor(item.userName)
+          uni.showToast({ title: '解锁成功', icon: 'success' })
+        } catch (e) {
+          console.error('解锁失败:', e)
+        }
+      }
+    }
+  })
 }
 
 onMounted(() => {
@@ -399,6 +498,17 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   .label { font-size: 24rpx; color: #86909C; min-width: 80rpx; }
   .value { font-size: 26rpx; color: #1D2129; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
-.card-footer { margin-top: 20rpx; }
+.card-footer { margin-top: 20rpx; display: flex; justify-content: space-between; align-items: center; }
 .time-text { font-size: 22rpx; color: #C9CDD4; }
+.action-btns { display: flex; gap: 16rpx; }
+.action-btn {
+  display: flex; align-items: center; gap: 6rpx; font-size: 24rpx;
+  padding: 8rpx 14rpx; border-radius: 8rpx;
+  &.delete { color: #F53F3F; background: #FFF1F0; }
+  &.unlock { color: #3D6DF7; background: #E8F0FE; }
+}
+.clean-bar {
+  flex-shrink: 0; padding: 20rpx 30rpx; background: #fff;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
 </style>

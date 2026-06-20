@@ -14,11 +14,11 @@ export function list(query) {
 }
 
 /** 删除登录日志 */
-export function delLogininfor(infoId) {
+export function delLogininfor(infoIds) {
   return request({
     url: '/monitor/logininfor',
     method: 'delete',
-    params: { infoId }
+    params: { infoIds }
   })
 }
 

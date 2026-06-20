@@ -4,6 +4,7 @@ namespace app\service;
 
 use app\model\BizPlan;
 use app\model\BizPlanItem;
+use app\model\BizStockPrepare;
 use app\model\BizEnterprise;
 use app\service\DataScopeService;
 use support\Db;
@@ -267,5 +268,19 @@ class BizPlanService
     {
         BizPlanItem::where('item_id', $planItemId)->increment('shipped_quantity', $quantity);
         return true;
+    }
+
+    /**
+     * 获取方案下活跃备货的总金额（已备货未出库金额）
+     * 活跃备货 = status IN (0,1) 的备货记录
+     * @param int $planId 方案ID
+     * @return float 已备货未出库金额
+     */
+    public function getActivePreparedAmount($planId)
+    {
+        return BizStockPrepare::where('plan_id', $planId)
+            ->whereIn('status', [0, 1])
+            ->selectRaw('COALESCE(SUM(total_amount - shipped_amount), 0) as active_amount')
+            ->value('active_amount');
     }
 }

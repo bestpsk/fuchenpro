@@ -89,7 +89,9 @@ class SysDictTypeService
             }
 
             $data = SysDictData::where('dict_type', $dictType)->where('status', '0')->orderBy('dict_sort', 'asc')->get()->toArray();
-            $redis->set($cacheKey, json_encode($data));
+            if (!empty($data)) {
+                $redis->set($cacheKey, json_encode($data));
+            }
             return $data;
         } catch (\Exception $e) {
             $data = SysDictData::where('dict_type', $dictType)->where('status', '0')->orderBy('dict_sort', 'asc')->get()->toArray();

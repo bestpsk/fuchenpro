@@ -32,6 +32,9 @@
           <el-col :span="1.5">
             <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['business:schedule:add']">新增</el-button>
           </el-col>
+          <el-col :span="1.5">
+            <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:schedule:export']">导出</el-button>
+          </el-col>
           <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
@@ -581,6 +584,12 @@ function reset() {
   proxy.resetForm("scheduleRef")
 }
 
+function handleExport() {
+  proxy.download("business/schedule/export", {
+    ...queryParams.value,
+  }, `schedule_${new Date().getTime()}.xlsx`)
+}
+
 function handleAdd() { reset(); open.value = true; title.value = "添加行程" }
 
 function canSelectCell(schedule) { return !schedule || schedule.status === '4' }
@@ -765,7 +774,7 @@ function submitForm() {
 }
 
 function getScheduleTooltip(schedule) {
-  const pMap = { '1': '爆卡', '2': '启动销售', '3': '售后服务', '4': '洽谈业务' }
+  const pMap = { '1': '爆卡', '2': '销售', '3': '售后', '4': '业务' }
   const sMap = { '1': '已预约', '2': '服务中', '3': '已完成', '4': '已取消' }
   return `企业：${schedule.enterpriseName}\n员工：${schedule.userName}\n目的：${pMap[schedule.purpose]}\n状态：${sMap[schedule.status]}\n备注：${schedule.remark || '无'}`
 }

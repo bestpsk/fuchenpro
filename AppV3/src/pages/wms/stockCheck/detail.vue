@@ -14,6 +14,10 @@
           <text class="info-label">操作人</text>
           <text class="info-value">{{ info.operatorName || '-' }}</text>
         </view>
+        <view class="info-row" v-if="info.warehouseName">
+          <text class="info-label">仓库</text>
+          <text class="info-value">{{ info.warehouseName }}</text>
+        </view>
         <view class="info-row">
           <text class="info-label">创建时间</text>
           <text class="info-value">{{ formatTime(info.createTime) }}</text>
@@ -34,24 +38,27 @@
         <view class="item-header">
           <text class="item-index">{{ idx + 1 }}.</text>
           <text class="item-name">{{ item.productName || '-' }}</text>
-          <text class="item-code">{{ item.productCode || '-' }}</text>
         </view>
         <view class="item-body">
           <view class="info-line">
             <view class="info-left">
-              <text class="info-label">系统库存</text>
-              <text class="info-value">{{ item.systemQuantity || 0 }}</text>
+              <text class="info-label">单位类型</text>
+              <text class="info-value">{{ item.unitType === '2' ? '副单位(拆)' : '主单位(整)' }}</text>
             </view>
             <view class="info-right">
-              <text class="info-label">实际数量</text>
-              <text class="info-value">{{ item.actualQuantity || 0 }}</text>
+              <text class="info-label">系统库存</text>
+              <text class="info-value">{{ getDisplayQuantity(item, item.systemQuantity) }}{{ getItemUnitLabel(item) }}</text>
             </view>
           </view>
           <view class="info-line">
             <view class="info-left">
+              <text class="info-label">实际数量</text>
+              <text class="info-value">{{ getDisplayQuantity(item, item.actualQuantity) }}{{ getItemUnitLabel(item) }}</text>
+            </view>
+            <view class="info-right">
               <text class="info-label">差异数量</text>
-              <text v-if="getDiff(item) > 0" class="info-value diff-positive">+{{ getDiff(item) }}</text>
-              <text v-else-if="getDiff(item) < 0" class="info-value diff-negative">{{ getDiff(item) }}</text>
+              <text v-if="getDiff(item) > 0" class="info-value diff-positive">+{{ getDisplayQuantity(item, getDiff(item)) }}{{ getItemUnitLabel(item) }}</text>
+              <text v-else-if="getDiff(item) < 0" class="info-value diff-negative">{{ getDisplayQuantity(item, getDiff(item)) }}{{ getItemUnitLabel(item) }}</text>
               <text v-else class="info-value diff-zero">0</text>
             </view>
           </view>
@@ -74,10 +81,38 @@ import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getStockCheck, delStockCheck, confirmStockCheck } from '@/api/wms/stockCheck'
 import { checkPermi } from '@/utils/permission'
+import { getDicts } from '@/api/system/dictData'
 
 const info = ref({})
 const stockCheckItems = ref([])
 const stockCheckId = ref(null)
+const productUnitDict = ref([])
+const productSpecDict = ref([])
+
+function getUnitLabel(item) {
+  if (!item.unit) return ''
+  const dict = productUnitDict.value.find(d => d.value === String(item.unit))
+  return dict ? dict.label : ''
+}
+
+function getSpecLabel(item) {
+  if (!item.spec) return ''
+  const dict = productSpecDict.value.find(d => d.value === String(item.spec))
+  return dict ? dict.label : ''
+}
+
+function getItemUnitLabel(item) {
+  return item.unitType === '2' ? getSpecLabel(item) : getUnitLabel(item)
+}
+
+function getDisplayQuantity(item, qty) {
+  const unitType = item.unitType || '1'
+  const packQty = item.packQty || 1
+  if (unitType === '1' && packQty > 1) {
+    return Math.round((qty || 0) / packQty * 10000) / 10000
+  }
+  return qty || 0
+}
 
 function getStatusLabel(status) {
   const map = { '0': '待确认', '1': '已确认' }
@@ -149,6 +184,12 @@ onMounted(() => {
   const options = pages[pages.length - 1].options || {}
   stockCheckId.value = options.id ? parseInt(options.id) : null
   loadDetail()
+  getDicts('biz_product_unit').then(res => {
+    productUnitDict.value = (res.data || []).map(d => ({ value: d.dictValue, label: d.dictLabel }))
+  })
+  getDicts('biz_product_spec').then(res => {
+    productSpecDict.value = (res.data || []).map(d => ({ value: d.dictValue, label: d.dictLabel }))
+  })
 })
 
 onShow(() => {
@@ -188,7 +229,7 @@ page { background-color: #F5F7FA; }
 .item-body { display: flex; flex-direction: column; gap: 10rpx; padding-left: 32rpx; }
 .info-line { display: flex; align-items: center; justify-content: space-between; font-size: 25rpx; line-height: 1.6;
   .info-left { display: flex; align-items: center; gap: 8rpx; flex: 1; }
-  .info-right { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; margin-left: auto; }
+  .info-right { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; margin-left: auto; min-width: 200rpx; justify-content: flex-end; }
   .info-label { color: #86909C; white-space: nowrap; font-size: 24rpx; }
   .info-value { color: #4E5969; font-size: 25rpx;
     &.diff-positive { color: #00B42A; font-weight: 600; }

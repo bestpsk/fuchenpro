@@ -20,8 +20,8 @@ export function delStockOut(ids) {
   return request({ url: '/wms/stockOut', method: 'delete', params: { stockOutIds: ids } })
 }
 
-export function confirmStockOut(id) {
-  return request({ url: '/wms/stockOut/confirm/' + id, method: 'put' })
+export function confirmStockOut(id, warehouseId) {
+  return request({ url: '/wms/stockOut/confirm/' + id, method: 'put', data: { warehouseId } })
 }
 
 export function cancelConfirmStockOut(id) {

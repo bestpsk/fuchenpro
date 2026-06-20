@@ -38,6 +38,9 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -180,6 +183,15 @@ function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
   handleQuery()
+}
+
+function handleExport() {
+  const params = { ...queryParams.value }
+  if (dateRange.value && dateRange.value.length === 2) {
+    params.startDate = dateRange.value[0]
+    params.endDate = dateRange.value[1]
+  }
+  proxy.download("business/attendance/record/export", params, `考勤记录_${new Date().getTime()}.xlsx`)
 }
 
 function handleDetail(row) {

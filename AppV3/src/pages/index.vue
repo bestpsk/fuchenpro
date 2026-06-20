@@ -100,7 +100,7 @@ async function loadHomeData() {
       sourceType: item.sourceType || item.source_type,
       sourceId: item.sourceId || item.source_id,
       status: getSourceTypeLabel(item.sourceType || item.source_type),
-      createTime: item.archiveDate || item.archive_date || item.createTime,
+      createTime: item.createTime || item.create_time || item.archiveDate || item.archive_date,
       operatorName: item.operatorUserName || item.operator_user_name || ''
     }))
   } catch (error) {
@@ -127,7 +127,7 @@ function getSourceTypeLabel(type) {
 
 function formatAmount(value) {
   const num = Number(value) || 0
-  return '¥' + num.toFixed(0)
+  return '¥' + num.toFixed(2)
 }
 </script>
 

@@ -33,6 +33,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['business:cardItem:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:cardItem:export']">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -342,6 +345,12 @@ function submitForm() {
       }
     }
   })
+}
+
+function handleExport() {
+  proxy.download("business/cardItem/export", {
+    ...queryParams.value,
+  }, `cardItem_${new Date().getTime()}.xlsx`)
 }
 
 function handleDelete(row) {

@@ -11,6 +11,12 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
+
+-- 导出 fuchenpro 的数据库结构
+DROP DATABASE IF EXISTS `fuchenpro`;
+CREATE DATABASE IF NOT EXISTS `fuchenpro` /*!40100 DEFAULT CHARACTER SET utf8 */;
+USE `fuchenpro`;
+
 -- 导出  表 fuchenpro.app_menu_config 结构
 DROP TABLE IF EXISTS `app_menu_config`;
 CREATE TABLE IF NOT EXISTS `app_menu_config` (
@@ -116,7 +122,7 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_clock` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_clock_time` (`clock_time`),
   KEY `idx_user_date` (`user_id`,`clock_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='打卡明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='打卡明细表';
 
 -- 正在导出表  fuchenpro.biz_attendance_clock 的数据：~15 rows (大约)
 DELETE FROM `biz_attendance_clock`;
@@ -136,7 +142,10 @@ INSERT INTO `biz_attendance_clock` (`clock_id`, `record_id`, `user_id`, `user_na
 	(12, 4, 1, 'admin', '2026-05-05 23:35:24', '0', '0', 31.0442870, 121.4661830, '永德小区北区', '', '', '', '2026-05-05 23:35:24'),
 	(13, 4, 1, 'admin', '2026-05-05 23:35:51', '1', '0', 31.0442870, 121.4661830, '永德小区北区', '', '', '', '2026-05-05 23:35:51'),
 	(14, 5, 1, '若依', '2026-05-23 19:44:21', '0', '0', 31.2130010, 121.4782990, '中海·恒昌玖里(建设中)', '', '', '', '2026-05-23 19:44:21'),
-	(15, 5, 1, '若依', '2026-05-23 19:44:41', '0', '0', 31.2130010, 121.4782990, '中海·恒昌玖里(建设中)', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260523/5e90ca62cd1001e8dbeaa9e7ee4b176a.jpg', '', '', '2026-05-23 19:44:41');
+	(15, 5, 1, '若依', '2026-05-23 19:44:41', '0', '0', 31.2130010, 121.4782990, '中海·恒昌玖里(建设中)', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260523/5e90ca62cd1001e8dbeaa9e7ee4b176a.jpg', '', '', '2026-05-23 19:44:41'),
+	(16, 6, 1, '若依', '2026-06-19 23:35:21', '0', '0', NULL, NULL, '东方闪电', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/81962052c5dca9e44e9f1c0025f6f613.jpg', '', '', '2026-06-19 23:35:21'),
+	(17, 6, 1, '若依', '2026-06-19 23:35:43', '1', '0', NULL, NULL, '好', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/dd6a80150b80be05cc9ab64e31728160.jpg', '', '', '2026-06-19 23:35:43'),
+	(18, 6, 1, '若依', '2026-06-19 23:45:01', '1', '0', NULL, NULL, '111', '', '', '', '2026-06-19 23:45:01');
 /*!40000 ALTER TABLE `biz_attendance_clock` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_attendance_config 结构
@@ -203,7 +212,7 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_record` (
   KEY `idx_attendance_date` (`attendance_date`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_attendance_status` (`attendance_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤记录表';
 
 -- 正在导出表  fuchenpro.biz_attendance_record 的数据：~5 rows (大约)
 DELETE FROM `biz_attendance_record`;
@@ -213,7 +222,8 @@ INSERT INTO `biz_attendance_record` (`record_id`, `user_id`, `user_name`, `atten
 	(2, 1, '若依', '2026-04-30', '2026-04-30 01:06:48', '2026-04-30 01:22:31', NULL, NULL, '', '/profile/upload/20260430/aaa8286dfa49ad4e4064448bf5e8baa5.png', NULL, NULL, '111', '/profile/upload/20260430/9afe6ed2e06052fb9aaa44882540c5ed.png', '2', 2, '2026-04-30 01:06:48', '2026-04-30 01:22:31', '0', '', NULL, '', '若依', '2026-04-30 01:06:48', '', '2026-04-30 01:22:31'),
 	(3, 1, 'admin', '2026-05-02', '2026-05-02 00:31:06', '2026-05-02 21:44:26', 31.0443368, 121.4664212, '上海市闵行区吴泾镇闵行区吴泾第一幼儿园(永德园)永德小区北区', '', 31.0443450, 121.4662010, '永德小区北区', '/profile/upload/20260502/09b530786537df3e7b79f4335182dc22.jpg', '0', 6, '2026-05-02 00:31:06', '2026-05-02 21:44:26', '0', '', NULL, '', 'admin', '2026-05-02 00:31:06', '', '2026-05-02 21:44:26'),
 	(4, 1, 'admin', '2026-05-05', '2026-05-05 23:35:24', '2026-05-05 23:35:51', 31.0442870, 121.4661830, '永德小区北区', '', 31.0442870, 121.4661830, '永德小区北区', '', '1', 2, '2026-05-05 23:35:24', '2026-05-05 23:35:51', '0', '', NULL, '', 'admin', '2026-05-05 23:35:24', '', '2026-05-05 23:35:51'),
-	(5, 1, '若依', '2026-05-23', NULL, NULL, NULL, NULL, '', '', NULL, NULL, '', '', '0', 0, NULL, NULL, '0', '', NULL, '', '若依', '2026-05-23 19:44:21', '', '2026-05-23 19:44:21');
+	(5, 1, '若依', '2026-05-23', NULL, NULL, NULL, NULL, '', '', NULL, NULL, '', '', '0', 0, NULL, NULL, '0', '', NULL, '', '若依', '2026-05-23 19:44:21', '', '2026-05-23 19:44:21'),
+	(6, 1, '若依', '2026-06-19', '2026-06-19 23:35:21', '2026-06-19 23:45:01', NULL, NULL, '东方闪电', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/81962052c5dca9e44e9f1c0025f6f613.jpg', NULL, NULL, '111', '', '1', 3, '2026-06-19 23:35:21', '2026-06-19 23:45:01', '0', '', NULL, '', '若依', '2026-06-19 23:35:21', '', '2026-06-19 23:45:01');
 /*!40000 ALTER TABLE `biz_attendance_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_attendance_rule 结构
@@ -238,7 +248,7 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_rule` (
   PRIMARY KEY (`rule_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤规则表';
 
--- 正在导出表  fuchenpro.biz_attendance_rule 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_attendance_rule 的数据：~0 rows (大约)
 DELETE FROM `biz_attendance_rule`;
 /*!40000 ALTER TABLE `biz_attendance_rule` DISABLE KEYS */;
 INSERT INTO `biz_attendance_rule` (`rule_id`, `rule_name`, `work_start_time`, `work_end_time`, `late_threshold`, `early_leave_threshold`, `work_latitude`, `work_longitude`, `work_address`, `allowed_distance`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -267,7 +277,7 @@ CREATE TABLE IF NOT EXISTS `biz_card_item` (
   KEY `idx_category` (`category`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='卡项目录表';
 
--- 正在导出表  fuchenpro.biz_card_item 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_card_item 的数据：~0 rows (大约)
 DELETE FROM `biz_card_item`;
 /*!40000 ALTER TABLE `biz_card_item` DISABLE KEYS */;
 INSERT INTO `biz_card_item` (`card_item_id`, `card_item_name`, `card_item_code`, `category`, `default_quantity`, `suggested_price`, `default_unit_price`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -323,7 +333,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer` (
   KEY `idx_store_id` (`store_id`),
   KEY `idx_customer_name` (`customer_name`),
   KEY `idx_phone` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
 
 -- 正在导出表  fuchenpro.biz_customer 的数据：~9 rows (大约)
 DELETE FROM `biz_customer`;
@@ -337,7 +347,10 @@ INSERT INTO `biz_customer` (`customer_id`, `enterprise_id`, `enterprise_name`, `
 	(6, 2, '逆龄奢', 3, '宜川店', '测试客户', 'blob:http://192.168.2.74:8088/cefca53b-da1e-4507-8998-6fded540fdea', '', '', '1', NULL, '', '', '0', 'admin', '2026-05-26 18:22:32', '', '2026-05-26 18:22:32'),
 	(7, 4, '企业1', 5, '哈哈', 'aaa', '', '', '', '0', NULL, 'important,new', '', '0', 'admin', '2026-05-27 22:10:34', '', '2026-05-27 22:10:34'),
 	(8, 1, NULL, 2, NULL, '客户3', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/customer_avatar/3fbea32dc79ab822fb3ab5588d9b1385.png', NULL, NULL, '1', 55, 'important,normal', '辅导费', '0', 'admin', '2026-05-28 15:19:35', '', '2026-05-28 15:19:36'),
-	(9, 5, '测试3', 6, '测试门店3', '测试顾客3', '', NULL, NULL, '1', 55, 'important,follow', NULL, '0', 'admin', '2026-06-01 22:30:42', 'admin', '2026-06-08 09:44:34');
+	(9, 5, '测试3', 6, '测试门店3', '测试顾客3', '', NULL, NULL, '1', 55, 'important,follow', NULL, '0', 'admin', '2026-06-01 22:30:42', 'admin', '2026-06-08 09:44:34'),
+	(10, 5, NULL, 6, NULL, '张三', '', NULL, NULL, '1', 55, 'normal', '少时诵诗书', '0', 'admin', '2026-06-19 14:50:49', '', '2026-06-19 14:50:49'),
+	(11, 7, NULL, 7, NULL, '李四', '', NULL, NULL, '1', 55, 'important', NULL, '0', 'admin', '2026-06-19 16:19:05', '', '2026-06-19 16:19:05'),
+	(12, 7, NULL, 8, NULL, '终测客户1', '', NULL, NULL, '1', NULL, NULL, NULL, '0', 'admin', '2026-06-19 20:57:37', '', '2026-06-19 20:57:37');
 /*!40000 ALTER TABLE `biz_customer` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_archive 结构
@@ -369,7 +382,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
   KEY `idx_archive_date` (`archive_date`),
   KEY `idx_source_type` (`source_type`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
 
 -- 正在导出表  fuchenpro.biz_customer_archive 的数据：~37 rows (大约)
 DELETE FROM `biz_customer_archive`;
@@ -411,7 +424,13 @@ INSERT INTO `biz_customer_archive` (`archive_id`, `customer_id`, `customer_name`
 	(36, 7, 'aaa', 4, '企业1', 5, '哈哈', '2026-06-01', 'sales', '0', 29, '[{"name":"卡项1","quantity":10}]', 5980.00, NULL, NULL, '大幅度', 1, '若依', '套餐: 面部尊享', 'admin', '2026-06-01 21:41:43'),
 	(37, 7, 'aaa', 4, '企业1', 5, '哈哈', '2026-06-01', 'sales', '0', 30, '[{"name":"卡项1","quantity":10}]', 5980.00, NULL, NULL, '11', 1, '若依', '套餐: aaa', 'admin', '2026-06-01 22:29:40'),
 	(38, 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '2026-06-01', 'sales', '0', 31, '[{"name":"卡项1","quantity":10}]', 5980.00, NULL, NULL, '11', 1, '若依', '套餐: 塑封', 'admin', '2026-06-01 22:30:57'),
-	(39, 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '2026-06-06', 'sales', '0', 4, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '鬼地方个', 1, '若依', '套餐: 测试套餐1', 'admin', '2026-06-06 13:23:12');
+	(39, 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '2026-06-06', 'sales', '0', 4, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '鬼地方个', 1, '若依', '套餐: 测试套餐1', 'admin', '2026-06-06 13:23:12'),
+	(40, 10, '张三', 5, '测试3', 6, '测试门店3', '2026-06-19', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260619\\/36e2fdcd46fac5da85685eedb656a569.jpg","https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260619\\/6070395f1e2aa6366cef62fea5c762ef.jpg"]', '热热热我', 1, '若依', '热认为', 'admin', '2026-06-19 14:58:21'),
+	(41, 10, '张三', 5, '测试3', 6, '测试门店3', '2026-06-19', 'sales', '0', 7, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 2222', 'admin', '2026-06-19 15:34:58'),
+	(42, 10, '张三', 5, NULL, 6, NULL, '2026-06-19', 'preparation', '3', NULL, '[{"name":"发的佛挡杀佛","quantity":1}]', 5980.00, 4, NULL, '发生的', 1, '若依', '放大发的', 'admin', '2026-06-19 15:40:32'),
+	(43, 10, '张三', 5, NULL, 6, NULL, '2026-06-19', 'after_sales', '3', NULL, '[{"name":"发大水发大水","quantity":1}]', 5555.00, 5, NULL, '发生的', 1, '若依', '发多少', 'admin', '2026-06-19 15:40:55'),
+	(44, 12, '终测客户1', 7, '终测1', 8, '终测门店2', '2026-06-19', 'sales', '0', 9, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 111', 'admin', '2026-06-19 20:57:44'),
+	(45, 12, '终测客户1', 7, '终测1', 8, '终测门店2', '2026-06-19', 'sales', '0', 13, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-19 22:59:44');
 /*!40000 ALTER TABLE `biz_customer_archive` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_package 结构
@@ -443,7 +462,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer_package` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
 
 -- 正在导出表  fuchenpro.biz_customer_package 的数据：~4 rows (大约)
 DELETE FROM `biz_customer_package`;
@@ -452,7 +471,12 @@ INSERT INTO `biz_customer_package` (`package_id`, `package_no`, `customer_id`, `
 	(1, 'PK202606030001', 9, '测试顾客3', 1, 'SO202606030001', 5, NULL, 6, NULL, '面部品项1', 9380.00, 9380.00, 0.00, '1', NULL, '111', 'admin', '2026-06-03 09:01:35', '', '2026-06-03 09:01:35'),
 	(2, 'PK202606030002', 1, '客户1', 2, 'SO202606030002', 2, NULL, 3, NULL, '测试开单', 9380.00, 9380.00, 0.00, '1', NULL, '8678', 'admin', '2026-06-03 13:38:11', '', '2026-06-03 13:38:11'),
 	(3, 'PK202606030003', 4, '李明', 3, 'SO202606030003', 2, NULL, 3, NULL, '规定发过的', 9380.00, 9380.00, 0.00, '1', NULL, '高度', 'admin', '2026-06-03 16:41:36', '', '2026-06-03 16:41:36'),
-	(4, 'PK202606060001', 9, '测试顾客3', 4, 'SO202606060001', 5, NULL, 6, NULL, '测试套餐1', 9380.00, 0.00, 9380.00, '1', NULL, '鬼地方个', 'admin', '2026-06-06 13:23:12', '', '2026-06-06 13:23:12');
+	(4, 'PK202606060001', 9, '测试顾客3', 4, 'SO202606060001', 5, NULL, 6, NULL, '测试套餐1', 9380.00, 0.00, 9380.00, '1', NULL, '鬼地方个', 'admin', '2026-06-06 13:23:12', '', '2026-06-06 13:23:12'),
+	(5, 'PK202606190001', 10, '张三', 5, 'SO202606190001', 5, '测试3', 6, '测试门店3', '111', 9380.00, 9380.00, 0.00, '1', NULL, '111', 'admin', '2026-06-19 14:57:49', '', '2026-06-19 14:57:49'),
+	(6, 'PK202606190002', 10, '张三', 7, 'SO202606190002', 5, '测试3', 6, '测试门店3', '2222', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-19 15:34:58', '', '2026-06-19 15:34:58'),
+	(7, 'PK202606190003', 11, '李四', 8, 'SO202606190003', 7, '终测1', 7, '终测门店1', '111', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-19 16:19:16', '', '2026-06-19 16:19:16'),
+	(8, 'PK202606190004', 12, '终测客户1', 9, 'SO202606190004', 7, '终测1', 8, '终测门店2', '111', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-19 20:57:44', '', '2026-06-19 20:57:44'),
+	(11, 'PK202606190005', 12, '终测客户1', 13, 'SO202606190007', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-19 22:59:44', '', '2026-06-19 22:59:44');
 /*!40000 ALTER TABLE `biz_customer_package` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_employee_config 结构
@@ -475,16 +499,17 @@ CREATE TABLE IF NOT EXISTS `biz_employee_config` (
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`config_id`),
   UNIQUE KEY `uk_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工配置表';
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工配置表';
 
--- 正在导出表  fuchenpro.biz_employee_config 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_employee_config 的数据：~5 rows (大约)
 DELETE FROM `biz_employee_config`;
 /*!40000 ALTER TABLE `biz_employee_config` DISABLE KEYS */;
 INSERT INTO `biz_employee_config` (`config_id`, `user_id`, `user_name`, `post_id`, `post_name`, `dept_id`, `dept_name`, `is_schedulable`, `rest_dates`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, 1, 'admin', 1, '董事长', 103, '研发部门', '1', '["2026-05-31","2026-05-30"]', '0', NULL, 'admin', '2026-04-28 17:48:51', '', '2026-05-11 21:32:16'),
-	(2, 2, 'ry', NULL, NULL, 105, '测试部门', '1', '[]', '0', NULL, 'admin', '2026-04-28 17:48:51', '', '2026-04-28 22:09:16'),
+	(2, 2, 'ry', NULL, NULL, 105, '测试部门', '1', '["2026-06-08","2026-06-09"]', '0', NULL, 'admin', '2026-04-28 17:48:51', '', '2026-06-08 22:54:08'),
 	(3, 100, '测试', 4, '普通员工', 101, '深圳总公司', '1', '["2026-05-09","2026-05-21","2026-06-03","2026-05-15"]', '0', NULL, 'admin', '2026-04-28 17:48:51', '', '2026-05-01 14:22:07'),
-	(4, 102, 'ceshi1', 2, '项目经理', 103, '研发部门', '1', '["2026-06-04","2026-06-05","2026-06-06"]', '0', NULL, '', '2026-06-03 00:32:03', '', '2026-06-03 00:32:03');
+	(4, 102, 'ceshi1', 2, '项目经理', 103, '研发部门', '1', '["2026-06-04","2026-06-05","2026-06-06"]', '0', NULL, '', '2026-06-03 00:32:03', '', '2026-06-03 00:32:03'),
+	(5, 103, '鹏鹏', 2, '项目经理', 101, '赛诺·森品牌', '1', '["2026-06-19","2026-06-20"]', '0', NULL, '', '2026-06-08 22:53:57', '', '2026-06-19 14:10:09');
 /*!40000 ALTER TABLE `biz_employee_config` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_enterprise 结构
@@ -513,16 +538,18 @@ CREATE TABLE IF NOT EXISTS `biz_enterprise` (
   PRIMARY KEY (`enterprise_id`),
   KEY `idx_enterprise_name` (`enterprise_name`),
   KEY `idx_server_user_id` (`server_user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业管理表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业管理表';
 
--- 正在导出表  fuchenpro.biz_enterprise 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_enterprise 的数据：~5 rows (大约)
 DELETE FROM `biz_enterprise`;
 /*!40000 ALTER TABLE `biz_enterprise` DISABLE KEYS */;
 INSERT INTO `biz_enterprise` (`enterprise_id`, `enterprise_name`, `pinyin`, `boss_name`, `phone`, `address`, `enterprise_type`, `store_count`, `annual_performance`, `enterprise_level`, `server_user_id`, `server_user_name`, `cooperation_start_date`, `cooperation_end_date`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, '馥田诗', '', '汪志', '15888888888', '陆家浜路1396号', '2', 2, 2000.00, '1', NULL, '吴总', '2026-05-06', '2028-05-05', '0', NULL, 'admin', '2026-04-27 23:38:35', 'admin', '2026-05-16 20:14:41'),
 	(2, '逆龄奢', '', '木总', '13588888888', '发顺丰第四范式', '2', 2, 500.00, '2', NULL, '李总', '2026-05-06', '2027-05-06', '0', '防守打法收到', 'admin', '2026-05-02 18:20:18', 'admin', '2026-05-06 19:09:28'),
 	(4, '企业1', 'Y1', '汪老板', '15555555555', '法国德国电饭锅电饭锅代发给对方大概给对方', '3', 5, 5000.00, '2', NULL, NULL, NULL, NULL, '0', '41', 'admin', '2026-05-26 14:13:27', '', '2026-05-26 14:13:27'),
-	(5, '测试3', '3', '哈哈', '16666666666', '急急急', '1', 0, 0.00, '2', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-05-29 17:09:35', '', '2026-05-29 17:09:35');
+	(5, '测试3', '3', '哈哈', '16666666666', '急急急', '1', 0, 0.00, '2', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-05-29 17:09:35', 'admin', '2026-06-08 22:44:42'),
+	(6, '测试4', '4', '测试', '15555555555', NULL, '1', 0, 0.00, '2', 2, '若人头', '2026-06-09', '2028-06-01', '0', '地方', 'admin', '2026-06-09 14:11:29', '', '2026-06-09 14:11:29'),
+	(7, '终测1', '1', '11', '15555555555', NULL, '1', 0, 0.00, '1', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 16:04:08', '', '2026-06-19 16:04:08');
 /*!40000 ALTER TABLE `biz_enterprise` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_feedback 结构
@@ -542,7 +569,7 @@ CREATE TABLE IF NOT EXISTS `biz_feedback` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='问题反馈表';
 
--- 正在导出表  fuchenpro.biz_feedback 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_feedback 的数据：~0 rows (大约)
 DELETE FROM `biz_feedback`;
 /*!40000 ALTER TABLE `biz_feedback` DISABLE KEYS */;
 INSERT INTO `biz_feedback` (`feedback_id`, `title`, `content`, `feedback_type`, `status`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -561,7 +588,7 @@ CREATE TABLE IF NOT EXISTS `biz_feedback_reply` (
   KEY `idx_feedback_id` (`feedback_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='反馈回复表';
 
--- 正在导出表  fuchenpro.biz_feedback_reply 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_feedback_reply 的数据：~0 rows (大约)
 DELETE FROM `biz_feedback_reply`;
 /*!40000 ALTER TABLE `biz_feedback_reply` DISABLE KEYS */;
 INSERT INTO `biz_feedback_reply` (`reply_id`, `feedback_id`, `content`, `create_by`, `create_time`) VALUES
@@ -572,6 +599,7 @@ INSERT INTO `biz_feedback_reply` (`reply_id`, `feedback_id`, `content`, `create_
 DROP TABLE IF EXISTS `biz_inventory`;
 CREATE TABLE IF NOT EXISTS `biz_inventory` (
   `inventory_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '库存ID',
+  `warehouse_id` bigint(20) NOT NULL DEFAULT '1' COMMENT '仓库ID',
   `product_id` bigint(20) NOT NULL COMMENT '货品ID',
   `quantity` int(11) NOT NULL DEFAULT '0' COMMENT '当前库存数量',
   `earliest_expiry` date DEFAULT NULL COMMENT '最早批次有效期至',
@@ -581,15 +609,17 @@ CREATE TABLE IF NOT EXISTS `biz_inventory` (
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`inventory_id`),
-  UNIQUE KEY `uk_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存表';
+  UNIQUE KEY `uk_product_warehouse` (`product_id`,`warehouse_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存表';
 
 -- 正在导出表  fuchenpro.biz_inventory 的数据：~2 rows (大约)
 DELETE FROM `biz_inventory`;
 /*!40000 ALTER TABLE `biz_inventory` DISABLE KEYS */;
-INSERT INTO `biz_inventory` (`inventory_id`, `product_id`, `quantity`, `earliest_expiry`, `warn_qty`, `last_stock_in_time`, `last_stock_out_time`, `create_time`, `update_time`) VALUES
-	(1, 1, 0, NULL, 0, NULL, NULL, '2026-04-29 15:10:14', '2026-06-02 15:35:12'),
-	(2, 2, 0, NULL, 0, NULL, NULL, '2026-05-05 00:11:55', '2026-06-02 15:35:12');
+INSERT INTO `biz_inventory` (`inventory_id`, `warehouse_id`, `product_id`, `quantity`, `earliest_expiry`, `warn_qty`, `last_stock_in_time`, `last_stock_out_time`, `create_time`, `update_time`) VALUES
+	(1, 1, 1, 1080, NULL, 0, '2026-06-09 14:14:28', '2026-06-19 23:02:00', '2026-04-29 15:10:14', '2026-06-19 23:02:00'),
+	(2, 1, 2, 1059, NULL, 0, '2026-06-09 14:14:28', '2026-06-19 23:02:00', '2026-05-05 00:11:55', '2026-06-19 23:02:00'),
+	(4, 2, 2, 10, '2027-06-01', 20, '2026-06-19 22:03:19', NULL, '2026-06-19 22:03:19', '2026-06-19 22:03:19'),
+	(5, 2, 1, 10, '2027-06-01', 50, '2026-06-19 22:03:19', NULL, '2026-06-19 22:03:19', '2026-06-19 22:03:19');
 /*!40000 ALTER TABLE `biz_inventory` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_operation_record 结构
@@ -626,11 +656,13 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
   KEY `idx_package_id` (`package_id`),
   KEY `idx_operation_date` (`operation_date`),
   KEY `idx_operation_batch_id` (`operation_batch_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
 
 -- 正在导出表  fuchenpro.biz_operation_record 的数据：~0 rows (大约)
 DELETE FROM `biz_operation_record`;
 /*!40000 ALTER TABLE `biz_operation_record` DISABLE KEYS */;
+INSERT INTO `biz_operation_record` (`record_id`, `operation_type`, `customer_id`, `customer_name`, `package_id`, `package_no`, `operation_batch_id`, `package_item_id`, `product_name`, `operation_quantity`, `consume_amount`, `trial_price`, `customer_feedback`, `satisfaction`, `before_photo`, `after_photo`, `operator_user_id`, `operator_user_name`, `operation_date`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `remark`, `create_by`, `create_time`) VALUES
+	(1, '0', 10, '张三', 5, NULL, 'OB202606191458215487', 5, '卡项1', 1, 938.00, NULL, '热热热我', 4, 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/36e2fdcd46fac5da85685eedb656a569.jpg', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/6070395f1e2aa6366cef62fea5c762ef.jpg', 1, '若依', '2026-06-19', 5, NULL, 6, NULL, '热认为', 'admin', '2026-06-19 14:58:21');
 /*!40000 ALTER TABLE `biz_operation_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_order_item 结构
@@ -655,16 +687,22 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
 
--- 正在导出表  fuchenpro.biz_order_item 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_order_item 的数据：~6 rows (大约)
 DELETE FROM `biz_order_item`;
 /*!40000 ALTER TABLE `biz_order_item` DISABLE KEYS */;
 INSERT INTO `biz_order_item` (`item_id`, `order_id`, `card_item_id`, `product_name`, `quantity`, `deal_amount`, `paid_amount`, `unit_price`, `owed_amount`, `payment_method`, `is_our_operation`, `customer_feedback`, `before_photo`, `after_photo`, `remark`, `create_time`) VALUES
 	(1, 1, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-03 09:01:35'),
 	(2, 2, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-03 13:38:11'),
 	(3, 3, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-03 16:41:36'),
-	(4, 4, 1, '卡项1', 10, 9380.00, 0.00, 938.00, 9380.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-06 13:23:12');
+	(4, 4, 1, '卡项1', 10, 9380.00, 0.00, 938.00, 9380.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-06 13:23:12'),
+	(5, 5, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 14:57:49'),
+	(6, 6, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 14:58:21'),
+	(7, 7, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 15:34:58'),
+	(8, 8, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 16:19:16'),
+	(9, 9, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 20:57:44'),
+	(12, 13, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-19 22:59:44');
 /*!40000 ALTER TABLE `biz_order_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_package_item 结构
@@ -686,7 +724,7 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
   PRIMARY KEY (`package_item_id`),
   KEY `idx_package_id` (`package_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
 
 -- 正在导出表  fuchenpro.biz_package_item 的数据：~4 rows (大约)
 DELETE FROM `biz_package_item`;
@@ -695,7 +733,12 @@ INSERT INTO `biz_package_item` (`package_item_id`, `package_id`, `card_item_id`,
 	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
 	(2, 2, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
 	(3, 3, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
-	(4, 4, 1, '卡项1', 938.00, 9380.00, 9380.00, 0.00, 9380.00, 10, 0, 10, NULL);
+	(4, 4, 1, '卡项1', 938.00, 9380.00, 9380.00, 0.00, 9380.00, 10, 0, 10, NULL),
+	(5, 5, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 1, 9, NULL),
+	(6, 6, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(7, 7, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(8, 8, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(9, 11, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL);
 /*!40000 ALTER TABLE `biz_package_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan 结构
@@ -729,11 +772,14 @@ CREATE TABLE IF NOT EXISTS `biz_plan` (
   PRIMARY KEY (`plan_id`),
   UNIQUE KEY `uk_plan_no` (`plan_no`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
 
--- 正在导出表  fuchenpro.biz_plan 的数据：~0 rows (大约)
+-- 正在导出表  fuchenpro.biz_plan 的数据：~2 rows (大约)
 DELETE FROM `biz_plan`;
 /*!40000 ALTER TABLE `biz_plan` DISABLE KEYS */;
+INSERT INTO `biz_plan` (`plan_id`, `plan_no`, `enterprise_id`, `plan_name`, `commission_rate`, `plan_amount`, `gift_amount`, `shipped_amount`, `remaining_amount`, `effective_date`, `expiry_date`, `audit_status`, `audit_by`, `audit_time`, `audit_remark`, `submit_by`, `submit_time`, `status_change_by`, `status_change_time`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'PL20260609001', 6, '测试4 0%方案', 30.00, 300000.00, 1000000.00, 0.00, 1000000.00, '2026-06-09', '2028-06-01', '2', 'admin', '2026-06-09 14:12:10', '', 'admin', '2026-06-09 14:12:03', 'admin', '2026-06-09 15:17:07', '0', NULL, 'admin', '2026-06-09 14:11:59', NULL, '2026-06-09 15:17:07'),
+	(2, 'PL20260609002', 6, '测试4 0%方案', 30.00, 50000.00, 150000.00, 6800.00, 150000.00, NULL, NULL, '2', 'admin', '2026-06-09 15:17:53', '', 'admin', '2026-06-09 15:17:51', NULL, NULL, '0', NULL, 'admin', '2026-06-09 15:17:48', NULL, '2026-06-09 15:17:53');
 /*!40000 ALTER TABLE `biz_plan` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan_item 结构
@@ -752,6 +798,7 @@ CREATE TABLE IF NOT EXISTS `biz_plan_item` (
   `sale_price` decimal(10,2) DEFAULT '0.00' COMMENT '单价',
   `amount` decimal(12,2) DEFAULT '0.00' COMMENT '总金额',
   `shipped_quantity` int(11) DEFAULT '0' COMMENT '已出数量',
+  `prepared_quantity` int(11) NOT NULL DEFAULT '0',
   `remaining_quantity` int(11) DEFAULT '0' COMMENT '剩余数量',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`item_id`),
@@ -884,16 +931,22 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_order_status` (`order_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
 
--- 正在导出表  fuchenpro.biz_sales_order 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_sales_order 的数据：~6 rows (大约)
 DELETE FROM `biz_sales_order`;
 /*!40000 ALTER TABLE `biz_sales_order` DISABLE KEYS */;
 INSERT INTO `biz_sales_order` (`order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `store_dealer`, `deal_amount`, `paid_amount`, `owed_amount`, `payment_method`, `order_status`, `source_type`, `operation_batch_id`, `package_name`, `enterprise_audit_status`, `finance_audit_status`, `enterprise_audit_by`, `enterprise_audit_time`, `finance_audit_by`, `finance_audit_time`, `creator_user_id`, `creator_user_name`, `remark`, `customer_feedback`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, 'SO202606030001', 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '111', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '面部品项1', '1', '1', '若依', '2026-06-03 09:01:42', '若依', '2026-06-03 09:02:14', 1, '若依', '111', '', 'admin', '2026-06-03 09:01:35', '', '2026-06-03 09:02:14'),
 	(2, 'SO202606030002', 1, '客户1', 2, '逆龄奢', 3, '宜川店', '7867', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '测试开单', '1', '1', '若依', '2026-06-03 13:38:17', '若依', '2026-06-03 13:38:21', 1, '若依', '8678', '', 'admin', '2026-06-03 13:38:11', '', '2026-06-03 13:38:21'),
 	(3, 'SO202606030003', 4, '李明', 2, '逆龄奢', 3, '宜川店', '电饭锅', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '规定发过的', '1', '1', '若依', '2026-06-03 16:41:41', '若依', '2026-06-03 16:42:13', 1, '若依', '高度', '', 'admin', '2026-06-03 16:41:36', '', '2026-06-03 16:42:13'),
-	(4, 'SO202606060001', 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '电风扇', 9380.00, 0.00, 9380.00, 'cash', '2', '0', NULL, '测试套餐1', '1', '1', '若依', '2026-06-06 13:23:28', '若依', '2026-06-06 13:23:32', 1, '若依', '鬼地方个', NULL, 'admin', '2026-06-06 13:23:12', '', '2026-06-06 13:23:32');
+	(4, 'SO202606060001', 9, '测试顾客3', 5, '测试3', 6, '测试门店3', '电风扇', 9380.00, 0.00, 9380.00, 'cash', '2', '0', NULL, '测试套餐1', '1', '1', '若依', '2026-06-06 13:23:28', '若依', '2026-06-06 13:23:32', 1, '若依', '鬼地方个', NULL, 'admin', '2026-06-06 13:23:12', '', '2026-06-06 13:23:32'),
+	(5, 'SO202606190001', 10, '张三', 5, '测试3', 6, '测试门店3', '111', 9380.00, 9380.00, 0.00, 'cash', '1', '0', NULL, '111', '1', '0', '若依', '2026-06-19 14:59:41', NULL, NULL, 1, '若依', '111', NULL, 'admin', '2026-06-19 14:57:49', '', '2026-06-19 14:59:41'),
+	(6, 'OP202606190001', 10, '张三', 5, '测试3', 6, '测试门店3', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606191458215487', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-19 14:58:21', '', '2026-06-19 14:58:21'),
+	(7, 'SO202606190002', 10, '张三', 5, '测试3', 6, '测试门店3', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '2222', '1', '1', '若依', '2026-06-19 16:02:18', '若依', '2026-06-19 16:02:22', 1, '若依', '', NULL, 'admin', '2026-06-19 15:34:58', '', '2026-06-19 16:02:22'),
+	(8, 'SO202606190003', 11, '李四', 7, '终测1', 7, '终测门店1', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '111', '1', '1', '若依', '2026-06-19 20:59:41', '若依', '2026-06-19 20:59:43', 1, '若依', '', NULL, 'admin', '2026-06-19 16:19:16', '', '2026-06-19 20:59:43'),
+	(9, 'SO202606190004', 12, '终测客户1', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '111', '1', '1', '若依', '2026-06-19 22:46:20', '若依', '2026-06-19 22:46:22', 1, '若依', '', NULL, 'admin', '2026-06-19 20:57:44', '', '2026-06-19 22:46:22'),
+	(13, 'SO202606190007', 12, '终测客户1', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '11', '1', '1', '若依', '2026-06-19 22:59:50', '若依', '2026-06-19 23:00:30', 1, '若依', '', '', 'admin', '2026-06-19 22:59:44', '', '2026-06-19 23:00:30');
 /*!40000 ALTER TABLE `biz_sales_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_schedule 结构
@@ -918,9 +971,9 @@ CREATE TABLE IF NOT EXISTS `biz_schedule` (
   KEY `idx_schedule_date` (`schedule_date`),
   KEY `idx_user_date` (`user_id`,`schedule_date`),
   KEY `idx_enterprise_date` (`enterprise_id`,`schedule_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=110 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行程安排表';
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行程安排表';
 
--- 正在导出表  fuchenpro.biz_schedule 的数据：~41 rows (大约)
+-- 正在导出表  fuchenpro.biz_schedule 的数据：~52 rows (大约)
 DELETE FROM `biz_schedule`;
 /*!40000 ALTER TABLE `biz_schedule` DISABLE KEYS */;
 INSERT INTO `biz_schedule` (`schedule_id`, `user_id`, `user_name`, `enterprise_id`, `enterprise_name`, `schedule_date`, `purpose`, `remark`, `status`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -964,7 +1017,18 @@ INSERT INTO `biz_schedule` (`schedule_id`, `user_id`, `user_name`, `enterprise_i
 	(98, 101, '奋斗奋斗', 2, '逆龄奢', '2026-05-11', '1', '大师', '1', 'admin', '2026-05-20 22:56:17', '', '2026-05-20 22:56:17'),
 	(99, 101, '奋斗奋斗', 2, '逆龄奢', '2026-05-12', '1', '大师', '1', 'admin', '2026-05-20 22:56:17', '', '2026-05-20 22:56:17'),
 	(100, 101, '奋斗奋斗', 2, '逆龄奢', '2026-05-13', '1', '大师', '1', 'admin', '2026-05-20 22:56:17', '', '2026-05-20 22:56:17'),
-	(109, 100, '测试', 5, '测试3', '2026-06-05', '1', NULL, '1', 'admin', '2026-06-04 19:58:51', '', '2026-06-04 19:58:51');
+	(111, 100, '测试', 5, '测试3', '2026-06-05', '2', '111', '2', 'admin', '2026-06-08 22:43:12', 'admin', '2026-06-19 14:47:16'),
+	(112, 100, '测试', 5, '测试3', '2026-06-06', '2', '1111', '2', 'admin', '2026-06-08 22:43:12', 'admin', '2026-06-19 14:46:44'),
+	(113, 100, '测试', 5, '测试3', '2026-06-07', '2', '1111', '2', 'admin', '2026-06-08 22:43:12', 'admin', '2026-06-19 14:46:33'),
+	(114, 102, 'ceshi1', 2, '逆龄奢', '2026-06-08', '2', NULL, '1', 'admin', '2026-06-08 22:45:26', '', '2026-06-08 22:45:26'),
+	(115, 1, '若依', 4, '企业1', '2026-06-07', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(116, 2, '若人头', 4, '企业1', '2026-06-07', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(117, 1, '若依', 4, '企业1', '2026-06-08', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(118, 2, '若人头', 4, '企业1', '2026-06-08', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(119, 1, '若依', 4, '企业1', '2026-06-09', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(120, 2, '若人头', 4, '企业1', '2026-06-09', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(121, 1, '若依', 4, '企业1', '2026-06-10', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43'),
+	(122, 2, '若人头', 4, '企业1', '2026-06-10', '2', NULL, '1', 'admin', '2026-06-08 22:53:43', '', '2026-06-08 22:53:43');
 /*!40000 ALTER TABLE `biz_schedule` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_check 结构
@@ -972,6 +1036,7 @@ DROP TABLE IF EXISTS `biz_stock_check`;
 CREATE TABLE IF NOT EXISTS `biz_stock_check` (
   `stock_check_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '盘点单ID',
   `stock_check_no` varchar(30) NOT NULL COMMENT '盘点单号',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '仓库ID',
   `check_date` date DEFAULT NULL COMMENT '盘点日期',
   `total_quantity` int(11) DEFAULT '0' COMMENT '盘点总数量',
   `total_diff_quantity` int(11) DEFAULT '0' COMMENT '差异数量合计',
@@ -989,11 +1054,11 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='盘点单主表';
 
--- 正在导出表  fuchenpro.biz_stock_check 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_check 的数据：~0 rows (大约)
 DELETE FROM `biz_stock_check`;
 /*!40000 ALTER TABLE `biz_stock_check` DISABLE KEYS */;
-INSERT INTO `biz_stock_check` (`stock_check_id`, `stock_check_no`, `check_date`, `total_quantity`, `total_diff_quantity`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'PD20260603001', '2026-06-03', 200, 200, 1, '若依', '0', NULL, 'admin', '2026-06-03 14:23:40', '', '2026-06-03 14:23:40');
+INSERT INTO `biz_stock_check` (`stock_check_id`, `stock_check_no`, `warehouse_id`, `check_date`, `total_quantity`, `total_diff_quantity`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'PD20260603001', NULL, '2026-06-03', 200, 200, 1, '若依', '0', NULL, 'admin', '2026-06-03 14:23:40', '', '2026-06-03 14:23:40');
 /*!40000 ALTER TABLE `biz_stock_check` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_check_item 结构
@@ -1005,6 +1070,9 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check_item` (
   `product_name` varchar(100) DEFAULT NULL COMMENT '货品名称',
   `spec` varchar(100) DEFAULT NULL COMMENT '规格',
   `unit` varchar(20) DEFAULT NULL COMMENT '单位',
+  `unit_type` char(1) DEFAULT '1' COMMENT '单位类型(1主单位 2副单位)',
+  `pack_qty` int(11) DEFAULT '1' COMMENT '换算比例',
+  `original_quantity` int(11) DEFAULT NULL COMMENT '原始数量(换算前)',
   `system_quantity` int(11) NOT NULL DEFAULT '0' COMMENT '系统库存数量',
   `actual_quantity` int(11) NOT NULL DEFAULT '0' COMMENT '实际盘点数量',
   `diff_quantity` int(11) NOT NULL DEFAULT '0' COMMENT '差异数量',
@@ -1028,6 +1096,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in` (
   `stock_in_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '入库单ID',
   `stock_in_no` varchar(30) NOT NULL COMMENT '入库单号',
   `stock_in_type` char(1) NOT NULL DEFAULT '1' COMMENT '入库类型(1采购入库 2退货入库 3其他入库)',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '仓库ID',
   `total_quantity` int(11) DEFAULT '0' COMMENT '总数量',
   `total_amount` decimal(12,2) DEFAULT '0.00' COMMENT '总金额',
   `stock_in_date` date DEFAULT NULL COMMENT '入库日期',
@@ -1043,13 +1112,15 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in` (
   UNIQUE KEY `uk_stock_in_no` (`stock_in_no`),
   KEY `idx_stock_in_date` (`stock_in_date`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单主表';
 
--- 正在导出表  fuchenpro.biz_stock_in 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_in 的数据：~2 rows (大约)
 DELETE FROM `biz_stock_in`;
 /*!40000 ALTER TABLE `biz_stock_in` DISABLE KEYS */;
-INSERT INTO `biz_stock_in` (`stock_in_id`, `stock_in_no`, `stock_in_type`, `total_quantity`, `total_amount`, `stock_in_date`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'RK20260602001', '1', 2000, 938000.00, '2026-06-02', 1, '若依', '0', NULL, '若依', '2026-06-02 15:40:33', '', '2026-06-02 15:40:33');
+INSERT INTO `biz_stock_in` (`stock_in_id`, `stock_in_no`, `stock_in_type`, `warehouse_id`, `total_quantity`, `total_amount`, `stock_in_date`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'RK20260602001', '1', NULL, 2000, 938000.00, '2026-06-02', 1, '若依', '1', NULL, '若依', '2026-06-02 15:40:33', '', '2026-06-09 14:13:40'),
+	(2, 'RK20260609001', '1', NULL, 200, 93800.00, '2026-06-09', 1, '若依', '1', NULL, '若依', '2026-06-09 14:14:25', '', '2026-06-09 14:14:28'),
+	(4, 'RK20260619001', '1', 2, 20, 9380.00, '2026-06-19', 1, '若依', '1', NULL, '若依', '2026-06-19 21:25:28', '', '2026-06-19 22:03:19');
 /*!40000 ALTER TABLE `biz_stock_in` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_in_item 结构
@@ -1057,6 +1128,7 @@ DROP TABLE IF EXISTS `biz_stock_in_item`;
 CREATE TABLE IF NOT EXISTS `biz_stock_in_item` (
   `item_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `stock_in_id` bigint(20) NOT NULL COMMENT '入库单ID',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '仓库ID',
   `product_id` bigint(20) NOT NULL COMMENT '货品ID',
   `product_name` varchar(100) DEFAULT NULL COMMENT '货品名称',
   `supplier_id` bigint(20) DEFAULT NULL COMMENT '供货商ID',
@@ -1072,17 +1144,22 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in_item` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   `production_date` date DEFAULT NULL COMMENT '生产日期',
   `expiry_date` date DEFAULT NULL COMMENT '有效期至',
+  `shipped_quantity` decimal(10,2) DEFAULT '0.00' COMMENT '已出库数量',
   PRIMARY KEY (`item_id`),
   KEY `idx_stock_in_id` (`stock_in_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单明细表';
 
--- 正在导出表  fuchenpro.biz_stock_in_item 的数据：~2 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_in_item 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_in_item`;
 /*!40000 ALTER TABLE `biz_stock_in_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_in_item` (`item_id`, `stock_in_id`, `product_id`, `product_name`, `supplier_id`, `supplier_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `purchase_price`, `amount`, `remark`, `production_date`, `expiry_date`) VALUES
-	(1, 1, 2, '测试1', 1, '南京伊美荟', '1', '5', 10, '1', 100, 1000, 680.00, 680000.00, NULL, '2026-06-02', '2028-06-02'),
-	(2, 1, 1, 'GCS-p7', 1, '南京伊美荟', '1', '5', 10, '1', 100, 1000, 258.00, 258000.00, NULL, '2026-06-02', '2028-06-02');
+INSERT INTO `biz_stock_in_item` (`item_id`, `stock_in_id`, `warehouse_id`, `product_id`, `product_name`, `supplier_id`, `supplier_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `purchase_price`, `amount`, `remark`, `production_date`, `expiry_date`, `shipped_quantity`) VALUES
+	(1, 1, NULL, 2, '测试1', 1, '南京伊美荟', '1', '5', 10, '1', 100, 1000, 680.00, 680000.00, NULL, '2026-06-02', '2028-06-02', 0.00),
+	(2, 1, NULL, 1, 'GCS-p7', 1, '南京伊美荟', '1', '5', 10, '1', 100, 1000, 258.00, 258000.00, NULL, '2026-06-02', '2028-06-02', 0.00),
+	(3, 2, NULL, 2, '测试1', 1, '南京伊美荟', '1', '5', 10, '1', 10, 100, 680.00, 68000.00, NULL, '2026-06-09', '2028-06-01', 0.00),
+	(4, 2, NULL, 1, 'GCS-p7', 1, '南京伊美荟', '1', '5', 10, '1', 10, 100, 258.00, 25800.00, NULL, '2026-06-09', '2028-06-01', 0.00),
+	(5, 4, 2, 2, '测试1', 1, '南京伊美荟', '1', '5', 10, '1', 1, 10, 680.00, 6800.00, NULL, NULL, '2027-06-01', 0.00),
+	(6, 4, 2, 1, 'GCS-p7', 1, '南京伊美荟', '1', '5', 10, '1', 1, 10, 258.00, 2580.00, NULL, NULL, '2027-06-01', 0.00);
 /*!40000 ALTER TABLE `biz_stock_in_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out 结构
@@ -1091,6 +1168,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
   `stock_out_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '出库单ID',
   `stock_out_no` varchar(30) NOT NULL COMMENT '出库单号',
   `stock_out_type` char(1) NOT NULL DEFAULT '1' COMMENT '出库类型(1销售出库 2调拨出库 3其他出库)',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '仓库ID',
   `out_target_type` varchar(1) NOT NULL DEFAULT '1' COMMENT '出库对象类型（1-企业出库 2-员工领用）',
   `prepare_id` bigint(20) DEFAULT NULL COMMENT '来源备货ID',
   `plan_id` bigint(20) DEFAULT NULL COMMENT '关联方案ID',
@@ -1103,6 +1181,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
   `logistics_no` varchar(100) DEFAULT NULL COMMENT '物流单号',
   `shipment_date` datetime DEFAULT NULL COMMENT '发货日期',
   `receipt_date` datetime DEFAULT NULL COMMENT '收货日期',
+  `shipment_images` text COMMENT '发货图片(JSON数组)',
   `audit_by` varchar(50) DEFAULT NULL COMMENT '审核人',
   `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
   `contact_employee_id` int(11) DEFAULT NULL COMMENT '对接员工ID',
@@ -1126,15 +1205,19 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
   KEY `idx_responsible_id` (`responsible_id`),
   KEY `idx_stock_out_date` (`stock_out_date`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单主表';
 
--- 正在导出表  fuchenpro.biz_stock_out 的数据：~3 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_out 的数据：~5 rows (大约)
 DELETE FROM `biz_stock_out`;
 /*!40000 ALTER TABLE `biz_stock_out` DISABLE KEYS */;
-INSERT INTO `biz_stock_out` (`stock_out_id`, `stock_out_no`, `stock_out_type`, `out_target_type`, `prepare_id`, `plan_id`, `enterprise_id`, `enterprise_name`, `contact_person`, `contact_phone`, `shipping_address`, `logistics_company`, `logistics_no`, `shipment_date`, `receipt_date`, `audit_by`, `audit_time`, `contact_employee_id`, `contact_employee_name`, `responsible_id`, `responsible_name`, `total_quantity`, `total_amount`, `stock_out_date`, `status`, `ship_type`, `ship_status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'CK20260603001', '1', '1', 2, NULL, 2, '逆龄奢', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '-', NULL, '-', 10, 2580.00, '2026-06-03', '0', 2, 0, NULL, 'admin', '2026-06-03 13:48:04', 'admin', '2026-06-03 15:06:46'),
-	(2, 'CK20260603002', '1', '1', 2, NULL, 2, '逆龄奢', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '-', NULL, '-', 1, 680.00, '2026-06-03', '0', 2, 0, NULL, 'admin', '2026-06-03 14:24:43', 'admin', '2026-06-03 15:06:40'),
-	(3, 'CK20260607001', '1', '1', 1, NULL, 5, '测试3', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 9380.00, '2026-06-07', '0', 1, 0, NULL, 'admin', '2026-06-07 00:00:02', '', '2026-06-07 00:00:02');
+INSERT INTO `biz_stock_out` (`stock_out_id`, `stock_out_no`, `stock_out_type`, `warehouse_id`, `out_target_type`, `prepare_id`, `plan_id`, `enterprise_id`, `enterprise_name`, `contact_person`, `contact_phone`, `shipping_address`, `logistics_company`, `logistics_no`, `shipment_date`, `receipt_date`, `shipment_images`, `audit_by`, `audit_time`, `contact_employee_id`, `contact_employee_name`, `responsible_id`, `responsible_name`, `total_quantity`, `total_amount`, `stock_out_date`, `status`, `ship_type`, `ship_status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'CK20260603001', '1', NULL, '1', 2, NULL, 2, '逆龄奢', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '-', NULL, '-', 10, 2580.00, '2026-06-03', '0', 2, 0, NULL, 'admin', '2026-06-03 13:48:04', 'admin', '2026-06-03 15:06:46'),
+	(2, 'CK20260603002', '1', NULL, '1', 2, NULL, 2, '逆龄奢', NULL, NULL, NULL, '电饭锅地方', '345345345345', '2026-06-09 14:14:55', '2026-06-09 14:15:02', NULL, NULL, NULL, NULL, '-', NULL, '-', 1, 680.00, '2026-06-03', '3', 2, 2, NULL, 'admin', '2026-06-03 14:24:43', 'admin', '2026-06-09 14:15:02'),
+	(3, 'CK20260607001', '1', NULL, '1', 1, NULL, 5, '测试3', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 20, 9380.00, '2026-06-07', '0', 1, 0, NULL, 'admin', '2026-06-07 00:00:02', '', '2026-06-07 00:00:02'),
+	(4, 'CK20260610001', '1', NULL, '1', 4, 1, 6, '测试4', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '-', NULL, '-', 10, 6800.00, '2026-06-10', '1', 2, 0, NULL, '', '2026-06-10 01:00:59', 'admin', '2026-06-10 01:31:44'),
+	(5, 'CK20260610002', '1', NULL, '1', 7, 2, 6, '测试4', NULL, NULL, NULL, '111', '111', '2026-06-10 01:31:04', '2026-06-10 01:31:07', NULL, NULL, NULL, NULL, '-', 1, 'admin', 10, 6800.00, '2026-06-10', '3', 2, 2, NULL, 'admin', '2026-06-10 01:30:08', 'admin', '2026-06-10 01:31:07'),
+	(6, 'CK20260619003', '1', 1, '1', 8, NULL, 7, '终测1', NULL, NULL, NULL, '顺丰速运', '111', '2026-06-19 22:45:24', '2026-06-19 22:45:39', '["https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/e22b971f7de03290cf68dd77f5352732.jpg"]', NULL, NULL, NULL, '-', 1, '若依', 20, 9380.00, '2026-06-19', '3', 2, 2, '11', 'admin', '2026-06-19 21:53:32', 'admin', '2026-06-19 22:45:39'),
+	(7, 'CK20260619001', '1', 1, '1', 10, NULL, 7, '终测1', NULL, NULL, NULL, '中通快递', '11', '2026-06-19 23:02:08', '2026-06-19 23:02:10', NULL, NULL, NULL, NULL, NULL, 1, '若依', 20, 9380.00, '2026-06-19', '3', 2, 2, NULL, 'admin', '2026-06-19 23:01:29', '', '2026-06-19 23:02:10');
 /*!40000 ALTER TABLE `biz_stock_out` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out_item 结构
@@ -1160,16 +1243,22 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_stock_out_id` (`stock_out_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单明细表';
 
--- 正在导出表  fuchenpro.biz_stock_out_item 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_out_item 的数据：~6 rows (大约)
 DELETE FROM `biz_stock_out_item`;
 /*!40000 ALTER TABLE `biz_stock_out_item` DISABLE KEYS */;
 INSERT INTO `biz_stock_out_item` (`item_id`, `stock_out_id`, `product_id`, `plan_item_id`, `supplier_id`, `supplier_name`, `product_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `sale_price`, `discount_price`, `amount`, `remark`) VALUES
 	(3, 2, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '2', 1, 1, 680.00, NULL, 680.00, NULL),
 	(4, 1, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
 	(5, 3, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
-	(6, 3, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL);
+	(6, 3, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(9, 5, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(10, 4, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(15, 6, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
+	(16, 6, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '2', 10, 10, 680.00, NULL, 6800.00, NULL),
+	(17, 7, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '2', 10, 10, 258.00, NULL, 2580.00, NULL),
+	(18, 7, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '2', 10, 10, 680.00, NULL, 6800.00, NULL);
 /*!40000 ALTER TABLE `biz_stock_out_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare 结构
@@ -1177,12 +1266,15 @@ DROP TABLE IF EXISTS `biz_stock_prepare`;
 CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
   `prepare_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '备货ID',
   `prepare_no` varchar(30) NOT NULL COMMENT '备货编号(SP+日期+4位序号)',
+  `plan_id` bigint(20) unsigned DEFAULT NULL,
+  `plan_no` varchar(30) DEFAULT NULL COMMENT '关联方案编号',
   `order_id` bigint(20) DEFAULT NULL COMMENT '来源订单ID',
   `order_no` varchar(30) DEFAULT NULL COMMENT '来源订单编号',
   `customer_id` bigint(20) DEFAULT NULL COMMENT '客户ID',
   `customer_name` varchar(50) DEFAULT NULL COMMENT '客户姓名',
   `enterprise_id` bigint(20) NOT NULL COMMENT '企业ID',
   `enterprise_name` varchar(100) DEFAULT NULL COMMENT '企业名称',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '仓库ID',
   `store_id` bigint(20) DEFAULT NULL COMMENT '门店ID',
   `store_name` varchar(100) DEFAULT NULL COMMENT '门店名称',
   `total_quantity` int(11) DEFAULT '0' COMMENT '总数量(最小单位)',
@@ -1194,6 +1286,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
   `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态(0待备货 1部分出库 2已出完 3已取消)',
   `remark` text COMMENT '备注',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `creator_user_id` bigint(20) DEFAULT NULL COMMENT '创建人用户ID',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -1202,15 +1295,23 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
   KEY `idx_order_id` (`order_id`),
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_id` (`store_id`),
-  KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货表';
+  KEY `idx_status` (`status`),
+  KEY `idx_plan_id` (`plan_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货表';
 
--- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~2 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~7 rows (大约)
 DELETE FROM `biz_stock_prepare`;
 /*!40000 ALTER TABLE `biz_stock_prepare` DISABLE KEYS */;
-INSERT INTO `biz_stock_prepare` (`prepare_id`, `prepare_no`, `order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `total_quantity`, `total_amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'SP202606030001', 1, 'SO202606030001', 9, '测试顾客3', 5, '测试3', 6, '测试门店3', 220, 103180.00, 20, 9380.00, 200, 93800.00, '1', NULL, 'admin', '2026-06-03 09:02:14', '', '2026-06-07 00:00:02'),
-	(2, 'SP202606030002', 2, 'SO202606030002', 1, '客户1', 2, '逆龄奢', 3, '宜川店', 40, 18760.00, 11, 3260.00, 29, 15500.00, '1', NULL, 'admin', '2026-06-03 13:38:21', '', '2026-06-03 16:42:13');
+INSERT INTO `biz_stock_prepare` (`prepare_id`, `prepare_no`, `plan_id`, `plan_no`, `order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `warehouse_id`, `store_id`, `store_name`, `total_quantity`, `total_amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `status`, `remark`, `create_by`, `creator_user_id`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'SP202606030001', NULL, NULL, 1, 'SO202606030001', 9, '测试顾客3', 5, '测试3', NULL, 6, '测试门店3', 240, 112560.00, 20, 9380.00, 220, 103180.00, '1', NULL, 'admin', NULL, '2026-06-03 09:02:14', '', '2026-06-19 16:02:22'),
+	(2, 'SP202606030002', NULL, NULL, 2, 'SO202606030002', 1, '客户1', 2, '逆龄奢', NULL, 3, '宜川店', 40, 18760.00, 11, 3260.00, 29, 15500.00, '1', NULL, 'admin', NULL, '2026-06-03 13:38:21', '', '2026-06-03 16:42:13'),
+	(3, 'SP202606100001', 2, 'PL20260609002', NULL, NULL, NULL, NULL, 6, '测试4', NULL, NULL, NULL, 11, 3260.00, 0, 0.00, 11, 3260.00, '0', NULL, '', NULL, '2026-06-10 00:59:15', '', '2026-06-10 00:59:15'),
+	(4, 'SP202606100002', 1, 'PL20260609001', NULL, NULL, NULL, NULL, 6, '测试4', NULL, NULL, NULL, 20, 9380.00, 10, 6800.00, 10, 2580.00, '1', NULL, '', NULL, '2026-06-10 01:00:46', '', '2026-06-10 01:00:59'),
+	(5, 'SP202606100005', 2, 'PL20260609002', NULL, NULL, NULL, NULL, 6, '测试4', NULL, NULL, NULL, 10, 6800.00, 0, 0.00, 10, 6800.00, '0', NULL, 'admin', NULL, '2026-06-10 01:07:42', '', '2026-06-10 01:07:42'),
+	(6, 'SP202606100007', 2, 'PL20260609002', NULL, NULL, NULL, NULL, 6, '测试4', NULL, NULL, NULL, 10, 6800.00, 0, 0.00, 10, 6800.00, '0', NULL, 'admin', 1, '2026-06-10 01:15:49', '', '2026-06-10 01:15:49'),
+	(7, 'SP202606100008', 2, 'PL20260609002', NULL, NULL, NULL, NULL, 6, '测试4', NULL, NULL, NULL, 10, 6800.00, 10, 6800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-06-10 01:30:07', '', '2026-06-10 01:30:08'),
+	(8, 'SP202606190001', NULL, NULL, 8, 'SO202606190003', 11, '李四', 7, '终测1', NULL, 7, '终测门店1', 20, 9380.00, 20, 9380.00, 0, 0.00, '2', NULL, 'admin', NULL, '2026-06-19 20:59:43', '', '2026-06-19 21:53:32'),
+	(10, 'SP202606190002', NULL, NULL, 13, 'SO202606190007', 12, '终测客户1', 7, '终测1', NULL, 8, '终测门店2', 20, 9380.00, 20, 9380.00, 0, 0.00, '2', NULL, 'admin', NULL, '2026-06-19 23:00:30', '', '2026-06-19 23:01:29');
 /*!40000 ALTER TABLE `biz_stock_prepare` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_item 结构
@@ -1218,6 +1319,7 @@ DROP TABLE IF EXISTS `biz_stock_prepare_item`;
 CREATE TABLE IF NOT EXISTS `biz_stock_prepare_item` (
   `item_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `prepare_id` bigint(20) NOT NULL COMMENT '备货ID',
+  `plan_item_id` bigint(20) unsigned DEFAULT NULL,
   `card_item_id` bigint(20) DEFAULT NULL COMMENT '卡项ID',
   `product_id` bigint(20) NOT NULL COMMENT '货品ID',
   `product_name` varchar(100) NOT NULL COMMENT '货品名称',
@@ -1235,17 +1337,29 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_item` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`item_id`),
   KEY `idx_prepare_id` (`prepare_id`),
-  KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货明细表';
+  KEY `idx_product_id` (`product_id`),
+  KEY `idx_plan_item_id` (`plan_item_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货明细表';
 
--- 正在导出表  fuchenpro.biz_stock_prepare_item 的数据：~4 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_prepare_item 的数据：~11 rows (大约)
 DELETE FROM `biz_stock_prepare_item`;
 /*!40000 ALTER TABLE `biz_stock_prepare_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_prepare_item` (`item_id`, `prepare_id`, `card_item_id`, `product_id`, `product_name`, `unit`, `spec`, `unit_type`, `pack_qty`, `sale_price`, `quantity`, `amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `remark`) VALUES
-	(1, 1, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 110, 28380.00, 10, 2580.00, 100, 25800.00, NULL),
-	(2, 1, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 110, 74800.00, 10, 6800.00, 100, 68000.00, NULL),
-	(3, 2, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 20, 5160.00, 10, 2580.00, 10, 2580.00, NULL),
-	(4, 2, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 20, 13600.00, 1, 680.00, 19, 12920.00, NULL);
+INSERT INTO `biz_stock_prepare_item` (`item_id`, `prepare_id`, `plan_item_id`, `card_item_id`, `product_id`, `product_name`, `unit`, `spec`, `unit_type`, `pack_qty`, `sale_price`, `quantity`, `amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `remark`) VALUES
+	(1, 1, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 120, 30960.00, 10, 2580.00, 110, 28380.00, NULL),
+	(2, 1, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 120, 81600.00, 10, 6800.00, 110, 74800.00, NULL),
+	(3, 2, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 20, 5160.00, 10, 2580.00, 10, 2580.00, NULL),
+	(4, 2, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 20, 13600.00, 1, 680.00, 19, 12920.00, NULL),
+	(5, 3, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 1, 680.00, 0, 0.00, 1, 680.00, NULL),
+	(6, 3, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(7, 4, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(8, 4, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(9, 5, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(10, 6, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(11, 7, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(12, 8, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 10, 2580.00, 10, 2580.00, 0, 0.00, NULL),
+	(13, 8, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(14, 10, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 10, 2580.00, 10, 2580.00, 0, 0.00, NULL),
+	(15, 10, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL);
 /*!40000 ALTER TABLE `biz_stock_prepare_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_order 结构
@@ -1262,7 +1376,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_order` (
   PRIMARY KEY (`id`),
   KEY `idx_prepare_id` (`prepare_id`),
   KEY `idx_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_order 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_prepare_order`;
@@ -1271,8 +1385,59 @@ INSERT INTO `biz_stock_prepare_order` (`id`, `prepare_id`, `order_id`, `order_no
 	(1, 1, 1, 'SO202606030001', 9, '测试顾客3', 6, '测试门店3'),
 	(2, 2, 2, 'SO202606030002', 1, '客户1', 3, '宜川店'),
 	(3, 2, 3, 'SO202606030003', 4, '李明', 3, '宜川店'),
-	(4, 1, 4, 'SO202606060001', 9, '测试顾客3', 6, '测试门店3');
+	(4, 1, 4, 'SO202606060001', 9, '测试顾客3', 6, '测试门店3'),
+	(5, 1, 7, 'SO202606190002', 10, '张三', 6, '测试门店3'),
+	(6, 8, 8, 'SO202606190003', 11, '李四', 7, '终测门店1'),
+	(7, 10, 13, 'SO202606190007', 12, '终测客户1', 8, '终测门店2');
 /*!40000 ALTER TABLE `biz_stock_prepare_order` ENABLE KEYS */;
+
+-- 导出  表 fuchenpro.biz_stock_transfer 结构
+DROP TABLE IF EXISTS `biz_stock_transfer`;
+CREATE TABLE IF NOT EXISTS `biz_stock_transfer` (
+  `transfer_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '调拨ID',
+  `transfer_no` varchar(30) NOT NULL COMMENT '调拨单号',
+  `from_warehouse_id` bigint(20) NOT NULL COMMENT '源仓库ID',
+  `from_warehouse_name` varchar(100) DEFAULT NULL COMMENT '源仓库名称',
+  `to_warehouse_id` bigint(20) NOT NULL COMMENT '目标仓库ID',
+  `to_warehouse_name` varchar(100) DEFAULT NULL COMMENT '目标仓库名称',
+  `total_quantity` int(11) DEFAULT '0' COMMENT '总数量',
+  `transfer_date` date DEFAULT NULL COMMENT '调拨日期',
+  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态(0待确认 1已确认 2已取消)',
+  `remark` text COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`transfer_id`),
+  UNIQUE KEY `uk_transfer_no` (`transfer_no`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单主表';
+
+-- 正在导出表  fuchenpro.biz_stock_transfer 的数据：~0 rows (大约)
+DELETE FROM `biz_stock_transfer`;
+/*!40000 ALTER TABLE `biz_stock_transfer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_transfer` ENABLE KEYS */;
+
+-- 导出  表 fuchenpro.biz_stock_transfer_item 结构
+DROP TABLE IF EXISTS `biz_stock_transfer_item`;
+CREATE TABLE IF NOT EXISTS `biz_stock_transfer_item` (
+  `item_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
+  `transfer_id` bigint(20) NOT NULL COMMENT '调拨单ID',
+  `product_id` bigint(20) NOT NULL COMMENT '货品ID',
+  `product_name` varchar(100) DEFAULT NULL COMMENT '货品名称',
+  `spec` char(1) DEFAULT NULL COMMENT '规格',
+  `unit` char(1) DEFAULT NULL COMMENT '单位',
+  `pack_qty` int(11) DEFAULT '1' COMMENT '换算比例',
+  `unit_type` char(1) DEFAULT '1' COMMENT '单位类型(1主单位 2副单位)',
+  `original_quantity` int(11) DEFAULT '0' COMMENT '原始数量',
+  `quantity` int(11) DEFAULT '0' COMMENT '调拨数量(最小单位)',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单明细表';
+
+-- 正在导出表  fuchenpro.biz_stock_transfer_item 的数据：~0 rows (大约)
+DELETE FROM `biz_stock_transfer_item`;
+/*!40000 ALTER TABLE `biz_stock_transfer_item` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_transfer_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_store 结构
 DROP TABLE IF EXISTS `biz_store`;
@@ -1301,7 +1466,7 @@ CREATE TABLE IF NOT EXISTS `biz_store` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_name` (`store_name`),
   KEY `idx_server_user_id` (`server_user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店管理表';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店管理表';
 
 -- 正在导出表  fuchenpro.biz_store 的数据：~5 rows (大约)
 DELETE FROM `biz_store`;
@@ -1311,7 +1476,9 @@ INSERT INTO `biz_store` (`store_id`, `enterprise_id`, `enterprise_name`, `store_
 	(2, 1, '馥田诗', '肇嘉浜', '发顺丰', '13555555555', 'gfggg', '改单费咕嘟咕嘟', '19:01 - 20:01', 455.00, 111, 'admin', 1, '若依', '0', '111111', 'admin', '2026-04-30 19:05:02', '', '2026-04-30 19:05:02'),
 	(3, 2, '逆龄奢', '宜川店', '木总', '1555555555', NULL, '辅导费神鼎飞丹砂', NULL, 0.00, 0, NULL, 1, '若依', '0', NULL, 'admin', '2026-05-02 22:30:37', 'admin', '2026-05-16 20:14:48'),
 	(5, 4, '企业1', '哈哈', '133', '1333333333', NULL, '133333', NULL, 0.00, 0, NULL, NULL, NULL, '0', '113333', 'admin', '2026-05-27 21:44:49', '', '2026-05-27 21:44:49'),
-	(6, 5, '测试3', '测试门店3', '', '', NULL, '', NULL, 0.00, 0, NULL, NULL, NULL, '0', '', 'admin', '2026-06-01 22:30:22', '', '2026-06-01 22:30:22');
+	(6, 5, '测试3', '测试门店3', 'dd', '15222222222', 'ddd', 'dddddddd', '2026-6-26 - 2027-6-26', 555.00, 55, NULL, NULL, '滴滴滴', '0', '顶顶顶顶', 'admin', '2026-06-01 22:30:22', 'admin', '2026-06-19 14:12:27'),
+	(7, 7, '终测1', '终测门店1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 16:04:49', '', '2026-06-19 16:04:49'),
+	(8, 7, '终测1', '终测门店2', NULL, NULL, NULL, NULL, NULL, 0.00, 0, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 20:57:09', '', '2026-06-19 20:57:09');
 /*!40000 ALTER TABLE `biz_store` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_supplier 结构
@@ -1333,12 +1500,61 @@ CREATE TABLE IF NOT EXISTS `biz_supplier` (
   KEY `idx_supplier_name` (`supplier_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='供货商表';
 
--- 正在导出表  fuchenpro.biz_supplier 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_supplier 的数据：~0 rows (大约)
 DELETE FROM `biz_supplier`;
 /*!40000 ALTER TABLE `biz_supplier` DISABLE KEYS */;
 INSERT INTO `biz_supplier` (`supplier_id`, `supplier_name`, `contact_person`, `contact_phone`, `address`, `cooperation_start_date`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, '南京伊美荟', '田总', '15555555555', '南京市', '2026-04-25', '0', NULL, 'admin', '2026-04-29 11:18:41', 'admin', '2026-05-17 19:57:00');
 /*!40000 ALTER TABLE `biz_supplier` ENABLE KEYS */;
+
+-- 导出  表 fuchenpro.biz_warehouse 结构
+DROP TABLE IF EXISTS `biz_warehouse`;
+CREATE TABLE IF NOT EXISTS `biz_warehouse` (
+  `warehouse_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '仓库ID',
+  `warehouse_name` varchar(100) NOT NULL COMMENT '仓库名称',
+  `warehouse_code` varchar(30) NOT NULL COMMENT '仓库编码',
+  `address` varchar(255) DEFAULT NULL COMMENT '仓库地址',
+  `contact_person` varchar(50) DEFAULT NULL COMMENT '联系人',
+  `contact_phone` varchar(50) DEFAULT NULL COMMENT '联系电话',
+  `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态(0正常 1停用)',
+  `remark` text COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`warehouse_id`),
+  UNIQUE KEY `uk_warehouse_code` (`warehouse_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='仓库表';
+
+-- 正在导出表  fuchenpro.biz_warehouse 的数据：~0 rows (大约)
+DELETE FROM `biz_warehouse`;
+/*!40000 ALTER TABLE `biz_warehouse` DISABLE KEYS */;
+INSERT INTO `biz_warehouse` (`warehouse_id`, `warehouse_name`, `warehouse_code`, `address`, `contact_person`, `contact_phone`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, '上海仓库', 'WH001', NULL, NULL, NULL, '0', NULL, '', '2026-06-19 21:14:28', 'admin', '2026-06-19 21:27:00'),
+	(2, '深圳仓库', 'WH002', NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 21:17:53', '', '2026-06-19 21:17:53');
+/*!40000 ALTER TABLE `biz_warehouse` ENABLE KEYS */;
+
+-- 导出  表 fuchenpro.biz_warehouse_user 结构
+DROP TABLE IF EXISTS `biz_warehouse_user`;
+CREATE TABLE IF NOT EXISTS `biz_warehouse_user` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `warehouse_id` bigint(20) NOT NULL COMMENT '仓库ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_warehouse_user` (`warehouse_id`,`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='仓库用户权限表';
+
+-- 正在导出表  fuchenpro.biz_warehouse_user 的数据：~5 rows (大约)
+DELETE FROM `biz_warehouse_user`;
+/*!40000 ALTER TABLE `biz_warehouse_user` DISABLE KEYS */;
+INSERT INTO `biz_warehouse_user` (`id`, `warehouse_id`, `user_id`, `create_time`) VALUES
+	(1, 1, 1, '2026-06-19 21:14:28'),
+	(2, 1, 2, '2026-06-19 21:14:28'),
+	(3, 1, 100, '2026-06-19 21:14:28'),
+	(4, 1, 102, '2026-06-19 21:14:28'),
+	(5, 1, 103, '2026-06-19 21:14:28');
+/*!40000 ALTER TABLE `biz_warehouse_user` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.fin_reimbursement 结构
 DROP TABLE IF EXISTS `fin_reimbursement`;
@@ -1546,7 +1762,7 @@ CREATE TABLE IF NOT EXISTS `hr_user_salary` (
   KEY `idx_type_id` (`type_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='用户薪资配置表';
 
--- 正在导出表  fuchenpro.hr_user_salary 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.hr_user_salary 的数据：~0 rows (大约)
 DELETE FROM `hr_user_salary`;
 /*!40000 ALTER TABLE `hr_user_salary` DISABLE KEYS */;
 INSERT INTO `hr_user_salary` (`salary_id`, `user_id`, `type_id`, `base_amount`, `commission_rate`, `tier_config`, `effective_date`, `expire_date`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
@@ -1862,7 +2078,7 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`config_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8 COMMENT='参数配置表';
+) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8 COMMENT='参数配置表';
 
 -- 正在导出表  fuchenpro.sys_config 的数据：~19 rows (大约)
 DELETE FROM `sys_config`;
@@ -1884,9 +2100,10 @@ INSERT INTO `sys_config` (`config_id`, `config_name`, `config_key`, `config_valu
 	(105, 'COS存储桶名称', 'sys.cos.bucket', 'mydream-1302682813', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 14:35:10', '腾讯云COS存储桶名称'),
 	(106, 'COS地域', 'sys.cos.region', 'ap-shanghai', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 14:35:10', '腾讯云COS地域'),
 	(107, 'COS自定义域名', 'sys.cos.domain', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 14:35:10', '腾讯云COS自定义域名'),
-	(108, '允许修改套餐次数', 'biz.sales.packageQuantityEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 13:33:11', '销售开单中是否允许修改套餐次数，影响Web端和APP端'),
-	(109, '允许修改套餐成交金额', 'biz.sales.packageDealAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 13:33:11', '销售开单中是否允许修改套餐成交金额，影响Web端和APP端'),
-	(110, '允许修改套餐实付金额', 'biz.sales.packagePaidAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-08 13:33:11', '销售开单中是否允许修改套餐实付金额，影响Web端和APP端');
+	(108, '允许修改套餐次数', 'biz.sales.packageQuantityEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:51', '销售开单中是否允许修改套餐次数，影响Web端和APP端'),
+	(109, '允许修改套餐成交金额', 'biz.sales.packageDealAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:52', '销售开单中是否允许修改套餐成交金额，影响Web端和APP端'),
+	(110, '允许修改套餐实付金额', 'biz.sales.packagePaidAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:52', '销售开单中是否允许修改套餐实付金额，影响Web端和APP端'),
+	(111, '允许手动输入打卡地址', 'biz.attendance.allowManualAddress', 'false', 'Y', '', '2026-06-20 00:14:57', 'admin', '2026-06-20 00:15:52', '控制APP端考勤打卡是否允许手动输入地址，关闭后定位失败时无法手动输入');
 /*!40000 ALTER TABLE `sys_config` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_dept 结构
@@ -1943,7 +2160,7 @@ CREATE TABLE IF NOT EXISTS `sys_dict_data` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=242 DEFAULT CHARSET=utf8 COMMENT='字典数据表';
+) ENGINE=InnoDB AUTO_INCREMENT=254 DEFAULT CHARSET=utf8 COMMENT='字典数据表';
 
 -- 正在导出表  fuchenpro.sys_dict_data 的数据：~127 rows (大约)
 DELETE FROM `sys_dict_data`;
@@ -2075,7 +2292,19 @@ INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value
 	(238, 1, '面部', '1', 'biz_card_item_category', '', 'primary', 'Y', '0', 'admin', '2026-06-01 19:06:44', '', NULL, NULL),
 	(239, 2, '身体', '2', 'biz_card_item_category', '', 'success', 'N', '0', 'admin', '2026-06-01 19:06:44', '', NULL, NULL),
 	(240, 3, '仪器', '3', 'biz_card_item_category', '', 'warning', 'N', '0', 'admin', '2026-06-01 19:06:44', '', NULL, NULL),
-	(241, 4, '其他', '4', 'biz_card_item_category', '', 'info', 'N', '0', 'admin', '2026-06-01 19:06:44', '', NULL, NULL);
+	(241, 4, '其他', '4', 'biz_card_item_category', '', 'info', 'N', '0', 'admin', '2026-06-01 19:06:44', '', NULL, NULL),
+	(242, 1, '顺丰速运', 'shunfeng', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(243, 2, '中通快递', 'zhongtong', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(244, 3, '圆通速递', 'yuantong', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(245, 4, '申通快递', 'shentong', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(246, 5, '韵达快递', 'yunda', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(247, 6, '百世快递', 'baishi', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(248, 7, '极兔速递', 'jitu', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(249, 8, '邮政EMS', 'ems', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(250, 9, '德邦快递', 'debang', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(251, 10, '京东物流', 'jd', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:07', '', NULL, NULL),
+	(252, 11, '天天快递', 'tiantian', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:08', '', NULL, NULL),
+	(253, 12, '宅急送', 'zhaijisong', 'logistics_company', '', 'primary', 'N', '0', 'admin', '2026-06-19 22:16:08', '', NULL, NULL);
 /*!40000 ALTER TABLE `sys_dict_data` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_dict_type 结构
@@ -2092,7 +2321,7 @@ CREATE TABLE IF NOT EXISTS `sys_dict_type` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`dict_id`),
   UNIQUE KEY `dict_type` (`dict_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=133 DEFAULT CHARSET=utf8 COMMENT='字典类型表';
+) ENGINE=InnoDB AUTO_INCREMENT=134 DEFAULT CHARSET=utf8 COMMENT='字典类型表';
 
 -- 正在导出表  fuchenpro.sys_dict_type 的数据：~34 rows (大约)
 DELETE FROM `sys_dict_type`;
@@ -2131,7 +2360,8 @@ INSERT INTO `sys_dict_type` (`dict_id`, `dict_name`, `dict_type`, `status`, `cre
 	(128, '反馈类型', 'biz_feedback_type', '0', 'admin', '2026-05-30 13:09:54', '', NULL, '反馈类型列表'),
 	(129, '反馈状态', 'biz_feedback_status', '0', 'admin', '2026-05-30 13:09:54', '', NULL, '反馈处理状态列表'),
 	(130, '卡项类别', 'biz_card_item_category', '0', 'admin', '2026-06-01 08:51:00', '', NULL, '卡项类别列表'),
-	(132, '备货状态', 'biz_stock_prepare_status', '0', 'admin', '2026-06-01 19:05:41', '', NULL, '备货状态列表');
+	(132, '备货状态', 'biz_stock_prepare_status', '0', 'admin', '2026-06-01 19:05:41', '', NULL, '备货状态列表'),
+	(133, '物流公司', 'logistics_company', '0', 'admin', '2026-06-19 22:16:07', '', NULL, '物流公司列表');
 /*!40000 ALTER TABLE `sys_dict_type` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_job 结构
@@ -2195,272 +2425,284 @@ CREATE TABLE IF NOT EXISTS `sys_logininfor` (
   `status` char(1) DEFAULT '0' COMMENT '登录状态（0成功 1失败）',
   `msg` varchar(255) DEFAULT '' COMMENT '提示消息',
   `login_time` datetime DEFAULT NULL COMMENT '访问时间',
+  `login_source` varchar(20) DEFAULT 'web' COMMENT '登录来源（web端/app端）',
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=349 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=368 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
 
--- 正在导出表  fuchenpro.sys_logininfor 的数据：~256 rows (大约)
+-- 正在导出表  fuchenpro.sys_logininfor 的数据：~261 rows (大约)
 DELETE FROM `sys_logininfor`;
 /*!40000 ALTER TABLE `sys_logininfor` DISABLE KEYS */;
-INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`, `browser`, `os`, `status`, `msg`, `login_time`) VALUES
-	(100, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 10:42:00'),
-	(101, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 10:43:45'),
-	(102, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 10:51:33'),
-	(103, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:30:39'),
-	(104, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:32:28'),
-	(105, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:32:50'),
-	(106, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:33:15'),
-	(107, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:35:32'),
-	(108, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:41:28'),
-	(109, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:46:13'),
-	(110, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:47:22'),
-	(111, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:48:49'),
-	(112, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:54:38'),
-	(113, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 13:16:18'),
-	(114, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:17:14'),
-	(115, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:18:05'),
-	(116, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:42:52'),
-	(117, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:49:45'),
-	(118, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:50:47'),
-	(119, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 14:01:31'),
-	(120, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 15:10:03'),
-	(121, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 16:18:12'),
-	(122, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 17:04:45'),
-	(123, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 17:05:26'),
-	(124, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 18:26:48'),
-	(125, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 19:52:14'),
-	(126, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 21:05:27'),
-	(127, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 21:44:33'),
-	(128, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 00:03:37'),
-	(129, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 00:46:28'),
-	(130, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 12:02:01'),
-	(131, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:04:56'),
-	(132, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:06:14'),
-	(133, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:16:22'),
-	(134, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:34:09'),
-	(135, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 19:55:31'),
-	(136, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 20:05:25'),
-	(137, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 20:06:54'),
-	(138, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 21:25:38'),
-	(139, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 21:39:43'),
-	(140, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 22:33:22'),
-	(141, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:03:31'),
-	(142, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:38:15'),
-	(143, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:39:31'),
-	(144, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 23:53:55'),
-	(145, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 00:04:37'),
-	(146, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 00:35:57'),
-	(147, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 08:19:15'),
-	(148, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 13:07:46'),
-	(149, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 13:24:02'),
-	(150, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 16:20:20'),
-	(151, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 18:22:47'),
-	(152, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 19:19:57'),
-	(153, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 20:19:54'),
-	(154, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 22:04:27'),
-	(155, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 23:37:28'),
-	(156, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-28 12:33:16'),
-	(157, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-28 17:47:29'),
-	(158, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-28 22:48:24'),
-	(159, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 07:46:46'),
-	(160, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 07:47:54'),
-	(161, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 12:45:12'),
-	(162, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 12:55:27'),
-	(163, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 13:00:07'),
-	(164, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-04-29 14:18:01'),
-	(165, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-04-29 16:40:58'),
-	(166, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 18:00:22'),
-	(167, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 18:10:50'),
-	(168, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 23:48:36'),
-	(169, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-30 01:06:19'),
-	(170, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 13:55:10'),
-	(171, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-30 14:04:36'),
-	(172, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 14:07:48'),
-	(173, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 19:26:13'),
-	(174, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 10:51:21'),
-	(175, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 16:12:17'),
-	(176, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 22:25:35'),
-	(177, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 00:09:54'),
-	(178, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-02 00:10:11'),
-	(179, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-02 00:10:50'),
-	(180, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 12:17:32'),
-	(181, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 18:17:46'),
-	(182, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 21:43:54'),
-	(183, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-02 21:46:33'),
-	(184, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 07:58:15'),
-	(185, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 07:58:50'),
-	(186, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 07:59:37'),
-	(187, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 14:22:17'),
-	(188, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 15:11:53'),
-	(189, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 16:32:39'),
-	(190, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 21:38:14'),
-	(191, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 03:17:28'),
-	(192, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 08:17:51'),
-	(193, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 18:37:53'),
-	(194, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 23:45:42'),
-	(195, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 11:07:36'),
-	(196, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-05 12:07:48'),
-	(197, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 16:09:10'),
-	(198, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 22:46:02'),
-	(199, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 23:25:56'),
-	(200, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-05 23:35:07'),
-	(201, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-06 14:04:38'),
-	(202, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-06 19:08:20'),
-	(203, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 06:43:53'),
-	(204, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 12:33:50'),
-	(205, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 18:15:12'),
-	(206, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 23:24:34'),
-	(207, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 08:22:07'),
-	(208, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 15:20:28'),
-	(209, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 20:22:45'),
-	(210, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-08 21:41:21'),
-	(211, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:03:39'),
-	(212, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:19:38'),
-	(213, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:33:13'),
-	(214, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 11:41:18'),
-	(215, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-09 16:22:11'),
-	(216, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 17:19:42'),
-	(217, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 21:12:26'),
-	(218, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 22:27:41'),
-	(219, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-09 22:41:17'),
-	(220, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 10:58:12'),
-	(221, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 11:07:34'),
-	(222, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 17:03:50'),
-	(223, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 17:12:52'),
-	(224, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 20:25:57'),
-	(225, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 22:12:25'),
-	(226, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 22:30:09'),
-	(227, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-11 21:31:23'),
-	(228, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-11 21:47:14'),
-	(229, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-11 21:48:07'),
-	(230, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 00:50:38'),
-	(231, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 15:12:04'),
-	(232, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 15:13:57'),
-	(233, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-12 20:20:23'),
-	(234, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 20:29:59'),
-	(235, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 21:30:44'),
-	(236, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-12 22:54:41'),
-	(237, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-12 23:59:14'),
-	(238, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 16:36:11'),
-	(239, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-13 16:42:03'),
-	(240, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 22:41:22'),
-	(241, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-13 22:45:37'),
-	(242, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 22:58:30'),
-	(243, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 16:35:12'),
-	(244, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-14 16:36:46'),
-	(245, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 17:36:03'),
-	(246, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 20:14:40'),
-	(247, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-14 23:59:20'),
-	(248, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 14:15:13'),
-	(249, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-15 14:15:21'),
-	(250, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 17:03:24'),
-	(251, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-15 19:44:39'),
-	(252, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 20:50:47'),
-	(253, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 19:26:41'),
-	(254, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 19:45:39'),
-	(255, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 20:12:38'),
-	(256, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-16 20:40:38'),
-	(257, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-17 19:56:29'),
-	(258, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 08:38:14'),
-	(259, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 18:03:17'),
-	(260, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 19:33:17'),
-	(261, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 12:15:37'),
-	(262, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:11:08'),
-	(263, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:28:11'),
-	(264, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:51:03'),
-	(265, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 21:43:05'),
-	(266, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 22:04:37'),
-	(267, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 08:46:23'),
-	(268, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 12:21:04'),
-	(269, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 13:12:10'),
-	(270, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-20 14:47:10'),
-	(271, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 14:49:07'),
-	(272, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 18:25:09'),
-	(273, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 19:50:55'),
-	(274, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 20:20:12'),
-	(275, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-20 20:25:21'),
-	(276, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 21:56:51'),
-	(277, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 14:16:27'),
-	(278, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 19:38:25'),
-	(279, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 20:14:24'),
-	(280, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-22 12:41:17'),
-	(281, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-22 19:02:36'),
-	(282, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-22 19:03:16'),
-	(283, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 00:27:34'),
-	(284, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 00:27:55'),
-	(285, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 13:42:32'),
-	(286, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 14:19:50'),
-	(287, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 14:41:30'),
-	(288, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 15:18:16'),
-	(289, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 16:51:10'),
-	(290, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 19:11:17'),
-	(291, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 19:21:09'),
-	(292, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-24 20:16:53'),
-	(293, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-24 20:18:56'),
-	(294, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-25 11:54:59'),
-	(295, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 12:13:26'),
-	(296, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-25 17:18:44'),
-	(297, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 18:02:51'),
-	(298, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 23:06:39'),
-	(299, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 00:17:28'),
-	(300, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-26 12:22:37'),
-	(301, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 14:26:23'),
-	(302, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-26 17:49:09'),
-	(303, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 19:26:28'),
-	(304, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 14:33:17'),
-	(305, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-27 14:49:09'),
-	(306, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 15:17:45'),
-	(307, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-27 21:30:05'),
-	(308, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 21:35:24'),
-	(309, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-28 13:13:39'),
-	(310, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-28 16:47:13'),
-	(311, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-28 19:47:38'),
-	(312, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 12:32:00'),
-	(313, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 13:53:56'),
-	(314, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-29 15:22:02'),
-	(315, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 17:47:39'),
-	(316, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 19:37:07'),
-	(317, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-29 22:15:41'),
-	(318, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 22:54:05'),
-	(319, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:48:54'),
-	(320, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:51:15'),
-	(321, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:56:08'),
-	(322, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 13:05:34'),
-	(323, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 13:10:24'),
-	(324, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-30 13:10:44'),
-	(325, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 14:02:49'),
-	(326, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-30 18:36:54'),
-	(327, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 18:49:30'),
-	(328, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-31 22:04:40'),
-	(329, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 08:51:15'),
-	(330, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 15:21:55'),
-	(331, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-01 17:44:52'),
-	(332, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 19:01:50'),
-	(333, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 22:37:01'),
-	(334, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-02 12:02:02'),
-	(335, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-02 20:54:11'),
-	(336, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 07:04:25'),
-	(337, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 13:36:46'),
-	(338, 'pengpeng', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 15:17:16'),
-	(339, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 15:18:37'),
-	(340, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-04 19:58:21'),
-	(341, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-05 15:06:05'),
-	(342, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-05 15:06:23'),
-	(343, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-05 22:16:00'),
-	(344, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-05 22:39:22'),
-	(345, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 00:20:16'),
-	(346, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-06 12:25:24'),
-	(347, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 12:27:18'),
-	(348, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 12:33:35'),
-	(349, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 18:53:24'),
-	(350, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 23:59:49'),
-	(351, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 00:32:28'),
-	(352, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 06:09:43'),
-	(353, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-08 10:32:49'),
-	(354, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-08 13:32:42'),
-	(355, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 14:36:05'),
-	(356, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 16:32:10');
+INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`, `browser`, `os`, `status`, `msg`, `login_time`, `login_source`) VALUES
+	(100, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 10:42:00', 'web'),
+	(101, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 10:43:45', 'web'),
+	(102, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 10:51:33', 'web'),
+	(103, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:30:39', 'web'),
+	(104, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:32:28', 'web'),
+	(105, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:32:50', 'web'),
+	(106, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:33:15', 'web'),
+	(107, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:35:32', 'web'),
+	(108, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:41:28', 'web'),
+	(109, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:46:13', 'web'),
+	(110, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:47:22', 'web'),
+	(111, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 12:48:49', 'web'),
+	(112, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 12:54:38', 'web'),
+	(113, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Unknown', '0', '登录成功', '2026-04-25 13:16:18', 'web'),
+	(114, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:17:14', 'web'),
+	(115, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:18:05', 'web'),
+	(116, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:42:52', 'web'),
+	(117, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:49:45', 'web'),
+	(118, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 13:50:47', 'web'),
+	(119, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 14:01:31', 'web'),
+	(120, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 15:10:03', 'web'),
+	(121, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 16:18:12', 'web'),
+	(122, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 17:04:45', 'web'),
+	(123, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 17:05:26', 'web'),
+	(124, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 18:26:48', 'web'),
+	(125, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 19:52:14', 'web'),
+	(126, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 21:05:27', 'web'),
+	(127, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-25 21:44:33', 'web'),
+	(128, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 00:03:37', 'web'),
+	(129, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 00:46:28', 'web'),
+	(130, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 12:02:01', 'web'),
+	(131, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:04:56', 'web'),
+	(132, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:06:14', 'web'),
+	(133, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:16:22', 'web'),
+	(134, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 12:34:09', 'web'),
+	(135, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 19:55:31', 'web'),
+	(136, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 20:05:25', 'web'),
+	(137, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 20:06:54', 'web'),
+	(138, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 21:25:38', 'web'),
+	(139, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 21:39:43', 'web'),
+	(140, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 22:33:22', 'web'),
+	(141, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:03:31', 'web'),
+	(142, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:38:15', 'web'),
+	(143, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-26 23:39:31', 'web'),
+	(144, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-26 23:53:55', 'web'),
+	(145, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 00:04:37', 'web'),
+	(146, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 00:35:57', 'web'),
+	(147, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 08:19:15', 'web'),
+	(148, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-27 13:07:46', 'web'),
+	(149, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 13:24:02', 'web'),
+	(150, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 16:20:20', 'web'),
+	(151, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 18:22:47', 'web'),
+	(152, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 19:19:57', 'web'),
+	(153, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 20:19:54', 'web'),
+	(154, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 22:04:27', 'web'),
+	(155, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-27 23:37:28', 'web'),
+	(156, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-28 12:33:16', 'web'),
+	(157, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-28 17:47:29', 'web'),
+	(158, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-28 22:48:24', 'web'),
+	(159, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 07:46:46', 'web'),
+	(160, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 07:47:54', 'web'),
+	(161, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 12:45:12', 'web'),
+	(162, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 12:55:27', 'web'),
+	(163, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 13:00:07', 'web'),
+	(164, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-04-29 14:18:01', 'web'),
+	(165, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-04-29 16:40:58', 'web'),
+	(166, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-29 18:00:22', 'web'),
+	(167, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 18:10:50', 'web'),
+	(168, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-29 23:48:36', 'web'),
+	(169, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-30 01:06:19', 'web'),
+	(170, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 13:55:10', 'web'),
+	(171, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-04-30 14:04:36', 'web'),
+	(172, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 14:07:48', 'web'),
+	(173, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-04-30 19:26:13', 'web'),
+	(174, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 10:51:21', 'web'),
+	(175, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 16:12:17', 'web'),
+	(176, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-01 22:25:35', 'web'),
+	(177, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 00:09:54', 'web'),
+	(178, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-02 00:10:11', 'web'),
+	(179, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-02 00:10:50', 'web'),
+	(180, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 12:17:32', 'web'),
+	(181, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 18:17:46', 'web'),
+	(182, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-02 21:43:54', 'web'),
+	(183, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-02 21:46:33', 'web'),
+	(184, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 07:58:15', 'web'),
+	(185, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 07:58:50', 'web'),
+	(186, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 07:59:37', 'web'),
+	(187, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 14:22:17', 'web'),
+	(188, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-03 15:11:53', 'web'),
+	(189, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 16:32:39', 'web'),
+	(190, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-03 21:38:14', 'web'),
+	(191, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 03:17:28', 'web'),
+	(192, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 08:17:51', 'web'),
+	(193, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 18:37:53', 'web'),
+	(194, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-04 23:45:42', 'web'),
+	(195, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 11:07:36', 'web'),
+	(196, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-05 12:07:48', 'web'),
+	(197, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 16:09:10', 'web'),
+	(198, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 22:46:02', 'web'),
+	(199, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-05 23:25:56', 'web'),
+	(200, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-05 23:35:07', 'web'),
+	(201, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-06 14:04:38', 'web'),
+	(202, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-06 19:08:20', 'web'),
+	(203, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 06:43:53', 'web'),
+	(204, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 12:33:50', 'web'),
+	(205, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 18:15:12', 'web'),
+	(206, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-07 23:24:34', 'web'),
+	(207, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 08:22:07', 'web'),
+	(208, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 15:20:28', 'web'),
+	(209, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-08 20:22:45', 'web'),
+	(210, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-08 21:41:21', 'web'),
+	(211, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:03:39', 'web'),
+	(212, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:19:38', 'web'),
+	(213, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-08 22:33:13', 'web'),
+	(214, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 11:41:18', 'web'),
+	(215, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-09 16:22:11', 'web'),
+	(216, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 17:19:42', 'web'),
+	(217, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 21:12:26', 'web'),
+	(218, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-09 22:27:41', 'web'),
+	(219, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-09 22:41:17', 'web'),
+	(220, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 10:58:12', 'web'),
+	(221, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 11:07:34', 'web'),
+	(222, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 17:03:50', 'web'),
+	(223, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 17:12:52', 'web'),
+	(224, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 20:25:57', 'web'),
+	(225, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-10 22:12:25', 'web'),
+	(226, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-10 22:30:09', 'web'),
+	(227, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-11 21:31:23', 'web'),
+	(228, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-11 21:47:14', 'web'),
+	(229, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-11 21:48:07', 'web'),
+	(230, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 00:50:38', 'web'),
+	(231, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 15:12:04', 'web'),
+	(232, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 15:13:57', 'web'),
+	(233, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-12 20:20:23', 'web'),
+	(234, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 20:29:59', 'web'),
+	(235, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-12 21:30:44', 'web'),
+	(236, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-12 22:54:41', 'web'),
+	(237, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-12 23:59:14', 'web'),
+	(238, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 16:36:11', 'web'),
+	(239, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-13 16:42:03', 'web'),
+	(240, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 22:41:22', 'web'),
+	(241, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-13 22:45:37', 'web'),
+	(242, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-13 22:58:30', 'web'),
+	(243, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 16:35:12', 'web'),
+	(244, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-14 16:36:46', 'web'),
+	(245, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 17:36:03', 'web'),
+	(246, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-14 20:14:40', 'web'),
+	(247, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-14 23:59:20', 'web'),
+	(248, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 14:15:13', 'web'),
+	(249, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-15 14:15:21', 'web'),
+	(250, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 17:03:24', 'web'),
+	(251, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-15 19:44:39', 'web'),
+	(252, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-15 20:50:47', 'web'),
+	(253, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 19:26:41', 'web'),
+	(254, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 19:45:39', 'web'),
+	(255, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-16 20:12:38', 'web'),
+	(256, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-16 20:40:38', 'web'),
+	(257, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-17 19:56:29', 'web'),
+	(258, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 08:38:14', 'web'),
+	(259, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 18:03:17', 'web'),
+	(260, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-18 19:33:17', 'web'),
+	(261, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 12:15:37', 'web'),
+	(262, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:11:08', 'web'),
+	(263, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:28:11', 'web'),
+	(264, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 16:51:03', 'web'),
+	(265, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 21:43:05', 'web'),
+	(266, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-19 22:04:37', 'web'),
+	(267, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 08:46:23', 'web'),
+	(268, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 12:21:04', 'web'),
+	(269, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 13:12:10', 'web'),
+	(270, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-20 14:47:10', 'web'),
+	(271, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 14:49:07', 'web'),
+	(272, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 18:25:09', 'web'),
+	(273, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 19:50:55', 'web'),
+	(274, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 20:20:12', 'web'),
+	(275, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-05-20 20:25:21', 'web'),
+	(276, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-20 21:56:51', 'web'),
+	(277, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 14:16:27', 'web'),
+	(278, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 19:38:25', 'web'),
+	(279, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-21 20:14:24', 'web'),
+	(280, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-22 12:41:17', 'web'),
+	(281, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-22 19:02:36', 'web'),
+	(282, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-22 19:03:16', 'web'),
+	(283, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 00:27:34', 'web'),
+	(284, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 00:27:55', 'web'),
+	(285, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 13:42:32', 'web'),
+	(286, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 14:19:50', 'web'),
+	(287, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 14:41:30', 'web'),
+	(288, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 15:18:16', 'web'),
+	(289, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 16:51:10', 'web'),
+	(290, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-23 19:11:17', 'web'),
+	(291, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-23 19:21:09', 'web'),
+	(292, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-24 20:16:53', 'web'),
+	(293, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-24 20:18:56', 'web'),
+	(294, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-25 11:54:59', 'web'),
+	(295, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 12:13:26', 'web'),
+	(296, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-25 17:18:44', 'web'),
+	(297, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 18:02:51', 'web'),
+	(298, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-25 23:06:39', 'web'),
+	(299, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 00:17:28', 'web'),
+	(300, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-26 12:22:37', 'web'),
+	(301, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 14:26:23', 'web'),
+	(302, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-26 17:49:09', 'web'),
+	(303, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-26 19:26:28', 'web'),
+	(304, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 14:33:17', 'web'),
+	(305, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-27 14:49:09', 'web'),
+	(306, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 15:17:45', 'web'),
+	(307, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-27 21:30:05', 'web'),
+	(308, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-27 21:35:24', 'web'),
+	(309, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-28 13:13:39', 'web'),
+	(310, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-28 16:47:13', 'web'),
+	(311, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-28 19:47:38', 'web'),
+	(312, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 12:32:00', 'web'),
+	(313, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 13:53:56', 'web'),
+	(314, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-29 15:22:02', 'web'),
+	(315, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 17:47:39', 'web'),
+	(316, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 19:37:07', 'web'),
+	(317, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-29 22:15:41', 'web'),
+	(318, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 22:54:05', 'web'),
+	(319, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:48:54', 'web'),
+	(320, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:51:15', 'web'),
+	(321, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-29 23:56:08', 'web'),
+	(322, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 13:05:34', 'web'),
+	(323, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 13:10:24', 'web'),
+	(324, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-30 13:10:44', 'web'),
+	(325, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 14:02:49', 'web'),
+	(326, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-30 18:36:54', 'web'),
+	(327, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-05-30 18:49:30', 'web'),
+	(328, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-05-31 22:04:40', 'web'),
+	(329, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 08:51:15', 'web'),
+	(330, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 15:21:55', 'web'),
+	(331, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-01 17:44:52', 'web'),
+	(332, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 19:01:50', 'web'),
+	(333, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-01 22:37:01', 'web'),
+	(334, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-02 12:02:02', 'web'),
+	(335, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-02 20:54:11', 'web'),
+	(336, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 07:04:25', 'web'),
+	(337, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 13:36:46', 'web'),
+	(338, 'pengpeng', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 15:17:16', 'web'),
+	(339, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-03 15:18:37', 'web'),
+	(340, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-04 19:58:21', 'web'),
+	(341, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-05 15:06:05', 'web'),
+	(342, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-05 15:06:23', 'web'),
+	(343, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-05 22:16:00', 'web'),
+	(344, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-05 22:39:22', 'web'),
+	(345, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 00:20:16', 'web'),
+	(346, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-06 12:25:24', 'web'),
+	(347, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 12:27:18', 'web'),
+	(348, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 12:33:35', 'web'),
+	(349, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 18:53:24', 'web'),
+	(350, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-06 23:59:49', 'web'),
+	(351, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 00:32:28', 'web'),
+	(352, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 06:09:43', 'web'),
+	(353, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-08 10:32:49', 'web'),
+	(354, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-08 13:32:42', 'web'),
+	(355, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 14:36:05', 'web'),
+	(356, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-08 16:32:10', 'web'),
+	(357, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-08 22:41:54', 'web'),
+	(358, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-09 13:09:34', 'web'),
+	(359, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-09 13:31:59', 'web'),
+	(360, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-10 00:41:11', 'web'),
+	(361, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-18 19:16:27', 'app'),
+	(362, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-19 20:56:34', 'app'),
+	(363, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-19 21:01:45', 'web'),
+	(364, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-19 22:16:40', 'web'),
+	(365, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-19 22:18:42', 'web'),
+	(366, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-19 22:31:18', 'web'),
+	(367, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-19 23:27:29', 'app');
 /*!40000 ALTER TABLE `sys_logininfor` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_menu 结构
@@ -2488,7 +2730,7 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3066 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
+) ENGINE=InnoDB AUTO_INCREMENT=3078 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
 
 -- 正在导出表  fuchenpro.sys_menu 的数据：~224 rows (大约)
 DELETE FROM `sys_menu`;
@@ -2717,7 +2959,18 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 	(3059, '客户新增', 3058, 1, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:customer:add', '#', 'admin', '2026-06-05 23:18:57', '', NULL, ''),
 	(3060, '客户修改', 3058, 2, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:customer:edit', '#', 'admin', '2026-06-05 23:18:58', '', NULL, ''),
 	(3061, '客户删除', 3058, 3, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:customer:remove', '#', 'admin', '2026-06-05 23:18:58', '', NULL, ''),
-	(3066, '系统配置', 1, 9, 'sysConfig', 'system/sysConfig/index', NULL, 'SysConfig', 1, 0, 'C', '0', '0', 'all', 'system:sysConfig:list', 'edit', 'admin', '2026-06-08 13:31:42', '', NULL, '');
+	(3066, '系统配置', 1, 9, 'sysConfig', 'system/sysConfig/index', NULL, 'SysConfig', 1, 0, 'C', '0', '0', 'all', 'system:sysConfig:list', 'edit', 'admin', '2026-06-08 13:31:42', '', NULL, ''),
+	(3067, '仓库管理', 2021, 8, 'warehouse', 'wms/warehouse/index', NULL, 'WmsWarehouse', 1, 0, 'C', '0', '0', 'all', 'wms:warehouse:list', 'build', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3068, '仓库查询', 3067, 1, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:warehouse:query', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3069, '仓库新增', 3067, 2, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:warehouse:add', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3070, '仓库修改', 3067, 3, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:warehouse:edit', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3071, '仓库删除', 3067, 4, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:warehouse:remove', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3072, '调拨管理', 2021, 9, 'stockTransfer', 'wms/stockTransfer/index', NULL, 'WmsStockTransfer', 1, 0, 'C', '0', '0', 'all', 'wms:transfer:list', 'switch', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3073, '调拨查询', 3072, 1, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:transfer:query', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3074, '调拨新增', 3072, 2, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:transfer:add', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3075, '调拨修改', 3072, 3, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:transfer:edit', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3076, '调拨删除', 3072, 4, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:transfer:remove', '#', 'admin', '2026-06-19 13:14:30', '', NULL, ''),
+	(3077, '调拨确认', 3072, 5, '', '', NULL, '', 1, 0, 'F', '0', '0', 'all', 'wms:transfer:confirm', '#', 'admin', '2026-06-19 13:14:30', '', NULL, '');
 /*!40000 ALTER TABLE `sys_menu` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_notice 结构
@@ -2880,7 +3133,7 @@ CREATE TABLE IF NOT EXISTS `sys_role_menu` (
   PRIMARY KEY (`role_id`,`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色和菜单关联表';
 
--- 正在导出表  fuchenpro.sys_role_menu 的数据：~337 rows (大约)
+-- 正在导出表  fuchenpro.sys_role_menu 的数据：~348 rows (大约)
 DELETE FROM `sys_role_menu`;
 /*!40000 ALTER TABLE `sys_role_menu` DISABLE KEYS */;
 INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
@@ -3051,6 +3304,17 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 	(1, 3059),
 	(1, 3060),
 	(1, 3061),
+	(1, 3067),
+	(1, 3068),
+	(1, 3069),
+	(1, 3070),
+	(1, 3071),
+	(1, 3072),
+	(1, 3073),
+	(1, 3074),
+	(1, 3075),
+	(1, 3076),
+	(1, 3077),
 	(2, 1),
 	(2, 2),
 	(2, 3),
@@ -3264,7 +3528,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 DELETE FROM `sys_user`;
 /*!40000 ALTER TABLE `sys_user` DISABLE KEYS */;
 INSERT INTO `sys_user` (`user_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `pwd_update_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
-	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-08 16:32:10', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
+	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-19 23:27:29', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
 	(2, 106, 'ry', '若人头', '00', 'ry@qq.com', '15666666666', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-04-25 01:10:45', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', 'admin', '2026-04-28 22:24:11', '测试员'),
 	(100, 101, '测试', '测试', '00', '', '15877778888', '0', '', '$2y$10$XouudTyFvzABxDZVRaQhZ.Jh9TSE9Qil2RA2N9mzv6hPqcyo.O4Uy', '0', '0', '', NULL, NULL, 'admin', '2026-04-25 21:08:28', '', NULL, '111'),
 	(101, NULL, '辅导费', '奋斗奋斗', '00', '', '', '0', '', '$2y$10$GiUlf1m6QaMIwgfxTHuDfeEoedCiiS0O1HBb3bcR.rW0DKPuua8gK', '0', '2', '', NULL, NULL, 'admin', '2026-05-20 19:52:31', '', NULL, NULL),

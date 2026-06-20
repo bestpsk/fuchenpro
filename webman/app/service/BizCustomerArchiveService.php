@@ -68,23 +68,47 @@ class BizCustomerArchiveService
     }
 
     // 从销售订单自动生成客户档案（source_type='0'），提取订单明细作为plan_items
-    public function insertArchiveFromOrder($order)
+    public function insertArchiveFromOrder($order, $items = null)
     {
-        if (!$order) return null;
+        if (!$order) {
+            \support\Log::warning('insertArchiveFromOrder: order为空');
+            return null;
+        }
         $orderId = $order->order_id ?? $order['order_id'] ?? null;
-        if (!$orderId) return null;
+        if (!$orderId) {
+            \support\Log::warning('insertArchiveFromOrder: orderId为空');
+            return null;
+        }
 
         $exists = BizCustomerArchive::where('source_type', '0')->where('source_id', $orderId)->first();
         if ($exists) return $exists;
 
-        $orderModel = is_array($order) ? BizSalesOrder::with('items')->find($orderId) : BizSalesOrder::with('items')->find($order->order_id);
-        if (!$orderModel) return null;
+        // 优先使用传入的模型，避免事务内二次查询
+        $orderModel = $order;
+        if (is_array($order)) {
+            $orderModel = BizSalesOrder::with('items')->find($orderId);
+        }
+        if (!$orderModel) {
+            \support\Log::warning('insertArchiveFromOrder: 未找到订单模型', ['orderId' => $orderId]);
+            return null;
+        }
 
-        if (!$orderModel->customer_id) return null;
+        if (!$orderModel->customer_id) {
+            \support\Log::warning('insertArchiveFromOrder: 订单customer_id为空', ['orderId' => $orderId]);
+            return null;
+        }
+
+        // 优先使用传入的items，否则从模型关系获取
+        $orderItems = $items;
+        if ($orderItems === null) {
+            $orderItems = $orderModel->items ?? $orderModel->items()->get() ?? [];
+        }
 
         $planItems = [];
-        foreach ($orderModel->items as $item) {
-            $planItems[] = ['name' => $item->product_name ?? '', 'quantity' => intval($item->quantity ?? 1)];
+        foreach ($orderItems as $item) {
+            $name = is_array($item) ? ($item['product_name'] ?? '') : ($item->product_name ?? '');
+            $qty = is_array($item) ? ($item['quantity'] ?? 1) : ($item->quantity ?? 1);
+            $planItems[] = ['name' => $name, 'quantity' => intval($qty)];
         }
 
         $data = [

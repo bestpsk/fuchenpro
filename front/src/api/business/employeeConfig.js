@@ -44,7 +44,7 @@ export function updateSchedulable(userId, isSchedulable) {
   return request({
     url: '/business/employeeConfig/updateSchedulable',
     method: 'put',
-    params: { userId, isSchedulable }
+    data: { userId, isSchedulable }
   })
 }
 

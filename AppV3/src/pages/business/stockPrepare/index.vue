@@ -176,6 +176,12 @@
                 <text class="value pending">{{ formatMainQty(item.pendingQuantity, item.items) }} / ¥{{ item.pendingAmount || '0' }}</text>
               </view>
             </view>
+            <view class="info-row" v-if="item.planId">
+              <view class="info-item">
+                <text class="label">来源</text>
+                <text class="value source">方案编号 {{ item.planNo }}</text>
+              </view>
+            </view>
           </view>
 
           <view class="card-footer">
@@ -767,6 +773,10 @@ page {
     &.pending {
       color: #FF7D00;
       font-size: 24rpx;
+    }
+
+    &.source {
+      color: #3D6DF7;
     }
   }
 }

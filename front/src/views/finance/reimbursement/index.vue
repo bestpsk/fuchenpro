@@ -30,6 +30,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['finance:reimbursement:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['finance:reimbursement:export']">导出</el-button>
+      </el-col>
     </el-row>
 
     <el-table v-loading="loading" :data="reimbursementList" @selection-change="handleSelectionChange" style="width: 100%" table-layout="auto">
@@ -412,6 +415,12 @@ function handlePay(row) {
     getList()
     proxy.$modal.msgSuccess('支付成功')
   }).catch(() => {})
+}
+
+function handleExport() {
+  proxy.download("finance/reimbursement/export", {
+    ...queryParams.value,
+  }, `reimbursement_${new Date().getTime()}.xlsx`)
 }
 
 function reset() {

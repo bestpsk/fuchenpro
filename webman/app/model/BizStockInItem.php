@@ -14,11 +14,12 @@ class BizStockInItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'stock_in_id', 'product_id', 'product_name',
+        'stock_in_id', 'warehouse_id', 'product_id', 'product_name',
         'supplier_id', 'supplier_name',
         'spec', 'unit', 'unit_type', 'pack_qty',
         'original_quantity', 'quantity', 'purchase_price', 'amount',
-        'production_date', 'expiry_date', 'remark'
+        'production_date', 'expiry_date', 'remark',
+        'shipped_quantity'
     ];
 
     // 关联所属入库单

@@ -257,6 +257,7 @@ const planDetailOpen = ref(false)
 const currentPlan = ref({})
 const currentEnterprise = ref({})
 const productOptions = ref([])
+const giftAmountManuallyModified = ref(false)
 
 const data = reactive({
   queryParams: { pageNum: 1, pageSize: 10, enterpriseName: undefined },
@@ -318,6 +319,7 @@ function handleAddPlan(row) {
 }
 
 function handleEditPlan(row) {
+  giftAmountManuallyModified.value = false
   getPlan(row.planId).then(res => {
     planForm.value = { ...res.data, items: (res.data.items || []).map(item => ({ ...item })) }
     planOpen.value = true
@@ -326,6 +328,7 @@ function handleEditPlan(row) {
 }
 
 function resetPlanForm() {
+  giftAmountManuallyModified.value = false
   planForm.value = {
     planId: undefined, enterpriseId: undefined, planName: undefined,
     commissionRate: 0, planAmount: 0, giftAmount: 0, remainingAmount: 0,
@@ -335,8 +338,22 @@ function resetPlanForm() {
 }
 
 function onGiftAmountChange() {
+  giftAmountManuallyModified.value = true
   planForm.value.remainingAmount = planForm.value.giftAmount
 }
+
+function calcGiftAmount() {
+  if (giftAmountManuallyModified.value) return
+  const planAmount = parseFloat(planForm.value.planAmount)
+  const commissionRate = parseFloat(planForm.value.commissionRate)
+  if (planAmount > 0 && commissionRate > 0) {
+    planForm.value.giftAmount = Math.round(planAmount * 100 / commissionRate * 100) / 100
+    planForm.value.remainingAmount = planForm.value.giftAmount
+  }
+}
+
+watch(() => planForm.value.planAmount, () => calcGiftAmount())
+watch(() => planForm.value.commissionRate, () => calcGiftAmount())
 
 function addPlanItem() {
   planForm.value.items.push({

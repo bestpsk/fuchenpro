@@ -7,6 +7,8 @@ use app\service\BizPlanService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizPlan;
 
 /**
  * 方案管理控制器
@@ -129,5 +131,17 @@ class BizPlanController
         $statusChangeBy = $request->loginUser->user->user_name ?? '';
         $result = $this->planService->changeStatus($planId, $status, $statusChangeBy);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出方案数据
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $this->planService->selectPlanList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizPlan::class);
+        return $excelUtil->exportExcel($list, '方案数据');
     }
 }

@@ -38,4 +38,22 @@ class BizProduct extends Model
     {
         return $this->hasMany(BizStockInItem::class, 'product_id', 'product_id');
     }
+
+    public static function getExcelFields(): array
+    {
+        return [
+            'product_code' => ['name' => '货品编码', 'sort' => 1],
+            'product_name' => ['name' => '品名', 'sort' => 2],
+            'supplier_name' => ['name' => '供货商', 'type' => 'export', 'sort' => 3],
+            'category' => ['name' => '类别', 'dictType' => 'biz_product_category', 'sort' => 4],
+            'unit' => ['name' => '单位(整)', 'dictType' => 'biz_product_unit', 'sort' => 5],
+            'spec' => ['name' => '规格(拆)', 'dictType' => 'biz_product_spec', 'sort' => 6],
+            'pack_qty' => ['name' => '包装数量', 'cellType' => 'numeric', 'sort' => 7],
+            'purchase_price' => ['name' => '进货价', 'cellType' => 'numeric', 'sort' => 8],
+            'sale_price' => ['name' => '出货价(整)', 'cellType' => 'numeric', 'sort' => 9],
+            'sale_price_spec' => ['name' => '出货价(拆)', 'cellType' => 'numeric', 'sort' => 10],
+            'warn_qty' => ['name' => '预警数量', 'cellType' => 'numeric', 'sort' => 11],
+            'status' => ['name' => '状态', 'readConverterExp' => '0=正常,1=停用', 'sort' => 12],
+        ];
+    }
 }

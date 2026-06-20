@@ -4,8 +4,8 @@ export function listLogininfor(query) {
   return request({ url: '/monitor/logininfor/list', method: 'get', params: query })
 }
 
-export function delLogininfor(infoId) {
-  return request({ url: '/monitor/logininfor', method: 'delete', params: { infoId } })
+export function delLogininfor(infoIds) {
+  return request({ url: '/monitor/logininfor', method: 'delete', params: { infoIds } })
 }
 
 export function cleanLogininfor() {

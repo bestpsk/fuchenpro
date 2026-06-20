@@ -1,5 +1,6 @@
 <template>
   <view class="stockin-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <view class="search-section">
       <view class="search-box">
         <u-icon name="search" size="16" color="#86909C"></u-icon>
@@ -79,6 +80,7 @@
           </view>
           <view class="card-actions" v-if="hasActions(item)" @click.stop>
             <view v-if="canConfirm(item)" class="action-tag confirm" @click.stop="handleConfirm(item)">确认入库</view>
+            <view v-if="canCancelConfirm(item)" class="action-tag cancel" @click.stop="handleCancelConfirm(item)">取消确认</view>
             <view v-if="canEdit(item)" class="action-tag edit" @click.stop="goEdit(item)">编辑</view>
             <view v-if="canDelete(item)" class="action-tag delete" @click.stop="handleDelete(item)">删除</view>
           </view>
@@ -96,8 +98,13 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listStockIn, delStockIn, confirmStockIn } from '@/api/wms/stockIn'
+import { onShow } from '@dcloudio/uni-app'
+import { listStockIn, delStockIn, confirmStockIn, cancelConfirmStockIn } from '@/api/wms/stockIn'
 import { checkPermi } from '@/utils/permission'
+import { useWarehouse } from '@/composables/useWarehouse'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 
 const stockInList = ref([])
 const loading = ref(false)
@@ -109,7 +116,7 @@ let searchTimer = null
 
 const hasActiveFilters = computed(() => (queryParams.status !== '' && queryParams.status !== undefined) || (queryParams.stockInType !== '' && queryParams.stockInType !== undefined))
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '', stockInType: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '', stockInType: '', warehouseId: undefined })
 
 const statusOptions = ref([
   { label: '待确认', value: '0' },
@@ -164,9 +171,15 @@ function getExpiryText(expiryDate) {
 }
 
 function canConfirm(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:confirm') }
+function canCancelConfirm(item) { return String(item.status) === '1' && checkPermi('wms:stockIn:edit') }
 function canEdit(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:edit') }
 function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:remove') }
-function hasActions(item) { return canConfirm(item) || canEdit(item) || canDelete(item) }
+function hasActions(item) { return canConfirm(item) || canCancelConfirm(item) || canEdit(item) || canDelete(item) }
+
+function handleWarehouseChange(warehouseId) {
+  queryParams.warehouseId = warehouseId
+  getList(true)
+}
 
 async function getList(isRefresh = false) {
   if (loading.value) return
@@ -177,6 +190,8 @@ async function getList(isRefresh = false) {
     if (queryParams.status !== '' && queryParams.status !== undefined) params.status = queryParams.status
     if (queryParams.stockInType !== '' && queryParams.stockInType !== undefined) params.stockInType = queryParams.stockInType
     if (queryParams.keyword) params.stockInNo = queryParams.keyword
+    const wid = queryParams.warehouseId || currentWarehouseId.value
+    if (wid) params.warehouseId = wid
     const response = await listStockIn(params)
     const data = response.data || response
     const list = data.rows || data.items || []
@@ -220,6 +235,21 @@ function handleConfirm(item) {
   }})
 }
 
+function handleCancelConfirm(item) {
+  uni.showModal({
+    title: '提示',
+    content: '确认取消入库？取消后将恢复库存',
+    success: (res) => {
+      if (res.confirm) {
+        cancelConfirmStockIn(item.stockInId).then(() => {
+          uni.showToast({ title: '取消确认成功', icon: 'success' })
+          getList()
+        })
+      }
+    }
+  })
+}
+
 function handleDelete(item) {
   uni.showModal({ title: '提示', content: '确认删除该入库单？', success: async (res) => {
     if (res.confirm) {
@@ -232,7 +262,7 @@ function handleDelete(item) {
   }})
 }
 
-onMounted(() => { getList(true) })
+onShow(async () => { await loadWarehouses(); queryParams.warehouseId = currentWarehouseId.value; getList(true) })
 </script>
 
 <style lang="scss" scoped>
@@ -293,6 +323,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .card-actions { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; }
 .action-tag { padding: 8rpx 20rpx; border-radius: 20rpx; font-size: 22rpx; font-weight: 500;
   &.confirm { background: #E8F8F0; color: #00B42A; }
+  &.cancel { background: #FFF7E8; color: #FF7D00; }
   &.edit { background: #FFF7E8; color: #FF7D00; }
   &.delete { background: #FFECE8; color: #F53F3F; }
 }

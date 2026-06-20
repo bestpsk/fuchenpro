@@ -6,7 +6,9 @@ use support\Request;
 use app\service\BizStockInService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\BizStockIn;
 
 /**
  * 入库管理控制器
@@ -114,5 +116,27 @@ class BizStockInController
         $result = $service->cancelConfirmStockIn($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
         return AjaxResult::success($result['msg']);
+    }
+
+    // 导出入库数据
+    public function export(Request $request)
+    {
+        $service = new BizStockInService();
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $service->selectStockInList($params);
+        $list = $result->items();
+        // 关联查询warehouse_name
+        foreach ($list as $item) {
+            if (!empty($item->warehouse_id)) {
+                $warehouse = \app\model\BizWarehouse::find($item->warehouse_id);
+                $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
+            } else {
+                $item->warehouse_name = '';
+            }
+        }
+        $excelUtil = new ExcelUtil(BizStockIn::class);
+        return $excelUtil->exportExcel($list, '入库数据');
     }
 }

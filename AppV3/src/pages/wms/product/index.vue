@@ -84,6 +84,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listProduct, delProduct } from '@/api/wms/product'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
 const productList = ref([])
@@ -103,13 +104,17 @@ const statusOptions = ref([
   { label: '停用', value: '1' }
 ])
 
-const categoryOptions = ref([
-  { label: '食品', value: '食品' },
-  { label: '饮料', value: '饮料' },
-  { label: '日用品', value: '日用品' },
-  { label: '办公用品', value: '办公用品' },
-  { label: '其他', value: '其他' }
-])
+const categoryOptions = ref([])
+
+async function loadCategoryDict() {
+  try {
+    const res = await getDicts('biz_product_category')
+    const list = res.data || []
+    categoryOptions.value = list.map(d => ({ label: d.dictLabel, value: d.dictValue }))
+  } catch (e) {
+    console.error('加载类别字典失败:', e)
+  }
+}
 
 const canEdit = computed(() => checkPermi('wms:product:edit'))
 const canDelete = computed(() => checkPermi('wms:product:remove'))
@@ -173,7 +178,7 @@ function handleDelete(item) {
   }})
 }
 
-onMounted(() => { getList(true) })
+onMounted(() => { loadCategoryDict(); getList(true) })
 </script>
 
 <style lang="scss" scoped>

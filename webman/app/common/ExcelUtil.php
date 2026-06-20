@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use support\Response;
+use app\service\SysDictTypeService;
 
 /**
  * Excel导入导出工具
@@ -44,9 +45,36 @@ class ExcelUtil
     private $rownum = 0;     // 当前写入行号
     private $list = [];      // 待导出的数据列表
 
-    public function __construct(string $clazz)
+    public function __construct(string $clazz = '')
     {
         $this->clazz = $clazz;
+    }
+
+    // 直接设置字段配置（用于无模型的报表导出场景）
+    public function setFields(array $fields): void
+    {
+        $this->fields = [];
+        foreach ($fields as $fieldName => $config) {
+            $this->fields[] = array_merge([
+                'field' => $fieldName,
+                'name' => $fieldName,
+                'width' => 16,
+                'height' => 14,
+                'dateFormat' => '',
+                'dictType' => '',
+                'readConverterExp' => '',
+                'cellType' => 'string',
+                'type' => 'all',
+                'prompt' => '',
+                'combo' => [],
+            ], $config);
+        }
+
+        usort($this->fields, function ($a, $b) {
+            $sortA = $a['sort'] ?? PHP_INT_MAX;
+            $sortB = $b['sort'] ?? PHP_INT_MAX;
+            return $sortA <=> $sortB;
+        });
     }
 
     // 导出Excel文件，根据模型字段定义生成带标题和表头的xlsx文件并下载
@@ -173,6 +201,11 @@ class ExcelUtil
     // 从模型类的getExcelFields方法解析字段配置，按导入/导出类型过滤并排序
     private function createExcelField(): void
     {
+        // 如果已通过setFields()直接设置字段配置，则跳过模型解析
+        if (!empty($this->fields)) {
+            return;
+        }
+
         $this->fields = [];
         if (method_exists($this->clazz, 'getExcelFields')) {
             $fields = call_user_func([$this->clazz, 'getExcelFields']);
@@ -424,12 +457,12 @@ class ExcelUtil
     // 导出时根据字典类型将字典值转换为字典标签
     public static function convertDictByExp($dictValue, string $dictType, string $separator = ','): string
     {
-        return SysDictTypeService::getDictLabel($dictType, (string)$dictValue, $separator);
+        return \app\service\SysDictTypeService::getDictLabel($dictType, (string)$dictValue, $separator);
     }
 
     // 导入时根据字典类型将字典标签反向转换为字典值
     public static function reverseDictByExp($dictLabel, string $dictType, string $separator = ','): string
     {
-        return SysDictTypeService::getDictValue($dictType, (string)$dictLabel, $separator);
+        return \app\service\SysDictTypeService::getDictValue($dictType, (string)$dictLabel, $separator);
     }
 }

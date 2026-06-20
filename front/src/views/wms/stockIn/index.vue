@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="入库单号" prop="stockInNo">
         <el-input v-model="queryParams.stockInNo" placeholder="请输入入库单号" clearable style="width: 180px" @keyup.enter="handleQuery" />
@@ -30,6 +31,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:stockIn:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
     </el-row>
 
@@ -39,6 +43,11 @@
       <el-table-column label="入库类型" prop="stockInType" min-width="90" align="center">
         <template #default="scope">
           <dict-tag :options="biz_stock_in_type" :value="scope.row.stockInType" />
+        </template>
+      </el-table-column>
+      <el-table-column label="仓库" min-width="90" align="center">
+        <template #default="scope">
+          <span>{{ scope.row.warehouseName || '-' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="总数量" min-width="120" align="center">
@@ -83,11 +92,18 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
+            <el-form-item label="仓库" prop="warehouseId">
+              <el-select v-model="form.warehouseId" placeholder="请选择仓库" :disabled="isView" style="width: 100%">
+                <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
             <el-form-item label="入库日期" prop="stockInDate">
               <el-date-picker v-model="form.stockInDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled="isView" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="6">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" placeholder="请输入备注" :disabled="isView" />
             </el-form-item>
@@ -259,8 +275,11 @@ import { listStockIn, getStockIn, delStockIn, addStockIn, updateStockIn, confirm
 import { searchSupplier } from "@/api/wms/supplier"
 import { searchProduct, getProduct } from "@/api/wms/product"
 import { ElMessageBox } from 'element-plus'
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { useWarehouse } from '@/composables/useWarehouse'
 
 const { proxy } = getCurrentInstance()
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 const { biz_stock_in_type, biz_doc_status, biz_product_unit, biz_product_spec } = useDict("biz_stock_in_type", "biz_doc_status", "biz_product_unit", "biz_product_spec")
 
 const stockInList = ref([])
@@ -277,11 +296,11 @@ const dateRange = ref([])
 const supplierOptions = ref([])
 const supplierLoading = ref(false)
 const productOptions = ref([])
-const productLoading = ref([])
+const productLoading = ref(false)
 
 const data = reactive({
   form: { items: [] },
-  queryParams: { pageNum: 1, pageSize: 10, stockInNo: undefined, stockInType: undefined, status: undefined },
+  queryParams: { pageNum: 1, pageSize: 10, stockInNo: undefined, stockInType: undefined, status: undefined, warehouseId: undefined },
   rules: {
     stockInType: [{ required: true, message: "入库类型不能为空", trigger: "change" }],
     stockInDate: [{ required: true, message: "入库日期不能为空", trigger: "change" }]
@@ -418,6 +437,7 @@ function getList() {
     params.stockInDateStart = dateRange.value[0]
     params.stockInDateEnd = dateRange.value[1]
   }
+  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
   listStockIn(params).then(async response => {
     const rows = response.rows || []
     if (rows.length > 0) {
@@ -444,8 +464,13 @@ function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { dateRange.value = []; proxy.resetForm("queryRef"); handleQuery() }
 function handleSelectionChange(selection) { ids.value = selection.map(item => item.stockInId); multiple.value = !selection.length }
 
+function handleWarehouseChange(warehouseId) {
+  queryParams.value.warehouseId = warehouseId
+  handleQuery()
+}
+
 function reset() {
-  form.value = { stockInId: undefined, stockInType: "1", stockInDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
+  form.value = { stockInId: undefined, stockInType: "1", stockInDate: new Date().toISOString().slice(0, 10), warehouseId: currentWarehouseId.value, remark: undefined, items: [] }
   productOptions.value = []
   proxy.resetForm("stockInRef")
 }
@@ -658,8 +683,13 @@ function getDictLabel(dict, value) {
   return item ? item.label : value
 }
 
+function handleExport() {
+  proxy.download("wms/stockIn/export", { ...queryParams.value, warehouseId: currentWarehouseId.value }, `入库_${new Date().getTime()}.xlsx`)
+}
+
 function cancel() { open.value = false; reset() }
 
+onMounted(() => { loadWarehouses() })
 getList()
 </script>
 

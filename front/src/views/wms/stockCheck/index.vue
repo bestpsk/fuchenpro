@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <WarehouseSelector @change="handleWarehouseChange" />
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="盘点单号" prop="stockCheckNo">
         <el-input v-model="queryParams.stockCheckNo" placeholder="请输入盘点单号" clearable style="width: 160px" @keyup.enter="handleQuery" />
@@ -61,11 +62,18 @@
       <el-form ref="stockCheckRef" :model="form" :rules="rules" label-width="100px">
         <el-row>
           <el-col :span="8">
+            <el-form-item label="仓库" prop="warehouseId">
+              <el-select v-model="form.warehouseId" placeholder="请选择仓库" :disabled="isView" @change="onDialogWarehouseChange" style="width: 100%">
+                <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
             <el-form-item label="盘点日期" prop="checkDate">
               <el-date-picker v-model="form.checkDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" :disabled="isView" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="16">
+          <el-col :span="8">
             <el-form-item label="备注" prop="remark">
               <el-input v-model="form.remark" placeholder="请输入备注" :disabled="isView" />
             </el-form-item>
@@ -142,8 +150,11 @@
  * @description 提供盘点单增删改查、确认盘点（差异调整到库存）、加载当前库存数据等功能
  */
 import { listStockCheck, getStockCheck, delStockCheck, addStockCheck, updateStockCheck, confirmStockCheck, loadInventoryData } from "@/api/wms/stockCheck"
+import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { useWarehouse } from '@/composables/useWarehouse'
 
 const { proxy } = getCurrentInstance()
+const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
 const { biz_doc_status, biz_product_unit, biz_product_spec } = useDict("biz_doc_status", "biz_product_unit", "biz_product_spec")
 
 const stockCheckList = ref([])
@@ -160,13 +171,13 @@ const searchKeyword = ref('')
 
 const data = reactive({
   form: { items: [] },
-  queryParams: { pageNum: 1, pageSize: 10, stockCheckNo: undefined, status: undefined },
+  queryParams: { pageNum: 1, pageSize: 10, stockCheckNo: undefined, status: undefined, warehouseId: undefined },
   rules: { checkDate: [{ required: true, message: "盘点日期不能为空", trigger: "change" }] }
 })
 const { queryParams, form, rules } = toRefs(data)
 
-function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
-function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
+function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
+function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === String(value)); return dict ? dict.label : '' }
 
 const filteredItems = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
@@ -240,6 +251,7 @@ function getList() {
     params.checkDateStart = dateRange.value[0]
     params.checkDateEnd = dateRange.value[1]
   }
+  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
   listStockCheck(params).then(response => {
     stockCheckList.value = response.rows
     total.value = response.total
@@ -251,16 +263,27 @@ function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { dateRange.value = []; proxy.resetForm("queryRef"); handleQuery() }
 function handleSelectionChange(selection) { ids.value = selection.map(item => item.stockCheckId); multiple.value = !selection.length }
 
+function handleWarehouseChange(warehouseId) {
+  queryParams.value.warehouseId = warehouseId
+  handleQuery()
+}
+
 function reset() {
-  form.value = { stockCheckId: undefined, checkDate: new Date().toISOString().slice(0, 10), remark: undefined, items: [] }
+  form.value = { stockCheckId: undefined, checkDate: new Date().toISOString().slice(0, 10), warehouseId: currentWarehouseId.value, remark: undefined, items: [] }
   proxy.resetForm("stockCheckRef")
 }
 
 function handleAdd() {
   reset()
-  loadInventoryData().then(res => {
-    form.value.items = (res.data || []).map(item => ({ ...item, unitType: item.unitType || '2', _prevUnitType: item.unitType || '2', actualQuantity: item.systemQuantity, diffQuantity: 0 }))
+  loadInventoryData(form.value.warehouseId || currentWarehouseId.value).then(res => {
+    form.value.items = (res.data || []).map(item => ({ ...item, unitType: item.unitType || '2', _prevUnitType: item.unitType || '2', _rawSystemQty: item.systemQuantity, _rawActualQty: item.systemQuantity, actualQuantity: item.systemQuantity, diffQuantity: 0 }))
     isView.value = false; dialogTitle.value = "新增盘点单"; open.value = true
+  })
+}
+
+function onDialogWarehouseChange(warehouseId) {
+  loadInventoryData(warehouseId).then(res => {
+    form.value.items = (res.data || []).map(item => ({ ...item, unitType: item.unitType || '2', _prevUnitType: item.unitType || '2', _rawSystemQty: item.systemQuantity, _rawActualQty: item.systemQuantity, actualQuantity: item.systemQuantity, diffQuantity: 0 }))
   })
 }
 
@@ -333,11 +356,21 @@ function convertToMinUnit(item) {
   return qty
 }
 
+function convertSystemQtyToMinUnit(item) {
+  const qty = item.systemQuantity || 0
+  const unitType = item.unitType || '2'
+  const packQty = item.packQty || 1
+  if (unitType === '1' && packQty > 1) {
+    return Math.round(qty * packQty)
+  }
+  return qty
+}
+
 function submitForm() {
   proxy.$refs["stockCheckRef"].validate(valid => {
     if (valid) {
       if (!form.value.items || form.value.items.length === 0) { proxy.$modal.msgWarning("盘点明细不能为空"); return }
-      const submitData = { ...form.value, items: form.value.items.map(item => ({ ...item, actualQuantity: convertToMinUnit(item) })) }
+      const submitData = { ...form.value, items: form.value.items.map(item => ({ ...item, actualQuantity: convertToMinUnit(item), systemQuantity: convertSystemQtyToMinUnit(item) })) }
       if (form.value.stockCheckId != undefined) {
         updateStockCheck(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
       } else {
@@ -354,5 +387,6 @@ function handleDelete(row) {
 
 function cancel() { open.value = false; reset() }
 
+onMounted(() => { loadWarehouses() })
 getList()
 </script>

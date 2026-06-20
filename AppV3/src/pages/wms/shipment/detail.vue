@@ -1,11 +1,20 @@
 <template>
   <view class="detail-container">
+    <!-- 基本信息 -->
     <view class="info-card">
       <view class="card-header-row">
         <text class="shipment-no">{{ info.stockOutNo || '-' }}</text>
         <view class="status-badge" :class="'status-' + String(info.status)">{{ getStatusLabel(info.status) }}</view>
       </view>
       <view class="info-body">
+        <view class="info-row">
+          <text class="info-label">出库类型</text>
+          <text class="info-value">{{ info.stockOutType === '1' ? '销售出库' : info.stockOutType === '2' ? '领用出库' : '其他' }}</text>
+        </view>
+        <view class="info-row" v-if="info.warehouseName">
+          <text class="info-label">仓库</text>
+          <text class="info-value">{{ info.warehouseName }}</text>
+        </view>
         <view class="info-row">
           <text class="info-label">企业</text>
           <text class="info-value">{{ info.enterpriseName || '-' }}</text>
@@ -14,22 +23,17 @@
           <text class="info-label">关联方案</text>
           <text class="info-value">{{ info.planName || '-' }}</text>
         </view>
+        <view class="info-row" v-if="info.prepareId">
+          <text class="info-label">来源</text>
+          <text class="info-value">备货出库</text>
+        </view>
         <view class="info-row">
           <text class="info-label">发货方式</text>
           <text class="info-value">{{ getShipTypeLabel(info.shipType) }}</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">收货人</text>
-          <text class="info-value">{{ info.contactPerson || '-' }}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">收货电话</text>
-          <text class="info-value phone-link" v-if="info.contactPhone" @click="callPhone">{{ info.contactPhone }}</text>
-          <text class="info-value" v-else>-</text>
-        </view>
-        <view class="info-row" v-if="info.shippingAddress">
-          <text class="info-label">收货地址</text>
-          <text class="info-value">{{ info.shippingAddress }}</text>
+        <view class="info-row" v-if="info.stockOutDate">
+          <text class="info-label">出库日期</text>
+          <text class="info-value">{{ info.stockOutDate }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">总数量</text>
@@ -46,6 +50,55 @@
       </view>
     </view>
 
+    <!-- 收货信息 -->
+    <view class="info-card" v-if="info.contactPerson || info.contactPhone || info.shippingAddress">
+      <view class="card-title">收货信息</view>
+      <view class="info-body">
+        <view class="info-row" v-if="info.contactPerson">
+          <text class="info-label">收货人</text>
+          <text class="info-value">{{ info.contactPerson }}</text>
+        </view>
+        <view class="info-row" v-if="info.contactPhone">
+          <text class="info-label">收货电话</text>
+          <text class="info-value phone-link" @click="callPhone">{{ info.contactPhone }}</text>
+        </view>
+        <view class="info-row" v-if="info.shippingAddress">
+          <text class="info-label">收货地址</text>
+          <text class="info-value">{{ info.shippingAddress }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 物流信息 -->
+    <view class="info-card" v-if="String(info.shipType) === '2' && (String(info.status) === '2' || String(info.status) === '3')">
+      <view class="card-title">物流信息</view>
+      <view class="info-body">
+        <view class="info-row" v-if="info.logisticsCompany">
+          <text class="info-label">物流公司</text>
+          <text class="info-value">{{ info.logisticsCompany }}</text>
+        </view>
+        <view class="info-row" v-if="info.logisticsNo">
+          <text class="info-label">物流单号</text>
+          <text class="info-value">{{ info.logisticsNo }}</text>
+        </view>
+        <view class="info-row" v-if="info.shipmentDate">
+          <text class="info-label">发货日期</text>
+          <text class="info-value">{{ info.shipmentDate }}</text>
+        </view>
+        <view class="info-row" v-if="info.receiptDate">
+          <text class="info-label">收货日期</text>
+          <text class="info-value">{{ info.receiptDate }}</text>
+        </view>
+        <view class="info-row" v-if="shipmentImageList.length > 0">
+          <text class="info-label">发货凭证</text>
+          <view class="image-list">
+            <image v-for="(img, idx) in shipmentImageList" :key="idx" :src="img" mode="aspectFill" class="detail-image" @click="previewImage(img)" />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 出库明细 -->
     <view class="info-card" v-if="stockOutItems.length > 0">
       <view class="section-header">
         <view class="card-title">出库明细</view>
@@ -55,16 +108,17 @@
         <view class="item-header">
           <text class="item-index">{{ idx + 1 }}.</text>
           <text class="item-name">{{ item.productName || '-' }}</text>
+          <text v-if="item.supplierName" class="supplier-tag">{{ item.supplierName }}</text>
         </view>
         <view class="item-body">
           <view class="info-line">
             <view class="info-left">
-              <text class="info-label">供货商</text>
-              <text class="info-value">{{ item.supplierName || '-' }}</text>
+              <text class="info-label">单位类型</text>
+              <text class="info-value">{{ item.unitType === '2' ? '副单位(拆)' : '主单位(整)' }}</text>
             </view>
             <view class="info-right">
               <text class="info-label">数量</text>
-              <text class="info-value">{{ item.quantity || 0 }}</text>
+              <text class="info-value">{{ getDisplayQuantity(item) }}{{ getItemUnitLabel(item) }}</text>
             </view>
           </view>
           <view class="info-line">
@@ -81,28 +135,7 @@
       </view>
     </view>
 
-    <view class="info-card" v-if="String(info.shipType) === '2' && (String(info.status) === '2' || String(info.status) === '3')">
-      <view class="card-title">物流信息</view>
-      <view class="info-body">
-        <view class="info-row">
-          <text class="info-label">物流公司</text>
-          <text class="info-value">{{ info.logisticsCompany || '-' }}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">物流单号</text>
-          <text class="info-value">{{ info.logisticsNo || '-' }}</text>
-        </view>
-        <view class="info-row" v-if="info.shipDate">
-          <text class="info-label">发货日期</text>
-          <text class="info-value">{{ info.shipDate }}</text>
-        </view>
-        <view class="info-row" v-if="info.receiptDate">
-          <text class="info-label">收货日期</text>
-          <text class="info-value">{{ info.receiptDate }}</text>
-        </view>
-      </view>
-    </view>
-
+    <!-- 操作按钮 -->
     <view class="action-section" v-if="showActions">
       <view class="action-btns">
         <u-button v-if="canConfirm" type="success" text="确认出库" @click="handleConfirm"></u-button>
@@ -111,20 +144,44 @@
       </view>
     </view>
 
-    <u-popup :show="showShipPopup" mode="center" round="16" @close="showShipPopup = false">
+    <!-- 发货弹窗 -->
+    <u-popup :show="showShipPopup" mode="center" round="16" :z-index="990" @close="showShipPopup = false">
       <view class="popup-content">
         <view class="popup-title">填写物流信息</view>
         <view class="popup-field">
-          <view class="popup-field-label">物流公司</view>
-          <view class="popup-input-box">
-            <input class="popup-input" type="text" v-model="shipForm.logisticsCompany" placeholder="请输入物流公司" placeholder-class="field-placeholder" />
+          <view class="popup-field-label">发货方式</view>
+          <view class="ship-type-options">
+            <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 0 }" @click="shipForm.shipTypeIndex = 0">自提</view>
+            <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 1 }" @click="shipForm.shipTypeIndex = 1">物流</view>
+          </view>
+        </view>
+        <view v-if="shipForm.shipTypeIndex === 1">
+          <view class="popup-field">
+            <view class="popup-field-label">物流公司</view>
+            <view class="form-picker" @click="showLogisticsPicker = true">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
+          </view>
+          <view class="popup-field">
+            <view class="popup-field-label">物流单号</view>
+            <view class="popup-input-box">
+              <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+            </view>
           </view>
         </view>
         <view class="popup-field">
-          <view class="popup-field-label">物流单号</view>
-          <view class="popup-input-box">
-            <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+          <view class="popup-field-label">发货凭证</view>
+          <view class="image-upload">
+            <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
+              <image :src="img" mode="aspectFill" @click="previewShipImage(img)" />
+              <view class="remove-btn" @click="removeImage(idx)">×</view>
+            </view>
+            <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
+              <text>+</text>
+            </view>
           </view>
+        </view>
+        <view class="popup-field">
+          <view class="popup-field-label">备注</view>
+          <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
         </view>
         <view class="popup-actions">
           <u-button type="info" plain text="取消" @click="showShipPopup = false"></u-button>
@@ -132,6 +189,32 @@
         </view>
       </view>
     </u-popup>
+
+    <!-- 物流公司选择弹窗 -->
+    <u-popup :show="showLogisticsPicker" mode="bottom" round="16" :z-index="995" @close="showLogisticsPicker = false">
+      <view class="logistics-picker-content">
+        <view class="logistics-picker-header">
+          <text class="logistics-picker-cancel" @click="showLogisticsPicker = false">取消</text>
+          <text class="logistics-picker-title">选择物流公司</text>
+          <text class="logistics-picker-confirm" @click="showLogisticsPicker = false">确定</text>
+        </view>
+        <scroll-view scroll-y class="logistics-picker-list">
+          <view class="logistics-picker-item" :class="{ active: shipForm.logisticsCompany === item }" v-for="(item, idx) in logisticsCompanyOptions" :key="idx" @click="onSelectLogistics(item)">
+            <text>{{ item }}</text>
+            <u-icon v-if="shipForm.logisticsCompany === item" name="checkmark" color="#3D6DF7" size="36rpx"></u-icon>
+          </view>
+          <view class="logistics-picker-empty" v-if="logisticsCompanyOptions.length === 0">
+            <text>暂无物流公司数据</text>
+          </view>
+        </scroll-view>
+      </view>
+    </u-popup>
+
+    <!-- 自定义图片预览（z-index高于弹窗） -->
+    <view class="image-preview-overlay" v-if="showImagePreview" @click="showImagePreview = false">
+      <view class="image-preview-close" @click.stop="showImagePreview = false">×</view>
+      <image :src="previewImageUrl" mode="aspectFit" class="image-preview-img" @click.stop />
+    </view>
   </view>
 </template>
 
@@ -139,13 +222,53 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getStockOut, confirmStockOut, shipStockOut, confirmReceipt } from '@/api/wms/stockOut'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
+import { getToken } from '@/utils/auth'
+import config from '@/config'
 
 const info = ref({})
 const stockOutItems = ref([])
 const stockOutId = ref(null)
 const showShipPopup = ref(false)
-const shipForm = reactive({ logisticsCompany: '', logisticsNo: '' })
+const showLogisticsPicker = ref(false)
+const showImagePreview = ref(false)
+const previewImageUrl = ref('')
+const shipForm = ref({ logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' })
+const logisticsCompanyOptions = ref([])
+const productUnitDict = ref([])
+const productSpecDict = ref([])
+
+function getUnitLabel(item) {
+  if (!item.unit) return ''
+  const dict = productUnitDict.value.find(d => d.value === String(item.unit))
+  return dict ? dict.label : ''
+}
+
+function getSpecLabel(item) {
+  if (!item.spec) return ''
+  const dict = productSpecDict.value.find(d => d.value === String(item.spec))
+  return dict ? dict.label : ''
+}
+
+function getItemUnitLabel(item) {
+  return item.unitType === '2' ? getSpecLabel(item) : getUnitLabel(item)
+}
+
+function getDisplayQuantity(item) {
+  const unitType = item.unitType || '1'
+  const packQty = item.packQty || 1
+  if (unitType === '1' && packQty > 1) {
+    return Math.round((item.quantity || 0) / packQty * 10000) / 10000
+  }
+  return item.quantity || 0
+}
+
+const shipmentImageList = computed(() => {
+  try {
+    return JSON.parse(info.value.shipmentImages || '[]')
+  } catch { return [] }
+})
 
 function getStatusLabel(status) {
   const map = { '0': '待确认', '1': '已确认(待发货)', '2': '已发货', '3': '已完成' }
@@ -186,6 +309,46 @@ function callPhone() {
   if (info.value.contactPhone) uni.makePhoneCall({ phoneNumber: info.value.contactPhone })
 }
 
+function previewImage(url) {
+  uni.previewImage({ urls: shipmentImageList.value, current: url })
+}
+
+function onSelectLogistics(item) {
+  shipForm.value.logisticsCompany = item
+  showLogisticsPicker.value = false
+}
+
+function chooseImage() {
+  uni.chooseImage({
+    count: 5 - shipForm.value.shipmentImages.length,
+    success: (res) => {
+      res.tempFilePaths.forEach(path => {
+        uni.uploadFile({
+          url: config.baseUrl + '/common/upload',
+          filePath: path,
+          name: 'file',
+          header: { Authorization: 'Bearer ' + getToken() },
+          success: (uploadRes) => {
+            const data = JSON.parse(uploadRes.data)
+            if (data.code === 200) {
+              shipForm.value.shipmentImages.push(data.url || data.fileName)
+            }
+          }
+        })
+      })
+    }
+  })
+}
+
+function removeImage(idx) {
+  shipForm.value.shipmentImages.splice(idx, 1)
+}
+
+function previewShipImage(url) {
+  previewImageUrl.value = url
+  showImagePreview.value = true
+}
+
 function handleConfirm() {
   uni.showModal({ title: '提示', content: '确认出库后将减少库存数量，是否继续？', success: async (res) => {
     if (res.confirm) {
@@ -199,13 +362,17 @@ function handleConfirm() {
 }
 
 async function confirmShip() {
-  if (!shipForm.logisticsCompany.trim()) { uni.showToast({ title: '请输入物流公司', icon: 'none' }); return }
-  if (!shipForm.logisticsNo.trim()) { uni.showToast({ title: '请输入物流单号', icon: 'none' }); return }
+  if (shipForm.value.shipTypeIndex === 1) {
+    if (!shipForm.value.logisticsCompany.trim()) { uni.showToast({ title: '请选择物流公司', icon: 'none' }); return }
+    if (!shipForm.value.logisticsNo.trim()) { uni.showToast({ title: '请输入物流单号', icon: 'none' }); return }
+  }
   try {
     await shipStockOut(stockOutId.value, {
-      shipType: '2',
-      logisticsCompany: shipForm.logisticsCompany,
-      logisticsNo: shipForm.logisticsNo
+      ship_type: String(shipForm.value.shipTypeIndex + 1),
+      logistics_company: shipForm.value.logisticsCompany,
+      logistics_no: shipForm.value.logisticsNo,
+      shipment_images: JSON.stringify(shipForm.value.shipmentImages),
+      remark: shipForm.value.remark
     })
     uni.showToast({ title: '发货成功', icon: 'success' })
     showShipPopup.value = false
@@ -230,6 +397,15 @@ onMounted(() => {
   const options = pages[pages.length - 1].options || {}
   stockOutId.value = options.id ? parseInt(options.id) : null
   loadDetail()
+  getDicts('logistics_company').then(res => {
+    logisticsCompanyOptions.value = (res.data || []).map(d => d.dictLabel)
+  }).catch(() => { logisticsCompanyOptions.value = [] })
+  getDicts('biz_product_unit').then(res => {
+    productUnitDict.value = (res.data || []).map(d => ({ value: d.dictValue, label: d.dictLabel }))
+  })
+  getDicts('biz_product_spec').then(res => {
+    productSpecDict.value = (res.data || []).map(d => ({ value: d.dictValue, label: d.dictLabel }))
+  })
 })
 
 onShow(() => {
@@ -268,11 +444,12 @@ page { background-color: #F5F7FA; }
 .item-header { display: flex; align-items: center; margin-bottom: 12rpx;
   .item-index { font-size: 26rpx; color: #86909C; font-weight: 500; margin-right: 8rpx; }
   .item-name { font-size: 27rpx; color: #1D2129; font-weight: 500; flex: 1; }
+  .supplier-tag { font-size: 22rpx; color: #3D6DF7; background: #F0F3FF; padding: 4rpx 14rpx; border-radius: 6rpx; flex-shrink: 0; margin-left: auto; }
 }
 .item-body { display: flex; flex-direction: column; gap: 10rpx; padding-left: 32rpx; }
 .info-line { display: flex; align-items: center; justify-content: space-between; font-size: 25rpx; line-height: 1.6;
   .info-left { display: flex; align-items: center; gap: 8rpx; flex: 1; }
-  .info-right { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; margin-left: auto; }
+  .info-right { display: flex; align-items: center; gap: 8rpx; flex-shrink: 0; margin-left: auto; min-width: 200rpx; justify-content: flex-end; }
   .info-label { color: #86909C; white-space: nowrap; font-size: 24rpx; }
   .info-value { color: #4E5969; font-size: 25rpx;
     &.amount { color: #FF6B35; font-weight: 600; }
@@ -291,4 +468,38 @@ page { background-color: #F5F7FA; }
 .popup-field { margin-bottom: 8rpx; }
 .popup-field-label { font-size: 26rpx; color: #4E5969; font-weight: 500; margin-bottom: 8rpx; }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 24rpx; .u-button { flex: 1; } }
+
+.form-picker { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; margin-bottom: 16rpx; }
+.form-textarea { width: 100%; background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; min-height: 120rpx; box-sizing: border-box; }
+.image-upload { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 16rpx; }
+.upload-item { position: relative; width: 140rpx; height: 140rpx; border-radius: 12rpx; overflow: hidden;
+  image { width: 100%; height: 100%; }
+  .remove-btn { position: absolute; top: 0; right: 0; width: 36rpx; height: 36rpx; background: rgba(0,0,0,0.5); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24rpx; border-radius: 0 0 0 12rpx; }
+}
+.upload-add { width: 140rpx; height: 140rpx; border: 2rpx dashed #C9CDD4; border-radius: 12rpx; display: flex; align-items: center; justify-content: center;
+  text { font-size: 48rpx; color: #C9CDD4; }
+}
+
+.image-list { display: flex; flex-wrap: wrap; gap: 12rpx; flex: 1; }
+.detail-image { width: 120rpx; height: 120rpx; border-radius: 8rpx; }
+
+.ship-type-options { display: flex; gap: 16rpx; margin-bottom: 16rpx; }
+.ship-type-item { flex: 1; text-align: center; padding: 16rpx 0; border-radius: 12rpx; background: #F7F8FA; font-size: 28rpx; color: #4E5969; transition: all 0.2s;
+  &.active { background: #E8F0FE; color: #3D6DF7; font-weight: 600; }
+}
+
+.logistics-picker-content { background: #fff; border-radius: 16rpx 16rpx 0 0; max-height: 60vh; }
+.logistics-picker-header { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx; border-bottom: 1rpx solid #F2F3F5; }
+.logistics-picker-cancel { font-size: 28rpx; color: #86909C; }
+.logistics-picker-title { font-size: 30rpx; font-weight: 600; color: #1D2129; }
+.logistics-picker-confirm { font-size: 28rpx; color: #3D6DF7; font-weight: 500; }
+.logistics-picker-list { max-height: 50vh; }
+.logistics-picker-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx; border-bottom: 1rpx solid #F2F3F5; font-size: 28rpx; color: #1D2129;
+  &.active { color: #3D6DF7; font-weight: 500; }
+}
+.logistics-picker-empty { padding: 60rpx 32rpx; text-align: center; font-size: 26rpx; color: #86909C; }
+
+.image-preview-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
+.image-preview-close { position: absolute; top: 60rpx; right: 30rpx; width: 60rpx; height: 60rpx; color: #fff; font-size: 48rpx; display: flex; align-items: center; justify-content: center; z-index: 10000; }
+.image-preview-img { width: 100%; height: 80vh; }
 </style>

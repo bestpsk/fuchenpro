@@ -37,6 +37,9 @@ class BizStockInService
         if (!empty($params['stock_in_date_end'])) {
             $query->where('stock_in_date', '<=', $params['stock_in_date_end']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('warehouse_id', $params['warehouse_id']);
+        }
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
             $query->whereIn('operator_id', $visibleUserIds);
@@ -54,7 +57,14 @@ class BizStockInService
                 $stockIn->display_spec = $firstItem->spec;
             }
         }
-        
+
+        $warehouseIds = $list->pluck('warehouse_id')->filter()->unique()->toArray();
+        $warehouses = \app\model\BizWarehouse::whereIn('warehouse_id', $warehouseIds)->get()->keyBy('warehouse_id');
+        foreach ($list->items() as $item) {
+            $warehouse = $warehouses->get($item->warehouse_id);
+            $item->warehouseName = $warehouse ? $warehouse->warehouse_name : '';
+        }
+
         return $list;
     }
 
@@ -86,6 +96,13 @@ class BizStockInService
                     'remark' => $item['remark'],
                 ];
             }, $items);
+
+            $warehouseName = '';
+            if (!empty($stockIn->warehouse_id)) {
+                $warehouse = \app\model\BizWarehouse::find($stockIn->warehouse_id);
+                $warehouseName = $warehouse ? $warehouse->warehouse_name : '';
+            }
+            $stockIn->warehouseName = $warehouseName;
         }
 
         return $stockIn;
@@ -94,15 +111,25 @@ class BizStockInService
     public function generateStockInNo()
     {
         $prefix = 'RK' . date('Ymd');
-        $last = BizStockIn::where('stock_in_no', 'like', $prefix . '%')
-            ->orderBy('stock_in_id', 'desc')
-            ->first();
-        $seq = 1;
-        if ($last) {
-            $lastSeq = intval(substr($last->stock_in_no, -3));
-            $seq = $lastSeq + 1;
+        $key = 'stock_in_no:' . date('Ymd');
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
+        $stockInNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+        // 数据库兜底：如果序号已存在，从数据库最大序号继续
+        $exists = BizStockIn::where('stock_in_no', $stockInNo)->exists();
+        if ($exists) {
+            $last = BizStockIn::where('stock_in_no', 'like', $prefix . '%')
+                ->orderBy('stock_in_id', 'desc')->first();
+            if ($last) {
+                $lastSeq = intval(substr($last->stock_in_no, -3));
+                $seq = $lastSeq + 1;
+                \support\Redis::set($key, $seq);
+                \support\Redis::expire($key, 86400);
+            }
+            $stockInNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
         }
-        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        return $stockInNo;
     }
 
     // 新增入库单，生成入库编号并创建明细
@@ -141,6 +168,7 @@ class BizStockInService
             $stockIn = BizStockIn::create($data);
             foreach ($items as $item) {
                 $item['stock_in_id'] = $stockIn->stock_in_id;
+                $item['warehouse_id'] = $data['warehouse_id'] ?? null;
                 BizStockInItem::create($item);
             }
             return $stockIn;
@@ -191,6 +219,7 @@ class BizStockInService
             BizStockInItem::where('stock_in_id', $stockInId)->delete();
             foreach ($items as $item) {
                 $item['stock_in_id'] = $stockInId;
+                $item['warehouse_id'] = $data['warehouse_id'] ?? null;
                 BizStockInItem::create($item);
             }
         });
@@ -226,23 +255,48 @@ class BizStockInService
         if ($items->isEmpty()) {
             return ['success' => false, 'msg' => '入库单明细为空'];
         }
-        Db::transaction(function () use ($stockInId, $items) {
+        $warehouseId = $stockIn->warehouse_id;
+        if (empty($warehouseId)) {
+            return ['success' => false, 'msg' => '入库单未指定仓库'];
+        }
+        Db::transaction(function () use ($stockInId, $stockIn, $items, $warehouseId) {
             foreach ($items as $item) {
+                // 自动计算有效期：如果 expiry_date 为空但有 production_date 和 shelf_life_days
+                if (empty($item->expiry_date) && !empty($item->production_date)) {
+                    $product = BizProduct::find($item->product_id);
+                    if ($product && !empty($product->shelf_life_days)) {
+                        $item->expiry_date = date('Y-m-d', strtotime($item->production_date . " +{$product->shelf_life_days} days"));
+                        $item->save();
+                    }
+                }
+
                 $actualQty = intval($item->quantity);
-                $inventory = BizInventory::where('product_id', $item->product_id)->first();
+                $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
                 if (!$inventory) {
                     $product = BizProduct::find($item->product_id);
-                    BizInventory::create([
+                    $inventory = BizInventory::create([
                         'product_id' => $item->product_id,
+                        'warehouse_id' => $warehouseId,
                         'quantity' => 0,
                         'warn_qty' => $product ? ($product->warn_qty ?? 0) : 0,
                         'create_time' => date('Y-m-d H:i:s'),
                     ]);
                 }
-                BizInventory::where('product_id', $item->product_id)->increment('quantity', $actualQty, [
-                    'last_stock_in_time' => date('Y-m-d H:i:s'),
-                    'update_time' => date('Y-m-d H:i:s'),
-                ]);
+                $inventory->quantity = intval($inventory->quantity) + $actualQty;
+                $inventory->last_stock_in_time = date('Y-m-d H:i:s');
+                $inventory->update_time = date('Y-m-d H:i:s');
+
+                // 更新最早有效期
+                $earliestExpiry = BizStockInItem::where('product_id', $item->product_id)
+                    ->where('warehouse_id', $warehouseId)
+                    ->whereRaw('quantity > shipped_quantity')
+                    ->whereNotNull('expiry_date')
+                    ->min('expiry_date');
+                if ($earliestExpiry) {
+                    $inventory->earliest_expiry = $earliestExpiry;
+                }
+
+                $inventory->save();
             }
             BizStockIn::where('stock_in_id', $stockInId)->update([
                 'status' => '1',
@@ -264,17 +318,21 @@ class BizStockInService
 
         $items = BizStockInItem::where('stock_in_id', $stockInId)->get();
         try {
-            Db::transaction(function () use ($stockInId, $items) {
+            Db::transaction(function () use ($stockInId, $stockIn, $items) {
+                $warehouseId = $stockIn->warehouse_id;
+                if (empty($warehouseId)) {
+                    throw new \Exception('入库单未指定仓库');
+                }
                 foreach ($items as $item) {
                     $actualQty = intval($item->quantity);
-                    $inventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
+                    $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
                     if (!$inventory || $inventory->quantity < $actualQty) {
                         $product = BizProduct::find($item->product_id);
                         $productName = $product ? $product->product_name : $item->product_id;
                         $currentQty = $inventory ? $inventory->quantity : 0;
                         throw new \Exception("货品【{$productName}】库存不足，当前库存：{$currentQty}，需回退数量：{$actualQty}");
                     }
-                    BizInventory::where('product_id', $item->product_id)->decrement('quantity', $actualQty, [
+                    BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->decrement('quantity', $actualQty, [
                         'last_stock_in_time' => date('Y-m-d H:i:s'),
                         'update_time' => date('Y-m-d H:i:s'),
                     ]);

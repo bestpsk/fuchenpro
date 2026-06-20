@@ -56,7 +56,26 @@ class BizSalesOrderService
         $key = 'order_no:' . $date;
         $seq = \support\Redis::incr($key);
         \support\Redis::expire($key, 86400);
-        return 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+        // 兜底：检查数据库中是否已存在该订单号
+        $orderNo = 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        $exists = BizSalesOrder::where('order_no', $orderNo)->exists();
+        if ($exists) {
+            // 从数据库获取当天最大序号
+            $lastOrder = BizSalesOrder::where('order_no', 'like', 'SO' . $date . '%')
+                ->orderBy('order_id', 'desc')
+                ->first();
+            if ($lastOrder) {
+                $lastSeq = intval(substr($lastOrder->order_no, -4));
+                $seq = $lastSeq + 1;
+                // 同步 Redis key
+                \support\Redis::set($key, $seq);
+                \support\Redis::expire($key, 86400);
+            }
+            $orderNo = 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $orderNo;
     }
 
     // 新增销售订单，生成订单编号并创建明细
@@ -162,11 +181,10 @@ class BizSalesOrderService
                 $this->generatePackage($order, $convertedItems);
             }
 
-            try {
-                $archiveService = new BizCustomerArchiveService();
-                $archiveService->insertArchiveFromOrder($order);
-            } catch (\Exception $e) {
-                \support\Log::error('写入开单档案失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            $archiveService = new BizCustomerArchiveService();
+            $archiveResult = $archiveService->insertArchiveFromOrder($order, $convertedItems);
+            if (!$archiveResult) {
+                throw new \Exception('写入开单档案失败，请检查订单数据是否完整');
             }
 
             return $order;
@@ -372,6 +390,23 @@ class BizSalesOrderService
         $key = 'package_no:' . $date;
         $seq = \support\Redis::incr($key);
         \support\Redis::expire($key, 86400);
-        return 'PK' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+        // 兜底：检查数据库中是否已存在该套餐编号
+        $packageNo = 'PK' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        $exists = BizCustomerPackage::where('package_no', $packageNo)->exists();
+        if ($exists) {
+            $lastPackage = BizCustomerPackage::where('package_no', 'like', 'PK' . $date . '%')
+                ->orderBy('package_id', 'desc')
+                ->first();
+            if ($lastPackage) {
+                $lastSeq = intval(substr($lastPackage->package_no, -4));
+                $seq = $lastSeq + 1;
+                \support\Redis::set($key, $seq);
+                \support\Redis::expire($key, 86400);
+            }
+            $packageNo = 'PK' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $packageNo;
     }
 }

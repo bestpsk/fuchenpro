@@ -10,6 +10,10 @@
           <text class="info-label">入库类型</text>
           <text class="info-value">{{ getStockInTypeLabel(info.stockInType) }}</text>
         </view>
+        <view class="info-row" v-if="info.warehouseName">
+          <text class="info-label">仓库</text>
+          <text class="info-value">{{ info.warehouseName }}</text>
+        </view>
         <view class="info-row">
           <text class="info-label">供货商</text>
           <text class="info-value">{{ info.supplierName || '-' }}</text>
@@ -55,17 +59,17 @@
           <view class="info-line">
             <view class="info-left">
               <text class="info-label">规格</text>
-              <text class="info-value">{{ item.spec || '-' }}</text>
+              <text class="info-value">{{ item.displaySpec || '-' }}</text>
             </view>
             <view class="info-right">
               <text class="info-label">数量</text>
-              <text class="info-value">{{ item.quantity || 0 }}</text>
+              <text class="info-value">{{ item.displayQuantity || 0 }}</text>
             </view>
           </view>
           <view class="info-line">
             <view class="info-left">
               <text class="info-label">单价</text>
-              <text class="info-value">¥{{ formatAmount(item.price) }}</text>
+              <text class="info-value">¥{{ formatAmount(item.displayPrice) }}</text>
             </view>
             <view class="info-right">
               <text class="info-label">金额</text>
@@ -151,7 +155,23 @@ async function loadDetail() {
     const response = await getStockIn(stockInId.value)
     const data = response.data || response
     info.value = data
-    stockInItems.value = data.items || []
+    stockInItems.value = (data.items || []).map(item => {
+      const unitType = item.unitType || '1'
+      const packQty = item.packQty || 1
+      const purchasePrice = item.purchasePrice || 0
+      let displayPrice = purchasePrice
+      let displayQuantity = item.quantity || 0
+      if (unitType === '1' && packQty > 1) {
+        displayPrice = Math.round(purchasePrice * packQty * 100) / 100
+        displayQuantity = Math.round(displayQuantity / packQty * 10000) / 10000
+      }
+      return {
+        ...item,
+        displayQuantity,
+        displayPrice,
+        displaySpec: unitType === '1' ? '主单位(整)' : '副单位(拆)'
+      }
+    })
   } catch (e) {
     console.error('加载入库详情失败:', e)
     uni.showToast({ title: '加载失败', icon: 'none' })

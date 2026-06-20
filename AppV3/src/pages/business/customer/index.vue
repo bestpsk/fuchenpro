@@ -188,8 +188,8 @@
                   {{ item.status === '0' ? '正常' : '停用' }}
                 </view>
               </view>
-              <view class="tag-list" v-if="item.tags">
-                <text class="customer-tag" v-for="(tag, idx) in item.tags.split(',')" :key="idx">{{ getTagLabel(tag) }}</text>
+              <view class="tag-list" v-if="item.tag">
+                <text class="customer-tag" v-for="(tag, idx) in item.tag.split(',')" :key="idx">{{ getTagLabel(tag) }}</text>
               </view>
             </view>
           </view>

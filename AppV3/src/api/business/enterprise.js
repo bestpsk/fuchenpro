@@ -66,3 +66,12 @@ export function delEnterprise(ids) {
     method: 'delete'
   })
 }
+
+/**
+ * 模糊搜索企业，用于下拉选择框
+ * @param {string} keyword - 搜索关键词
+ * @returns {Promise<Array>} 匹配的企业列表
+ */
+export function searchEnterprise(keyword) {
+  return request({ url: '/business/enterprise/search', method: 'get', params: { keyword } })
+}

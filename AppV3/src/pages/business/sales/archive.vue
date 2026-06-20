@@ -166,7 +166,7 @@ async function loadDictData() {
       getDicts('biz_source_type')
     ])
     archiveTypeDict.value = (archiveRes.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
-    sourceTypeDict.value = (sourceRes.data || []).filter(d => d.dictValue !== '3').map(d => ({ label: d.dictLabel, value: d.dictValue }))
+    sourceTypeDict.value = (sourceRes.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
   } catch (e) {
     console.error(e)
   }

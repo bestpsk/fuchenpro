@@ -32,6 +32,9 @@
       <el-col :span="1.5">
         <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['business:enterprise:add']">新增企业</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:enterprise:export']">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -569,6 +572,12 @@ function submitForm() {
       }
     }
   })
+}
+
+function handleExport() {
+  proxy.download("business/enterprise/export", {
+    ...queryParams.value,
+  }, `enterprise_${new Date().getTime()}.xlsx`)
 }
 
 function handleDelete(row) {

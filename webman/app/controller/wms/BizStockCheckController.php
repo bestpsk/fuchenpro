@@ -103,6 +103,7 @@ class BizStockCheckController
     public function loadInventory(Request $request)
     {
         $params['login_user'] = $request->loginUser;
+        $params['warehouse_id'] = $request->input('warehouse_id');
         $service = new BizStockCheckService();
         $items = $service->loadInventoryData($params);
         return AjaxResult::success($items);

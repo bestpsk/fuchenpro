@@ -38,9 +38,16 @@ class BizStockOutService
         if (!empty($params['stock_out_date_end'])) {
             $query->where('stock_out_date', '<=', $params['stock_out_date_end']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('warehouse_id', $params['warehouse_id']);
+        }
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('responsible_id', $visibleUserIds);
+            $userName = $params['login_user']->user->user_name ?? '';
+            $query->where(function ($q) use ($visibleUserIds, $userName) {
+                $q->whereIn('responsible_id', $visibleUserIds)
+                  ->orWhere('create_by', $userName);
+            });
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -56,7 +63,14 @@ class BizStockOutService
                 $stockOut->display_spec = $firstItem->spec;
             }
         }
-        
+
+        $warehouseIds = $list->pluck('warehouse_id')->filter()->unique()->toArray();
+        $warehouses = \app\model\BizWarehouse::whereIn('warehouse_id', $warehouseIds)->get()->keyBy('warehouse_id');
+        foreach ($list->items() as $item) {
+            $warehouse = $warehouses->get($item->warehouse_id);
+            $item->warehouseName = $warehouse ? $warehouse->warehouse_name : '';
+        }
+
         return $list;
     }
 
@@ -73,6 +87,8 @@ class BizStockOutService
                     'productId' => $item['product_id'],
                     'productName' => $item['product_name'],
                     'spec' => $item['spec'],
+                    'supplierId' => $item['supplier_id'] ?? null,
+                    'supplierName' => $item['supplier_name'] ?? null,
                     'unit' => $item['unit'],
                     'unitType' => $item['unit_type'] ?? '1',
                     'packQty' => $item['pack_qty'] ?? 1,
@@ -85,6 +101,17 @@ class BizStockOutService
             }, $items);
 
             $stockOutArray = $stockOut->toArray();
+            $warehouseName = '';
+            if (!empty($stockOut->warehouse_id)) {
+                $warehouse = \app\model\BizWarehouse::find($stockOut->warehouse_id);
+                $warehouseName = $warehouse ? $warehouse->warehouse_name : '';
+            }
+
+            $planName = null;
+            if (!empty($stockOut->plan_id)) {
+                $plan = \app\model\BizPlan::find($stockOut->plan_id);
+                $planName = $plan ? $plan->plan_name : null;
+            }
 
             return [
                 'stockOutId' => $stockOutArray['stock_out_id'],
@@ -93,14 +120,29 @@ class BizStockOutService
                 'outTargetType' => $stockOutArray['out_target_type'] ?? '1',
                 'enterpriseId' => $stockOutArray['enterprise_id'],
                 'enterpriseName' => $stockOutArray['enterprise_name'] ?? '-',
+                'warehouseId' => $stockOutArray['warehouse_id'] ?? null,
+                'warehouseName' => $warehouseName,
                 'contactEmployeeId' => $stockOutArray['contact_employee_id'],
                 'contactEmployeeName' => $stockOutArray['contact_employee_name'] ?? '-',
+                'contactPerson' => $stockOutArray['contact_person'] ?? null,
+                'contactPhone' => $stockOutArray['contact_phone'] ?? null,
+                'shippingAddress' => $stockOutArray['shipping_address'] ?? null,
                 'responsibleId' => $stockOutArray['responsible_id'],
                 'responsibleName' => $stockOutArray['responsible_name'] ?? '-',
                 'totalQuantity' => $stockOutArray['total_quantity'],
                 'totalAmount' => $stockOutArray['total_amount'],
                 'stockOutDate' => $stockOutArray['stock_out_date'],
                 'status' => $stockOutArray['status'],
+                'shipType' => isset($stockOutArray['ship_type']) ? strval($stockOutArray['ship_type']) : '2',
+                'shipStatus' => $stockOutArray['ship_status'] ?? null,
+                'logisticsCompany' => $stockOutArray['logistics_company'] ?? null,
+                'logisticsNo' => $stockOutArray['logistics_no'] ?? null,
+                'shipmentDate' => $stockOutArray['shipment_date'] ?? null,
+                'receiptDate' => $stockOutArray['receipt_date'] ?? null,
+                'shipmentImages' => $stockOutArray['shipment_images'] ?? null,
+                'planId' => $stockOutArray['plan_id'] ?? null,
+                'planName' => $planName,
+                'prepareId' => $stockOutArray['prepare_id'] ?? null,
                 'remark' => $stockOutArray['remark'],
                 'createBy' => $stockOutArray['create_by'],
                 'createTime' => $stockOutArray['create_time'],
@@ -115,15 +157,25 @@ class BizStockOutService
     public function generateStockOutNo()
     {
         $prefix = 'CK' . date('Ymd');
-        $last = BizStockOut::where('stock_out_no', 'like', $prefix . '%')
-            ->orderBy('stock_out_id', 'desc')
-            ->first();
-        $seq = 1;
-        if ($last) {
-            $lastSeq = intval(substr($last->stock_out_no, -3));
-            $seq = $lastSeq + 1;
+        $key = 'stock_out_no:' . date('Ymd');
+        $seq = \support\Redis::incr($key);
+        \support\Redis::expire($key, 86400);
+        $stockOutNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+
+        // 数据库兜底：如果序号已存在，从数据库最大序号继续
+        $exists = BizStockOut::where('stock_out_no', $stockOutNo)->exists();
+        if ($exists) {
+            $last = BizStockOut::where('stock_out_no', 'like', $prefix . '%')
+                ->orderBy('stock_out_id', 'desc')->first();
+            if ($last) {
+                $lastSeq = intval(substr($last->stock_out_no, -3));
+                $seq = $lastSeq + 1;
+                \support\Redis::set($key, $seq);
+                \support\Redis::expire($key, 86400);
+            }
+            $stockOutNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
         }
-        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        return $stockOutNo;
     }
 
     // 新增出库单，生成出库编号并扣减库存
@@ -265,21 +317,65 @@ class BizStockOutService
             return ['success' => false, 'msg' => '出库单明细为空'];
         }
         try {
-            Db::transaction(function () use ($stockOutId, $stockOut, $items) {
+            Db::transaction(function () use ($stockOutId, $stockOut, $items, $params) {
+            $warehouseId = $stockOut->warehouse_id;
+            // 如果出库单未指定仓库，从确认参数中获取
+            if (empty($warehouseId) && !empty($params['warehouse_id'])) {
+                $warehouseId = $params['warehouse_id'];
+                $stockOut->warehouse_id = $warehouseId;
+                $stockOut->save();
+            }
+            if (empty($warehouseId)) {
+                throw new \Exception('出库单未指定仓库，请先选择出库仓库');
+            }
                 foreach ($items as $item) {
-                    $actualQty = intval($item->quantity);
-                    $inventory = BizInventory::where('product_id', $item->product_id)->lockForUpdate()->first();
-                    if (!$inventory || $inventory->quantity < $actualQty) {
+                    $itemQuantity = intval($item->quantity);
+                    $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
+                    if (!$inventory || $inventory->quantity < $itemQuantity) {
                         $product = BizProduct::find($item->product_id);
                         $productName = $product ? $product->product_name : $item->product_name;
                         $currentQty = $inventory ? $inventory->quantity : 0;
-                        throw new \Exception("货品【{$productName}】库存不足，当前库存：{$currentQty}，出库数量：{$actualQty}");
+                        throw new \Exception("货品【{$productName}】库存不足，当前库存：{$currentQty}，出库数量：{$itemQuantity}");
                     }
-                    BizInventory::where('product_id', $item->product_id)->decrement('quantity', $actualQty, [
+
+                    // 按FIFO原则扣减批次库存：有效期升序（即将到期的优先出库）
+                    $batches = \app\model\BizStockInItem::where('product_id', $item->product_id)
+                        ->where('warehouse_id', $warehouseId)
+                        ->whereRaw('quantity > shipped_quantity')
+                        ->orderBy('expiry_date', 'asc')
+                        ->orderBy('item_id', 'asc')
+                        ->lockForUpdate()
+                        ->get();
+
+                    $remainingToShip = $itemQuantity;
+                    foreach ($batches as $batch) {
+                        if ($remainingToShip <= 0) break;
+                        $batchRemaining = $batch->quantity - $batch->shipped_quantity;
+                        $shipFromBatch = min($batchRemaining, $remainingToShip);
+                        $batch->shipped_quantity += $shipFromBatch;
+                        $batch->save();
+                        $remainingToShip -= $shipFromBatch;
+                    }
+                    // 批次总量不够时仅记录日志，不阻断出库（库存可能通过直接调整等方式增加，无批次记录）
+
+                    // 扣减库存总数量
+                    BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->decrement('quantity', $itemQuantity, [
                         'last_stock_out_time' => date('Y-m-d H:i:s'),
                         'update_time' => date('Y-m-d H:i:s'),
                     ]);
-                    $updatedInventory = BizInventory::where('product_id', $item->product_id)->first();
+
+                    // 更新最早有效期
+                    $earliestExpiry = \app\model\BizStockInItem::where('product_id', $item->product_id)
+                        ->where('warehouse_id', $warehouseId)
+                        ->whereRaw('quantity > shipped_quantity')
+                        ->whereNotNull('expiry_date')
+                        ->min('expiry_date');
+                    BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->update([
+                        'earliest_expiry' => $earliestExpiry,
+                        'update_time' => date('Y-m-d H:i:s'),
+                    ]);
+
+                    $updatedInventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->first();
                     if ($updatedInventory->quantity < 0) {
                         $product = BizProduct::find($item->product_id);
                         $productName = $product ? $product->product_name : $item->product_name;
@@ -309,11 +405,46 @@ class BizStockOutService
         }
 
         $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get();
-        Db::transaction(function () use ($stockOutId, $items) {
+        $warehouseId = $stockOut->warehouse_id;
+        if (empty($warehouseId)) {
+            return ['success' => false, 'msg' => '出库单未指定仓库'];
+        }
+        Db::transaction(function () use ($stockOutId, $stockOut, $items, $warehouseId) {
             foreach ($items as $item) {
                 $actualQty = intval($item->quantity);
-                BizInventory::where('product_id', $item->product_id)->increment('quantity', $actualQty, [
+
+                // 按LIFO原则回退批次shipped_quantity：有效期降序（后扣的先回退）
+                $batches = \app\model\BizStockInItem::where('product_id', $item->product_id)
+                    ->where('warehouse_id', $warehouseId)
+                    ->whereRaw('shipped_quantity > 0')
+                    ->orderBy('expiry_date', 'desc')
+                    ->orderBy('item_id', 'desc')
+                    ->lockForUpdate()
+                    ->get();
+
+                $remainingToRestore = $actualQty;
+                foreach ($batches as $batch) {
+                    if ($remainingToRestore <= 0) break;
+                    $canRestore = min($batch->shipped_quantity, $remainingToRestore);
+                    $batch->shipped_quantity -= $canRestore;
+                    $batch->save();
+                    $remainingToRestore -= $canRestore;
+                }
+
+                // 恢复库存总数量
+                BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->increment('quantity', $actualQty, [
                     'last_stock_out_time' => date('Y-m-d H:i:s'),
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
+
+                // 更新最早有效期
+                $earliestExpiry = \app\model\BizStockInItem::where('product_id', $item->product_id)
+                    ->where('warehouse_id', $warehouseId)
+                    ->whereRaw('quantity > shipped_quantity')
+                    ->whereNotNull('expiry_date')
+                    ->min('expiry_date');
+                BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->update([
+                    'earliest_expiry' => $earliestExpiry,
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             }
@@ -342,6 +473,8 @@ class BizStockOutService
         $updateData = [
             'ship_type' => strval($shipType),
             'ship_status' => '1',
+            'shipment_images' => $data['shipment_images'] ?? null,
+            'remark' => $data['remark'] ?? $stockOut->remark,
             'update_time' => date('Y-m-d H:i:s'),
         ];
 

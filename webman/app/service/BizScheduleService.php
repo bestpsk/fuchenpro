@@ -30,6 +30,12 @@ class BizScheduleService
         if (!empty($params['enterprise_name'])) {
             $query->where('enterprise_name', 'like', '%' . $params['enterprise_name'] . '%');
         }
+        if (!empty($params['keyword'])) {
+            $query->where(function ($q) use ($params) {
+                $q->where('user_name', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('enterprise_name', 'like', '%' . $params['keyword'] . '%');
+            });
+        }
         if (!empty($params['schedule_date'])) {
             $query->where('schedule_date', $params['schedule_date']);
         }
@@ -125,10 +131,27 @@ class BizScheduleService
         return Db::transaction(function () use ($dataList) {
             $insertData = [];
             $createTime = date('Y-m-d H:i:s');
+            $conflictDates = [];
 
             foreach ($dataList as $item) {
+                // 检查同一员工同一天是否已有排班
+                $exists = BizSchedule::where('user_id', $item['user_id'])
+                    ->where('schedule_date', $item['schedule_date'])
+                    ->exists();
+                if ($exists) {
+                    $conflictDates[] = $item['schedule_date'];
+                    continue;
+                }
                 $item['create_time'] = $createTime;
                 $insertData[] = $item;
+            }
+
+            if (!empty($conflictDates)) {
+                throw new \Exception('以下日期已有排班安排，存在冲突：' . implode('、', array_unique($conflictDates)));
+            }
+
+            if (empty($insertData)) {
+                throw new \Exception('没有可新增的排班数据');
             }
 
             return BizSchedule::insert($insertData);
@@ -210,8 +233,50 @@ class BizScheduleService
     {
         $startDate = $params['start_date'] ?? date('Y-m-01');
         $endDate = $params['end_date'] ?? date('Y-m-t');
-        
+
+        // 收集需要查询的企业ID（来自企业名匹配或员工名匹配）
+        $matchedEnterpriseIds = null; // null means no filter
+        $matchedUserIds = [];
+
+        if (!empty($params['keyword'])) {
+            // 按企业名匹配的企业
+            $enterpriseByName = BizEnterprise::query()
+                ->where('enterprise_name', 'like', '%' . $params['keyword'] . '%')
+                ->where('status', '0')
+                ->pluck('enterprise_id')
+                ->toArray();
+
+            // 按员工名匹配的排班对应的企业ID
+            $matchedUserIds = SysUser::query()
+                ->where(function ($q) use ($params) {
+                    $q->where('nick_name', 'like', '%' . $params['keyword'] . '%')
+                      ->orWhere('user_name', 'like', '%' . $params['keyword'] . '%');
+                })
+                ->where('status', '0')
+                ->pluck('user_id')
+                ->toArray();
+
+            $enterpriseByUser = [];
+            if (!empty($matchedUserIds)) {
+                $enterpriseByUser = BizSchedule::query()
+                    ->whereBetween('schedule_date', [$startDate, $endDate])
+                    ->whereIn('user_id', $matchedUserIds)
+                    ->pluck('enterprise_id')
+                    ->unique()
+                    ->toArray();
+            }
+
+            $matchedEnterpriseIds = array_unique(array_merge($enterpriseByName, $enterpriseByUser));
+
+            if (empty($matchedEnterpriseIds)) {
+                return [];
+            }
+        }
+
         $enterpriseQuery = BizEnterprise::query();
+        if ($matchedEnterpriseIds !== null) {
+            $enterpriseQuery->whereIn('enterprise_id', $matchedEnterpriseIds);
+        }
         if (!empty($params['enterprise_name'])) {
             $enterpriseQuery->where('enterprise_name', 'like', '%' . $params['enterprise_name'] . '%');
         }
@@ -220,11 +285,17 @@ class BizScheduleService
         } else {
             $enterpriseQuery->where('status', '0');
         }
-        
+
         $enterprises = $enterpriseQuery->get();
-        
+
         $scheduleQuery = BizSchedule::query();
         $scheduleQuery->whereBetween('schedule_date', [$startDate, $endDate]);
+        if (!empty($params['keyword']) && !empty($matchedUserIds)) {
+            $scheduleQuery->where(function ($q) use ($matchedUserIds, $matchedEnterpriseIds) {
+                $q->whereIn('user_id', $matchedUserIds)
+                  ->orWhereIn('enterprise_id', $matchedEnterpriseIds ?? []);
+            });
+        }
         if (!empty($params['user_name'])) {
             $scheduleQuery->where('user_name', 'like', '%' . $params['user_name'] . '%');
         }
@@ -232,7 +303,7 @@ class BizScheduleService
             $scheduleQuery->where('purpose', $params['purpose']);
         }
         DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
-        
+
         $schedules = $scheduleQuery->get();
 
         foreach ($schedules as $schedule) {
@@ -241,24 +312,24 @@ class BizScheduleService
                 $schedule->user_name = $user->nick_name ?? $user->user_name;
             }
         }
-        
+
         $result = [];
         foreach ($enterprises as $enterprise) {
             $enterpriseSchedules = $schedules->where('enterprise_id', $enterprise->enterprise_id);
             $scheduleMap = [];
-            
+
             foreach ($enterpriseSchedules as $schedule) {
                 $day = date('j', strtotime($schedule->schedule_date));
-                $scheduleMap[$day] = $schedule;
+                $scheduleMap[$day][] = $schedule;
             }
-            
+
             $result[] = [
                 'enterprise_id' => $enterprise->enterprise_id,
                 'enterprise_name' => $enterprise->enterprise_name,
                 'schedules' => $scheduleMap
             ];
         }
-        
+
         return $result;
     }
 }

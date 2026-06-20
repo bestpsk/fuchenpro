@@ -15,3 +15,7 @@ export function inventoryTurnover(query) {
 export function productFlow(query) {
   return request({ url: '/wms/report/productFlow', method: 'get', params: query })
 }
+
+export function expiryInventory(query) {
+  return request({ url: '/wms/report/expiryInventory', method: 'get', params: query })
+}

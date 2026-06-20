@@ -78,9 +78,8 @@
           @click="handleView(item)"
         >
           <view class="card-header">
-            <view class="plan-name">
-              <text class="plan-no" v-if="item.planNo">{{ item.planNo }}</text>
-              <text class="name-text">{{ item.planName }}</text>
+            <view class="header-left">
+              <text class="plan-no">{{ item.planNo || '-' }}</text>
             </view>
             <view class="status-tag" :class="getStatusClass(item.auditStatus)">
               {{ getAuditStatusName(item.auditStatus) }}
@@ -92,6 +91,12 @@
               <view class="info-item">
                 <text class="label">企业名称</text>
                 <text class="value">{{ item.enterpriseName || '-' }}</text>
+              </view>
+            </view>
+            <view class="info-row">
+              <view class="info-item">
+                <text class="label">方案名称</text>
+                <text class="value">{{ item.planName || '-' }}</text>
               </view>
             </view>
             <view class="info-row">
@@ -135,7 +140,7 @@
     </scroll-view>
 
     <!-- 详情弹窗 -->
-    <u-popup :show="detailOpen" mode="bottom" round="16" @close="closeDetail">
+    <u-popup :show="detailOpen" mode="bottom" round="16" :closeable="true" @close="closeDetail" :customStyle="{ width: '100vw', maxWidth: '100vw', left: 0 }">
       <view class="detail-popup">
         <view class="detail-header">
           <text class="detail-title">方案详情</text>
@@ -295,24 +300,15 @@ async function loadDicts() {
 
 /** 根据审核状态值获取名称 */
 function getAuditStatusName(value) {
-  const item = auditStatusOptions.value.find(t => t.value === value)
+  const item = auditStatusOptions.value.find(t => String(t.value) === String(value))
   if (item) return item.label
-  const statusTextMap = {
-    '0': '草稿'
-  }
-  return statusTextMap[value] || '-'
+  const fallback = { '0': '草稿', '1': '待审核', '2': '已审核', '3': '已完成', '4': '已驳回' }
+  return fallback[String(value)] || '未知'
 }
 
 /** 根据审核状态值获取样式类名 */
 function getStatusClass(status) {
-  const map = {
-    '0': 'status-draft',
-    '1': 'status-pending',
-    '2': 'status-approved',
-    '3': 'status-rejected',
-    '4': 'status-completed'
-  }
-  return map[status] || 'status-pending'
+  return 'status-' + String(status || '0')
 }
 
 function formatMoney(value) {
@@ -671,7 +667,7 @@ page {
   margin-bottom: 20rpx;
 }
 
-.plan-name {
+.header-left {
   display: flex;
   align-items: center;
   gap: 12rpx;
@@ -679,13 +675,7 @@ page {
   min-width: 0;
 
   .plan-no {
-    font-size: 22rpx;
-    color: #86909C;
-    flex-shrink: 0;
-  }
-
-  .name-text {
-    font-size: 30rpx;
+    font-size: 28rpx;
     font-weight: 600;
     color: #1D2129;
     overflow: hidden;
@@ -701,30 +691,11 @@ page {
   font-weight: 500;
   flex-shrink: 0;
 
-  &.status-draft {
-    background: #f0f0f0;
-    color: #999;
-  }
-
-  &.status-pending {
-    background: #FFF7E8;
-    color: #FF7D00;
-  }
-
-  &.status-approved {
-    background: #E8FFEA;
-    color: #00B42A;
-  }
-
-  &.status-rejected {
-    background: #FFF1F0;
-    color: #F53F3F;
-  }
-
-  &.status-completed {
-    background: #E8F7FF;
-    color: #3491FA;
-  }
+  &.status-0 { background: #F2F3F5; color: #86909C; }
+  &.status-1 { background: #E8F0FE; color: #3D6DF7; }
+  &.status-2 { background: #E8FFEA; color: #00B42A; }
+  &.status-3 { background: #F0E8FF; color: #8B5CF6; }
+  &.status-4 { background: #FFECE8; color: #F53F3F; }
 }
 
 .card-body {
@@ -804,11 +775,15 @@ page {
 
 /* 详情弹窗 */
 .detail-popup {
-  max-height: 80vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   background: #fff;
   border-radius: 32rpx 32rpx 0 0;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .detail-header {
@@ -828,7 +803,9 @@ page {
 .detail-scroll {
   flex: 1;
   padding: 30rpx;
-  overflow: hidden;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .detail-section {
@@ -838,9 +815,11 @@ page {
 .detail-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding: 16rpx 0;
   border-bottom: 1rpx solid #F7F8FA;
+  overflow: hidden;
+  width: 100%;
 
   &:last-child {
     border-bottom: none;
@@ -850,11 +829,20 @@ page {
 .detail-label {
   font-size: 26rpx;
   color: #86909C;
+  width: 140rpx;
+  flex-shrink: 0;
 }
 
 .detail-value {
   font-size: 26rpx;
   color: #1D2129;
+  min-width: 0;
+  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: right;
+  flex: 1;
+  margin-left: 20rpx;
 
   &.amount-text {
     color: #00B42A;

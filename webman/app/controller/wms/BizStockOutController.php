@@ -6,7 +6,9 @@ use support\Request;
 use app\service\BizStockOutService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\BizStockOut;
 
 /**
  * 出库管理控制器
@@ -95,6 +97,7 @@ class BizStockOutController
         $parts = explode('/', $request->path());
         $id = intval(end($parts));
         $params['login_user'] = $request->loginUser;
+        $params['warehouse_id'] = $request->post('warehouseId') ?: ($request->input('warehouseId') ?: null);
         $service = new BizStockOutService();
         $result = $service->confirmStockOut($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
@@ -143,5 +146,27 @@ class BizStockOutController
         $result = $service->confirmReceipt($id, $params);
         if (!$result['success']) return AjaxResult::error($result['msg']);
         return AjaxResult::success($result['msg']);
+    }
+
+    // 导出出库数据
+    public function export(Request $request)
+    {
+        $service = new BizStockOutService();
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $service->selectStockOutList($params);
+        $list = $result->items();
+        // 关联查询warehouse_name
+        foreach ($list as $item) {
+            if (!empty($item->warehouse_id)) {
+                $warehouse = \app\model\BizWarehouse::find($item->warehouse_id);
+                $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
+            } else {
+                $item->warehouse_name = '';
+            }
+        }
+        $excelUtil = new ExcelUtil(BizStockOut::class);
+        return $excelUtil->exportExcel($list, '出库数据');
     }
 }

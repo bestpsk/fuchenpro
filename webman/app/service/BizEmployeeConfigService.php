@@ -63,7 +63,8 @@ class BizEmployeeConfigService
             } else {
                 $item->rest_dates = [];
             }
-            if (empty($item->is_schedulable)) {
+            // 仅当 is_schedulable 字段为 NULL 或空字符串时才兜底为 '1'，不能使用 empty() 因为 empty('0') 为 true
+            if ($item->is_schedulable === null || $item->is_schedulable === '') {
                 $item->is_schedulable = '1';
             }
             $item->user_name = $item->nick_name ?: $item->user_name;

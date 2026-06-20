@@ -72,6 +72,9 @@
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['business:store:remove']">删除</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:store:export']">导出</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -445,6 +448,12 @@ function submitForm() {
       }
     }
   })
+}
+
+function handleExport() {
+  proxy.download("business/store/export", {
+    ...queryParams.value,
+  }, `store_${new Date().getTime()}.xlsx`)
 }
 
 function handleDelete(row) {

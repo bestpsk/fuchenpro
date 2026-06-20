@@ -23,6 +23,9 @@ class SysLogininforService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
+        if (!empty($params['login_source'])) {
+            $query->where('login_source', $params['login_source']);
+        }
         if (!empty($params['begin_time'])) {
             $query->where('login_time', '>=', $params['begin_time']);
         }

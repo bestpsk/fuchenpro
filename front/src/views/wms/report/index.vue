@@ -13,6 +13,7 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getStockInSummary">查询</el-button>
+            <el-button type="warning" plain icon="Download" @click="handleExportStockIn">导出</el-button>
           </el-form-item>
         </el-form>
         <el-table :data="stockInData" border v-loading="stockInLoading" style="width: 100%">
@@ -45,6 +46,7 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getStockOutSummary">查询</el-button>
+            <el-button type="warning" plain icon="Download" @click="handleExportStockOut">导出</el-button>
           </el-form-item>
         </el-form>
         <el-table :data="stockOutData" border v-loading="stockOutLoading" style="width: 100%">
@@ -77,6 +79,7 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getTurnover">查询</el-button>
+            <el-button type="warning" plain icon="Download" @click="handleExportTurnover">导出</el-button>
           </el-form-item>
         </el-form>
         <el-table :data="turnoverData" border v-loading="turnoverLoading" style="width: 100%">
@@ -118,6 +121,7 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getFlow">查询</el-button>
+            <el-button type="warning" plain icon="Download" @click="handleExportFlow">导出</el-button>
           </el-form-item>
         </el-form>
         <el-table :data="flowData" border v-loading="flowLoading" style="width: 100%">
@@ -137,6 +141,45 @@
           </el-table-column>
         </el-table>
       </el-tab-pane>
+
+      <el-tab-pane label="有效期盘点" name="expiry">
+        <el-form :inline="true" :model="expiryQueryParams">
+          <el-form-item label="仓库">
+            <el-select v-model="expiryQueryParams.warehouseId" placeholder="全部仓库" clearable style="width: 160px" @change="getExpiryList">
+              <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="到期状态">
+            <el-select v-model="expiryQueryParams.expiryStatus" placeholder="全部" clearable style="width: 140px">
+              <el-option label="已过期" value="expired" />
+              <el-option label="30天内到期" value="30" />
+              <el-option label="60天内到期" value="60" />
+              <el-option label="90天内到期" value="90" />
+              <el-option label="正常" value="normal" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" icon="Search" @click="getExpiryList">查询</el-button>
+            <el-button type="warning" plain icon="Download" @click="handleExportExpiry">导出</el-button>
+          </el-form-item>
+        </el-form>
+        <el-table :data="expiryList" border v-loading="expiryLoading" style="width: 100%">
+          <el-table-column label="入库单号" prop="stockInNo" width="150" />
+          <el-table-column label="货品名称" prop="productName" min-width="120" />
+          <el-table-column label="类别" min-width="80" align="center">
+            <template #default="scope"><dict-tag :options="biz_product_category" :value="scope.row.category" /></template>
+          </el-table-column>
+          <el-table-column label="批次数量" prop="remainingQuantity" width="100" />
+          <el-table-column label="生产日期" prop="productionDate" width="110" />
+          <el-table-column label="有效期至" prop="expiryDate" width="110" />
+          <el-table-column label="剩余天数" prop="remainingDays" width="100" />
+          <el-table-column label="到期状态" width="120">
+            <template #default="scope">
+              <el-tag :type="getExpiryTagType(scope.row.expiryStatus)">{{ scope.row.expiryStatusText }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -146,8 +189,12 @@
  * @description 仓储报表页面 - 入库/出库/周转/流水统计
  * @description 提供入库汇总、出库汇总、库存周转率、产品出入库流水等统计报表
  */
-import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow } from "@/api/wms/report"
+import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow, expiryInventory } from "@/api/wms/report"
 import { searchProduct } from "@/api/wms/product"
+import { useWarehouse } from '@/composables/useWarehouse'
+
+const { proxy } = getCurrentInstance()
+const { warehouseList, loadWarehouses } = useWarehouse()
 
 const { biz_product_category, biz_product_unit, biz_product_spec } = useDict("biz_product_category", "biz_product_unit", "biz_product_spec")
 
@@ -174,6 +221,10 @@ const flowQuery = ref({})
 const flowDateRange = ref([])
 const flowData = ref([])
 const flowLoading = ref(false)
+
+const expiryList = ref([])
+const expiryQueryParams = ref({ expiryStatus: undefined, warehouseId: undefined })
+const expiryLoading = ref(false)
 
 function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
 function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
@@ -223,6 +274,52 @@ function getFlow() {
   productFlow(params).then(res => { flowData.value = res.data || []; flowLoading.value = false })
 }
 
+function getExpiryList() {
+  expiryLoading.value = true
+  const params = { ...expiryQueryParams.value }
+  expiryInventory(params).then(res => { expiryList.value = res.data || []; expiryLoading.value = false })
+}
+
+function getExpiryTagType(status) {
+  switch (status) {
+    case 'expired': return 'danger'
+    case '30': return 'warning'
+    case '60': return 'warning'
+    case '90': return 'info'
+    default: return 'success'
+  }
+}
+
+function handleExportStockIn() {
+  const params = { ...stockInQuery.value }
+  if (stockInDateRange.value?.length === 2) { params.stockInDateStart = stockInDateRange.value[0]; params.stockInDateEnd = stockInDateRange.value[1] }
+  proxy.download("wms/report/exportStockInSummary", params, `入库汇总_${new Date().getTime()}.xlsx`)
+}
+
+function handleExportStockOut() {
+  const params = { ...stockOutQuery.value }
+  if (stockOutDateRange.value?.length === 2) { params.stockOutDateStart = stockOutDateRange.value[0]; params.stockOutDateEnd = stockOutDateRange.value[1] }
+  proxy.download("wms/report/exportStockOutSummary", params, `出库汇总_${new Date().getTime()}.xlsx`)
+}
+
+function handleExportTurnover() {
+  const params = { ...turnoverQuery.value }
+  if (turnoverDateRange.value?.length === 2) { params.startDate = turnoverDateRange.value[0]; params.endDate = turnoverDateRange.value[1] }
+  proxy.download("wms/report/exportTurnover", params, `库存周转_${new Date().getTime()}.xlsx`)
+}
+
+function handleExportFlow() {
+  if (!flowQuery.value.productId) return proxy.$modal.msgWarning('请先选择货品')
+  const params = { productId: flowQuery.value.productId }
+  if (flowDateRange.value?.length === 2) { params.flowDateStart = flowDateRange.value[0]; params.flowDateEnd = flowDateRange.value[1] }
+  proxy.download("wms/report/exportProductFlow", params, `货品收发存_${new Date().getTime()}.xlsx`)
+}
+
+function handleExportExpiry() {
+  const params = { ...expiryQueryParams.value }
+  proxy.download("wms/report/exportExpiryInventory", params, `有效期盘点_${new Date().getTime()}.xlsx`)
+}
+
 function searchProductList(keyword) {
   productLoading.value = true
   searchProduct(keyword).then(res => { productOptions.value = res.data || []; productLoading.value = false })
@@ -232,7 +329,9 @@ function handleTabClick(tab) {
   if (tab.paneName === "stockIn" && stockInData.value.length === 0) getStockInSummary()
   else if (tab.paneName === "stockOut" && stockOutData.value.length === 0) getStockOutSummary()
   else if (tab.paneName === "turnover" && turnoverData.value.length === 0) getTurnover()
+  else if (tab.paneName === "expiry" && expiryList.value.length === 0) getExpiryList()
 }
 
 getStockInSummary()
+loadWarehouses()
 </script>

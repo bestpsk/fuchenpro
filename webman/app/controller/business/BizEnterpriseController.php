@@ -7,6 +7,8 @@ use app\service\BizEnterpriseService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizEnterprise;
 
 /**
  * 企业管理控制器
@@ -86,5 +88,18 @@ class BizEnterpriseController
         $service = new BizEnterpriseService();
         $result = $service->updateEnterpriseStatus($enterpriseId, $status);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出企业数据
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $service = new BizEnterpriseService();
+        $result = $service->selectEnterpriseList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizEnterprise::class);
+        return $excelUtil->exportExcel($list, '企业数据');
     }
 }

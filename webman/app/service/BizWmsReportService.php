@@ -34,10 +34,16 @@ class BizWmsReportService
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
+        }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('biz_stock_in.operator_id', $visibleUserIds);
+            $query->where(function ($q) use ($visibleUserIds) {
+                $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
+                  ->orWhereNull('biz_stock_in.operator_id');
+            });
         }
         $results = $query->groupBy([
                 'biz_stock_in_item.product_id',
@@ -66,7 +72,7 @@ class BizWmsReportService
         $query = BizStockOutItem::query()
             ->join('biz_stock_out', 'biz_stock_out_item.stock_out_id', '=', 'biz_stock_out.stock_out_id')
             ->join('biz_product', 'biz_stock_out_item.product_id', '=', 'biz_product.product_id')
-            ->where('biz_stock_out.status', '1');
+            ->whereIn('biz_stock_out.status', ['1', '2', '3']);
         if (!empty($params['stock_out_date_start'])) {
             $query->where('biz_stock_out.stock_out_date', '>=', $params['stock_out_date_start']);
         }
@@ -79,10 +85,16 @@ class BizWmsReportService
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('biz_stock_out.warehouse_id', $params['warehouse_id']);
+        }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('biz_stock_out.responsible_id', $visibleUserIds);
+            $query->where(function ($q) use ($visibleUserIds) {
+                $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds)
+                  ->orWhereNull('biz_stock_out.responsible_id');
+            });
         }
         $results = $query->groupBy([
                 'biz_stock_out_item.product_id',
@@ -113,6 +125,9 @@ class BizWmsReportService
             ->where('biz_product.status', '0');
         if (isset($params['category']) && $params['category'] !== '') {
             $query->where('biz_product.category', $params['category']);
+        }
+        if (!empty($params['warehouse_id'])) {
+            $query->where('biz_inventory.warehouse_id', $params['warehouse_id']);
         }
         // 数据权限过滤：非管理员只能查看其可见用户操作入库的产品
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
@@ -147,7 +162,7 @@ class BizWmsReportService
                 ->sum('biz_stock_in_item.quantity');
             $stockOutQty = BizStockOutItem::query()
                 ->join('biz_stock_out', 'biz_stock_out_item.stock_out_id', '=', 'biz_stock_out.stock_out_id')
-                ->where('biz_stock_out.status', '1')
+                ->whereIn('biz_stock_out.status', ['1', '2', '3'])
                 ->where('biz_stock_out_item.product_id', $product->product_id)
                 ->whereBetween('biz_stock_out.stock_out_date', [$startDate, $endDate])
                 ->sum('biz_stock_out_item.quantity');
@@ -182,10 +197,16 @@ class BizWmsReportService
         if (!empty($params['flow_date_end'])) {
             $stockInItems->where('biz_stock_in.stock_in_date', '<=', $params['flow_date_end']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $stockInItems->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
+        }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $stockInItems->whereIn('biz_stock_in.operator_id', $visibleUserIds);
+            $stockInItems->where(function ($q) use ($visibleUserIds) {
+                $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
+                  ->orWhereNull('biz_stock_in.operator_id');
+            });
         }
         $stockInList = $stockInItems->select([
                 'biz_stock_in.stock_in_no as doc_no',
@@ -202,7 +223,7 @@ class BizWmsReportService
         }
         $stockOutItems = BizStockOutItem::query()
             ->join('biz_stock_out', 'biz_stock_out_item.stock_out_id', '=', 'biz_stock_out.stock_out_id')
-            ->where('biz_stock_out.status', '1')
+            ->whereIn('biz_stock_out.status', ['1', '2', '3'])
             ->where('biz_stock_out_item.product_id', $productId);
         if (!empty($params['flow_date_start'])) {
             $stockOutItems->where('biz_stock_out.stock_out_date', '>=', $params['flow_date_start']);
@@ -210,10 +231,16 @@ class BizWmsReportService
         if (!empty($params['flow_date_end'])) {
             $stockOutItems->where('biz_stock_out.stock_out_date', '<=', $params['flow_date_end']);
         }
+        if (!empty($params['warehouse_id'])) {
+            $stockOutItems->where('biz_stock_out.warehouse_id', $params['warehouse_id']);
+        }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds2 = DataScopeService::getVisibleUserIds($params['login_user']);
-            $stockOutItems->whereIn('biz_stock_out.responsible_id', $visibleUserIds2);
+            $stockOutItems->where(function ($q) use ($visibleUserIds2) {
+                $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds2)
+                  ->orWhereNull('biz_stock_out.responsible_id');
+            });
         }
         $stockOutList = $stockOutItems->select([
                 'biz_stock_out.stock_out_no as doc_no',
@@ -243,5 +270,95 @@ class BizWmsReportService
         unset($flow);
         $flows = array_reverse($flows);
         return $flows;
+    }
+
+    public function expiryInventory($params)
+    {
+        $query = BizStockInItem::from('biz_stock_in_item as sii')
+            ->join('biz_product as p', 'sii.product_id', '=', 'p.product_id')
+            ->join('biz_stock_in as si', 'sii.stock_in_id', '=', 'si.stock_in_id')
+            ->whereRaw('sii.quantity > sii.shipped_quantity')
+            ->whereNotNull('sii.expiry_date')
+            ->where('si.status', '1'); // 只统计已确认的入库单
+
+        // 仓库筛选
+        if (!empty($params['warehouse_id'])) {
+            $query->where('si.warehouse_id', $params['warehouse_id']);
+        }
+
+        // 到期状态筛选
+        if (!empty($params['expiry_status'])) {
+            $today = date('Y-m-d');
+            switch ($params['expiry_status']) {
+                case 'expired':
+                    $query->where('sii.expiry_date', '<', $today);
+                    break;
+                case '30':
+                    $query->where('sii.expiry_date', '>=', $today)
+                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+30 days')));
+                    break;
+                case '60':
+                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+30 days')))
+                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+60 days')));
+                    break;
+                case '90':
+                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+60 days')))
+                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+90 days')));
+                    break;
+                case 'normal':
+                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+90 days')));
+                    break;
+            }
+        }
+
+        // 数据权限过滤
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->where(function ($q) use ($visibleUserIds) {
+                $q->whereIn('si.operator_id', $visibleUserIds)
+                  ->orWhereNull('si.operator_id');
+            });
+        }
+
+        $items = $query->select([
+                'sii.item_id',
+                'si.stock_in_no',
+                'si.warehouse_id',
+                'sii.product_id',
+                'p.product_name',
+                'p.category',
+                'sii.quantity',
+                'sii.shipped_quantity',
+                Db::raw('sii.quantity - sii.shipped_quantity as remaining_quantity'),
+                'sii.production_date',
+                'sii.expiry_date',
+                Db::raw('DATEDIFF(sii.expiry_date, CURDATE()) as remaining_days'),
+            ])
+            ->orderBy('remaining_days', 'asc')
+            ->get();
+
+        // 计算到期状态
+        $result = $items->map(function ($item) {
+            $remainingDays = intval($item->remaining_days);
+            if ($remainingDays <= 0) {
+                $item->expiry_status = 'expired';
+                $item->expiry_status_text = '已过期';
+            } elseif ($remainingDays <= 30) {
+                $item->expiry_status = '30';
+                $item->expiry_status_text = '30天内到期';
+            } elseif ($remainingDays <= 60) {
+                $item->expiry_status = '60';
+                $item->expiry_status_text = '60天内到期';
+            } elseif ($remainingDays <= 90) {
+                $item->expiry_status = '90';
+                $item->expiry_status_text = '90天内到期';
+            } else {
+                $item->expiry_status = 'normal';
+                $item->expiry_status_text = '正常';
+            }
+            return $item;
+        });
+
+        return $result;
     }
 }

@@ -36,6 +36,7 @@ const request = (options) => {
     // 在Authorization头中注入Bearer Token，后端通过此字段验证用户身份
     options.header['Authorization'] = 'Bearer ' + getToken()
   }
+  options.header['X-Login-Source'] = 'app'
   // GET请求：将params对象序列化为URL查询字符串，避免参数丢失
   if (options.params) {
     let url = options.url + '?' + tansParams(options.params)

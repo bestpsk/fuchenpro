@@ -15,7 +15,7 @@ class BizCustomerPackage extends Model
 
     protected $fillable = [
         'package_no', 'customer_id', 'customer_name', 'order_id', 'order_no',
-        'enterprise_id', 'store_id', 'package_name', 'total_amount',
+        'enterprise_id', 'enterprise_name', 'store_id', 'store_name', 'package_name', 'total_amount',
         'paid_amount', 'owed_amount',
         'status', 'expire_date', 'remark',
         'create_by', 'create_time', 'update_by', 'update_time'

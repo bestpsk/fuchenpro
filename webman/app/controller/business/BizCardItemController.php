@@ -5,7 +5,9 @@ namespace app\controller\business;
 use support\Request;
 use app\service\BizCardItemService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\BizCardItem;
 
 class BizCardItemController
 {
@@ -65,5 +67,17 @@ class BizCardItemController
         $service = new BizCardItemService();
         $result = $service->deleteCardItemByIds($cardItemIds);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['page_size'] = 10000;
+        $service = new BizCardItemService();
+        $result = $service->selectCardItemList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizCardItem::class);
+        return $excelUtil->exportExcel($list, '卡项数据');
     }
 }

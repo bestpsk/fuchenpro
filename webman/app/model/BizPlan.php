@@ -33,4 +33,20 @@ class BizPlan extends Model
     {
         return $this->hasMany(BizPlanItem::class, 'plan_id', 'plan_id');
     }
+
+    public static function getExcelFields(): array
+    {
+        return [
+            'plan_no' => ['name' => '方案编号', 'sort' => 1],
+            'plan_name' => ['name' => '方案名称', 'sort' => 2],
+            'enterprise_name' => ['name' => '企业名称', 'type' => 'export', 'sort' => 3],
+            'commission_rate' => ['name' => '分成比例(%)', 'cellType' => 'numeric', 'sort' => 4],
+            'plan_amount' => ['name' => '方案金额', 'cellType' => 'numeric', 'sort' => 5],
+            'gift_amount' => ['name' => '配赠金额', 'cellType' => 'numeric', 'sort' => 6],
+            'remaining_amount' => ['name' => '剩余金额', 'cellType' => 'numeric', 'sort' => 7],
+            'audit_status' => ['name' => '审核状态', 'readConverterExp' => '0=草稿,1=待审核,2=已审核,3=已完成,4=已驳回', 'sort' => 8],
+            'status' => ['name' => '启用', 'dictType' => 'sys_normal_disable', 'sort' => 9],
+            'create_time' => ['name' => '创建时间', 'dateFormat' => 'Y-m-d H:i:s', 'sort' => 10],
+        ];
+    }
 }

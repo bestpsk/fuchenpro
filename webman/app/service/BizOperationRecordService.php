@@ -67,7 +67,7 @@ class BizOperationRecordService
                     $qty = intval($data['operation_quantity'] ?? 1);
 
                     // 条件increment，原子检查+扣减
-                    $affected = BizPackageItem::where('item_id', $packageItem->item_id)
+                    $affected = BizPackageItem::where('package_item_id', $packageItem->package_item_id)
                         ->whereRaw('used_quantity + ? <= total_quantity', [$qty])
                         ->increment('used_quantity', $qty);
                     if ($affected === 0) {
@@ -75,10 +75,10 @@ class BizOperationRecordService
                     }
 
                     // 更新 remaining_quantity
-                    $freshItem = BizPackageItem::find($packageItem->item_id);
+                    $freshItem = BizPackageItem::find($packageItem->package_item_id);
                     $remaining = $freshItem->total_quantity - $freshItem->used_quantity;
                     if ($remaining < 0) $remaining = 0;
-                    BizPackageItem::where('item_id', $packageItem->item_id)->update(['remaining_quantity' => $remaining]);
+                    BizPackageItem::where('package_item_id', $packageItem->package_item_id)->update(['remaining_quantity' => $remaining]);
 
                     if ($remaining <= 0) {
                         $allUsed = BizPackageItem::where('package_id', $packageItem->package_id)

@@ -8,6 +8,7 @@ use app\model\BizOrderItem;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\service\BizCustomerArchiveService;
+use app\service\BizSalesOrderService;
 use app\service\DataScopeService;
 use support\Db;
 
@@ -265,10 +266,6 @@ class BizRepaymentService
 
     private function generateRepaymentOrderNo()
     {
-        $date = date('Ymd');
-        $key = 'repayment_order_no:' . $date;
-        $seq = \support\Redis::incr($key);
-        \support\Redis::expire($key, 86400);
-        return 'SO' . $date . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        return (new BizSalesOrderService())->generateOrderNo();
     }
 }

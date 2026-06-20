@@ -16,7 +16,7 @@ class BizPlanItem extends Model
     protected $fillable = [
         'plan_id', 'product_id', 'product_name', 'supplier_id', 'supplier_name',
         'unit_type', 'pack_qty', 'quantity', 'spec', 'sale_price', 'amount',
-        'shipped_quantity', 'remaining_quantity', 'remark'
+        'shipped_quantity', 'prepared_quantity', 'remaining_quantity', 'remark'
     ];
 
     // 关联所属方案

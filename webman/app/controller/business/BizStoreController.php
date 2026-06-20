@@ -6,6 +6,8 @@ use support\Request;
 use app\service\BizStoreService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizStore;
 
 /**
  * 门店管理控制器
@@ -74,5 +76,18 @@ class BizStoreController
         $service = new BizStoreService();
         $result = $service->deleteStoreByIds($storeIds);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出门店数据
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $service = new BizStoreService();
+        $result = $service->selectStoreList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizStore::class);
+        return $excelUtil->exportExcel($list, '门店数据');
     }
 }

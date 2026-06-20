@@ -10,7 +10,7 @@
   "pages": [
     { "path": "pages/login", "style": { "navigationBarTitleText": "登录" } },
     { "path": "pages/register", "style": { "navigationBarTitleText": "注册" } },
-    { "path": "pages/index", "style": { "navigationBarTitleText": "馥辰国际", "navigationStyle": "custom" } },
+    { "path": "pages/index", "style": { "navigationBarTitleText": "赛诺美生", "navigationStyle": "custom" } },
     { "path": "pages/work/index", "style": { "navigationBarTitleText": "工作台" } },
     { "path": "pages/mine/index", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/mine/avatar/index", "style": { "navigationBarTitleText": "修改头像" } },
@@ -44,7 +44,7 @@
     { "path": "pages/business/plan/index", "style": { "navigationBarTitleText": "方案管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/plan/form", "style": { "navigationBarTitleText": "方案信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/plan/detail", "style": { "navigationBarTitleText": "方案详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
-    { "path": "pages/business/plan/shipment", "style": { "navigationBarTitleText": "新建出库单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/plan/prepare", "style": { "navigationBarTitleText": "方案备货", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/cardItem/index", "style": { "navigationBarTitleText": "卡项管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/cardItem/form", "style": { "navigationBarTitleText": "卡项信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/stockPrepare/index", "style": { "navigationBarTitleText": "备货管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
@@ -64,6 +64,7 @@
     { "path": "pages/wms/stockIn/detail", "style": { "navigationBarTitleText": "入库详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/wms/shipment/index", "style": { "navigationBarTitleText": "出库管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/wms/shipment/detail", "style": { "navigationBarTitleText": "出库详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/wms/shipment/edit", "style": { "navigationBarTitleText": "编辑出库单", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/wms/stock/index", "style": { "navigationBarTitleText": "库存查看", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/wms/stock/detail", "style": { "navigationBarTitleText": "库存详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/wms/stockCheck/index", "style": { "navigationBarTitleText": "库存盘点", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
@@ -114,7 +115,7 @@
   },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "馥辰国际",
+    "navigationBarTitleText": "赛诺美生",
     "navigationBarBackgroundColor": "#FFFFFF"
   }
 }

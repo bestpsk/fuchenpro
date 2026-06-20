@@ -6,6 +6,8 @@ use support\Request;
 use app\service\BizScheduleService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
+use app\model\BizSchedule;
 
 /**
  * 行程安排控制器
@@ -131,5 +133,18 @@ class BizScheduleController
         $service = new BizScheduleService();
         $result = $service->deleteScheduleByIds($scheduleIds);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出行程数据
+    public function export(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $service = new BizScheduleService();
+        $result = $service->selectScheduleList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizSchedule::class);
+        return $excelUtil->exportExcel($list, '行程数据');
     }
 }

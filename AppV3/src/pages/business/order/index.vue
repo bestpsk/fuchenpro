@@ -17,6 +17,15 @@
     <view v-if="hasActiveFilters" class="active-filters">
       <scroll-view scroll-x class="filter-scroll">
         <view class="filter-tags">
+          <view v-if="queryParams.enterpriseId" class="filter-tag active" @click="clearFilter('enterpriseId')">
+            <text>{{ getEnterpriseName(queryParams.enterpriseId) }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.storeId" class="filter-tag active" @click="clearFilter('storeId')">
+            <text>{{ getStoreName(queryParams.storeId) }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.creatorUserId" class="filter-tag active" @click="clearFilter('creatorUserId')">
+            <text>{{ getEmployeeName(queryParams.creatorUserId) }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
           <view v-if="queryParams.status !== '' && queryParams.status !== undefined" class="filter-tag active" @click="clearFilter('status')">
             <text>{{ getOrderStatusName(queryParams.status) }}</text><u-icon name="close" size="12"></u-icon>
           </view>
@@ -27,6 +36,33 @@
     <u-popup :show="showFilter" mode="top" round="16" @close="toggleFilter">
       <view class="popup-content">
         <view class="popup-title">筛选条件</view>
+        <view class="form-item">
+          <view class="form-label">企业</view>
+          <view class="form-select" @click="showEnterprisePicker = true">
+            <text :class="queryParams.enterpriseId ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.enterpriseId ? getEnterpriseName(queryParams.enterpriseId) : '请选择企业' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">门店</view>
+          <view class="form-select" @click="showStorePicker = true">
+            <text :class="queryParams.storeId ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.storeId ? getStoreName(queryParams.storeId) : '请选择门店' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">开单员工</view>
+          <view class="form-select" @click="showEmployeePicker = true">
+            <text :class="queryParams.creatorUserId ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.creatorUserId ? getEmployeeName(queryParams.creatorUserId) : '请选择员工' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
         <view class="form-item">
           <view class="form-label">订单状态</view>
           <view class="form-options">
@@ -39,6 +75,10 @@
         </view>
       </view>
     </u-popup>
+
+    <u-picker :show="showEnterprisePicker" :columns="enterprisePickerColumns" keyName="enterpriseName" @confirm="onEnterprisePickerConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
+    <u-picker :show="showStorePicker" :columns="storePickerColumns" keyName="storeName" @confirm="onStorePickerConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
+    <u-picker :show="showEmployeePicker" :columns="employeePickerColumns" keyName="nickName" @confirm="onEmployeePickerConfirm" @cancel="showEmployeePicker = false" @close="showEmployeePicker = false"></u-picker>
 
     <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="orderList.length > 0" class="card-list">
@@ -79,6 +119,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { listSalesOrder, cancelOrder as cancelOrderApi } from '@/api/business/salesOrder'
+import { listEnterprise } from '@/api/business/enterprise'
+import { listStore } from '@/api/business/store'
+import { listEmployeeConfig } from '@/api/business/employeeConfig'
 import { useDictStore } from '@/store/modules/dict'
 import { checkPermi } from '@/utils/permission'
 
@@ -89,12 +132,19 @@ const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
+const showEnterprisePicker = ref(false)
+const showStorePicker = ref(false)
+const showEmployeePicker = ref(false)
+
+const enterpriseOptions = ref([])
+const storeOptions = ref([])
+const employeeOptions = ref([])
 
 let searchTimer = null
 
-const hasActiveFilters = computed(() => queryParams.status !== '' && queryParams.status !== undefined)
+const hasActiveFilters = computed(() => queryParams.enterpriseId || queryParams.storeId || queryParams.creatorUserId || (queryParams.status !== '' && queryParams.status !== undefined))
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', status: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', enterpriseId: '', storeId: '', creatorUserId: '', status: '' })
 
 const orderStatusOptions = ref([
   { label: '待确认', value: '0' },
@@ -102,6 +152,10 @@ const orderStatusOptions = ref([
   { label: '财务已审', value: '2' },
   { label: '已取消', value: '4' }
 ])
+
+const enterprisePickerColumns = computed(() => [enterpriseOptions.value])
+const storePickerColumns = computed(() => [storeOptions.value])
+const employeePickerColumns = computed(() => [employeeOptions.value])
 
 function displayOrderNo(item) {
   const no = item.order_no || item.orderNo
@@ -153,6 +207,73 @@ function getStoreDisplay(item) {
   return '-'
 }
 
+async function loadEnterpriseOptions() {
+  try {
+    const response = await listEnterprise({ pageNum: 1, pageSize: 100 })
+    const data = response.data || response
+    enterpriseOptions.value = data.rows || []
+  } catch (e) { console.error('获取企业列表失败:', e) }
+}
+
+async function loadStoreOptions() {
+  try {
+    const params = { pageNum: 1, pageSize: 100, ...(queryParams.enterpriseId ? { enterpriseId: queryParams.enterpriseId } : {}) }
+    const response = await listStore(params)
+    const data = response.data || response
+    storeOptions.value = data.rows || []
+  } catch (e) { console.error('获取门店列表失败:', e) }
+}
+
+async function loadEmployeeOptions() {
+  try {
+    const response = await listEmployeeConfig({ pageNum: 1, pageSize: 100 })
+    const data = response.data || response
+    employeeOptions.value = data.rows || []
+  } catch (e) { console.error('获取员工列表失败:', e) }
+}
+
+function onEnterprisePickerConfirm({ value }) {
+  const selected = value[0]
+  if (selected) {
+    queryParams.enterpriseId = selected.enterpriseId
+    queryParams.storeId = ''
+    storeOptions.value = []
+    loadStoreOptions()
+  }
+  showEnterprisePicker.value = false
+}
+
+function onStorePickerConfirm({ value }) {
+  const selected = value[0]
+  if (selected) {
+    queryParams.storeId = selected.storeId
+  }
+  showStorePicker.value = false
+}
+
+function onEmployeePickerConfirm({ value }) {
+  const selected = value[0]
+  if (selected) {
+    queryParams.creatorUserId = selected.userId
+  }
+  showEmployeePicker.value = false
+}
+
+function getEnterpriseName(id) {
+  const item = enterpriseOptions.value.find(e => String(e.enterpriseId) === String(id))
+  return item ? item.enterpriseName : ''
+}
+
+function getStoreName(id) {
+  const item = storeOptions.value.find(s => String(s.storeId) === String(id))
+  return item ? item.storeName : ''
+}
+
+function getEmployeeName(id) {
+  const item = employeeOptions.value.find(e => String(e.userId) === String(id))
+  return item ? (item.nickName || item.userName || '') : ''
+}
+
 function getDisplayAmount(item) {
   const sourceType = item.source_type || item.sourceType
   if (sourceType === '2') {
@@ -185,9 +306,19 @@ function handleSearch() { getList(true) }
 function onSearchInput() { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(() => handleSearch(), 500) }
 function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 function toggleFilter() { showFilter.value = !showFilter.value }
-function resetFilter() { queryParams.status = '' }
+function resetFilter() { queryParams.enterpriseId = ''; queryParams.storeId = ''; queryParams.creatorUserId = ''; queryParams.status = ''; storeOptions.value = [] }
 function confirmFilter() { showFilter.value = false; getList(true) }
-function clearFilter(field) { queryParams[field] = ''; getList(true) }
+function clearFilter(field) {
+  if (field === 'enterpriseId') {
+    queryParams.enterpriseId = ''
+    queryParams.storeId = ''
+    storeOptions.value = []
+    loadStoreOptions()
+  } else {
+    queryParams[field] = ''
+  }
+  getList(true)
+}
 
 function goDetail(item) {
   const sourceType = String(item.source_type || item.sourceType || '0')
@@ -218,7 +349,7 @@ async function cancelOrder(item) {
   }
 }
 
-onMounted(() => { dictStore.loadDict('biz_source_type'); getList(true) })
+onMounted(() => { dictStore.loadDict('biz_source_type'); loadEnterpriseOptions(); loadStoreOptions(); loadEmployeeOptions(); getList(true) })
 </script>
 
 <style lang="scss" scoped>
@@ -248,6 +379,9 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; margin-bottom: 30rpx; }
 .form-item { margin-bottom: 30rpx; }
 .form-label { font-size: 28rpx; color: #1D2129; font-weight: 500; margin-bottom: 16rpx; }
+.form-select { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 24rpx; background: #F5F7FA; border-radius: 8rpx; }
+.selected-text { font-size: 26rpx; color: #1D2129; }
+.placeholder-text { font-size: 26rpx; color: #C9CDD4; }
 .form-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
 .option-tag { padding: 14rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent;
   &.active { background: #E8F0FE; color: #3D6DF7; border-color: #3D6DF7; }

@@ -17,11 +17,11 @@ export function listEmployeeConfig(params) {
 /**
  * 更新员工是否可排班状态，关闭后排班系统不会为该员工分配班次
  * @param {string|number} userId - 员工用户ID
- * @param {boolean} schedulable - 是否可排班
+ * @param {string} isSchedulable - 是否可排班，'0' 不可排班，'1' 可排班
  * @returns {Promise<void>}
  */
-export function updateSchedulable(userId, schedulable) {
-  return request({ url: '/business/employeeConfig/schedulable', method: 'put', data: { userId, schedulable } })
+export function updateSchedulable(userId, isSchedulable) {
+  return request({ url: '/business/employeeConfig/updateSchedulable', method: 'put', data: { userId, isSchedulable } })
 }
 
 /**
@@ -31,7 +31,7 @@ export function updateSchedulable(userId, schedulable) {
  * @returns {Promise<void>}
  */
 export function saveRestDates(userId, restDates) {
-  return request({ url: '/business/employeeConfig/restDates', method: 'post', data: { userId, restDates } })
+  return request({ url: '/business/employeeConfig/saveRestDates', method: 'post', data: { userId, restDates } })
 }
 
 /**
@@ -40,5 +40,5 @@ export function saveRestDates(userId, restDates) {
  * @returns {Promise<Array<string>>} 休息日期数组
  */
 export function getRestDates(userId) {
-  return request({ url: '/business/employeeConfig/restDates', method: 'get', params: { userId } })
+  return request({ url: '/business/employeeConfig/getRestDates', method: 'get', params: { userId } })
 }

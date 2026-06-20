@@ -17,6 +17,12 @@
     <view v-if="hasActiveFilters" class="active-filters">
       <scroll-view scroll-x class="filter-scroll">
         <view class="filter-tags">
+          <view v-if="queryParams.enterpriseName !== ''" class="filter-tag active" @click="clearFilter('enterpriseName')">
+            <text>企业: {{ queryParams.enterpriseName }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.planName !== ''" class="filter-tag active" @click="clearFilter('planName')">
+            <text>方案: {{ queryParams.planName }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
           <view v-if="queryParams.auditStatus !== '' && queryParams.auditStatus !== undefined" class="filter-tag active" @click="clearFilter('auditStatus')">
             <text>{{ getAuditStatusLabel(queryParams.auditStatus) }}</text><u-icon name="close" size="12"></u-icon>
           </view>
@@ -28,9 +34,17 @@
       <view class="popup-content">
         <view class="popup-title">筛选条件</view>
         <view class="form-item">
+          <view class="form-label">企业名称</view>
+          <input class="form-input" type="text" v-model="filterForm.enterpriseName" placeholder="请输入企业名称" placeholder-class="form-placeholder" />
+        </view>
+        <view class="form-item">
+          <view class="form-label">方案名称</view>
+          <input class="form-input" type="text" v-model="filterForm.planName" placeholder="请输入方案名称" placeholder-class="form-placeholder" />
+        </view>
+        <view class="form-item">
           <view class="form-label">审核状态</view>
           <view class="form-options">
-            <view v-for="item in auditStatusOptions" :key="item.value" class="option-tag" :class="{ active: queryParams.auditStatus === item.value }" @click="queryParams.auditStatus = queryParams.auditStatus === item.value ? '' : item.value">{{ item.label }}</view>
+            <view v-for="item in auditStatusOptions" :key="item.value" class="option-tag" :class="{ active: filterForm.auditStatus === item.value }" @click="filterForm.auditStatus = filterForm.auditStatus === item.value ? '' : item.value">{{ item.label }}</view>
           </view>
         </view>
         <view class="popup-actions">
@@ -66,6 +80,12 @@
               <view class="info-item"><text class="label">有效期</text><text class="value">{{ formatDateRange(item.effectiveDate, item.expiryDate) }}</text></view>
             </view>
           </view>
+          <view class="card-footer" v-if="item.auditStatus === '0' || item.auditStatus === '4'">
+            <view class="delete-btn" @click.stop="handleDelete(item)">
+              <u-icon name="trash" size="14" color="#F53F3F"></u-icon>
+              <text style="font-size: 24rpx; color: #F53F3F;">删除</text>
+            </view>
+          </view>
         </view>
       </view>
       <u-empty v-else-if="!loading" mode="data" text="暂无方案数据" :marginTop="100"></u-empty>
@@ -80,7 +100,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { listPlan, listEnterprise } from '@/api/business/plan'
+import { listPlan, listEnterprise, delPlan } from '@/api/business/plan'
 import { checkPermi } from '@/utils/permission'
 
 
@@ -92,7 +112,13 @@ const showFilter = ref(false)
 
 let searchTimer = null
 
-const hasActiveFilters = computed(() => queryParams.auditStatus !== '' && queryParams.auditStatus !== undefined)
+const hasActiveFilters = computed(() => (queryParams.auditStatus !== '' && queryParams.auditStatus !== undefined) || queryParams.enterpriseName !== '' || queryParams.planName !== '')
+
+const filterForm = reactive({
+  enterpriseName: '',
+  planName: '',
+  auditStatus: ''
+})
 
 const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', auditStatus: '', enterpriseName: '', planName: '' })
 
@@ -130,7 +156,9 @@ async function getList(isRefresh = false) {
   try {
     const params = { pageNum: queryParams.pageNum, pageSize: queryParams.pageSize }
     if (queryParams.auditStatus !== '' && queryParams.auditStatus !== undefined) params.auditStatus = queryParams.auditStatus
-    if (queryParams.keyword) { params.enterpriseName = queryParams.keyword; params.planName = queryParams.keyword }
+    if (queryParams.enterpriseName) params.enterpriseName = queryParams.enterpriseName
+    if (queryParams.planName) params.planName = queryParams.planName
+    if (queryParams.keyword) { params.keyword = queryParams.keyword }
     const response = await listPlan(params)
     const data = response.data || response
     const list = data.rows || []
@@ -147,12 +175,30 @@ function handleSearch() { getList(true) }
 function onSearchInput() { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(() => handleSearch(), 500) }
 function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 function toggleFilter() { showFilter.value = !showFilter.value }
-function resetFilter() { queryParams.auditStatus = '' }
-function confirmFilter() { showFilter.value = false; getList(true) }
-function clearFilter(field) { queryParams[field] = ''; getList(true) }
+function resetFilter() { filterForm.enterpriseName = ''; filterForm.planName = ''; filterForm.auditStatus = '' }
+function confirmFilter() { queryParams.enterpriseName = filterForm.enterpriseName; queryParams.planName = filterForm.planName; queryParams.auditStatus = filterForm.auditStatus; showFilter.value = false; getList(true) }
+function clearFilter(field) { queryParams[field] = ''; if (field === 'enterpriseName') filterForm.enterpriseName = ''; if (field === 'planName') filterForm.planName = ''; if (field === 'auditStatus') filterForm.auditStatus = ''; getList(true) }
 
 function goDetail(item) {
   uni.navigateTo({ url: `/pages/business/plan/detail?id=${item.planId}` })
+}
+
+function handleDelete(item) {
+  uni.showModal({
+    title: '提示',
+    content: `确认删除方案"${item.planName || item.planNo}"？`,
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await delPlan(item.planId)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+          getList(true)
+        } catch (e) {
+          uni.showToast({ title: '删除失败', icon: 'none' })
+        }
+      }
+    }
+  })
 }
 
 function handleAdd() {
@@ -190,6 +236,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .form-item { margin-bottom: 30rpx; }
 .form-label { font-size: 28rpx; color: #1D2129; font-weight: 500; margin-bottom: 16rpx; }
 .form-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.form-input { width: 100%; height: 72rpx; background: #F5F7FA; border-radius: 8rpx; padding: 0 20rpx; font-size: 28rpx; color: #1D2129; box-sizing: border-box; }
+.form-placeholder { color: #C9CDD4; font-size: 28rpx; }
 .option-tag { padding: 14rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent;
   &.active { background: #E8F0FE; color: #3D6DF7; border-color: #3D6DF7; }
 }
@@ -214,6 +262,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 
 .card-body { padding: 20rpx 0; border-top: 1rpx solid #F2F3F5; }
+.card-footer { display: flex; justify-content: flex-end; padding-top: 16rpx; margin-top: 12rpx; border-top: 1rpx solid #F2F3F5; }
+.delete-btn { display: flex; align-items: center; gap: 6rpx; padding: 8rpx 20rpx; }
 .info-row { display: flex; margin-bottom: 16rpx; &:last-child { margin-bottom: 0; } }
 .info-item { flex: 1; display: flex; align-items: center; gap: 12rpx;
   .label { font-size: 24rpx; color: #86909C; min-width: 60rpx; }

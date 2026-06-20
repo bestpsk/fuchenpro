@@ -11,7 +11,7 @@ class BizStockPrepareItem extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'item_id', 'prepare_id', 'card_item_id', 'product_id', 'product_name', 'unit', 'spec',
+        'item_id', 'prepare_id', 'card_item_id', 'plan_item_id', 'product_id', 'product_name', 'unit', 'spec',
         'unit_type', 'pack_qty', 'sale_price', 'quantity', 'amount',
         'shipped_quantity', 'shipped_amount', 'remaining_quantity', 'remaining_amount', 'remark'
     ];

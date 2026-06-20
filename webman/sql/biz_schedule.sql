@@ -12,7 +12,7 @@ CREATE TABLE `biz_schedule` (
   `enterprise_id` bigint NOT NULL COMMENT '企业ID',
   `enterprise_name` varchar(100) DEFAULT NULL COMMENT '企业名称',
   `schedule_date` date NOT NULL COMMENT '行程日期',
-  `purpose` char(1) NOT NULL COMMENT '下店目的(1爆卡 2启动销售 3售后服务 4洽谈业务)',
+  `purpose` char(1) NOT NULL COMMENT '下店目的(1爆卡 2销售 3售后 4业务)',
   `remark` text DEFAULT NULL COMMENT '备注',
   `status` char(1) NOT NULL DEFAULT '0' COMMENT '状态(0正常 1取消)',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
@@ -34,9 +34,9 @@ VALUES ('下店目的', 'biz_schedule_purpose', '0', 'admin', NOW(), '下店目�
 -- 3. 插入字典数据
 INSERT INTO `sys_dict_data` (`dict_sort`, `dict_label`, `dict_value`, `dict_type`, `css_class`, `list_class`, `is_default`, `status`, `create_by`, `create_time`) VALUES
 (1, '爆卡', '1', 'biz_schedule_purpose', '', 'danger', 'N', '0', 'admin', NOW()),
-(2, '启动销售', '2', 'biz_schedule_purpose', '', 'success', 'N', '0', 'admin', NOW()),
-(3, '售后服务', '3', 'biz_schedule_purpose', '', 'warning', 'N', '0', 'admin', NOW()),
-(4, '洽谈业务', '4', 'biz_schedule_purpose', '', 'primary', 'N', '0', 'admin', NOW());
+(2, '销售', '2', 'biz_schedule_purpose', '', 'success', 'N', '0', 'admin', NOW()),
+(3, '售后', '3', 'biz_schedule_purpose', '', 'warning', 'N', '0', 'admin', NOW()),
+(4, '业务', '4', 'biz_schedule_purpose', '', 'primary', 'N', '0', 'admin', NOW());
 
 -- 4. 插入菜单数据
 -- 行程安排菜单

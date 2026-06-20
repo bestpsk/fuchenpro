@@ -5,7 +5,9 @@ namespace app\controller\wms;
 use support\Request;
 use app\service\BizSupplierService;
 use app\common\AjaxResult;
+use app\common\ExcelUtil;
 use app\common\TableDataInfo;
+use app\model\BizSupplier;
 
 /**
  * 供应商管理控制器
@@ -79,5 +81,18 @@ class BizSupplierController
         $service = new BizSupplierService();
         $result = $service->deleteSupplierByIds($supplierIds, $params);
         return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 导出供货商数据
+    public function export(Request $request)
+    {
+        $service = new BizSupplierService();
+        $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
+        $params['pageSize'] = 10000;
+        $result = $service->selectSupplierList($params);
+        $list = $result->items();
+        $excelUtil = new ExcelUtil(BizSupplier::class);
+        return $excelUtil->exportExcel($list, '供货商数据');
     }
 }

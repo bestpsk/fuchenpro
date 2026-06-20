@@ -71,7 +71,7 @@
             <u-icon name="reload" size="14" color="#fff" />
             <text>重新定位</text>
           </view>
-          <view class="fail-btn fail-btn-secondary" @click="showManualInput = true">
+          <view class="fail-btn fail-btn-secondary" v-if="allowManualAddress" @click="showManualInput = true">
             <u-icon name="edit-pen" size="14" color="#3D6DF7" />
             <text style="color: #3D6DF7;">手动输入</text>
           </view>
@@ -196,6 +196,7 @@
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getTodayRecord, clock, getTodayClockList, uploadAttendancePhoto, getUserAttendanceRule } from '@/api/attendance'
+import { getConfigKey } from '@/api/system/config'
 import config from '@/config'
 
 const AMAP_WEB_SERVICE_KEY = config.amap.webServiceKey
@@ -223,6 +224,7 @@ const shortAddress = ref('')
 const distanceToWorkplace = ref(null)
 const userRule = ref(null)
 const ruleLoading = ref(false)
+const allowManualAddress = ref(true)
 
 let timer = null
 let locationTimer = null
@@ -233,12 +235,14 @@ const showPhotoArea = computed(() => {
 
 /** 是否可打卡：坐班需有定位或手动地址，外勤需有事由、照片和定位（或手动地址） */
 const canClock = computed(() => {
+  const hasLocation = !!location.value.latitude
+  const hasManualAddress = allowManualAddress.value && manualAddress.value.trim()
   if (clockType.value === '0') {
-    return !!(location.value.latitude || manualAddress.value.trim())
+    return !!(hasLocation || hasManualAddress)
   }
 
   if (clockType.value === '1') {
-    return !!(outsideReason.value.trim() && photoUploadedUrl.value && (location.value.latitude || manualAddress.value.trim()))
+    return !!(outsideReason.value.trim() && photoUploadedUrl.value && (hasLocation || hasManualAddress))
   }
 
   return false
@@ -581,6 +585,16 @@ async function loadUserRule() {
   }
 }
 
+/** 加载考勤配置（是否允许手动输入地址） */
+async function loadAttendanceConfig() {
+  try {
+    const res = await getConfigKey('biz.attendance.allowManualAddress')
+    allowManualAddress.value = res.data !== 'false'
+  } catch (e) {
+    console.error('获取考勤配置失败', e)
+  }
+}
+
 /** 拍照并上传，外勤打卡时必须拍照 */
 function takePhoto() {
   uni.chooseImage({
@@ -734,6 +748,7 @@ onMounted(() => {
   }, 100)
 
   loadUserRule()
+  loadAttendanceConfig()
   getLocation()
   loadTodayRecord()
   loadTodayClockList()
