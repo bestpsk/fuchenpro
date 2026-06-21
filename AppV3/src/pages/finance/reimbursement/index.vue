@@ -333,7 +333,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listReimbursement, getReimbursement, delReimbursement, auditReimbursement, payReimbursement } from '@/api/finance/reimbursement'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
@@ -358,6 +358,7 @@ const detailData = ref({})
 const detailImages = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const categoryOptions = ref([])
 const statusOptions = ref([])

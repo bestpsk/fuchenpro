@@ -10,7 +10,7 @@
 
       <view class="form-field" @click="mode !== 'view' && (showDeptPicker = true)">
         <view class="field-input-box">
-          <u-icon name="file-folder-fill" size="18" color="#86909C"></u-icon>
+          <u-icon name="folder" size="18" color="#86909C"></u-icon>
           <input class="field-input" :value="selectedDeptName" placeholder="* 归属部门" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
           <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
         </view>
@@ -123,7 +123,7 @@
             <template v-for="dept in deptOptions" :key="dept.id">
               <view class="dept-node" @click="selectDept(dept)">
                 <view class="dept-node-content" :class="{ active: form.deptId === dept.id }">
-                  <u-icon :name="dept.children && dept.children.length ? 'file-folder-fill' : 'file-text-fill'" size="18" :color="form.deptId === dept.id ? '#3D6DF7' : '#86909C'"></u-icon>
+                  <u-icon :name="dept.children && dept.children.length ? 'folder' : 'file-text-fill'" size="18" :color="form.deptId === dept.id ? '#3D6DF7' : '#86909C'"></u-icon>
                   <text class="dept-node-label">{{ dept.label }}</text>
                   <u-icon v-if="form.deptId === dept.id" name="checkmark" size="16" color="#3D6DF7"></u-icon>
                 </view>

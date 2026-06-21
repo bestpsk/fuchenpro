@@ -45,7 +45,7 @@ class SysConfigService
         $redis = Redis::connection();
         $cacheKey = Constants::SYS_CONFIG_KEY . $configKey;
         $cached = $redis->get($cacheKey);
-        if ($cached !== null) {
+        if ($cached !== null && $cached !== false) {
             return $cached;
         }
 
@@ -54,7 +54,7 @@ class SysConfigService
             $redis->set($cacheKey, $config->config_value);
             return $config->config_value;
         }
-        return '';
+        return null;
     }
 
     // 新增系统参数配置
@@ -114,7 +114,30 @@ class SysConfigService
     public static function getConfigValue(string $configKey, $default = null)
     {
         $value = self::selectConfigByKey($configKey);
-        return $value !== null && $value !== '' ? $value : $default;
+        return $value !== null ? $value : $default;
+    }
+
+    /**
+     * 根据参数键名设置参数值，不存在则创建
+     */
+    public static function setConfigValue(string $configKey, string $configValue, string $configName = '', string $configType = 'Y')
+    {
+        $config = SysConfig::where('config_key', $configKey)->first();
+        if ($config) {
+            $config->config_value = $configValue;
+            $config->update_time = date('Y-m-d H:i:s');
+            $config->save();
+        } else {
+            SysConfig::create([
+                'config_name' => $configName ?: $configKey,
+                'config_key' => $configKey,
+                'config_value' => $configValue,
+                'config_type' => $configType,
+                'create_time' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        $redis = Redis::connection();
+        $redis->set(Constants::SYS_CONFIG_KEY . $configKey, $configValue);
     }
 
     // 查询验证码是否启用

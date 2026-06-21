@@ -1,8 +1,8 @@
 {
-  "name": "ruoyi",
-  "version": "3.9.2",
-  "description": "若依管理系统",
-  "author": "若依",
+  "name": "synolife",
+  "version": "1.0.0",
+  "description": "赛诺美生管理系统",
+  "author": "赛诺美生",
   "license": "MIT",
   "type": "module",
   "scripts": {

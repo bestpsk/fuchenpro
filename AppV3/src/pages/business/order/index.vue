@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listSalesOrder, cancelOrder as cancelOrderApi } from '@/api/business/salesOrder'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
@@ -141,6 +141,7 @@ const storeOptions = ref([])
 const employeeOptions = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => queryParams.enterpriseId || queryParams.storeId || queryParams.creatorUserId || (queryParams.status !== '' && queryParams.status !== undefined))
 

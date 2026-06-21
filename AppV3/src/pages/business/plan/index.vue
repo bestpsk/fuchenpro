@@ -99,7 +99,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listPlan, listEnterprise, delPlan } from '@/api/business/plan'
 import { checkPermi } from '@/utils/permission'
 
@@ -111,6 +111,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => (queryParams.auditStatus !== '' && queryParams.auditStatus !== undefined) || queryParams.enterpriseName !== '' || queryParams.planName !== '')
 

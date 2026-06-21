@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listStockCheck, delStockCheck, confirmStockCheck } from '@/api/wms/stockCheck'
 import { checkPermi } from '@/utils/permission'
@@ -87,6 +87,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => queryParams.status !== '' && queryParams.status !== undefined)
 

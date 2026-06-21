@@ -17,6 +17,25 @@ class SysAppMenuService
         'system' => '#3D6DF7',
     ];
 
+    // 无效uView图标名映射为有效图标名
+    const ICON_FALLBACK_MAP = [
+        'swap'       => 'list',
+        '调拨'        => 'list',
+        'allocation'  => 'list',
+        'transfer'    => 'list',
+    ];
+
+    // 校验并修正图标名称
+    private static function normalizeIcon($icon)
+    {
+        if (!$icon) return 'list';
+        // 已知无效图标名直接替换
+        if (isset(self::ICON_FALLBACK_MAP[$icon])) {
+            return self::ICON_FALLBACK_MAP[$icon];
+        }
+        return $icon;
+    }
+
     public function getGroupedAppMenus($userId = null)
     {
         $menuIds = $this->getAuthorizedMenuIds($userId);
@@ -93,7 +112,7 @@ class SysAppMenuService
             $grouped[$groupKey]['items'][] = [
                 'id' => $menuId,
                 'title' => $menu->menu_name,
-                'icon' => $appMenu->app_icon ?: 'list',
+                'icon' => self::normalizeIcon($appMenu->app_icon),
                 'path' => $appMenu->app_path ?: '',
                 'iconColor' => $appMenu->icon_color ?: '#fff',
                 'bgColor' => $appMenu->bg_color ?: $groupBgColor,

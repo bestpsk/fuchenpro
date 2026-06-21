@@ -47,7 +47,7 @@ export function updateSalesOrder(data) {
  * @returns {Promise<void>}
  */
 export function delSalesOrder(id) {
-  return request({ url: '/business/sales/' + id, method: 'delete' })
+  return request({ url: '/business/sales', method: 'delete', params: { orderIds: id } })
 }
 
 /**

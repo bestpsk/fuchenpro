@@ -216,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listLogininfor, delLogininfor, cleanLogininfor, unlockLogininfor } from '@/api/monitor/logininfor'
 import { checkPermi } from '@/utils/permission'
 
@@ -229,6 +229,7 @@ const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return (queryParams.status !== '' && queryParams.status !== undefined) || queryParams.loginSource || queryParams.beginTime

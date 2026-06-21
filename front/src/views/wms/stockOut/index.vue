@@ -391,7 +391,7 @@
 </template>
 
 <script setup name="WmsStockOut">
-import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, confirmStockOutById, cancelConfirmStockOut, shipStockOut, confirmReceiptStockOut } from "@/api/wms/stockOut"
+import { listStockOut, getStockOut, delStockOut, addStockOut, updateStockOut, confirmStockOut, cancelConfirmStockOut, shipStockOut, confirmReceiptStockOut } from "@/api/wms/stockOut"
 import { ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getToken } from '@/utils/auth'

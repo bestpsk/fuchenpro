@@ -15,6 +15,6 @@ export function listWarnInventory(query) {
 }
 
 /** 根据产品ID查询库存数量详情 */
-export function getInventory(productId) {
-  return request({ url: '/wms/inventory/' + productId, method: 'get' })
+export function getInventory(productId, query) {
+  return request({ url: '/wms/inventory/' + productId, method: 'get', params: query })
 }

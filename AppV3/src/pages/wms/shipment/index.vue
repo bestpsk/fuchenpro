@@ -80,46 +80,63 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <u-popup :show="showShipPopup" mode="center" round="16" @close="showShipPopup = false">
-      <view class="popup-content">
-        <view class="popup-title">填写物流信息</view>
-        <view class="popup-field">
-          <view class="popup-field-label">发货方式</view>
-          <picker :range="['自提', '物流']" @change="handleShipTypeChange" :value="shipForm.shipTypeIndex">
-            <view class="form-picker">{{ shipForm.shipTypeIndex === 0 ? '自提' : '物流' }}</view>
-          </picker>
+    <u-popup :show="showShipPopup" mode="bottom" round="16" @close="showShipPopup = false">
+      <view class="drawer-content">
+        <view class="drawer-handle"></view>
+        <view class="drawer-header">
+          <view v-if="showLogisticsView" class="drawer-back" @click="showLogisticsView = false"><u-icon name="arrow-left" size="20" color="#4E5969"></u-icon></view>
+          <text class="drawer-title">{{ showLogisticsView ? '选择物流公司' : '填写物流信息' }}</text>
+          <view class="drawer-close" @click="showShipPopup = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
         </view>
-        <view v-if="shipForm.shipTypeIndex === 1">
+        <!-- 物流信息表单 -->
+        <scroll-view v-if="!showLogisticsView" scroll-y class="drawer-body">
           <view class="popup-field">
-            <view class="popup-field-label">物流公司</view>
-            <picker :range="logisticsCompanyOptions" @change="onLogisticsCompanyChange" :value="logisticsCompanyIndex">
-              <view class="form-picker">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
-            </picker>
+            <view class="popup-field-label">发货方式</view>
+            <view class="ship-type-options">
+              <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 0 }" @click="shipForm.shipTypeIndex = 0">自提</view>
+              <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 1 }" @click="shipForm.shipTypeIndex = 1">物流</view>
+            </view>
+          </view>
+          <view v-if="shipForm.shipTypeIndex === 1">
+            <view class="popup-field">
+              <view class="popup-field-label">物流公司</view>
+              <view class="form-picker" @click="showLogisticsView = true">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
+            </view>
+            <view class="popup-field">
+              <view class="popup-field-label">物流单号</view>
+              <view class="popup-input-box">
+                <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+              </view>
+            </view>
           </view>
           <view class="popup-field">
-            <view class="popup-field-label">物流单号</view>
-            <view class="popup-input-box">
-              <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+            <view class="popup-field-label">发货凭证</view>
+            <view class="image-upload">
+              <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
+                <image :src="img" mode="aspectFill" @click="previewImage(img)" />
+                <view class="remove-btn" @click="removeImage(idx)">×</view>
+              </view>
+              <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
+                <text>+</text>
+              </view>
             </view>
           </view>
-        </view>
-        <view class="popup-field">
-          <view class="popup-field-label">发货凭证</view>
-          <view class="image-upload">
-            <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
-              <image :src="img" mode="aspectFill" @click="previewImage(img)" />
-              <view class="remove-btn" @click="removeImage(idx)">×</view>
-            </view>
-            <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
-              <text>+</text>
-            </view>
+          <view class="popup-field">
+            <view class="popup-field-label">备注</view>
+            <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
           </view>
-        </view>
-        <view class="popup-field">
-          <view class="popup-field-label">备注</view>
-          <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
-        </view>
-        <view class="popup-actions">
+        </scroll-view>
+        <!-- 物流公司选择列表 -->
+        <scroll-view v-else scroll-y class="drawer-body">
+          <view class="logistics-list-item" :class="{ active: shipForm.logisticsCompany === item }" v-for="(item, idx) in logisticsCompanyOptions" :key="idx" @click="onSelectLogistics(item)">
+            <text>{{ item }}</text>
+            <u-icon v-if="shipForm.logisticsCompany === item" name="checkmark" color="#3D6DF7" size="36rpx"></u-icon>
+          </view>
+          <view class="logistics-list-empty" v-if="logisticsCompanyOptions.length === 0">
+            <text>暂无物流公司数据</text>
+          </view>
+        </scroll-view>
+        <view class="drawer-actions" v-if="!showLogisticsView">
           <u-button type="info" plain text="取消" @click="showShipPopup = false"></u-button>
           <u-button type="primary" text="确认发货" @click="confirmShip"></u-button>
         </view>
@@ -145,7 +162,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listStockOut, delStockOut, confirmStockOut, cancelConfirmStockOut, shipStockOut, confirmReceipt } from '@/api/wms/stockOut'
 import { getDicts } from '@/api/system/dictData'
@@ -164,6 +181,7 @@ const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showShipPopup = ref(false)
+const showLogisticsView = ref(false)
 const currentShipItem = ref(null)
 const shipForm = ref({ logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' })
 const showConfirmWarehousePicker = ref(false)
@@ -174,6 +192,7 @@ const confirmWarehouseIndex = ref(0)
 const logisticsCompanyOptions = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => (queryParams.status !== '' && queryParams.status !== undefined) || (queryParams.shipType !== '' && queryParams.shipType !== undefined))
 
@@ -323,6 +342,7 @@ function handleCancelConfirm(item) {
 function handleShip(item) {
   currentShipItem.value = item
   shipForm.value = { logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' }
+  showLogisticsView.value = false
   showShipPopup.value = true
 }
 
@@ -373,13 +393,9 @@ function handleShipTypeChange(e) {
   shipForm.value.shipTypeIndex = e.detail.value
 }
 
-const logisticsCompanyIndex = computed(() => {
-  const idx = logisticsCompanyOptions.value.indexOf(shipForm.value.logisticsCompany)
-  return idx >= 0 ? idx : 0
-})
-
-function onLogisticsCompanyChange(e) {
-  shipForm.value.logisticsCompany = logisticsCompanyOptions.value[e.detail.value] || ''
+function onSelectLogistics(item) {
+  shipForm.value.logisticsCompany = item
+  showLogisticsView.value = false
 }
 
 function chooseImage() {
@@ -417,7 +433,8 @@ function handleWarehouseChange(warehouseId) {
   getList()
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await loadWarehouses()
   getList(true)
   getDicts('logistics_company').then(res => {
     logisticsCompanyOptions.value = (res.data || []).map(d => d.dictLabel)
@@ -426,6 +443,7 @@ onMounted(() => {
 
 onShow(() => {
   loadWarehouses()
+  getList(true)
 })
 </script>
 
@@ -456,6 +474,25 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &.active { background: #e8f0fe; color: #3D6DF7; border-color: #3D6DF7; }
 }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 40rpx; padding-top: 30rpx; border-top: 1rpx solid #E5E6EB; .u-button { flex: 1; } }
+
+.drawer-content { background: #fff; border-radius: 16rpx 16rpx 0 0; max-height: 80vh; display: flex; flex-direction: column; }
+.drawer-handle { width: 64rpx; height: 8rpx; background: #E5E6EB; border-radius: 4rpx; margin: 16rpx auto 0; }
+.drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx 16rpx; }
+.drawer-title { font-size: 32rpx; font-weight: 600; color: #1D2129; flex: 1; text-align: center; }
+.drawer-close { padding: 8rpx; }
+.drawer-back { padding: 8rpx; margin-right: 8rpx; }
+.drawer-body { flex: 1; padding: 0 32rpx; max-height: 55vh; }
+.drawer-actions { display: flex; gap: 20rpx; padding: 20rpx 32rpx 40rpx; border-top: 1rpx solid #F2F3F5; .u-button { flex: 1; } }
+
+.ship-type-options { display: flex; gap: 16rpx; margin-bottom: 16rpx; }
+.ship-type-item { flex: 1; text-align: center; padding: 16rpx 0; border-radius: 12rpx; background: #F7F8FA; font-size: 28rpx; color: #4E5969; transition: all 0.2s;
+  &.active { background: #E8F0FE; color: #3D6DF7; font-weight: 600; }
+}
+
+.logistics-list-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 0; border-bottom: 1rpx solid #F2F3F5; font-size: 28rpx; color: #1D2129;
+  &.active { color: #3D6DF7; font-weight: 500; }
+}
+.logistics-list-empty { padding: 60rpx 0; text-align: center; font-size: 26rpx; color: #86909C; }
 
 .popup-field { margin-bottom: 8rpx; }
 .popup-field-label { font-size: 26rpx; color: #4E5969; font-weight: 500; margin-bottom: 8rpx; }

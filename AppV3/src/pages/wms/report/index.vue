@@ -40,11 +40,12 @@
         </view>
       </view>
 
-      <view v-if="currentTab === 0 || currentTab === 1" class="category-filter">
-        <view class="category-input-box">
-          <u-icon name="search" size="14" color="#86909C"></u-icon>
-          <input class="category-input" type="text" v-model="category" placeholder="输入类别筛选" placeholder-class="field-placeholder" confirm-type="search" @confirm="handleQuery" />
-          <view v-if="category" class="clear-btn" @click="category = ''; handleQuery()">
+      <view v-if="currentTab === 0 || currentTab === 1 || currentTab === 2" class="category-filter">
+        <view class="category-input-box" @click="showCategoryPicker = true">
+          <u-icon name="list" size="14" color="#86909C"></u-icon>
+          <text v-if="category" class="category-selected">{{ getCategoryLabel(category) }}</text>
+          <text v-else class="category-placeholder">全部类别</text>
+          <view v-if="category" class="clear-btn" @click.stop="category = ''; handleQuery()">
             <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
           </view>
         </view>
@@ -78,13 +79,20 @@
       <view v-if="currentTab === 0" class="tab-content">
         <view v-if="stockInList.length > 0" class="card-list">
           <view v-for="(item, idx) in stockInList" :key="idx" class="report-card">
+            <view class="card-header-row">
+              <text class="card-product-name">{{ item.productName || '-' }}</text>
+            </view>
             <view class="card-row">
               <text class="card-label">类别</text>
-              <text class="card-value">{{ item.category || '-' }}</text>
+              <text class="card-value">{{ getCategoryLabel(item.category) || '-' }}</text>
+            </view>
+            <view class="card-row" v-if="item.packQty > 1">
+              <text class="card-label">换算</text>
+              <text class="card-value">1{{ getUnitLabel(item.unit) }}={{ item.packQty }}{{ getSpecLabel(item.spec) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">入库数量</text>
-              <text class="card-value bold">{{ item.totalQuantity || 0 }}</text>
+              <text class="card-value bold">{{ formatQty(item.totalQuantity, item) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">入库金额</text>
@@ -112,13 +120,20 @@
       <view v-if="currentTab === 1" class="tab-content">
         <view v-if="stockOutList.length > 0" class="card-list">
           <view v-for="(item, idx) in stockOutList" :key="idx" class="report-card">
+            <view class="card-header-row">
+              <text class="card-product-name">{{ item.productName || '-' }}</text>
+            </view>
             <view class="card-row">
               <text class="card-label">类别</text>
-              <text class="card-value">{{ item.category || '-' }}</text>
+              <text class="card-value">{{ getCategoryLabel(item.category) || '-' }}</text>
+            </view>
+            <view class="card-row" v-if="item.packQty > 1">
+              <text class="card-label">换算</text>
+              <text class="card-value">1{{ getUnitLabel(item.unit) }}={{ item.packQty }}{{ getSpecLabel(item.spec) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">出库数量</text>
-              <text class="card-value bold">{{ item.totalQuantity || 0 }}</text>
+              <text class="card-value bold">{{ formatQty(item.totalQuantity, item) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">出库金额</text>
@@ -149,22 +164,30 @@
             <view class="card-header-row">
               <text class="card-product-name">{{ item.productName || '-' }}</text>
             </view>
+            <view class="card-row">
+              <text class="card-label">类别</text>
+              <text class="card-value">{{ getCategoryLabel(item.category) || '-' }}</text>
+            </view>
+            <view class="card-row" v-if="item.packQty > 1">
+              <text class="card-label">换算</text>
+              <text class="card-value">1{{ getUnitLabel(item.unit) }}={{ item.packQty }}{{ getSpecLabel(item.spec) }}</text>
+            </view>
             <view class="turnover-grid">
               <view class="turnover-cell">
                 <text class="turnover-label">期初库存</text>
-                <text class="turnover-val">{{ item.beginQuantity || 0 }}</text>
+                <text class="turnover-val">{{ formatQty(item.beginQuantity, item) }}</text>
               </view>
               <view class="turnover-cell in">
                 <text class="turnover-label">期间入库</text>
-                <text class="turnover-val">{{ item.periodInQuantity || 0 }}</text>
+                <text class="turnover-val">{{ formatQty(item.periodInQuantity, item) }}</text>
               </view>
               <view class="turnover-cell out">
                 <text class="turnover-label">期间出库</text>
-                <text class="turnover-val">{{ item.periodOutQuantity || 0 }}</text>
+                <text class="turnover-val">{{ formatQty(item.periodOutQuantity, item) }}</text>
               </view>
               <view class="turnover-cell">
                 <text class="turnover-label">期末库存</text>
-                <text class="turnover-val end">{{ item.endQuantity || 0 }}</text>
+                <text class="turnover-val end">{{ formatQty(item.endQuantity, item) }}</text>
               </view>
             </view>
           </view>
@@ -172,21 +195,21 @@
         <u-empty v-else-if="!loading" mode="data" text="暂无库存周转数据" :marginTop="100"></u-empty>
       </view>
 
-      <!-- Tab 4: 货品流水 -->
+      <!-- Tab 4: 货品收发存 -->
       <view v-if="currentTab === 3" class="tab-content">
         <view v-if="flowList.length > 0" class="card-list">
           <view v-for="(item, idx) in flowList" :key="idx" class="report-card flow-card">
             <view class="card-header-row">
-              <text class="card-order-no">{{ item.orderNo || '-' }}</text>
-              <view class="flow-type-badge" :class="item.type === '入库' ? 'type-in' : 'type-out'">{{ item.type || '-' }}</view>
+              <text class="card-order-no">{{ item.docNo || '-' }}</text>
+              <view class="flow-type-badge" :class="item.flowType === '入库' ? 'type-in' : 'type-out'">{{ item.flowType || '-' }}</view>
             </view>
             <view class="card-row">
               <text class="card-label">日期</text>
-              <text class="card-value">{{ formatDate(item.date) }}</text>
+              <text class="card-value">{{ formatDate(item.flowDate) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">数量</text>
-              <text class="card-value bold">{{ item.quantity || 0 }}</text>
+              <text class="card-value bold">{{ formatQty(item.quantity, item) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">金额</text>
@@ -194,12 +217,19 @@
             </view>
             <view class="card-row">
               <text class="card-label">结存</text>
-              <text class="card-value bold">{{ item.balance || 0 }}</text>
+              <text class="card-value bold">{{ formatQty(item.balance, item) }}</text>
+            </view>
+            <view class="card-row" v-if="item.packQty > 1">
+              <text class="card-label">换算</text>
+              <text class="card-value">1{{ getUnitLabel(item.unit) }}={{ item.packQty }}{{ getSpecLabel(item.spec) }}</text>
             </view>
           </view>
         </view>
-        <u-empty v-else-if="!loading" mode="data" text="暂无货品流水数据" :marginTop="100"></u-empty>
-        <u-loadmore v-if="flowList.length > 0" :status="flowLoadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
+        <u-empty v-else-if="!loading && selectedProduct" mode="data" text="暂无货品收发存数据" :marginTop="100"></u-empty>
+        <view v-else-if="!selectedProduct" class="empty-tip">
+          <u-icon name="search" size="28" color="#C9CDD4"></u-icon>
+          <text class="empty-tip-text">请先选择货品查看收发存明细</text>
+        </view>
       </view>
 
       <!-- Tab 5: 有效期盘点 -->
@@ -211,12 +241,16 @@
               <view class="expiry-status-badge" :style="{ backgroundColor: getExpiryStatusColor(item.expiryStatus) + '1A', color: getExpiryStatusColor(item.expiryStatus) }">{{ item.expiryStatusText || item.expiryStatus || '-' }}</view>
             </view>
             <view class="card-row">
+              <text class="card-label">类别</text>
+              <text class="card-value">{{ getCategoryLabel(item.category) || '-' }}</text>
+            </view>
+            <view class="card-row">
               <text class="card-label">入库单号</text>
-              <text class="card-value">{{ item.orderNo || '-' }}</text>
+              <text class="card-value">{{ item.stockInNo || '-' }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">批次数量</text>
-              <text class="card-value bold">{{ item.batchQuantity || 0 }}</text>
+              <text class="card-value bold">{{ item.remainingQuantity || 0 }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">生产日期</text>
@@ -281,6 +315,27 @@
     </view>
   </u-popup>
 
+  <u-popup :show="showCategoryPicker" mode="bottom" round="16" @close="showCategoryPicker = false">
+    <view class="expiry-picker-content">
+      <view class="picker-header">
+        <text class="picker-title">选择类别</text>
+        <view class="picker-close" @click="showCategoryPicker = false">
+          <u-icon name="close" size="18" color="#86909C"></u-icon>
+        </view>
+      </view>
+      <scroll-view scroll-y class="picker-list">
+        <view class="picker-item" @click="category = ''; showCategoryPicker = false; handleQuery()">
+          <text class="picker-item-name">全部类别</text>
+          <u-icon v-if="!category" name="checkmark" size="16" color="#3D6DF7"></u-icon>
+        </view>
+        <view v-for="item in categoryOptions" :key="item.dictValue" class="picker-item" :class="{ active: category === item.dictValue }" @click="onSelectCategory(item.dictValue)">
+          <text class="picker-item-name">{{ item.dictLabel }}</text>
+          <u-icon v-if="category === item.dictValue" name="checkmark" size="16" color="#3D6DF7"></u-icon>
+        </view>
+      </scroll-view>
+    </view>
+  </u-popup>
+
   <u-popup :show="showExpiryStatusPicker" mode="bottom" round="16" @close="showExpiryStatusPicker = false">
     <view class="expiry-picker-content">
       <view class="picker-header">
@@ -305,15 +360,52 @@ import { stockInSummary, stockOutSummary, inventoryTurnover, productFlow, expiry
 import { searchProduct } from '@/api/wms/product'
 import { useWarehouse } from '@/composables/useWarehouse'
 import { checkPermi } from '@/utils/permission'
+import { getDicts } from '@/api/system/dictData'
 
 const { currentWarehouseId, warehouseList, loadWarehouses } = useWarehouse()
+
+const unitOptions = ref([])
+const specOptions = ref([])
+const categoryOptions = ref([])
+
+function getUnitLabel(value) {
+  if (!value) return ''
+  const dict = unitOptions.value.find(d => d.dictValue === value)
+  return dict ? dict.dictLabel : ''
+}
+function getSpecLabel(value) {
+  if (!value) return ''
+  const dict = specOptions.value.find(d => d.dictValue === value)
+  return dict ? dict.dictLabel : ''
+}
+function getCategoryLabel(value) {
+  if (!value) return ''
+  const dict = categoryOptions.value.find(d => d.dictValue === value)
+  return dict ? dict.dictLabel : ''
+}
+
+function formatQty(qty, row) {
+  const packQty = row.packQty || 1
+  const unitLabel = getUnitLabel(row.unit)
+  const specLabel = getSpecLabel(row.spec)
+  qty = qty || 0
+  if (packQty > 1 && specLabel) {
+    const mainQty = qty / packQty
+    const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(1).replace(/\.0$/, '')
+    return mainQtyStr + unitLabel + '（' + qty + specLabel + '）'
+  } else if (unitLabel) {
+    return qty + unitLabel
+  } else {
+    return String(qty)
+  }
+}
 
 const currentTab = ref(0)
 const tabList = ref([
   { name: '入库汇总' },
   { name: '出库汇总' },
   { name: '库存周转' },
-  { name: '货品流水' },
+  { name: '货品收发存' },
   { name: '有效期盘点' }
 ])
 
@@ -330,6 +422,7 @@ const endDatePickerValue = ref(Date.now())
 
 // 类别筛选
 const category = ref('')
+const showCategoryPicker = ref(false)
 
 // 货品筛选
 const selectedProduct = ref(null)
@@ -358,12 +451,8 @@ const stockOutSummaryData = computed(() => {
 // Tab 3: 库存周转
 const turnoverList = ref([])
 
-// Tab 4: 货品流水
+// Tab 4: 货品收发存
 const flowList = ref([])
-const flowPageNum = ref(1)
-const flowPageSize = ref(10)
-const flowTotal = ref(0)
-const flowLoadStatus = ref('loadmore')
 
 // Tab 5: 有效期盘点
 const expiryList = ref([])
@@ -445,42 +534,40 @@ async function loadData(isRefresh = false) {
   if (loading.value) return
   loading.value = true
 
-  const params = { startDate: startDate.value, endDate: endDate.value }
-  if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
-
   try {
     if (currentTab.value === 0) {
+      const params = { stockInDateStart: startDate.value, stockInDateEnd: endDate.value }
+      if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
       if (category.value) params.category = category.value
       const res = await stockInSummary(params)
       stockInList.value = res.data || res || []
     } else if (currentTab.value === 1) {
+      const params = { stockOutDateStart: startDate.value, stockOutDateEnd: endDate.value }
+      if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
       if (category.value) params.category = category.value
       const res = await stockOutSummary(params)
       stockOutList.value = res.data || res || []
     } else if (currentTab.value === 2) {
+      const params = { startDate: startDate.value, endDate: endDate.value }
+      if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
+      if (category.value) params.category = category.value
       const res = await inventoryTurnover(params)
       turnoverList.value = res.data || res || []
     } else if (currentTab.value === 3) {
-      if (isRefresh) {
-        flowPageNum.value = 1
-        flowLoadStatus.value = 'loadmore'
+      if (!selectedProduct.value) {
+        flowList.value = []
+        return
       }
-      if (selectedProduct.value) params.productId = selectedProduct.value.productId
-      params.pageNum = flowPageNum.value
-      params.pageSize = flowPageSize.value
+      const params = { flowDateStart: startDate.value, flowDateEnd: endDate.value }
+      if (currentWarehouseId.value) params.warehouseId = currentWarehouseId.value
+      params.productId = selectedProduct.value.productId
       const res = await productFlow(params)
-      const data = res.data || res || {}
-      const list = data.rows || data.items || []
-      const total = data.total || 0
-      flowList.value = isRefresh ? list : [...flowList.value, ...list]
-      flowTotal.value = total
-      flowLoadStatus.value = flowList.value.length >= total ? 'nomore' : 'loadmore'
+      flowList.value = res.data || res || []
     } else if (currentTab.value === 4) {
       loadExpiryData()
     }
   } catch (e) {
     console.error('加载报表数据失败:', e)
-    if (currentTab.value === 3) flowLoadStatus.value = 'error'
   } finally {
     loading.value = false
     refreshing.value = false
@@ -488,11 +575,7 @@ async function loadData(isRefresh = false) {
 }
 
 function loadMore() {
-  if (currentTab.value !== 3) return
-  if (loading.value || flowLoadStatus.value === 'nomore') return
-  flowLoadStatus.value = 'loading'
-  flowPageNum.value++
-  loadData()
+  // 货品收发存不支持分页，无需加载更多
 }
 
 function onPullDownRefresh() {
@@ -527,6 +610,12 @@ function onSelectProduct(item) {
   selectedProduct.value = item
   showProductPicker.value = false
   loadData(true)
+}
+
+function onSelectCategory(value) {
+  category.value = value
+  showCategoryPicker.value = false
+  handleQuery()
 }
 
 function clearProduct() {
@@ -577,6 +666,9 @@ onMounted(() => {
   }
   loadWarehouses()
   initDefaultDateRange()
+  getDicts('biz_product_unit').then(res => { unitOptions.value = res.data || [] })
+  getDicts('biz_product_spec').then(res => { specOptions.value = res.data || [] })
+  getDicts('biz_product_category').then(res => { categoryOptions.value = res.data || [] })
   loadData()
 })
 </script>
@@ -655,6 +747,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .category-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
+.category-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
+.category-placeholder { flex: 1; font-size: 28rpx; color: #C9CDD4; }
 .field-placeholder { color: #C9CDD4; font-size: 28rpx; }
 .clear-btn { flex-shrink: 0; padding: 8rpx; display: flex; align-items: center; }
 
@@ -829,4 +923,14 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .summary-divider { width: 2rpx; height: 60rpx; background: #E5E6EB; }
 
 .bottom-spacer { height: 40rpx; }
+
+.empty-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  gap: 20rpx;
+}
+.empty-tip-text { font-size: 26rpx; color: #C9CDD4; }
 </style>

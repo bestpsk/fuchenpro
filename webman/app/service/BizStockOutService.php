@@ -53,9 +53,15 @@ class BizStockOutService
         $pageSize = intval($params['page_size'] ?? 10);
         $list = $query->orderBy('stock_out_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
         
+        $stockOutIds = $list->pluck('stock_out_id')->toArray();
+        $firstItemsMap = BizStockOutItem::whereIn('stock_out_id', $stockOutIds)
+            ->orderBy('id', 'asc')
+            ->get()
+            ->groupBy('stock_out_id');
         foreach ($list->items() as $stockOut) {
-            $firstItem = BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->first();
-            if ($firstItem) {
+            $items = $firstItemsMap->get($stockOut->stock_out_id);
+            if ($items && $items->isNotEmpty()) {
+                $firstItem = $items->first();
                 $stockOut->display_unit_type = $firstItem->unit_type ?? '1';
                 $stockOut->display_original_qty = $firstItem->original_quantity ?? $firstItem->quantity;
                 $stockOut->display_pack_qty = $firstItem->pack_qty ?? 1;
@@ -184,21 +190,9 @@ class BizStockOutService
     {
         $items = $data['items'] ?? [];
         unset($data['items']);
-        
-        $camelToSnake = function ($str) {
-            return strtolower(preg_replace('/([A-Z])/', '_$1', $str));
-        };
-        
-        $convertedData = [];
-        foreach ($data as $key => $value) {
-            if (is_string($key) && preg_match('/[A-Z]/', $key)) {
-                $convertedData[$camelToSnake($key)] = $value;
-            } else {
-                $convertedData[$key] = $value;
-            }
-        }
-        $data = $convertedData;
-        
+
+        $data = convert_to_snake_case($data);
+
         $data['stock_out_no'] = $this->generateStockOutNo();
         $data['create_time'] = date('Y-m-d H:i:s');
         $data['status'] = '0';

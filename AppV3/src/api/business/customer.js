@@ -58,5 +58,5 @@ export function updateCustomer(data) {
  * @returns {Promise<void>}
  */
 export function delCustomer(id) {
-  return request({ url: '/business/customer/' + id, method: 'delete' })
+  return request({ url: '/business/customer', method: 'delete', params: { customerIds: id } })
 }

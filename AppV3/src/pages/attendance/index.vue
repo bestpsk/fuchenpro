@@ -199,7 +199,20 @@ import { getTodayRecord, clock, getTodayClockList, uploadAttendancePhoto, getUse
 import { getConfigKey } from '@/api/system/config'
 import config from '@/config'
 
-const AMAP_WEB_SERVICE_KEY = config.amap.webServiceKey
+// 从后端动态获取高德Web服务Key，获取失败时降级使用config.js中的默认值
+const AMAP_WEB_SERVICE_KEY = ref(config.amap.webServiceKey)
+
+/** 加载高德地图配置 */
+async function loadAmapConfig() {
+  try {
+    const res = await getConfigKey('sys.amap.webServiceKey')
+    if (res.data) {
+      AMAP_WEB_SERVICE_KEY.value = res.data
+    }
+  } catch (e) {
+    console.warn('获取高德地图配置失败，使用默认配置', e)
+  }
+}
 
 const currentDate = ref('')
 const currentTime = ref('')
@@ -417,7 +430,7 @@ function handleLocationSuccess(lat, lng) {
 /** IP定位降级方案，通过高德IP定位接口获取城市级别位置 */
 async function ipGeolocation() {
   try {
-    const key = AMAP_WEB_SERVICE_KEY
+    const key = AMAP_WEB_SERVICE_KEY.value
     const url = `https://restapi.amap.com/v3/ip?key=${key}`
     const res = await new Promise((resolve, reject) => {
       uni.request({ url, method: 'GET', timeout: 5000, success: resolve, fail: reject })
@@ -518,7 +531,7 @@ async function fallbackGetLocation() {
 async function reverseGeocode(lat, lng) {
   geocodingLoading.value = true
   try {
-    const key = AMAP_WEB_SERVICE_KEY
+    const key = AMAP_WEB_SERVICE_KEY.value
     const url = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${key}&extensions=all&output=JSON`
     const res = await new Promise((resolve, reject) => {
       uni.request({ url, method: 'GET', timeout: 8000, success: resolve, fail: reject })
@@ -747,6 +760,7 @@ onMounted(() => {
     pageReady.value = true
   }, 100)
 
+  loadAmapConfig()
   loadUserRule()
   loadAttendanceConfig()
   getLocation()

@@ -47,7 +47,7 @@ export function updateStore(data) {
  * @returns {Promise<void>}
  */
 export function delStore(ids) {
-  return request({ url: '/business/store/' + ids, method: 'delete' })
+  return request({ url: '/business/store', method: 'delete', params: { storeIds: ids } })
 }
 
 /**

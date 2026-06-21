@@ -66,8 +66,9 @@ const upload = (options) => {
           // 其他非200状态码：弹出提示
           toast(msg)
           reject(code)
+        } else {
+          resolve(data)
         }
-        resolve(data)
       },
       fail: (error) => {
         toast('后端接口连接异常')

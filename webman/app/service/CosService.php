@@ -189,4 +189,23 @@ class CosService
         );
         return strpos($url, $baseUrl) === 0;
     }
+
+    // 从COS下载文件内容到字符串
+    public function getObjectContent(string $cosPath): ?string
+    {
+        if (!$this->isEnabled()) {
+            return null;
+        }
+
+        try {
+            $result = $this->client->getObject([
+                'Bucket' => $this->config['bucket'],
+                'Key' => $cosPath,
+            ]);
+            return (string)$result['Body'];
+        } catch (\Exception $e) {
+            \support\Log::error('COS下载失败: ' . $e->getMessage());
+            return null;
+        }
+    }
 }

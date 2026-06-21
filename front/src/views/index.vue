@@ -382,7 +382,7 @@ function goShortcut(path) {
 .stat-item {
   padding: 16px 12px;
   border-radius: 8px;
-  background: #f8f9fc;
+  background: var(--el-bg-color);
   margin-bottom: 12px;
   transition: box-shadow 0.2s;
   &:hover {

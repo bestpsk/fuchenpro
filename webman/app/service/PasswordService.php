@@ -4,6 +4,7 @@ namespace app\service;
 
 use support\Redis;
 use app\common\Constants;
+use app\service\SysConfigService;
 
 /**
  * 密码服务层，负责密码加密、验证和密码错误锁定策略
@@ -26,7 +27,10 @@ class PasswordService
         $retryCountKey = Constants::PWD_ERR_CNT_KEY . $loginUser->user_name;
         $retryCount = (int)$redis->get($retryCountKey);
 
-        if ($retryCount >= Constants::PWD_ERR_MAX_COUNT) {
+        $pwdErrMaxCount = intval(SysConfigService::getConfigValue('sys.security.pwdErrMaxCount'));
+        $pwdErrLockTime = intval(SysConfigService::getConfigValue('sys.security.pwdErrLockTime'));
+
+        if ($retryCount >= $pwdErrMaxCount) {
             $ttl = $redis->ttl($retryCountKey);
             $minutes = max(1, ceil($ttl / 60));
             return "密码错误次数过多，账户锁定{$minutes}分钟";
@@ -34,12 +38,12 @@ class PasswordService
 
         if (!self::verify($password, $loginUser->password)) {
             $retryCount++;
-            $redis->setex($retryCountKey, Constants::PWD_ERR_LOCK_TIME * 60, $retryCount);
-            $remaining = Constants::PWD_ERR_MAX_COUNT - $retryCount;
+            $redis->setex($retryCountKey, $pwdErrLockTime * 60, $retryCount);
+            $remaining = $pwdErrMaxCount - $retryCount;
             if ($remaining > 0) {
                 return "密码错误，还剩{$remaining}次机会";
             }
-            return "密码错误次数过多，账户锁定10分钟";
+            return "密码错误次数过多，账户锁定{$pwdErrLockTime}分钟";
         }
 
         $redis->del($retryCountKey);
@@ -48,7 +52,7 @@ class PasswordService
 
     public static function isDefaultPassword($password)
     {
-        $initPassword = SysConfigService::selectConfigByKey('sys.user.initPassword');
+        $initPassword = SysConfigService::selectConfigByKey('sys.security.initPassword');
         return $password === $initPassword;
     }
 }

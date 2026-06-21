@@ -72,7 +72,7 @@
  */
 import { getCodeImg } from "@/api/login"
 import Cookies from "js-cookie"
-import { encrypt, decrypt } from "@/utils/jsencrypt"
+import { encrypt, encryptTxt, decryptTxt } from "@/utils/jsencrypt"
 import useUserStore from '@/store/modules/user'
 import defaultSettings from '@/settings'
 
@@ -124,7 +124,7 @@ function handleLogin() {
       loading.value = true
       if (loginForm.value.rememberMe) {
         Cookies.set("username", loginForm.value.username, { expires: 30 })
-        Cookies.set("password", encrypt(loginForm.value.password), { expires: 30 })
+        Cookies.set("password", encryptTxt(loginForm.value.password), { expires: 30 })
         Cookies.set("rememberMe", loginForm.value.rememberMe, { expires: 30 })
       } else {
         Cookies.remove("username")
@@ -168,7 +168,7 @@ function getCookie() {
   const rememberMe = Cookies.get("rememberMe")
   loginForm.value = {
     username: username === undefined ? loginForm.value.username : username,
-    password: password === undefined ? loginForm.value.password : decrypt(password),
+    password: password === undefined ? loginForm.value.password : decryptTxt(password),
     rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
   }
 }

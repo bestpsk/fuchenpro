@@ -43,7 +43,7 @@
  * @description 首页头部导航组件 - 用户信息与快捷操作
  * @description 展示用户头像、昵称、问候语，提供个人信息、消息中心、设置三个快捷入口
  */
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { listNoticeTop } from '@/api/system/notice'
 import { getConfigKey, getWelcomeSlogan } from '@/api/system/config'
@@ -84,10 +84,18 @@ function loadUnreadCount() {
   }).catch(() => {})
 }
 
+function handleSloganChange() {
+  loadWelcomeSlogan()
+}
+
 onMounted(() => {
   loadUnreadCount()
   loadWelcomeSlogan()
-  uni.$on('welcomeSloganChanged', () => loadWelcomeSlogan())
+  uni.$on('welcomeSloganChanged', handleSloganChange)
+})
+
+onUnmounted(() => {
+  uni.$off('welcomeSloganChanged', handleSloganChange)
 })
 
 function loadWelcomeSlogan() {

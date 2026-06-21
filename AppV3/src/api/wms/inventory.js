@@ -8,6 +8,6 @@ export function listWarnInventory(query) {
   return request({ url: '/wms/inventory/warn', method: 'get', params: query })
 }
 
-export function getInventory(productId) {
-  return request({ url: '/wms/inventory/' + productId, method: 'get' })
+export function getInventory(productId, query) {
+  return request({ url: '/wms/inventory/' + productId, method: 'get', params: query })
 }

@@ -62,8 +62,9 @@ export function updateEnterprise(data) {
  */
 export function delEnterprise(ids) {
   return request({
-    url: '/business/enterprise/' + ids,
-    method: 'delete'
+    url: '/business/enterprise',
+    method: 'delete',
+    params: { enterpriseIds: ids }
   })
 }
 

@@ -144,69 +144,67 @@
       </view>
     </view>
 
-    <!-- 发货弹窗 -->
-    <u-popup :show="showShipPopup" mode="center" round="16" :z-index="990" @close="showShipPopup = false">
-      <view class="popup-content">
-        <view class="popup-title">填写物流信息</view>
-        <view class="popup-field">
-          <view class="popup-field-label">发货方式</view>
-          <view class="ship-type-options">
-            <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 0 }" @click="shipForm.shipTypeIndex = 0">自提</view>
-            <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 1 }" @click="shipForm.shipTypeIndex = 1">物流</view>
-          </view>
+    <!-- 发货抽屉 -->
+    <u-popup :show="showShipPopup" mode="bottom" round="16" @close="showShipPopup = false">
+      <view class="drawer-content">
+        <view class="drawer-handle"></view>
+        <view class="drawer-header">
+          <view v-if="showLogisticsView" class="drawer-back" @click="showLogisticsView = false"><u-icon name="arrow-left" size="20" color="#4E5969"></u-icon></view>
+          <text class="drawer-title">{{ showLogisticsView ? '选择物流公司' : '填写物流信息' }}</text>
+          <view class="drawer-close" @click="showShipPopup = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
         </view>
-        <view v-if="shipForm.shipTypeIndex === 1">
+        <!-- 物流信息表单 -->
+        <scroll-view v-if="!showLogisticsView" scroll-y class="drawer-body">
           <view class="popup-field">
-            <view class="popup-field-label">物流公司</view>
-            <view class="form-picker" @click="showLogisticsPicker = true">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
+            <view class="popup-field-label">发货方式</view>
+            <view class="ship-type-options">
+              <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 0 }" @click="shipForm.shipTypeIndex = 0">自提</view>
+              <view class="ship-type-item" :class="{ active: shipForm.shipTypeIndex === 1 }" @click="shipForm.shipTypeIndex = 1">物流</view>
+            </view>
+          </view>
+          <view v-if="shipForm.shipTypeIndex === 1">
+            <view class="popup-field">
+              <view class="popup-field-label">物流公司</view>
+              <view class="form-picker" @click="showLogisticsView = true">{{ shipForm.logisticsCompany || '请选择物流公司' }}</view>
+            </view>
+            <view class="popup-field">
+              <view class="popup-field-label">物流单号</view>
+              <view class="popup-input-box">
+                <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+              </view>
+            </view>
           </view>
           <view class="popup-field">
-            <view class="popup-field-label">物流单号</view>
-            <view class="popup-input-box">
-              <input class="popup-input" type="text" v-model="shipForm.logisticsNo" placeholder="请输入物流单号" placeholder-class="field-placeholder" />
+            <view class="popup-field-label">发货凭证</view>
+            <view class="image-upload">
+              <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
+                <image :src="img" mode="aspectFill" @click="previewShipImage(img)" />
+                <view class="remove-btn" @click="removeImage(idx)">×</view>
+              </view>
+              <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
+                <text>+</text>
+              </view>
             </view>
           </view>
-        </view>
-        <view class="popup-field">
-          <view class="popup-field-label">发货凭证</view>
-          <view class="image-upload">
-            <view class="upload-item" v-for="(img, idx) in shipForm.shipmentImages" :key="idx">
-              <image :src="img" mode="aspectFill" @click="previewShipImage(img)" />
-              <view class="remove-btn" @click="removeImage(idx)">×</view>
-            </view>
-            <view class="upload-add" @click="chooseImage" v-if="shipForm.shipmentImages.length < 5">
-              <text>+</text>
-            </view>
+          <view class="popup-field">
+            <view class="popup-field-label">备注</view>
+            <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
           </view>
-        </view>
-        <view class="popup-field">
-          <view class="popup-field-label">备注</view>
-          <textarea v-model="shipForm.remark" placeholder="请输入备注" class="form-textarea" />
-        </view>
-        <view class="popup-actions">
-          <u-button type="info" plain text="取消" @click="showShipPopup = false"></u-button>
-          <u-button type="primary" text="确认发货" @click="confirmShip"></u-button>
-        </view>
-      </view>
-    </u-popup>
-
-    <!-- 物流公司选择弹窗 -->
-    <u-popup :show="showLogisticsPicker" mode="bottom" round="16" :z-index="995" @close="showLogisticsPicker = false">
-      <view class="logistics-picker-content">
-        <view class="logistics-picker-header">
-          <text class="logistics-picker-cancel" @click="showLogisticsPicker = false">取消</text>
-          <text class="logistics-picker-title">选择物流公司</text>
-          <text class="logistics-picker-confirm" @click="showLogisticsPicker = false">确定</text>
-        </view>
-        <scroll-view scroll-y class="logistics-picker-list">
-          <view class="logistics-picker-item" :class="{ active: shipForm.logisticsCompany === item }" v-for="(item, idx) in logisticsCompanyOptions" :key="idx" @click="onSelectLogistics(item)">
+        </scroll-view>
+        <!-- 物流公司选择列表 -->
+        <scroll-view v-else scroll-y class="drawer-body">
+          <view class="logistics-list-item" :class="{ active: shipForm.logisticsCompany === item }" v-for="(item, idx) in logisticsCompanyOptions" :key="idx" @click="onSelectLogistics(item)">
             <text>{{ item }}</text>
             <u-icon v-if="shipForm.logisticsCompany === item" name="checkmark" color="#3D6DF7" size="36rpx"></u-icon>
           </view>
-          <view class="logistics-picker-empty" v-if="logisticsCompanyOptions.length === 0">
+          <view class="logistics-list-empty" v-if="logisticsCompanyOptions.length === 0">
             <text>暂无物流公司数据</text>
           </view>
         </scroll-view>
+        <view class="drawer-actions" v-if="!showLogisticsView">
+          <u-button type="info" plain text="取消" @click="showShipPopup = false"></u-button>
+          <u-button type="primary" text="确认发货" @click="confirmShip"></u-button>
+        </view>
       </view>
     </u-popup>
 
@@ -231,7 +229,7 @@ const info = ref({})
 const stockOutItems = ref([])
 const stockOutId = ref(null)
 const showShipPopup = ref(false)
-const showLogisticsPicker = ref(false)
+const showLogisticsView = ref(false)
 const showImagePreview = ref(false)
 const previewImageUrl = ref('')
 const shipForm = ref({ logisticsCompany: '', logisticsNo: '', shipTypeIndex: 1, shipmentImages: [], remark: '' })
@@ -315,7 +313,7 @@ function previewImage(url) {
 
 function onSelectLogistics(item) {
   shipForm.value.logisticsCompany = item
-  showLogisticsPicker.value = false
+  showLogisticsView.value = false
 }
 
 function chooseImage() {
@@ -461,13 +459,27 @@ page { background-color: #F5F7FA; }
   .u-button { flex: 1; }
 }
 
-.popup-content { padding: 30rpx; background: #fff; border-radius: 16rpx; width: 600rpx; }
+.popup-content { padding: 30rpx; background: #fff; border-radius: 16rpx; }
 .popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; text-align: center; }
 .popup-input-box { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; margin-bottom: 16rpx; }
 .popup-input { width: 100%; font-size: 28rpx; color: #1D2129; height: 72rpx; }
 .popup-field { margin-bottom: 8rpx; }
 .popup-field-label { font-size: 26rpx; color: #4E5969; font-weight: 500; margin-bottom: 8rpx; }
 .popup-actions { display: flex; gap: 20rpx; margin-top: 24rpx; .u-button { flex: 1; } }
+
+.drawer-content { background: #fff; border-radius: 16rpx 16rpx 0 0; max-height: 80vh; display: flex; flex-direction: column; }
+.drawer-handle { width: 64rpx; height: 8rpx; background: #E5E6EB; border-radius: 4rpx; margin: 16rpx auto 0; }
+.drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx 16rpx; }
+.drawer-title { font-size: 32rpx; font-weight: 600; color: #1D2129; flex: 1; text-align: center; }
+.drawer-close { padding: 8rpx; }
+.drawer-back { padding: 8rpx; margin-right: 8rpx; }
+.drawer-body { flex: 1; padding: 0 32rpx; max-height: 55vh; }
+.drawer-actions { display: flex; gap: 20rpx; padding: 20rpx 32rpx 40rpx; border-top: 1rpx solid #F2F3F5; .u-button { flex: 1; } }
+
+.logistics-list-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 0; border-bottom: 1rpx solid #F2F3F5; font-size: 28rpx; color: #1D2129;
+  &.active { color: #3D6DF7; font-weight: 500; }
+}
+.logistics-list-empty { padding: 60rpx 0; text-align: center; font-size: 26rpx; color: #86909C; }
 
 .form-picker { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; margin-bottom: 16rpx; }
 .form-textarea { width: 100%; background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; min-height: 120rpx; box-sizing: border-box; }
@@ -487,17 +499,6 @@ page { background-color: #F5F7FA; }
 .ship-type-item { flex: 1; text-align: center; padding: 16rpx 0; border-radius: 12rpx; background: #F7F8FA; font-size: 28rpx; color: #4E5969; transition: all 0.2s;
   &.active { background: #E8F0FE; color: #3D6DF7; font-weight: 600; }
 }
-
-.logistics-picker-content { background: #fff; border-radius: 16rpx 16rpx 0 0; max-height: 60vh; }
-.logistics-picker-header { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx; border-bottom: 1rpx solid #F2F3F5; }
-.logistics-picker-cancel { font-size: 28rpx; color: #86909C; }
-.logistics-picker-title { font-size: 30rpx; font-weight: 600; color: #1D2129; }
-.logistics-picker-confirm { font-size: 28rpx; color: #3D6DF7; font-weight: 500; }
-.logistics-picker-list { max-height: 50vh; }
-.logistics-picker-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 32rpx; border-bottom: 1rpx solid #F2F3F5; font-size: 28rpx; color: #1D2129;
-  &.active { color: #3D6DF7; font-weight: 500; }
-}
-.logistics-picker-empty { padding: 60rpx 32rpx; text-align: center; font-size: 26rpx; color: #86909C; }
 
 .image-preview-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; }
 .image-preview-close { position: absolute; top: 60rpx; right: 30rpx; width: 60rpx; height: 60rpx; color: #fff; font-size: 48rpx; display: flex; align-items: center; justify-content: center; z-index: 10000; }

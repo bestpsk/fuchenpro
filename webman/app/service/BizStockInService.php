@@ -49,9 +49,15 @@ class BizStockInService
         $list = $query->orderBy('stock_in_id', 'desc')
             ->paginate($pageSize, ['*', Db::raw('(SELECT MIN(expiry_date) FROM biz_stock_in_item WHERE biz_stock_in_item.stock_in_id = biz_stock_in.stock_in_id) as earliest_expiry')], 'page', $pageNum);
         
+        $stockInIds = $list->pluck('stock_in_id')->toArray();
+        $firstItemsMap = BizStockInItem::whereIn('stock_in_id', $stockInIds)
+            ->orderBy('id', 'asc')
+            ->get()
+            ->groupBy('stock_in_id');
         foreach ($list->items() as $stockIn) {
-            $firstItem = BizStockInItem::where('stock_in_id', $stockIn->stock_in_id)->first();
-            if ($firstItem) {
+            $items = $firstItemsMap->get($stockIn->stock_in_id);
+            if ($items && $items->isNotEmpty()) {
+                $firstItem = $items->first();
                 $stockIn->display_pack_qty = $firstItem->pack_qty ?? 1;
                 $stockIn->display_unit = $firstItem->unit;
                 $stockIn->display_spec = $firstItem->spec;

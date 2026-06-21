@@ -67,22 +67,35 @@
       <view v-if="customerList.length > 0" class="card-list">
         <view v-for="item in customerList" :key="item.customerId" class="customer-card" @click="goCustomerDetail(item)">
           <view class="card-header">
-            <u-avatar v-if="item.avatar" :src="getAvatarUrl(item.avatar)" size="40" mode="aspectFill" />
-            <u-avatar v-else :text="item.customerName ? item.customerName.charAt(0) : ''" size="40" :bg-color="item.gender === '1' ? '#FF6B9D' : '#3D6DF7'" color="#fff" fontSize="18" />
-            <view class="customer-info-area">
-              <view class="customer-name">
+            <view class="avatar-wrap">
+              <image v-if="item.avatar" class="customer-avatar" :src="getAvatarUrl(item.avatar)" mode="aspectFill" />
+              <view v-else class="avatar-placeholder" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7' }">
+                <text class="avatar-text">{{ item.customerName ? item.customerName.charAt(0) : '' }}</text>
+              </view>
+            </view>
+            <view class="header-info">
+              <view class="name-row">
                 <text class="name-text">{{ item.customerName }}</text>
-                <text class="gender-text" :class="item.gender === '1' ? 'female' : 'male'">{{ item.gender === '1' ? '女' : '男' }}</text>
-                <text class="age-text" v-if="item.age">{{ item.age }}岁</text>
+                <text class="gender-tag" :class="item.gender === '1' ? 'female' : 'male'">{{ item.gender === '1' ? '女' : '男' }}</text>
+                <text class="age-tag" v-if="item.age">{{ item.age }}岁</text>
+              </view>
+              <view class="tag-list" v-if="item.tag">
+                <text class="customer-tag" v-for="(tag, idx) in item.tag.split(',')" :key="idx">{{ getTagLabel(tag) }}</text>
               </view>
             </view>
           </view>
           <view class="card-body">
             <view class="info-row">
-              <view class="tag-list" v-if="item.tag">
-                <text class="customer-tag" v-for="(tag, idx) in item.tag.split(',')" :key="idx">{{ getTagLabel(tag) }}</text>
+              <view class="info-item">
+                <text class="label">满意度</text>
+                <view class="star-row">
+                  <u-icon v-for="n in 5" :key="n" :name="n <= (item.avgSatisfaction || 0) ? 'star-fill' : 'star'" size="14" :color="n <= (item.avgSatisfaction || 0) ? '#FF9A2E' : '#E5E6EB'"></u-icon>
+                </view>
               </view>
-              <text class="no-tag" v-else>暂无标签</text>
+              <view class="info-item">
+                <text class="label">成交额</text>
+                <text class="value highlight">{{ item.dealAmount ? '¥' + item.dealAmount : '-' }}</text>
+              </view>
             </view>
           </view>
           <view class="card-actions">
@@ -214,7 +227,7 @@
  * @description 按企业→门店→客户三级筛选，支持企业/门店选择持久化（刷新不丢失），
  * 提供客户搜索、新增客户弹窗、开单/操作/档案快捷跳转功能
  */
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import config from '@/config'
 import { getDicts } from '@/api/system/dict/data'
@@ -258,7 +271,7 @@ function getTagLabel(value) {
 function getAvatarUrl(avatar) {
   if (!avatar || avatar === '') return ''
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar
-  return config.appInfo.site_url + avatar
+  return config.baseUrl + avatar
 }
 
 /** 将当前选中的企业和门店信息保存到本地存储，刷新后可恢复 */
@@ -359,6 +372,7 @@ const genderOptions = [
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 /** 根据搜索关键词过滤企业列表 */
 const filteredEnterpriseList = computed(() => {
@@ -381,7 +395,7 @@ const filteredStoreList = computed(() => {
 /** 加载企业列表，仅获取状态为正常的企业 */
 async function loadEnterpriseOptions() {
   try {
-    const response = await listEnterprise({ pageNum: 1, pageSize: 1000, status: '0' })
+    const response = await listEnterprise({ pageNum: 1, pageSize: 100, status: '0' })
     const data = response.data || response
     enterpriseColumns.value = data.rows || []
   } catch (e) { console.error('加载企业列表失败:', e) }
@@ -603,26 +617,31 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .customer-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
   &:active { transform: scale(0.98); opacity: 0.9; }
 }
-.card-header { display: flex; align-items: center; gap: 16rpx; margin-bottom: 16rpx; }
-.customer-info-area { flex: 1; }
-.customer-name { display: flex; align-items: center; gap: 12rpx;
-  .name-text { font-size: 30rpx; font-weight: 600; color: #1D2129; }
-}
-.gender-text { font-size: 22rpx; padding: 2rpx 10rpx; border-radius: 4rpx;
+.card-header { display: flex; align-items: flex-start; gap: 20rpx; margin-bottom: 20rpx; }
+.avatar-wrap { flex-shrink: 0; }
+.customer-avatar { width: 80rpx; height: 80rpx; border-radius: 50%; }
+.avatar-placeholder { width: 80rpx; height: 80rpx; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.avatar-text { font-size: 32rpx; color: #fff; font-weight: 500; }
+.header-info { flex: 1; min-width: 0; }
+.name-row { display: flex; align-items: center; gap: 12rpx; margin-bottom: 12rpx; }
+.name-text { font-size: 30rpx; font-weight: 600; color: #1D2129; }
+.gender-tag { font-size: 22rpx; padding: 2rpx 10rpx; border-radius: 4rpx;
   &.male { color: #3D6DF7; background: #E8F0FE; }
   &.female { color: #FF6B9D; background: #FFF0F5; }
 }
-.age-text { font-size: 24rpx; color: #86909C; }
+.age-tag { font-size: 24rpx; color: #86909C; }
 .tag-list { display: flex; gap: 8rpx; flex-wrap: wrap; }
 .customer-tag { padding: 4rpx 12rpx; background: #E8F0FE; color: #3D6DF7; border-radius: 4rpx; font-size: 22rpx; }
-.no-tag { font-size: 24rpx; color: #C9CDD4; }
 
-.card-body { padding: 16rpx 0; border-top: 1rpx solid #F2F3F5; }
-.info-row { display: flex; }
+.card-body { padding: 20rpx 0; border-top: 1rpx solid #F2F3F5; border-bottom: 1rpx solid #F2F3F5; }
+.info-row { display: flex; margin-bottom: 16rpx; &:last-child { margin-bottom: 0; } }
 .info-item { flex: 1; display: flex; align-items: center; gap: 12rpx;
-  .label { font-size: 24rpx; color: #86909C; min-width: 60rpx; }
-  .value { font-size: 26rpx; color: #1D2129; }
+  .label { font-size: 24rpx; color: #86909C; min-width: 80rpx; }
+  .value { font-size: 26rpx; color: #1D2129;
+    &.highlight { color: #FF6B35; font-weight: 500; }
+  }
 }
+.star-row { display: flex; gap: 4rpx; }
 
 .card-actions { display: flex; gap: 20rpx; margin-top: 16rpx; padding-top: 16rpx; border-top: 1rpx solid #F2F3F5; }
 .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8rpx; padding: 16rpx; border-radius: 12rpx; font-size: 28rpx; font-weight: 500;

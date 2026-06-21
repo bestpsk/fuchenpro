@@ -215,7 +215,7 @@
  * @description 展示企业列表，支持关键词搜索（企业名/老板/电话）、按类型/级别/状态筛选、
  * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除企业
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listEnterprise, delEnterprise } from '@/api/business/enterprise'
 import { checkPermi } from '@/utils/permission'
@@ -229,6 +229,7 @@ const showFilter = ref(false)
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 /** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {

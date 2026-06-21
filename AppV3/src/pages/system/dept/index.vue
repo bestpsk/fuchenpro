@@ -147,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listDept, delDept } from '@/api/system/dept'
 import { checkPermi } from '@/utils/permission'
 
@@ -158,6 +158,7 @@ const showFilter = ref(false)
 const expandedKeys = ref({})
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const queryParams = reactive({
   deptName: '',

@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listInventory, listWarnInventory } from '@/api/wms/inventory'
 import { checkPermi } from '@/utils/permission'
@@ -126,6 +126,7 @@ const showFilter = ref(false)
 const warnOnly = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => queryParams.category !== '' && queryParams.category !== undefined)
 

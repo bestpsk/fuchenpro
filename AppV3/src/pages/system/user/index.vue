@@ -91,7 +91,7 @@
             <template v-for="dept in deptOptions" :key="dept.id">
               <view class="dept-node" @click="selectDept(dept)">
                 <view class="dept-node-content" :class="{ active: queryParams.deptId === dept.id }">
-                  <u-icon :name="dept.children && dept.children.length ? 'file-folder-fill' : 'file-text-fill'" size="18" :color="queryParams.deptId === dept.id ? '#3D6DF7' : '#86909C'"></u-icon>
+                  <u-icon :name="dept.children && dept.children.length ? 'folder' : 'file-text-fill'" size="18" :color="queryParams.deptId === dept.id ? '#3D6DF7' : '#86909C'"></u-icon>
                   <text class="dept-node-label">{{ dept.label }}</text>
                   <u-icon v-if="queryParams.deptId === dept.id" name="checkmark" size="16" color="#3D6DF7"></u-icon>
                 </view>
@@ -219,7 +219,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listUser, delUser, resetUserPwd, changeUserStatus, deptTreeSelect } from '@/api/system/user'
 import { checkPermi } from '@/utils/permission'
 
@@ -236,6 +236,7 @@ const deptOptions = ref([])
 const selectedDeptName = ref('')
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return (queryParams.status !== '' && queryParams.status !== undefined) || queryParams.deptId

@@ -34,11 +34,6 @@ export function confirmStockOut(id, warehouseId) {
   return request({ url: '/wms/stockOut/confirm/' + id, method: 'put', data: { warehouseId } })
 }
 
-/** 根据出库单ID确认出库（与confirmStockOut功能相同，参数名不同） */
-export function confirmStockOutById(stockOutId) {
-  return request({ url: '/wms/stockOut/confirm/' + stockOutId, method: 'put' })
-}
-
 /** 取消确认出库，将已出库数量归还库存 */
 export function cancelConfirmStockOut(stockOutId) {
   return request({ url: '/wms/stockOut/cancelConfirm/' + stockOutId, method: 'put' })

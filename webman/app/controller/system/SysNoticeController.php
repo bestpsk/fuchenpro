@@ -87,14 +87,7 @@ class SysNoticeController
     // 分页查询指定通知的已读用户列表
     public function readUsersList(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $noticeId = 0;
-        foreach ($parts as $i => $p) {
-            if ($p === 'readUsers' && isset($parts[$i + 1]) && $parts[$i + 1] === 'list') {
-                $noticeId = intval($parts[$i - 1] ?? 0);
-                break;
-            }
-        }
+        $noticeId = intval($request->input('noticeId', 0));
         $service = new SysNoticeService();
         $result = $service->readUsersList($noticeId, $request->all());
         return TableDataInfo::result($result->items(), $result->total());

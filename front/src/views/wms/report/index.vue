@@ -11,6 +11,11 @@
               <el-option v-for="dict in biz_product_category" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
+          <el-form-item label="仓库">
+            <el-select v-model="stockInQuery.warehouseId" placeholder="全部仓库" clearable style="width: 160px">
+              <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getStockInSummary">查询</el-button>
             <el-button type="warning" plain icon="Download" @click="handleExportStockIn">导出</el-button>
@@ -44,6 +49,11 @@
               <el-option v-for="dict in biz_product_category" :key="dict.value" :label="dict.label" :value="dict.value" />
             </el-select>
           </el-form-item>
+          <el-form-item label="仓库">
+            <el-select v-model="stockOutQuery.warehouseId" placeholder="全部仓库" clearable style="width: 160px">
+              <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
+            </el-select>
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getStockOutSummary">查询</el-button>
             <el-button type="warning" plain icon="Download" @click="handleExportStockOut">导出</el-button>
@@ -75,6 +85,11 @@
           <el-form-item label="类别">
             <el-select v-model="turnoverQuery.category" placeholder="请选择" clearable style="width: 140px">
               <el-option v-for="dict in biz_product_category" :key="dict.value" :label="dict.label" :value="dict.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="仓库">
+            <el-select v-model="turnoverQuery.warehouseId" placeholder="全部仓库" clearable style="width: 160px">
+              <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -114,6 +129,11 @@
           <el-form-item label="货品">
             <el-select v-model="flowQuery.productId" placeholder="搜索货品" filterable remote :remote-method="searchProductList" :loading="productLoading" style="width: 240px">
               <el-option v-for="item in productOptions" :key="item.productId" :label="item.productName + '(' + item.productCode + ')'" :value="item.productId" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="仓库">
+            <el-select v-model="flowQuery.warehouseId" placeholder="全部仓库" clearable style="width: 160px">
+              <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
             </el-select>
           </el-form-item>
           <el-form-item label="日期范围">
@@ -270,6 +290,7 @@ function getFlow() {
   if (!flowQuery.value.productId) return
   flowLoading.value = true
   const params = { productId: flowQuery.value.productId }
+  if (flowQuery.value.warehouseId) params.warehouseId = flowQuery.value.warehouseId
   if (flowDateRange.value?.length === 2) { params.flowDateStart = flowDateRange.value[0]; params.flowDateEnd = flowDateRange.value[1] }
   productFlow(params).then(res => { flowData.value = res.data || []; flowLoading.value = false })
 }
@@ -311,6 +332,7 @@ function handleExportTurnover() {
 function handleExportFlow() {
   if (!flowQuery.value.productId) return proxy.$modal.msgWarning('请先选择货品')
   const params = { productId: flowQuery.value.productId }
+  if (flowQuery.value.warehouseId) params.warehouseId = flowQuery.value.warehouseId
   if (flowDateRange.value?.length === 2) { params.flowDateStart = flowDateRange.value[0]; params.flowDateEnd = flowDateRange.value[1] }
   proxy.download("wms/report/exportProductFlow", params, `货品收发存_${new Date().getTime()}.xlsx`)
 }

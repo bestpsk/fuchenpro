@@ -34,11 +34,6 @@ export function confirmStockIn(id) {
   return request({ url: '/wms/stockIn/confirm/' + id, method: 'put' })
 }
 
-/** 根据入库单ID确认入库（与confirmStockIn功能相同，参数名不同） */
-export function confirmStockInById(stockInId) {
-  return request({ url: '/wms/stockIn/confirm/' + stockInId, method: 'put' })
-}
-
 /** 取消确认入库，将已入库数量从库存中扣减 */
 export function cancelConfirmStockIn(stockInId) {
   return request({ url: '/wms/stockIn/cancelConfirm/' + stockInId, method: 'put' })

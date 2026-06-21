@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listProduct, delProduct } from '@/api/wms/product'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
@@ -94,6 +94,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => (queryParams.status !== '' && queryParams.status !== undefined) || (queryParams.category !== '' && queryParams.category !== undefined))
 

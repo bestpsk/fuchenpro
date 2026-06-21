@@ -171,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listType, delType, refreshCache } from '@/api/system/dictType'
 import { checkPermi } from '@/utils/permission'
 
@@ -184,6 +184,7 @@ const showDatePicker = ref(false)
 const dateRange = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return (queryParams.status !== '' && queryParams.status !== undefined) || dateRange.value.length > 0

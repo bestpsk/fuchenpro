@@ -69,6 +69,7 @@ const particleCanvas = ref(null)
 let timer = null
 let animationId = null
 let particles = []
+let resizeHandler = null
 
 /** 头像加载失败时回退为默认头像 */
 const onAvatarError = (e) => {
@@ -136,7 +137,8 @@ const initParticles = () => {
     canvas.height = window.innerHeight
   }
   resize()
-  window.addEventListener('resize', resize)
+  resizeHandler = resize
+  window.addEventListener('resize', resizeHandler)
 
   particles = Array.from({ length: 80 }, () => ({
     x: Math.random() * canvas.width,
@@ -187,6 +189,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearInterval(timer)
   cancelAnimationFrame(animationId)
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler)
+    resizeHandler = null
+  }
 })
 </script>
 

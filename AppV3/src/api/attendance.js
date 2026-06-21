@@ -130,5 +130,5 @@ export function updateAttendanceRule(data) {
 }
 
 export function delAttendanceRule(ruleIds) {
-  return request({ url: '/business/attendance/rule/' + ruleIds, method: 'delete' })
+  return request({ url: '/business/attendance/rule', method: 'delete', params: { ruleIds } })
 }

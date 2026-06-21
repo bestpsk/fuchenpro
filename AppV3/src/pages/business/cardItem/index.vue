@@ -194,7 +194,7 @@
  * @description 展示卡项列表，支持关键词搜索（卡项名称/编码）、按分类/状态筛选、
  * 分页加载、下拉刷新、状态切换、跳转新增/编辑、删除卡项
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listCardItem, delCardItem, updateCardItem } from '@/api/business/cardItem'
 import { getDicts } from '@/api/system/dict/data'
 import { checkPermi } from '@/utils/permission'
@@ -207,6 +207,7 @@ const showFilter = ref(false)
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 /** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {

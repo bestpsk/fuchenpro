@@ -164,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listRole, delRole, changeRoleStatus } from '@/api/system/role'
 import { checkPermi } from '@/utils/permission'
 
@@ -175,6 +175,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return queryParams.status !== '' && queryParams.status !== undefined

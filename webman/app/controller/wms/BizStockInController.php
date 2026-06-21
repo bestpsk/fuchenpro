@@ -127,10 +127,18 @@ class BizStockInController
         $params['pageSize'] = 10000;
         $result = $service->selectStockInList($params);
         $list = $result->items();
-        // 关联查询warehouse_name
+        // 关联查询warehouse_name（批量查询避免N+1）
+        $warehouseIds = [];
         foreach ($list as $item) {
             if (!empty($item->warehouse_id)) {
-                $warehouse = \app\model\BizWarehouse::find($item->warehouse_id);
+                $warehouseIds[] = $item->warehouse_id;
+            }
+        }
+        $warehouseIds = array_values(array_unique($warehouseIds));
+        $warehouses = \app\model\BizWarehouse::whereIn('warehouse_id', $warehouseIds)->get()->keyBy('warehouse_id');
+        foreach ($list as $item) {
+            if (!empty($item->warehouse_id)) {
+                $warehouse = $warehouses->get($item->warehouse_id);
                 $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
             } else {
                 $item->warehouse_name = '';

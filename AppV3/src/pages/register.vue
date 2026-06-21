@@ -7,22 +7,22 @@
     <view class="login-form-content">
       <view class="input-item">
         <u-icon name="account" size="20" color="#999" style="margin-left: 10px" />
-        <input v-model="registerForm.username" class="input" type="text" placeholder="请输入账�? maxlength="30" />
+        <input v-model="registerForm.username" class="input" type="text" placeholder="请输入账号" maxlength="30" />
       </view>
       <view class="input-item">
         <u-icon name="lock" size="20" color="#999" style="margin-left: 10px" />
-        <input v-model="registerForm.password" type="password" class="input" placeholder="请输入密�? maxlength="20" />
+        <input v-model="registerForm.password" type="password" class="input" placeholder="请输入密码" maxlength="20" />
       </view>
       <view class="input-item">
         <u-icon name="lock" size="20" color="#999" style="margin-left: 10px" />
-        <input v-model="registerForm.confirmPassword" type="password" class="input" placeholder="请输入重复密�? maxlength="20" />
+        <input v-model="registerForm.confirmPassword" type="password" class="input" placeholder="请输入重复密码" maxlength="20" />
       </view>
       <view class="input-item captcha-row" v-if="captchaEnabled">
         <u-icon name="photo" size="20" color="#999" style="margin-left: 10px" />
         <input v-model="registerForm.code" type="number" class="input captcha-input" placeholder="请输入验证码" maxlength="4" />
         <view class="login-code" @click="getCode">
           <image v-if="codeUrl" :src="codeUrl" class="login-code-img" mode="heightFix" />
-          <view v-else class="login-code-placeholder">获取验证�?/view>
+          <view v-else class="login-code-placeholder">获取验证码</view>
         </view>
       </view>
       <view class="action-btn">

@@ -58,7 +58,6 @@ export const useMenuStore = defineStore('menu', {
           this.loaded = true
         }
         const res = await getGroupedMenus()
-        console.log('[MenuStore] API response:', JSON.stringify(res?.code), 'data length:', res?.data?.length)
         if (res.code === 200 && res.data && res.data.length > 0) {
           const menuMap = {}
           for (const group of res.data) {

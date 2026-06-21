@@ -543,7 +543,7 @@ function submitForm() {
 onMounted(() => {
   getDeptTree()
   getList()
-  proxy.getConfigKey("sys.user.initPassword").then(response => {
+  proxy.getConfigKey("sys.security.initPassword").then(response => {
     initPassword.value = response.msg
   })
 })

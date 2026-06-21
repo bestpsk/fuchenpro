@@ -35,6 +35,11 @@ return [
             'publicPath' => public_path()
         ]
     ],
+    // Database backup scheduler
+    'backupScheduler' => [
+        'handler' => app\process\BackupScheduler::class,
+        'count' => 1,
+    ],
     // File update detection and automatic reload
     'monitor' => [
         'handler' => app\process\Monitor::class,

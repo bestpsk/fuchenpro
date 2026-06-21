@@ -220,7 +220,7 @@
  * @description 展示备货列表，支持备货编号搜索、按企业/门店/状态筛选、
  * 分页加载、下拉刷新、跳转详情
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listStockPrepare } from '@/api/business/stockPrepare'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
@@ -239,6 +239,7 @@ const storeOptions = ref([])
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const statusOptions = ref([
   { label: '待出库', value: '0' },

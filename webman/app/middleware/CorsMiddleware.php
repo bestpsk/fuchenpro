@@ -14,7 +14,6 @@ use Webman\Http\Response;
  */
 class CorsMiddleware implements MiddlewareInterface
 {
-    // 处理跨域请求：OPTIONS预检返回204，其他请求注入CORS响应头
     public function process(Request $request, callable $handler): Response
     {
         if ($request->method() === 'OPTIONS') {
@@ -23,13 +22,24 @@ class CorsMiddleware implements MiddlewareInterface
             $response = $handler($request);
         }
 
-        $response->withHeaders([
-            'Access-Control-Allow-Origin' => $request->header('origin', '*'),
-            'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, token, isToken, repeatSubmit, interval',
+        $origin = $request->header('origin', '');
+        $allowedOrigins = config('cors.allowed_origins', []);
+        $headers = [
+            'Access-Control-Allow-Methods' => config('cors.methods', 'GET, POST, PUT, DELETE, OPTIONS'),
+            'Access-Control-Allow-Headers' => config('cors.headers', 'Content-Type, Authorization, X-Requested-With, token, isToken, repeatSubmit, interval'),
             'Access-Control-Allow-Credentials' => 'true',
-            'Access-Control-Max-Age' => '86400',
-        ]);
+            'Access-Control-Max-Age' => (string)config('cors.max_age', 86400),
+        ];
+
+        if (!empty($allowedOrigins)) {
+            if (in_array($origin, $allowedOrigins, true) && $origin !== '') {
+                $headers['Access-Control-Allow-Origin'] = $origin;
+            }
+        } elseif ($origin !== '') {
+            $headers['Access-Control-Allow-Origin'] = $origin;
+        }
+
+        $response->withHeaders($headers);
 
         return $response;
     }

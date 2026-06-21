@@ -184,6 +184,8 @@
             <view class="header-info">
               <view class="name-row">
                 <text class="name-text">{{ item.customerName }}</text>
+                <text class="gender-tag" :class="item.gender === '1' ? 'female' : 'male'">{{ item.gender === '1' ? '女' : '男' }}</text>
+                <text class="age-tag" v-if="item.age">{{ item.age }}岁</text>
                 <view class="status-tag" :class="item.status === '0' ? 'status-normal' : 'status-stop'">
                   {{ item.status === '0' ? '正常' : '停用' }}
                 </view>
@@ -199,7 +201,7 @@
               <view class="info-item">
                 <text class="label">满意度</text>
                 <view class="star-row">
-                  <u-icon v-for="n in 5" :key="n" :name="n <= (item.satisfaction || 0) ? 'star-fill' : 'star'" size="14" :color="n <= (item.satisfaction || 0) ? '#FF9A2E' : '#E5E6EB'"></u-icon>
+                  <u-icon v-for="n in 5" :key="n" :name="n <= (item.avgSatisfaction || 0) ? 'star-fill' : 'star'" size="14" :color="n <= (item.avgSatisfaction || 0) ? '#FF9A2E' : '#E5E6EB'"></u-icon>
                 </view>
               </view>
               <view class="info-item">
@@ -209,12 +211,12 @@
             </view>
             <view class="info-row">
               <view class="info-item">
-                <text class="label">电话</text>
-                <text class="value phone-text" @click.stop="callPhone(item.phone)">{{ item.phone || '-' }}</text>
+                <text class="label">企业</text>
+                <text class="value">{{ getEnterpriseName(item.enterpriseId) || '-' }}</text>
               </view>
               <view class="info-item">
-                <text class="label">所属门店</text>
-                <text class="value">{{ item.storeName || '-' }}</text>
+                <text class="label">门店</text>
+                <text class="value">{{ getStoreNameById(item.storeId) || '-' }}</text>
               </view>
             </view>
           </view>
@@ -263,13 +265,13 @@
  * @description 展示客户列表，支持关键词搜索（客户名/电话）、按企业/门店/标签/状态筛选、
  * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除客户
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import config from '@/config'
 import { getDicts } from '@/api/system/dict/data'
 import { listEnterprise } from '@/api/business/enterprise'
-import { searchStore } from '@/api/business/store'
-import { listCustomer, delCustomer } from '@/api/business/customer'
+import { listStore, searchStore } from '@/api/business/store'
+import { listCustomer, searchCustomer, delCustomer } from '@/api/business/customer'
 import { checkPermi } from '@/utils/permission'
 
 const customerList = ref([])
@@ -284,10 +286,12 @@ const storeSearchKeyword = ref('')
 
 const enterpriseColumns = ref([])
 const storeColumns = ref([])
+const allStoreList = ref([])
 const tagOptions = ref([])
 
 /** 搜索防抖定时器 */
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 /** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {
@@ -337,6 +341,23 @@ function getStoreName(id) {
   return item ? item.storeName : ''
 }
 
+/** 根据门店ID从全量列表获取门店名称 */
+function getStoreNameById(id) {
+  const item = allStoreList.value.find(s => String(s.storeId) === String(id))
+  return item ? item.storeName : ''
+}
+
+/** 加载全量门店列表（用于卡片中门店名称映射） */
+async function loadAllStores() {
+  try {
+    const response = await listStore({ pageNum: 1, pageSize: 999 })
+    const data = response.data || response
+    allStoreList.value = data.rows || []
+  } catch (e) {
+    console.error('加载全量门店列表失败:', e)
+  }
+}
+
 /** 标签值映射为中文名称 */
 function getTagLabel(value) {
   const item = tagOptions.value.find(t => t.value === value)
@@ -351,13 +372,13 @@ function formatTime(time) {
 function getAvatarUrl(avatar) {
   if (!avatar || avatar === '') return ''
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar
-  return config.appInfo.site_url + avatar
+  return config.baseUrl + avatar
 }
 
 /** 加载企业列表 */
 async function loadEnterpriseOptions() {
   try {
-    const response = await listEnterprise({ pageNum: 1, pageSize: 1000, status: '0' })
+    const response = await listEnterprise({ pageNum: 1, pageSize: 100, status: '0' })
     const data = response.data || response
     enterpriseColumns.value = data.rows || []
   } catch (e) {
@@ -412,7 +433,7 @@ function onStorePickerOpen() {
   showStorePicker.value = true
 }
 
-/** 加载客户列表，支持分页和关键词搜索（搜索时同时匹配客户名/电话），isRefresh为true时重置到第一页 */
+/** 加载客户列表，支持分页和关键词搜索 */
 async function getList(isRefresh = false) {
   if (loading.value) return
 
@@ -560,6 +581,7 @@ function handleDelete(item) {
 
 onMounted(async () => {
   await loadEnterpriseOptions()
+  loadAllStores()
   loadTagOptions()
 })
 
@@ -911,6 +933,20 @@ page {
   font-size: 30rpx;
   font-weight: 600;
   color: #1D2129;
+}
+
+.gender-tag {
+  font-size: 22rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+
+  &.male { color: #3D6DF7; background: #E8F0FE; }
+  &.female { color: #FF6B9D; background: #FFF0F5; }
+}
+
+.age-tag {
+  font-size: 24rpx;
+  color: #86909C;
 }
 
 .status-tag {

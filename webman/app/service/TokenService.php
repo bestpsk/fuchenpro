@@ -19,8 +19,8 @@ class TokenService
 
     public function __construct()
     {
-        $this->secret = Constants::JWT_SECRET;
-        $this->expire = intval(SysConfigService::getConfigValue('sys.login.expireTime', Constants::TOKEN_EXPIRE));
+        $this->secret = getenv('JWT_SECRET') ?: Constants::JWT_SECRET ?: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+        $this->expire = intval(SysConfigService::getConfigValue('sys.login.expireTime'));
     }
 
     // 创建JWT令牌，存入Redis并返回
@@ -74,7 +74,8 @@ class TokenService
     {
         $expireTime = $loginUser->expireTime;
         $currentTime = intval(microtime(true) * 1000);
-        if ($expireTime - $currentTime <= Constants::MILLIS_MINUTE_TWENTY) {
+        $refreshThreshold = intval(SysConfigService::getConfigValue('sys.login.tokenRefreshThreshold')) * 60 * 1000;
+        if ($expireTime - $currentTime <= $refreshThreshold) {
             $this->refreshToken($loginUser);
         }
     }
@@ -84,7 +85,7 @@ class TokenService
     public function refreshToken(LoginUser $loginUser)
     {
         $loginUser->loginTime = intval(microtime(true) * 1000);
-        $loginUser->expireTime = $loginUser->loginTime + $this->expire * 60 * 10000;
+        $loginUser->expireTime = $loginUser->loginTime + $this->expire * 60 * 1000;
         $userKey = Constants::LOGIN_TOKEN_KEY . $loginUser->token;
         $redis = Redis::connection();
         $redis->setex($userKey, $this->expire * 60, json_encode($loginUser->toArray()));

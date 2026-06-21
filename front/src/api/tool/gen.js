@@ -48,7 +48,7 @@ export function importTable(data) {
   })
 }
 
-/** 通过SQL语句创建表并导入代码生成器 */
+/** 通过SQL语句创建表并导入代码生成器（注意：后端未实现此接口，调用会返回404） */
 export function createTable(data) {
   return request({
     url: '/tool/gen/createTable',
@@ -77,7 +77,7 @@ export function delTable(tableId) {
 /** 生成代码并下载到自定义路径 */
 export function genCode(tableName) {
   return request({
-    url: '/tool/gen/genCode/' + tableName,
+    url: '/tool/gen/download/' + tableName,
     method: 'get'
   })
 }

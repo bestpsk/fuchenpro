@@ -7,6 +7,7 @@ use app\model\SysUserRole;
 use app\model\SysUserPost;
 use app\common\LoginUser;
 use app\common\Constants;
+use app\service\SysConfigService;
 
 /**
  * 系统用户服务层，处理用户的增删改查、密码管理、唯一性校验和导入导出
@@ -81,8 +82,8 @@ class SysUserService
         if (!empty($data['password'])) {
             $data['password'] = PasswordService::encrypt($data['password']);
         } else {
-            $initPwd = SysConfigService::selectConfigByKey('sys.user.initPassword');
-            $data['password'] = PasswordService::encrypt($initPwd ?: '123456');
+            $initPwd = SysConfigService::getConfigValue('sys.security.initPassword');
+            $data['password'] = PasswordService::encrypt($initPwd);
         }
         $data['create_time'] = date('Y-m-d H:i:s');
         $data['del_flag'] = '0';
@@ -240,8 +241,8 @@ class SysUserService
                 $existingUser = $this->selectUserByUserName($userName);
 
                 if (!$existingUser) {
-                    $initPwd = SysConfigService::selectConfigByKey('sys.user.initPassword');
-                    $user['password'] = PasswordService::encrypt($initPwd ?: '123456');
+                    $initPwd = SysConfigService::getConfigValue('sys.security.initPassword');
+                    $user['password'] = PasswordService::encrypt($initPwd);
                     $user['create_by'] = $operName;
                     $user['nick_name'] = $user['nick_name'] ?? $userName;
                     $user['status'] = $user['status'] ?? '0';

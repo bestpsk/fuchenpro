@@ -469,7 +469,7 @@ function getList() {
 }
 
 function getScheduleList(params) {
-  listSchedule({ ...params, pageNum: 1, pageSize: 2000 }).then(response => {
+  listSchedule({ ...params, pageNum: 1, pageSize: 500 }).then(response => {
     scheduleListData.value = response.rows || []
     processScheduleListGroup()
   })
@@ -846,20 +846,26 @@ function isRestDayForUser(userId, day) {
   return dates.includes(`${y}-${m}-${String(day).padStart(2, '0')}`)
 }
 
+function handleMouseUp() {
+  if (isDragging.value) {
+    isDragging.value = false
+    dragStartInfo.value = null
+    dragEndInfo.value = null
+    selectedDays.value.clear()
+  }
+}
+
 onMounted(() => {
   getList()
   getUserList()
   getEnterpriseList()
   tableHeight.value = window.innerHeight - 320
 
-  document.addEventListener('mouseup', () => {
-    if (isDragging.value) {
-      isDragging.value = false
-      dragStartInfo.value = null
-      dragEndInfo.value = null
-      selectedDays.value.clear()
-    }
-  })
+  document.addEventListener('mouseup', handleMouseUp)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mouseup', handleMouseUp)
 })
 </script>
 

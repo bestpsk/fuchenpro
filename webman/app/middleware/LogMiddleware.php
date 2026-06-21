@@ -7,6 +7,7 @@ use Webman\Http\Request;
 use Webman\Http\Response;
 use app\model\SysOperLog;
 use app\common\LoginUser;
+use support\Log;
 
 /**
  * 操作日志中间件
@@ -42,7 +43,14 @@ class LogMiddleware implements MiddlewareInterface
             $operLog->request_method = $method;
             $operLog->operator_type = 1;
             $operLog->oper_name = $loginUser->user ? $loginUser->user->user_name : '';
-            $operLog->dept_name = $loginUser->user && $loginUser->user->dept ? $loginUser->user->dept->dept_name : '';
+
+            // 隔离 dept 懒加载，避免加载失败导致整条日志不记录
+            try {
+                $operLog->dept_name = $loginUser->user && $loginUser->user->dept ? $loginUser->user->dept->dept_name : '';
+            } catch (\Throwable $e) {
+                $operLog->dept_name = '';
+            }
+
             $operLog->oper_url = $request->fullUrl();
             $operLog->oper_ip = $request->getRealIp();
             $operLog->oper_location = \app\service\IpService::getLocation($request->getRealIp());
@@ -63,7 +71,8 @@ class LogMiddleware implements MiddlewareInterface
             $operLog->cost_time = $costTime;
             $operLog->oper_time = date('Y-m-d H:i:s');
             $operLog->save();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('LogMiddleware error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         }
 
         return $response;
@@ -73,6 +82,7 @@ class LogMiddleware implements MiddlewareInterface
     private function getTitle($path)
     {
         $titles = [
+            '/system/user/detail' => '用户详情',
             '/system/user' => '用户管理',
             '/system/role' => '角色管理',
             '/system/menu' => '菜单管理',
@@ -81,6 +91,8 @@ class LogMiddleware implements MiddlewareInterface
             '/system/dict' => '字典管理',
             '/system/config' => '参数管理',
             '/system/notice' => '通知公告',
+            '/system/appMenu' => 'APP菜单管理',
+            '/system/banner' => '轮播图管理',
             '/monitor/online' => '在线用户',
             '/monitor/job' => '定时任务',
             '/monitor/logininfor' => '登录日志',
@@ -88,6 +100,33 @@ class LogMiddleware implements MiddlewareInterface
             '/monitor/cache' => '缓存监控',
             '/monitor/server' => '服务监控',
             '/tool/gen' => '代码生成',
+            '/business/enterprise' => '企业管理',
+            '/business/store' => '门店管理',
+            '/business/customer' => '客户管理',
+            '/business/sales' => '销售管理',
+            '/business/package' => '套餐管理',
+            '/business/operation' => '操作记录',
+            '/business/repayment' => '还款管理',
+            '/business/cardItem' => '卡项管理',
+            '/business/stockPrepare' => '备货管理',
+            '/business/archive' => '档案管理',
+            '/business/plan' => '方案管理',
+            '/business/schedule' => '排班管理',
+            '/business/employeeConfig' => '员工配置',
+            '/business/attendance' => '考勤管理',
+            '/finance/planAudit' => '方案审核',
+            '/finance/reimbursement' => '报销管理',
+            '/wms/supplier' => '供货商管理',
+            '/wms/warehouse' => '仓库管理',
+            '/wms/product' => '货品管理',
+            '/wms/stockIn' => '入库管理',
+            '/wms/stockOut' => '出库管理',
+            '/wms/inventory' => '库存查看',
+            '/wms/stockCheck' => '库存盘点',
+            '/wms/stockTransfer' => '调拨管理',
+            '/wms/report' => '进销存报表',
+            '/hr/salary' => '薪资管理',
+            '/admin/feedback' => '反馈管理',
         ];
 
         foreach ($titles as $prefix => $title) {

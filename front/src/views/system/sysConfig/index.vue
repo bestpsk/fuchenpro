@@ -20,6 +20,14 @@
                   </div>
                </el-form-item>
 
+               <el-form-item label="令牌续期阈值">
+                  <el-input-number v-model="systemForm.tokenRefreshThreshold" :min="1" :max="1440" :step="1" controls-position="right" />
+                  <span style="margin-left: 10px">分钟</span>
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     令牌剩余有效期低于此值时自动续期
+                  </div>
+               </el-form-item>
+
                <!-- 对象存储配置 -->
                <el-divider content-position="left">对象存储配置</el-divider>
                <el-form-item label="启用腾讯云COS">
@@ -46,6 +54,48 @@
                </el-form-item>
                <el-form-item label="自定义域名">
                   <el-input v-model="systemForm.cosDomain" placeholder="请输入COS自定义域名" style="max-width: 400px" />
+               </el-form-item>
+
+               <!-- 安全策略配置 -->
+               <el-divider content-position="left">安全策略配置</el-divider>
+               <el-form-item label="验证码有效期">
+                  <el-input-number v-model="systemForm.captchaExpire" :min="1" :max="30" :step="1" controls-position="right" />
+                  <span style="margin-left: 10px">分钟</span>
+               </el-form-item>
+               <el-form-item label="密码最大错误次数">
+                  <el-input-number v-model="systemForm.pwdErrMaxCount" :min="1" :max="20" :step="1" controls-position="right" />
+                  <span style="margin-left: 10px">次</span>
+               </el-form-item>
+               <el-form-item label="密码锁定时间">
+                  <el-input-number v-model="systemForm.pwdErrLockTime" :min="1" :max="1440" :step="1" controls-position="right" />
+                  <span style="margin-left: 10px">分钟</span>
+               </el-form-item>
+               <el-form-item label="用户初始密码">
+                  <el-input v-model="systemForm.initPassword" placeholder="请输入用户初始密码" show-password style="max-width: 400px" />
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     新建用户和重置密码时的默认密码
+                  </div>
+               </el-form-item>
+
+               <!-- 高德地图配置 -->
+               <el-divider content-position="left">高德地图配置</el-divider>
+               <el-form-item label="Web服务Key">
+                  <el-input v-model="systemForm.amapWebServiceKey" placeholder="请输入高德Web服务Key" style="max-width: 400px" />
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     用于APP端逆地理编码和IP定位，修改后立即生效
+                  </div>
+               </el-form-item>
+               <el-form-item label="JS API Key">
+                  <el-input v-model="systemForm.amapJsKey" placeholder="请输入高德JS API Key" style="max-width: 400px" />
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     用于Web端地图组件加载，修改后刷新页面生效
+                  </div>
+               </el-form-item>
+               <el-form-item label="安全密钥">
+                  <el-input v-model="systemForm.amapSecurityJsCode" placeholder="请输入高德安全密钥" show-password style="max-width: 400px" />
+                  <div style="color: #909399; font-size: 12px; line-height: 1.5; margin-top: 4px;">
+                     JS API安全密钥，与JS API Key配合使用
+                  </div>
                </el-form-item>
 
                <el-form-item>
@@ -99,7 +149,7 @@
  * @description 系统配置页面 - 参数配置与业务配置管理
  * @description 提供登录过期时间、对象存储、销售开单等配置项的查看与修改
  */
-import { listConfig, updateConfig, refreshCache } from "@/api/system/config"
+import { listConfig, getConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config"
 
 const { proxy } = getCurrentInstance()
 
@@ -112,12 +162,20 @@ const configMap = ref({})
 // 参数配置表单
 const systemForm = reactive({
    expireTime: 300,
+   tokenRefreshThreshold: 20,
    cosEnabled: false,
    cosSecretId: '',
    cosSecretKey: '',
    cosBucket: '',
    cosRegion: 'ap-shanghai',
-   cosDomain: ''
+   cosDomain: '',
+   captchaExpire: 2,
+   pwdErrMaxCount: 5,
+   pwdErrLockTime: 10,
+   initPassword: '123456',
+   amapWebServiceKey: '',
+   amapJsKey: '',
+   amapSecurityJsCode: ''
 })
 
 // 业务配置表单
@@ -130,20 +188,28 @@ const bizForm = reactive({
 
 // 配置键名与表单字段的映射关系
 const systemKeyMap = {
-   'sys.login.expireTime': { field: 'expireTime', type: 'number' },
-   'sys.cos.enabled': { field: 'cosEnabled', type: 'boolean' },
-   'sys.cos.secretId': { field: 'cosSecretId', type: 'string' },
-   'sys.cos.secretKey': { field: 'cosSecretKey', type: 'string' },
-   'sys.cos.bucket': { field: 'cosBucket', type: 'string' },
-   'sys.cos.region': { field: 'cosRegion', type: 'string' },
-   'sys.cos.domain': { field: 'cosDomain', type: 'string' }
+   'sys.login.expireTime': { field: 'expireTime', type: 'number', configName: 'Token有效期', remark: 'Token有效时长（分钟）' },
+   'sys.login.tokenRefreshThreshold': { field: 'tokenRefreshThreshold', type: 'number', configName: '令牌续期阈值', remark: '令牌剩余有效期低于此值时自动续期（分钟）' },
+   'sys.cos.enabled': { field: 'cosEnabled', type: 'boolean', configName: '启用腾讯云COS', remark: '是否启用腾讯云对象存储' },
+   'sys.cos.secretId': { field: 'cosSecretId', type: 'string', configName: 'COS SecretId', remark: '腾讯云SecretId' },
+   'sys.cos.secretKey': { field: 'cosSecretKey', type: 'string', configName: 'COS SecretKey', remark: '腾讯云SecretKey' },
+   'sys.cos.bucket': { field: 'cosBucket', type: 'string', configName: 'COS Bucket', remark: 'COS存储桶名称' },
+   'sys.cos.region': { field: 'cosRegion', type: 'string', configName: 'COS Region', remark: 'COS地域' },
+   'sys.cos.domain': { field: 'cosDomain', type: 'string', configName: 'COS自定义域名', remark: 'COS自定义访问域名' },
+   'sys.security.captchaExpire': { field: 'captchaExpire', type: 'number', configName: '验证码有效期', remark: '验证码有效时长（分钟）' },
+   'sys.security.pwdErrMaxCount': { field: 'pwdErrMaxCount', type: 'number', configName: '密码最大错误次数', remark: '密码错误达到此次数后锁定账号' },
+   'sys.security.pwdErrLockTime': { field: 'pwdErrLockTime', type: 'number', configName: '密码锁定时间', remark: '密码错误锁定时长（分钟）' },
+   'sys.security.initPassword': { field: 'initPassword', type: 'string', configName: '用户初始密码', remark: '新建用户和重置密码时的默认密码' },
+   'sys.amap.webServiceKey': { field: 'amapWebServiceKey', type: 'string', configName: '高德Web服务Key', remark: '用于APP端逆地理编码和IP定位' },
+   'sys.amap.jsKey': { field: 'amapJsKey', type: 'string', configName: '高德JS API Key', remark: '用于Web端地图组件加载' },
+   'sys.amap.securityJsCode': { field: 'amapSecurityJsCode', type: 'string', configName: '高德安全密钥', remark: 'JS API安全密钥，与JS API Key配合使用' }
 }
 
 const bizKeyMap = {
-   'biz.sales.packageQuantityEditable': { field: 'packageQuantityEditable', type: 'boolean' },
-   'biz.sales.packageDealAmountEditable': { field: 'packageDealAmountEditable', type: 'boolean' },
-   'biz.sales.packagePaidAmountEditable': { field: 'packagePaidAmountEditable', type: 'boolean' },
-   'biz.attendance.allowManualAddress': { field: 'allowManualAddress', type: 'boolean' }
+   'biz.sales.packageQuantityEditable': { field: 'packageQuantityEditable', type: 'boolean', configName: '允许修改套餐次数', remark: '销售开单时是否允许修改套餐次数' },
+   'biz.sales.packageDealAmountEditable': { field: 'packageDealAmountEditable', type: 'boolean', configName: '允许修改套餐成交金额', remark: '销售开单时是否允许修改套餐成交金额' },
+   'biz.sales.packagePaidAmountEditable': { field: 'packagePaidAmountEditable', type: 'boolean', configName: '允许修改套餐实付金额', remark: '销售开单时是否允许修改套餐实付金额' },
+   'biz.attendance.allowManualAddress': { field: 'allowManualAddress', type: 'boolean', configName: '允许手动输入打卡地址', remark: '关闭后APP端考勤打卡定位失败时无法手动输入地址' }
 }
 
 /** 将配置值转换为表单字段类型 */
@@ -193,16 +259,27 @@ async function saveConfigs(keyMap, form) {
    const promises = []
    for (const [key, mapping] of Object.entries(keyMap)) {
       const config = configMap.value[key]
+      const configValue = stringifyValue(form[mapping.field], mapping.type)
       if (config) {
          const updateData = {
             configId: config.configId,
             configName: config.configName,
             configKey: config.configKey,
-            configValue: stringifyValue(form[mapping.field], mapping.type),
+            configValue,
             configType: config.configType,
             remark: config.remark
          }
          promises.push(updateConfig(updateData))
+      } else {
+         // 配置项不存在，自动创建
+         const addData = {
+            configName: mapping.configName,
+            configKey: key,
+            configValue,
+            configType: 'Y',
+            remark: mapping.remark
+         }
+         promises.push(addConfig(addData))
       }
    }
    await Promise.all(promises)

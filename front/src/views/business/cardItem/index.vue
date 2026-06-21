@@ -388,6 +388,10 @@ watch(productKeyword, (val) => {
   }, 500)
 })
 
+onBeforeUnmount(() => {
+  clearTimeout(debounceTimer)
+})
+
 function handleProductSelectChange(selection) {
   selectedProducts.value = selection
 }

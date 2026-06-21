@@ -17,7 +17,7 @@ class Constants
     const UNAUTHORIZED = 401;
 
     // JWT令牌配置
-    const JWT_SECRET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+    const JWT_SECRET = ''; // 从环境变量读取，见 TokenService
     const JWT_ALGO = 'HS512';
     const TOKEN_EXPIRE = 300;           // 令牌有效期（分钟）
     const TOKEN_PREFIX = 'Bearer ';     // 令牌请求头前缀
@@ -54,6 +54,7 @@ class Constants
     // 时间常量（毫秒）
     const MILLIS_MINUTE = 60 * 1000;            // 一分钟的毫秒数
     const MILLIS_MINUTE_TWENTY = 20 * 60 * 1000; // 二十分钟的毫秒数（令牌自动续期阈值）
+    const TOKEN_REFRESH_THRESHOLD = 20;  // 令牌自动续期阈值（分钟）
 
     // 安全策略
     const CAPTCHA_EXPIRE = 2;           // 验证码有效期（分钟）

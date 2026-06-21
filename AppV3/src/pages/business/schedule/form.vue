@@ -135,6 +135,7 @@
     <u-calendar
       :show="showCalendarPicker"
       mode="multiple"
+      :defaultDate="form.selectedDates"
       :maxDate="maxDate"
       :minDate="minDate"
       :formatter="calendarFormatter"
@@ -163,6 +164,7 @@
  */
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from '@/api/business/schedule'
+import { getRestDates } from '@/api/business/employeeConfig'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listUser } from '@/api/system/user'
 import { getDicts } from '@/api/system/dict/data'
@@ -189,12 +191,15 @@ const purposeColumns = ref([])
 const statusColumns = ref([])
 
 const bookedDates = ref([])
+const originalDates = ref([])
+const restDates = ref([])
 
 const minDate = ref(Number(new Date()))
 const maxDate = ref(Number(new Date(new Date().setFullYear(new Date().getFullYear() + 1))))
 
 const form = reactive({
   scheduleId: undefined,
+  scheduleIds: [],
   userId: '',
   userName: '',
   enterpriseId: '',
@@ -269,15 +274,52 @@ async function openCalendar() {
     return
   }
   await loadBookedDates()
+  // 加载选中员工的休息日
+  if (formMode.value === 'employee' && form.userId) {
+    try {
+      const res = await getRestDates(form.userId)
+      const data = res.data || res
+      restDates.value = data || []
+    } catch (e) {
+      restDates.value = []
+    }
+  } else if (formMode.value === 'enterprise' && selectedUsers.value.length > 0) {
+    try {
+      const allDates = new Set()
+      for (const user of selectedUsers.value) {
+        const res = await getRestDates(user.userId)
+        const data = res.data || res
+        const dates = Array.isArray(data) ? data : []
+        dates.forEach(d => allDates.add(d))
+      }
+      restDates.value = Array.from(allDates)
+    } catch (e) {
+      restDates.value = []
+    }
+  } else {
+    restDates.value = []
+  }
   showCalendarPicker.value = true
 }
 
-/** 日历日期格式化，已安排的日期标记为"已安排"并禁用选择 */
+/** 日历日期格式化，休息日和已安排的日期标记并禁用选择 */
 function calendarFormatter(day) {
-  const dateStr = `${day.year}-${String(day.month).padStart(2, '0')}-${String(day.day).padStart(2, '0')}`
-  if (bookedDates.value.includes(dateStr)) {
-    day.bottomInfo = '已安排'
-    day.type = 'disabled'
+  const dateObj = day.date instanceof Date ? day.date : new Date(day.date)
+  const y = dateObj.getFullYear()
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const d = String(dateObj.getDate()).padStart(2, '0')
+  const dateStr = `${y}-${m}-${d}`
+  if (restDates.value.includes(dateStr)) {
+    day.bottomInfo = '休息日'
+    day.disabled = true
+  } else if (bookedDates.value.includes(dateStr)) {
+    // 编辑模式下，当前行程自身的日期可取消选中
+    if (originalDates.value.includes(dateStr)) {
+      day.bottomInfo = '当前行程'
+    } else {
+      day.bottomInfo = '已安排'
+      day.disabled = true
+    }
   }
   return day
 }
@@ -391,9 +433,11 @@ async function loadDetail() {
     // 读取列表页传递的分组日期数据
     const groupData = uni.getStorageSync('scheduleGroupData')
     const scheduleDates = (groupData && groupData.scheduleDates) ? groupData.scheduleDates : (data.scheduleDate ? [data.scheduleDate] : [])
+    const groupScheduleIds = (groupData && groupData.scheduleIds) ? groupData.scheduleIds : [data.scheduleId]
     uni.removeStorageSync('scheduleGroupData')
     Object.assign(form, {
       scheduleId: data.scheduleId,
+      scheduleIds: groupScheduleIds,
       userId: data.userId || '',
       userName: data.userName || '',
       enterpriseId: data.enterpriseId || '',
@@ -407,6 +451,7 @@ async function loadDetail() {
       statusName: sItem ? sItem.label : '',
       remark: data.remark || ''
     })
+    originalDates.value = [...scheduleDates]
   } catch (e) { console.error('加载详情失败:', e); uni.showToast({ title: '加载失败', icon: 'none' }) }
   finally { uni.hideLoading() }
 }
@@ -474,7 +519,14 @@ async function submitForm() {
     if (!form.selectedDates || form.selectedDates.length === 0) { uni.showToast({ title: '请选择至少一个日期', icon: 'none' }); return }
     if (!form.purpose) { uni.showToast({ title: '请选择下店目的', icon: 'none' }); return }
 
-    const conflictDates = form.selectedDates.filter(date => bookedDates.value.includes(date))
+    // 检查休息日冲突
+    const restConflictDates = form.selectedDates.filter(date => restDates.value.includes(date))
+    if (restConflictDates.length > 0) {
+      uni.showToast({ title: `所选日期 ${restConflictDates.join('、')} 为休息日，不可安排行程`, icon: 'none', duration: 3000 })
+      return
+    }
+
+    const conflictDates = form.selectedDates.filter(date => bookedDates.value.includes(date) && !originalDates.value.includes(date))
     if (conflictDates.length > 0) {
       uni.showModal({ title: '日期冲突', content: `以下日期已有安排：${conflictDates.join('、')}`, showCancel: false })
       return
@@ -494,7 +546,57 @@ async function submitForm() {
       }))
 
       if (form.scheduleId) {
-        await updateSchedule({ scheduleId: form.scheduleId, userId: form.userId, userName: form.userName, enterpriseId: form.enterpriseId, enterpriseName: form.enterpriseName, scheduleDate: form.startDate, purpose: form.purpose, status: form.status, remark: form.remark })
+        // 编辑模式：差量更新（新增/删除/更新日期）
+        const newDates = form.selectedDates.filter(d => !originalDates.value.includes(d))
+        const removedDates = originalDates.value.filter(d => !form.selectedDates.includes(d))
+        const keptDates = form.selectedDates.filter(d => originalDates.value.includes(d))
+
+        // 1. 删除被移除的日期对应的记录
+        if (removedDates.length > 0) {
+          const removedIds = removedDates.map(date => {
+            const idx = originalDates.value.indexOf(date)
+            return form.scheduleIds[idx]
+          }).filter(Boolean)
+          if (removedIds.length > 0) {
+            await delSchedule(removedIds.join(','))
+          }
+        }
+
+        // 2. 新增新选中的日期
+        if (newDates.length > 0) {
+          const newSchedules = newDates.map(scheduleDate => ({
+            userId: form.userId,
+            userName: form.userName,
+            enterpriseId: form.enterpriseId,
+            enterpriseName: form.enterpriseName,
+            scheduleDate,
+            purpose: form.purpose,
+            status: form.status,
+            remark: form.remark
+          }))
+          await addScheduleBatch(newSchedules)
+        }
+
+        // 3. 更新保留日期的非日期字段
+        if (keptDates.length > 0) {
+          const keptIds = keptDates.map(date => {
+            const idx = originalDates.value.indexOf(date)
+            return form.scheduleIds[idx]
+          }).filter(Boolean)
+          for (const id of keptIds) {
+            await updateSchedule({
+              scheduleId: id,
+              userId: form.userId,
+              userName: form.userName,
+              enterpriseId: form.enterpriseId,
+              enterpriseName: form.enterpriseName,
+              purpose: form.purpose,
+              status: form.status,
+              remark: form.remark
+            })
+          }
+        }
+
         uni.showToast({ title: '修改成功', icon: 'success' })
       } else {
         await addScheduleBatch(scheduleList)
@@ -793,5 +895,15 @@ page { background-color: #F5F7FA; }
   z-index: 100;
 
   .u-button { flex: 1; height: 88rpx; border-radius: 44rpx; font-size: 30rpx; font-weight: 600; }
+}
+</style>
+
+<style lang="scss">
+/* 日历禁用日期（休息日/已安排）显示红色 - 全局样式穿透 scoped */
+.u-calendar-month__days__day__select__info--disabled {
+  color: #f56c6c !important;
+}
+.u-calendar-month__days__day__select__buttom-info--disabled {
+  color: #f56c6c !important;
 }
 </style>

@@ -35,6 +35,7 @@
  */
 import { ref, reactive } from 'vue'
 import AMapLoader from '@amap/amap-jsapi-loader'
+import { getConfigKey } from '@/api/system/config'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -54,19 +55,36 @@ let marker = null
 let placeSearch = null
 let geocoder = null
 
-const AMAP_KEY = import.meta.env.VITE_AMAP_KEY
-const AMAP_SECURITY_CODE = import.meta.env.VITE_AMAP_SECURITY_CODE
+// 降级使用环境变量
+const AMAP_KEY = ref(import.meta.env.VITE_AMAP_KEY || '')
+const AMAP_SECURITY_CODE = ref(import.meta.env.VITE_AMAP_SECURITY_CODE || '')
+
+/** 从后端获取高德地图配置 */
+async function loadAmapConfig() {
+  try {
+    const [keyRes, codeRes] = await Promise.all([
+      getConfigKey('sys.amap.jsKey'),
+      getConfigKey('sys.amap.securityJsCode')
+    ])
+    if (keyRes.data) AMAP_KEY.value = keyRes.data
+    if (codeRes.data) AMAP_SECURITY_CODE.value = codeRes.data
+  } catch (e) {
+    console.warn('获取高德地图配置失败，使用默认配置', e)
+  }
+}
 
 window._AMapSecurityConfig = {
-  securityJsCode: AMAP_SECURITY_CODE
+  securityJsCode: AMAP_SECURITY_CODE.value
 }
 
 function initMap() {
-  AMapLoader.load({
-    key: AMAP_KEY,
-    version: '2.0',
-    plugins: ['AMap.PlaceSearch', 'AMap.Geocoder', 'AMap.AutoComplete'],
-    securityJsCode: AMAP_SECURITY_CODE
+  loadAmapConfig().then(() => {
+    window._AMapSecurityConfig.securityJsCode = AMAP_SECURITY_CODE.value
+    AMapLoader.load({
+      key: AMAP_KEY.value,
+      version: '2.0',
+      plugins: ['AMap.PlaceSearch', 'AMap.Geocoder', 'AMap.AutoComplete'],
+      securityJsCode: AMAP_SECURITY_CODE.value
   }).then((AMap) => {
     const center = (props.latitude && props.longitude)
       ? [parseFloat(props.longitude), parseFloat(props.latitude)]
@@ -97,6 +115,9 @@ function initMap() {
     })
   }).catch((e) => {
     console.error('地图加载失败', e)
+  })
+  }).catch((e) => {
+    console.error('获取高德配置失败', e)
   })
 }
 

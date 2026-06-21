@@ -86,7 +86,10 @@ class BizWmsReportService
             $query->where('biz_product.category', $params['category']);
         }
         if (!empty($params['warehouse_id'])) {
-            $query->where('biz_stock_out.warehouse_id', $params['warehouse_id']);
+            $query->where(function($q) use ($params) {
+                $q->where('biz_stock_out.warehouse_id', $params['warehouse_id'])
+                  ->orWhereNull('biz_stock_out.warehouse_id');
+            });
         }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
@@ -158,14 +161,23 @@ class BizWmsReportService
                 ->join('biz_stock_in', 'biz_stock_in_item.stock_in_id', '=', 'biz_stock_in.stock_in_id')
                 ->where('biz_stock_in.status', '1')
                 ->where('biz_stock_in_item.product_id', $product->product_id)
-                ->whereBetween('biz_stock_in.stock_in_date', [$startDate, $endDate])
-                ->sum('biz_stock_in_item.quantity');
+                ->whereBetween('biz_stock_in.stock_in_date', [$startDate, $endDate]);
+            if (!empty($params['warehouse_id'])) {
+                $stockInQty->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
+            }
+            $stockInQty = $stockInQty->sum('biz_stock_in_item.quantity');
             $stockOutQty = BizStockOutItem::query()
                 ->join('biz_stock_out', 'biz_stock_out_item.stock_out_id', '=', 'biz_stock_out.stock_out_id')
                 ->whereIn('biz_stock_out.status', ['1', '2', '3'])
                 ->where('biz_stock_out_item.product_id', $product->product_id)
-                ->whereBetween('biz_stock_out.stock_out_date', [$startDate, $endDate])
-                ->sum('biz_stock_out_item.quantity');
+                ->whereBetween('biz_stock_out.stock_out_date', [$startDate, $endDate]);
+            if (!empty($params['warehouse_id'])) {
+                $stockOutQty->where(function($q) use ($params) {
+                    $q->where('biz_stock_out.warehouse_id', $params['warehouse_id'])
+                      ->orWhereNull('biz_stock_out.warehouse_id');
+                });
+            }
+            $stockOutQty = $stockOutQty->sum('biz_stock_out_item.quantity');
             $product->period_in_quantity = intval($stockInQty);
             $product->period_out_quantity = intval($stockOutQty);
             $product->begin_quantity = intval($product->current_quantity) - intval($stockInQty) + intval($stockOutQty);
@@ -232,7 +244,10 @@ class BizWmsReportService
             $stockOutItems->where('biz_stock_out.stock_out_date', '<=', $params['flow_date_end']);
         }
         if (!empty($params['warehouse_id'])) {
-            $stockOutItems->where('biz_stock_out.warehouse_id', $params['warehouse_id']);
+            $stockOutItems->where(function($q) use ($params) {
+                $q->where('biz_stock_out.warehouse_id', $params['warehouse_id'])
+                  ->orWhereNull('biz_stock_out.warehouse_id');
+            });
         }
         // 数据权限过滤
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {

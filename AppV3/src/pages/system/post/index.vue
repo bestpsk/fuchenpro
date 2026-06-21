@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listPost, delPost } from '@/api/system/post'
 import { checkPermi } from '@/utils/permission'
 import { getDicts } from '@/api/system/dictData'
@@ -155,6 +155,7 @@ const showFilter = ref(false)
 const statusOptions = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return queryParams.status !== '' && queryParams.status !== undefined

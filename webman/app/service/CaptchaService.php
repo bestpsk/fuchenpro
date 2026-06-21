@@ -4,6 +4,7 @@ namespace app\service;
 
 use support\Redis;
 use app\common\Constants;
+use app\service\SysConfigService;
 
 /**
  * 验证码服务层，负责数学运算验证码的生成和校验
@@ -29,7 +30,8 @@ class CaptchaService
 
         $redis = Redis::connection();
         $verifyKey = Constants::CAPTCHA_CODE_KEY . $uuid;
-        $redis->setex($verifyKey, Constants::CAPTCHA_EXPIRE * 60, $answer);
+        $captchaExpire = intval(SysConfigService::getConfigValue('sys.security.captchaExpire'));
+        $redis->setex($verifyKey, $captchaExpire * 60, $answer);
 
         return [
             'captchaEnabled' => true,

@@ -255,8 +255,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { listPlanAudit, getPlanAudit, auditPlan } from '@/api/finance/planAudit'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { listPlanAudit, getPlanAudit } from '@/api/finance/planAudit'
+import { auditPlan } from '@/api/business/plan'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
@@ -273,6 +274,7 @@ const rejectForm = ref({})
 const auditStatusOptions = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return !!queryParams.auditStatus

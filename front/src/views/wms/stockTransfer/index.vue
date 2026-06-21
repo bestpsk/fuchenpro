@@ -142,7 +142,7 @@
           <el-table-column label="数量" min-width="120" align="center" header-align="center">
             <template #default="scope">
               <el-input-number v-if="!isView" v-model="scope.row.quantity" :min="1" style="width: 100%" />
-              <span v-else>{{ scope.row.quantity || 0 }}</span>
+              <span v-else>{{ scope.row.unitType === '1' && scope.row.packQty > 1 ? (scope.row.originalQuantity || scope.row.quantity) : scope.row.quantity }}</span>
             </template>
           </el-table-column>
           <el-table-column label="规格" min-width="80" align="center" header-align="center">
@@ -190,7 +190,11 @@
             {{ scope.row.unitType === '1' ? '主单位(整)' : '副单位(拆)' }}
           </template>
         </el-table-column>
-        <el-table-column label="数量" prop="quantity" min-width="100" align="center" />
+        <el-table-column label="数量" min-width="100" align="center">
+          <template #default="scope">
+            {{ scope.row.unitType === '1' && scope.row.packQty > 1 ? (scope.row.originalQuantity || scope.row.quantity) : scope.row.quantity }}
+          </template>
+        </el-table-column>
         <el-table-column label="规格" min-width="80" align="center">
           <template #default="scope">
             {{ scope.row.unitType === '1' ? getUnitLabel(scope.row.unit) : getSpecLabel(scope.row.spec) }}
@@ -344,17 +348,27 @@ function onProductSelect(index) {
 }
 
 function loadStockInfo(index, productId) {
-  getInventory(productId).then(res => {
-    const inventories = res.data || []
-    const stock = inventories.find(inv => inv.warehouseId === form.value.fromWarehouseId)
-    if (stock) {
-      const unitLabel = getUnitLabel(form.value.items[index].unit)
-      form.value.items[index].stockInfo = (stock.quantity || 0) + (unitLabel || '')
+  getInventory(productId, { warehouse_id: form.value.fromWarehouseId }).then(res => {
+    const data = res.data
+    if (data && data.quantity !== undefined) {
+      const item = form.value.items[index]
+      const totalQty = Number(data.quantity) || 0
+      item.stockQuantity = totalQty
+      const unitLabel = getUnitLabel(item.unit)
+      const specLabel = getSpecLabel(item.spec)
+      if (item.unitType === '1' && item.packQty > 1) {
+        const mainQty = Math.floor(totalQty / item.packQty)
+        item.stockInfo = `主单位${mainQty}${unitLabel}（共${totalQty}${specLabel}）`
+      } else {
+        item.stockInfo = `${totalQty}${specLabel}`
+      }
     } else {
       form.value.items[index].stockInfo = '库存为0'
+      form.value.items[index].stockQuantity = 0
     }
   }).catch(() => {
     form.value.items[index].stockInfo = undefined
+    form.value.items[index].stockQuantity = 0
   })
 }
 

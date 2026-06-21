@@ -452,6 +452,10 @@ async function loadDetail(id) {
     form.noticeType = data.noticeType || '1'
     form.status = data.status || '0'
     form.noticeContent = data.noticeContent || ''
+    // 编辑器已就绪时，立即设置内容
+    if (editorCtx.value && form.noticeContent) {
+      setEditorContent(form.noticeContent)
+    }
   } catch (e) {
     console.error('获取公告详情失败:', e)
   }

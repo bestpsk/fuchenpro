@@ -202,7 +202,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listOperlog, delOperlog, cleanOperlog } from '@/api/monitor/operlog'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
@@ -217,6 +217,7 @@ const showEndDatePicker = ref(false)
 const selectedIds = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const operTypeOptions = ref([])
 

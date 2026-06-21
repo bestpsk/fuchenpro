@@ -135,8 +135,8 @@ class SysLoginController
 
         $isDefaultModifyPwdFlag = false;
         if ($isDefaultModifyPwd === 1) {
-            $initPwd = \app\service\SysConfigService::selectConfigByKey('sys.user.initPassword');
-            if (PasswordService::verify($initPwd ?: '123456', $user->password)) {
+            $initPwd = \app\service\SysConfigService::getConfigValue('sys.security.initPassword');
+            if (PasswordService::verify($initPwd, $user->password)) {
                 $isDefaultModifyPwdFlag = true;
             }
         }

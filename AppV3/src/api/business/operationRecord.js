@@ -29,7 +29,7 @@ export function addOperation(data) {
  * @returns {Promise<void>}
  */
 export function delOperation(id) {
-  return request({ url: '/business/operation/' + id, method: 'delete' })
+  return request({ url: '/business/operation', method: 'delete', params: { recordIds: id } })
 }
 
 /**

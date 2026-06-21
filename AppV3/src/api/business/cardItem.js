@@ -17,7 +17,7 @@ export function updateCardItem(data) {
 }
 
 export function delCardItem(id) {
-  return request({ url: '/business/cardItem/' + id, method: 'delete' })
+  return request({ url: '/business/cardItem', method: 'delete', params: { cardItemIds: id } })
 }
 
 export function searchCardItem(keyword) {

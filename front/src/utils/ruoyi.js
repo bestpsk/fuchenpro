@@ -147,7 +147,7 @@ export function selectDictLabels(datas, value, separator) {
 export function sprintf(str) {
   let flag = true, i = 1
   str = str.replace(/%s/g, function () {
-    const arg = args[i++]
+    const arg = arguments[i++]
     if (typeof arg === 'undefined') {
       flag = false
       return ''

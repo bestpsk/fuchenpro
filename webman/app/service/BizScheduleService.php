@@ -316,6 +316,12 @@ class BizScheduleService
         $result = [];
         foreach ($enterprises as $enterprise) {
             $enterpriseSchedules = $schedules->where('enterprise_id', $enterprise->enterprise_id);
+
+            // 跳过没有排班的企业
+            if ($enterpriseSchedules->isEmpty()) {
+                continue;
+            }
+
             $scheduleMap = [];
 
             foreach ($enterpriseSchedules as $schedule) {

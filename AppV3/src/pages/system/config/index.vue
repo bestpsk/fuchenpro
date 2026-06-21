@@ -148,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listConfig, delConfig, refreshCache } from '@/api/system/config'
 import { checkPermi } from '@/utils/permission'
 import { getDicts } from '@/api/system/dictData'
@@ -161,6 +161,7 @@ const showFilter = ref(false)
 const configTypeOptions = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return queryParams.configType !== '' && queryParams.configType !== undefined

@@ -38,7 +38,7 @@ service.interceptors.request.use(config => {
   if (getToken() && !isToken) {
     // 在Authorization头中注入Bearer Token，后端通过此字段验证用户身份
     config.headers['Authorization'] = 'Bearer ' + getToken()
-    console.log('[request]', config.url, 'Token:', getToken()?.substring(0, 30) + '...')
+    if (import.meta.env.DEV) console.log('[request]', config.url, 'Token:', getToken()?.substring(0, 30) + '...')
   }
   // GET请求：将params对象序列化为URL查询字符串，避免参数丢失
   if ((config.method === 'get' || config.method === 'delete') && config.params) {
@@ -82,7 +82,7 @@ service.interceptors.request.use(config => {
   return config
 }, error => {
     console.log(error)
-    Promise.reject(error)
+    return Promise.reject(error)
 })
 
 // 响应拦截器：统一处理业务错误码和网络异常
@@ -107,7 +107,7 @@ service.interceptors.response.use(res => {
         isRelogin.show = false
       })
     }
-      return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
+      return Promise.reject(new Error('无效的会话，或者会话已过期，请重新登录。'))
     } else if (code === 500) {
       // 500服务端错误：弹出错误提示
       ElMessage({ message: msg, type: 'error' })
@@ -119,7 +119,7 @@ service.interceptors.response.use(res => {
     } else if (code !== 200) {
       // 其他非200状态码：弹出通知
       ElNotification.error({ title: msg })
-      return Promise.reject('error')
+      return Promise.reject(new Error(msg))
     } else {
       return  Promise.resolve(res.data)
     }

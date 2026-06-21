@@ -38,7 +38,7 @@ export function getOwedPackages(customerId) {
  * @returns {Promise<void>}
  */
 export function addRepayment(data) {
-  return request({ url: '/business/repayment', method: 'post', data })
+  return request({ url: '/business/repayment/add', method: 'post', data })
 }
 
 /**

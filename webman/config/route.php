@@ -96,11 +96,20 @@ Route::put('/system/config', [app\controller\system\SysConfigController::class, 
 Route::delete('/system/config', [app\controller\system\SysConfigController::class, 'remove']);
 Route::get('/system/config/{configId}', [app\controller\system\SysConfigController::class, 'getInfo']);
 
+// 数据库备份管理
+Route::get('/system/backup/list', [app\controller\system\DatabaseBackupController::class, 'list']);
+Route::post('/system/backup/execute', [app\controller\system\DatabaseBackupController::class, 'execute']);
+Route::delete('/system/backup', [app\controller\system\DatabaseBackupController::class, 'remove']);
+Route::post('/system/backup/download', [app\controller\system\DatabaseBackupController::class, 'download']);
+Route::get('/system/backup/preview/{backupId}', [app\controller\system\DatabaseBackupController::class, 'preview']);
+Route::get('/system/backup/config', [app\controller\system\DatabaseBackupController::class, 'getConfig']);
+Route::put('/system/backup/config', [app\controller\system\DatabaseBackupController::class, 'updateConfig']);
+
 Route::get('/system/notice/list', [app\controller\system\SysNoticeController::class, 'list']);
 Route::get('/system/notice/listTop', [app\controller\system\SysNoticeController::class, 'listTop']);
+Route::get('/system/notice/readUsers/list', [app\controller\system\SysNoticeController::class, 'readUsersList']);
 Route::post('/system/notice/markRead', [app\controller\system\SysNoticeController::class, 'markRead']);
 Route::post('/system/notice/markReadAll', [app\controller\system\SysNoticeController::class, 'markReadAll']);
-Route::get('/system/notice/readUsers/list', [app\controller\system\SysNoticeController::class, 'readUsersList']);
 Route::post('/system/notice', [app\controller\system\SysNoticeController::class, 'add']);
 Route::put('/system/notice', [app\controller\system\SysNoticeController::class, 'edit']);
 Route::delete('/system/notice', [app\controller\system\SysNoticeController::class, 'remove']);
@@ -405,6 +414,19 @@ Route::get('/wms/report/stockOutSummary', [app\controller\wms\BizWmsReportContro
 Route::get('/wms/report/inventoryTurnover', [app\controller\wms\BizWmsReportController::class, 'inventoryTurnover']);
 Route::get('/wms/report/productFlow', [app\controller\wms\BizWmsReportController::class, 'productFlow']);
 Route::get('/wms/report/expiryInventory', [app\controller\wms\BizWmsReportController::class, 'expiryInventory']);
+
+// =============================================
+// 数据统计模块路由
+// =============================================
+
+Route::get('/statistics/performance/dept', [app\controller\statistics\PerformanceStatsController::class, 'deptPerformance']);
+Route::get('/statistics/performance/user', [app\controller\statistics\PerformanceStatsController::class, 'userPerformance']);
+Route::get('/statistics/performance/enterprise', [app\controller\statistics\PerformanceStatsController::class, 'enterprisePerformance']);
+Route::get('/statistics/performance/store', [app\controller\statistics\PerformanceStatsController::class, 'storePerformance']);
+Route::post('/statistics/performance/exportDept', [app\controller\statistics\PerformanceStatsController::class, 'exportDeptPerformance']);
+Route::post('/statistics/performance/exportUser', [app\controller\statistics\PerformanceStatsController::class, 'exportUserPerformance']);
+Route::post('/statistics/performance/exportEnterprise', [app\controller\statistics\PerformanceStatsController::class, 'exportEnterprisePerformance']);
+Route::post('/statistics/performance/exportStore', [app\controller\statistics\PerformanceStatsController::class, 'exportStorePerformance']);
 
 // =============================================
 // 财务管理模块路由

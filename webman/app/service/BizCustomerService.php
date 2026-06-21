@@ -30,7 +30,24 @@ class BizCustomerService
         DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
-        return $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+        $result = $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
+
+        // 为每个客户计算满意度和成交额
+        foreach ($result as $customer) {
+            $customerId = $customer->customer_id;
+
+            $dealAmount = BizSalesOrder::where('customer_id', $customerId)
+                ->whereIn('order_status', ['1', '2'])
+                ->sum('deal_amount');
+            $customer->deal_amount = round(floatval($dealAmount), 2);
+
+            $avgSatisfaction = BizOperationRecord::where('customer_id', $customerId)
+                ->whereNotNull('satisfaction')
+                ->avg('satisfaction');
+            $customer->avg_satisfaction = $avgSatisfaction ? round(floatval($avgSatisfaction), 1) : null;
+        }
+
+        return $result;
     }
 
     // 根据ID查询客户信息

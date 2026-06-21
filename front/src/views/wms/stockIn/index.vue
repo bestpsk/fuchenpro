@@ -271,7 +271,7 @@
  * @description 入库管理页面 - 入库单CRUD与确认/取消确认
  * @description 提供入库单增删改查、确认入库（计入库存）、取消确认入库（扣减库存）等功能
  */
-import { listStockIn, getStockIn, delStockIn, addStockIn, updateStockIn, confirmStockIn, confirmStockInById, cancelConfirmStockIn } from "@/api/wms/stockIn"
+import { listStockIn, getStockIn, delStockIn, addStockIn, updateStockIn, confirmStockIn, cancelConfirmStockIn } from "@/api/wms/stockIn"
 import { searchSupplier } from "@/api/wms/supplier"
 import { searchProduct, getProduct } from "@/api/wms/product"
 import { ElMessageBox } from 'element-plus'
@@ -316,7 +316,7 @@ function handleStatusChange(row, val) {
     type: 'warning'
   }).then(() => {
     if (val === '1') {
-      confirmStockInById(row.stockInId).then(() => {
+      confirmStockIn(row.stockInId).then(() => {
         proxy.$modal.msgSuccess('入库确认成功')
         getList()
       }).catch(() => {

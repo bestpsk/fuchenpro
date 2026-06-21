@@ -87,5 +87,5 @@ export function updateSchedule(data) {
  * @returns {Promise<void>}
  */
 export function delSchedule(ids) {
-  return request({ url: '/business/schedule/' + ids, method: 'delete' })
+  return request({ url: '/business/schedule', method: 'delete', params: { scheduleIds: ids } })
 }

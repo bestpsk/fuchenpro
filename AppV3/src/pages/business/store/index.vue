@@ -168,7 +168,7 @@
  * @description 展示门店列表，支持关键词搜索（门店名/负责人/电话）、按所属企业/状态筛选、
  * 分页加载、下拉刷新、拨打电话、跳转新增/编辑/详情、删除门店
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listStore, delStore } from '@/api/business/store'
 import { listEnterprise } from '@/api/business/enterprise'
@@ -186,6 +186,7 @@ const enterpriseSearchKeyword = ref('')
 const enterpriseSearchResults = ref([])
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return queryParams.enterpriseId || (queryParams.status !== '' && queryParams.status !== undefined)

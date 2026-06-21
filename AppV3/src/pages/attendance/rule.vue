@@ -258,7 +258,7 @@
  * @description 展示考勤规则列表，支持按名称搜索、状态筛选、分页加载、下拉刷新、
  * 新增/编辑/删除规则、状态切换，表单包含时间选择、地图选点等功能
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { listAttendanceRule, getAttendanceRule, addAttendanceRule, updateAttendanceRule, delAttendanceRule } from '@/api/attendance'
 import { checkPermi } from '@/utils/permission'
 
@@ -271,6 +271,7 @@ const showForm = ref(false)
 const isEdit = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
   return queryParams.status !== '' && queryParams.status !== undefined

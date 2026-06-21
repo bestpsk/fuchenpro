@@ -260,7 +260,8 @@
  * Tab2: 企业排班，按企业分组展示排班数据
  * Tab3: 员工配置，管理员工排班开关和休息日期
  */
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
 import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
 import { checkPermi } from '@/utils/permission'
@@ -337,6 +338,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 
 let searchTimer = null
+onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => queryParams.purpose || queryParams.status)
 
@@ -638,6 +640,7 @@ async function onRestDateConfirm(e) {
 
 // ==================== 初始化 ====================
 onMounted(() => { getList(true) })
+onShow(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>
