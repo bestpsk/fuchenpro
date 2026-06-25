@@ -334,6 +334,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listReimbursement, getReimbursement, delReimbursement, auditReimbursement, payReimbursement } from '@/api/finance/reimbursement'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
@@ -664,6 +665,9 @@ function onConfirmOk() {
 
 onMounted(() => {
   loadDictData()
+})
+
+onShow(() => {
   getList(true)
 })
 </script>
@@ -856,7 +860,7 @@ page {
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
 
   &:active {
     transform: scale(0.98);

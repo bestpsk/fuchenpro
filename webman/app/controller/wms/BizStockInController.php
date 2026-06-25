@@ -43,19 +43,23 @@ class BizStockInController
     // 新增入库单，含入库明细项，自动填充操作人信息
     public function add(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $loginUser = $request->loginUser->user;
-        $realName = trim($loginUser->nick_name ?? '');
-        $userName = trim($loginUser->user_name ?? '');
-        $data['create_by'] = $realName ?: $userName;
-        $data['operator_id'] = $request->loginUser->userId ?? 0;
-        $data['operator_name'] = $realName ?: $userName;
-        if (isset($data['items'])) {
-            $data['items'] = convert_to_snake_case($data['items']);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $loginUser = $request->loginUser->user;
+            $realName = trim($loginUser->nick_name ?? '');
+            $userName = trim($loginUser->user_name ?? '');
+            $data['create_by'] = $realName ?: $userName;
+            $data['operator_id'] = $request->loginUser->userId ?? 0;
+            $data['operator_name'] = $realName ?: $userName;
+            if (isset($data['items'])) {
+                $data['items'] = convert_to_snake_case($data['items']);
+            }
+            $service = new BizStockInService();
+            $result = $service->insertStockIn($data);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $service = new BizStockInService();
-        $result = $service->insertStockIn($data);
-        return AjaxResult::toAjax($result ? 1 : 0);
     }
 
     // 修改入库单及明细项，已确认的入库单不可修改
@@ -91,22 +95,26 @@ class BizStockInController
     // 确认入库，将入库数量累加到库存表
     public function confirm(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:confirm')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
+        try {
+            if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:confirm')) {
+                return json(['code' => 403, 'msg' => '没有操作权限']);
+            }
+            $parts = explode('/', $request->path());
+            $id = intval(end($parts));
+            $params['login_user'] = $request->loginUser;
+            $service = new BizStockInService();
+            $result = $service->confirmStockIn($id, $params);
+            if (!$result['success']) return AjaxResult::error($result['msg']);
+            return AjaxResult::success($result['msg']);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $parts = explode('/', $request->path());
-        $id = intval(end($parts));
-        $params['login_user'] = $request->loginUser;
-        $service = new BizStockInService();
-        $result = $service->confirmStockIn($id, $params);
-        if (!$result['success']) return AjaxResult::error($result['msg']);
-        return AjaxResult::success($result['msg']);
     }
 
     // 取消确认入库，从库存中扣减已入库数量
     public function cancelConfirm(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:cancelConfirm')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:confirm')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $parts = explode('/', $request->path());

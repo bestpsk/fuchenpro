@@ -52,7 +52,10 @@
 
     <!-- 收货信息 -->
     <view class="info-card" v-if="info.contactPerson || info.contactPhone || info.shippingAddress">
-      <view class="card-title">收货信息</view>
+      <view class="card-title">
+        <u-icon name="account" size="16" color="#3D6DF7"></u-icon>
+        <text>收货信息</text>
+      </view>
       <view class="info-body">
         <view class="info-row" v-if="info.contactPerson">
           <text class="info-label">收货人</text>
@@ -71,7 +74,10 @@
 
     <!-- 物流信息 -->
     <view class="info-card" v-if="String(info.shipType) === '2' && (String(info.status) === '2' || String(info.status) === '3')">
-      <view class="card-title">物流信息</view>
+      <view class="card-title">
+        <u-icon name="car" size="16" color="#3D6DF7"></u-icon>
+        <text>物流信息</text>
+      </view>
       <view class="info-body">
         <view class="info-row" v-if="info.logisticsCompany">
           <text class="info-label">物流公司</text>
@@ -101,7 +107,10 @@
     <!-- 出库明细 -->
     <view class="info-card" v-if="stockOutItems.length > 0">
       <view class="section-header">
-        <view class="card-title">出库明细</view>
+        <view class="card-title">
+          <u-icon name="arrow-up" size="16" color="#3D6DF7"></u-icon>
+          <text>出库明细</text>
+        </view>
         <text class="item-count">{{ stockOutItems.length }}项</text>
       </view>
       <view v-for="(item, idx) in stockOutItems" :key="idx" class="item-card">
@@ -286,7 +295,7 @@ function formatAmount(val) {
 
 const canConfirm = computed(() => String(info.value.status) === '0' && checkPermi('wms:stockOut:confirm'))
 const canShip = computed(() => String(info.value.status) === '1' && checkPermi('wms:stockOut:ship'))
-const canConfirmReceipt = computed(() => String(info.value.status) === '2' && checkPermi('wms:stockOut:confirmReceipt'))
+const canConfirmReceipt = computed(() => String(info.value.status) === '2' && checkPermi('wms:stockOut:receipt'))
 const showActions = computed(() => canConfirm.value || canShip.value || canConfirmReceipt.value)
 
 async function loadDetail() {
@@ -425,7 +434,7 @@ page { background-color: #F5F7FA; }
   &.status-3 { background: #F0E8FF; color: #8B5CF6; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .item-count { font-size: 22rpx; color: #86909C; background: #F5F7FA; padding: 4rpx 16rpx; border-radius: 4rpx; }
 

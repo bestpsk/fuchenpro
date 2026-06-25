@@ -234,7 +234,7 @@ function formatTime(time) {
 
 function canConfirm(item) { return String(item.status) === '0' && checkPermi('wms:stockOut:confirm') }
 function canShip(item) { return String(item.status) === '1' && checkPermi('wms:stockOut:ship') }
-function canConfirmReceipt(item) { return String(item.status) === '2' && checkPermi('wms:stockOut:confirmReceipt') }
+function canConfirmReceipt(item) { return String(item.status) === '2' && checkPermi('wms:stockOut:receipt') }
 function canEdit(item) { return String(item.status) === '0' && checkPermi('wms:stockOut:edit') }
 function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:stockOut:remove') }
 function hasActions(item) { return canConfirm(item) || canShip(item) || canConfirmReceipt(item) || canEdit(item) || canDelete(item) }
@@ -454,7 +454,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 
 .search-section { flex-shrink: 0; padding: 20rpx 0; }
-.search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
+.search-box { display: flex; align-items: center; background: #fff; border-radius: 36rpx; padding: 0 8rpx 0 28rpx; height: 72rpx; gap: 12rpx; box-sizing: border-box; box-shadow: 0 2rpx 8rpx rgba(61,109,247,0.06); }
 .search-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .search-placeholder { color: #86909C; font-size: 28rpx; }
 .clear-btn { flex-shrink: 0; padding: 8rpx; display: flex; align-items: center; }

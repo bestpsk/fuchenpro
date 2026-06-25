@@ -159,15 +159,15 @@ const calendarDays = computed(() => {
   return days
 })
 
-/** 考勤状态编码映射为中文（0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤） */
+/** 考勤状态编码映射为中文（0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤/5-迟到+缺勤/6-早退+缺勤） */
 function getStatusText(status) {
-  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
+  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤', '5': '迟到+缺勤', '6': '早退+缺勤' }
   return map[status] || '--'
 }
 
 /** 考勤状态映射为样式类名（normal/late/absent） */
 function getStatusColor(status) {
-  const map = { '0': 'normal', '1': 'late', '2': 'late', '3': 'absent', '4': 'absent' }
+  const map = { '0': 'normal', '1': 'late', '2': 'late', '3': 'absent', '4': 'absent', '5': 'absent', '6': 'absent' }
   return map[status] || ''
 }
 

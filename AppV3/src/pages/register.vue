@@ -1,36 +1,60 @@
 <template>
   <view class="normal-login-container">
-    <view class="logo-content">
-      <image style="width: 100rpx; height: 100rpx" src="/static/logo.png" mode="widthFix" />
-      <text class="title">赛诺美生注册</text>
+    <!-- 顶部装饰区域 -->
+    <view class="top-decoration">
+      <view class="decoration-circle circle-1"></view>
+      <view class="decoration-circle circle-2"></view>
+      <view class="decoration-circle circle-3"></view>
     </view>
+
+    <!-- Logo 区域 -->
+    <view class="logo-content">
+      <text class="title">赛诺美生注册</text>
+      <text class="subtitle">创建您的账号</text>
+    </view>
+
+    <!-- 表单区域 -->
     <view class="login-form-content">
+      <view class="form-title">账号注册</view>
+
       <view class="input-item">
-        <u-icon name="account" size="20" color="#999" style="margin-left: 10px" />
+        <u-icon name="account" size="22" color="#3D6DF7" style="margin-left: 12px" />
         <input v-model="registerForm.username" class="input" type="text" placeholder="请输入账号" maxlength="30" />
       </view>
+
       <view class="input-item">
-        <u-icon name="lock" size="20" color="#999" style="margin-left: 10px" />
+        <u-icon name="lock" size="22" color="#3D6DF7" style="margin-left: 12px" />
         <input v-model="registerForm.password" type="password" class="input" placeholder="请输入密码" maxlength="20" />
       </view>
+
       <view class="input-item">
-        <u-icon name="lock" size="20" color="#999" style="margin-left: 10px" />
+        <u-icon name="lock" size="22" color="#3D6DF7" style="margin-left: 12px" />
         <input v-model="registerForm.confirmPassword" type="password" class="input" placeholder="请输入重复密码" maxlength="20" />
       </view>
+
       <view class="input-item captcha-row" v-if="captchaEnabled">
-        <u-icon name="photo" size="20" color="#999" style="margin-left: 10px" />
+        <u-icon name="photo" size="22" color="#3D6DF7" style="margin-left: 12px" />
         <input v-model="registerForm.code" type="number" class="input captcha-input" placeholder="请输入验证码" maxlength="4" />
         <view class="login-code" @click="getCode">
           <image v-if="codeUrl" :src="codeUrl" class="login-code-img" mode="heightFix" />
           <view v-else class="login-code-placeholder">获取验证码</view>
         </view>
       </view>
+
       <view class="action-btn">
         <button @click="handleRegister" class="register-btn">注册</button>
       </view>
+
+      <view class="reg">
+        <text @click="handleUserLogin" class="uni-text-blue">使用已有账号登录</text>
+      </view>
     </view>
-    <view class="xieyi">
-      <text @click="handleUserLogin" class="uni-text-blue">使用已有账号登录</text>
+
+    <!-- 底部品牌区域 -->
+    <view class="bottom-section">
+      <view class="brand-mark">
+        <text class="brand-en">SYNOLIFE</text>
+      </view>
     </view>
   </view>
 </template>
@@ -116,95 +140,199 @@ async function doRegister() {
 
 <style lang="scss" scoped>
 page {
-  background-color: #ffffff;
+  background: linear-gradient(180deg, #E8F0FE 0%, #FFFFFF 40%, #FFFFFF 100%);
+  min-height: 100vh;
 }
 
 .normal-login-container {
   width: 100%;
+  min-height: 100vh;
+  padding: 0 32rpx 60rpx 32rpx;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
 
-  .logo-content {
-    width: 100%;
-    font-size: 21px;
+/* 顶部装饰圆形 */
+.top-decoration {
+  position: absolute;
+  top: -60rpx;
+  left: 0;
+  right: 0;
+  height: 300rpx;
+  pointer-events: none;
+
+  .decoration-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(61, 109, 247, 0.15), rgba(91, 143, 249, 0.08));
+  }
+
+  .circle-1 {
+    width: 200rpx;
+    height: 200rpx;
+    top: 40rpx;
+    left: -40rpx;
+  }
+
+  .circle-2 {
+    width: 160rpx;
+    height: 160rpx;
+    top: 80rpx;
+    right: 60rpx;
+  }
+
+  .circle-3 {
+    width: 100rpx;
+    height: 100rpx;
+    top: 20rpx;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Logo 区域 */
+.logo-content {
+  width: 100%;
+  text-align: center;
+  padding-top: 120rpx;
+  margin-bottom: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .title {
+    font-size: 56rpx;
+    font-weight: 700;
+    color: #3D6DF7;
+    letter-spacing: 4rpx;
+  }
+
+  .subtitle {
+    font-size: 26rpx;
+    color: #86909C;
+    margin-top: 12rpx;
+  }
+}
+
+/* 表单区域 */
+.login-form-content {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 40rpx 24rpx;
+  box-shadow: 0 4rpx 24rpx rgba(61, 109, 247, 0.12);
+  margin-bottom: 32rpx;
+  box-sizing: border-box;
+  width: 100%;
+
+  .form-title {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #1D2129;
     text-align: center;
-    padding-top: 15%;
+    margin-bottom: 32rpx;
+  }
+
+  .input-item {
+    margin: 24rpx 0;
+    background: #F7F8FA;
+    border: 2rpx solid #E5E6EB;
+    height: 96rpx;
+    border-radius: 24rpx;
     display: flex;
     align-items: center;
-    justify-content: center;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    width: 100%;
+    padding-right: 24rpx;
 
-    image {
-      border-radius: 4px;
+    .input {
+      flex: 1;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      text-align: left;
+      padding-left: 12rpx;
     }
 
-    .title {
-      margin-left: 10px;
+    .captcha-input {
+      flex: 1;
     }
   }
 
-  .login-form-content {
-    text-align: center;
-    margin: 20px auto;
-    margin-top: 15%;
-    width: 80%;
+  .captcha-row {
+    padding-right: 0;
 
-    .input-item {
-      margin: 20px auto;
-      background-color: #f5f6f7;
-      height: 45px;
-      border-radius: 20px;
+    .login-code {
+      height: 96rpx;
       display: flex;
       align-items: center;
+      justify-content: center;
+      padding: 0 16rpx;
+      flex-shrink: 0;
 
-      .input {
-        flex: 1;
-        font-size: 14px;
-        line-height: 20px;
-        text-align: left;
-        padding-left: 15px;
+      .login-code-img {
+        height: 72rpx;
+        width: 180rpx;
+        border-radius: 12rpx;
       }
 
-      .captcha-input {
-        flex: 1;
+      .login-code-placeholder {
+        font-size: 26rpx;
+        color: #3D6DF7;
+        white-space: nowrap;
       }
     }
+  }
 
-    .captcha-row {
-      padding-right: 0;
+  .register-btn {
+    margin-top: 48rpx;
+    height: 96rpx;
+    line-height: 96rpx;
+    background: linear-gradient(135deg, #3D6DF7, #5B8FF9);
+    color: #ffffff;
+    border-radius: 48rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    box-shadow: 0 4rpx 16rpx rgba(61, 109, 247, 0.35);
+    letter-spacing: 8rpx;
 
-      .login-code {
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 10px;
-        flex-shrink: 0;
-
-        .login-code-img {
-          height: 38px;
-          width: 200rpx;
-        }
-
-        .login-code-placeholder {
-          font-size: 12px;
-          color: #999;
-          white-space: nowrap;
-        }
-      }
+    &:active {
+      opacity: 0.9;
+      transform: scale(0.98);
     }
+  }
 
-    .register-btn {
-      margin-top: 40px;
-      height: 45px;
-      line-height: 45px;
-      background-color: #3c96f3;
-      color: #ffffff;
-      border-radius: 20px;
-      font-size: 16px;
+  .reg {
+    margin-top: 24rpx;
+    text-align: center;
+    font-size: 26rpx;
+
+    .uni-text-blue {
+      color: #3D6DF7;
     }
+  }
+}
 
-    .xieyi {
-      color: #333;
-      margin-top: 20px;
-      text-align: center;
+/* 底部区域 */
+.bottom-section {
+  position: absolute;
+  bottom: 40rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+
+  .brand-mark {
+    margin-top: 40rpx;
+    display: flex;
+    justify-content: center;
+
+    .brand-en {
+      font-size: 22rpx;
+      color: #C9CDD4;
+      letter-spacing: 8rpx;
+      font-weight: 400;
     }
   }
 }

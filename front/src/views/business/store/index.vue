@@ -204,7 +204,12 @@
                 v-model="form.serverUserId"
                 placeholder="请选择服务员工"
                 filterable
-                @focus="handleUserFocus"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                remote
+                :remote-method="loadUserList"
+                @focus="() => loadUserList('')"
                 @change="handleUserChange"
                 style="width: 100%"
               >
@@ -328,7 +333,7 @@ function reset() {
     annualPerformance: 0,
     regularCustomers: 0,
     creatorName: undefined,
-    serverUserId: undefined,
+    serverUserId: [],
     serverUserName: undefined,
     status: "0",
     remark: undefined
@@ -377,7 +382,7 @@ function handleUserFocus() {
 }
 
 function loadUserList(keyword = '') {
-  listUser({ userName: keyword, pageSize: 50 }).then(response => {
+  listUser({ nickName: keyword, status: '0', pageNum: 1, pageSize: 50 }).then(response => {
     userOptions.value = response.rows || []
   })
 }
@@ -389,10 +394,15 @@ function handleEnterpriseChange(val) {
   }
 }
 
-function handleUserChange(val) {
-  const user = userOptions.value.find(item => item.userId === val)
-  if (user) {
-    form.value.serverUserName = user.nick_name || user.nickName || user.userName
+function handleUserChange(userIds) {
+  if (userIds && userIds.length > 0) {
+    const names = userIds.map(id => {
+      const user = userOptions.value.find(item => item.userId === id)
+      return user?.nickName || user?.nick_name || user?.userName || ''
+    }).filter(Boolean)
+    form.value.serverUserName = names.length > 0 ? names.join('、') : undefined
+  } else {
+    form.value.serverUserName = undefined
   }
 }
 
@@ -412,6 +422,12 @@ function handleUpdate(row) {
   const storeId = row.storeId || ids.value
   getStore(storeId).then(response => {
     form.value = response.data
+    // 多选回显：字符串转数组
+    if (form.value.serverUserId && typeof form.value.serverUserId === 'string') {
+      form.value.serverUserId = form.value.serverUserId.split(',').map(id => parseInt(id))
+    } else if (!form.value.serverUserId) {
+      form.value.serverUserId = []
+    }
     if (form.value.businessHours) {
       const times = form.value.businessHours.split(' - ')
       if (times.length === 2) {

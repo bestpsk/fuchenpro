@@ -40,7 +40,6 @@ class BizStockPrepareService
         if (!empty($params['warehouse_id'])) {
             $query->where('warehouse_id', $params['warehouse_id']);
         }
-        DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->with('items.product', 'orders')->orderBy('prepare_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);

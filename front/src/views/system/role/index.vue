@@ -681,12 +681,14 @@ getList()
 <style scoped>
 .custom-tree-node {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex: 1;
   padding-right: 8px;
+  padding: 4px 0;
 }
 .menu-label {
   min-width: 80px;
+  line-height: 24px;
 }
 .button-permissions {
   margin-left: 20px;

@@ -1,20 +1,34 @@
 <template>
   <div class="app-container">
+    <!-- 时间筛选 -->
+    <el-form :inline="true" class="mb20">
+      <el-form-item label="时间范围">
+        <el-button-group>
+          <el-button :type="activeQuick === 'today' ? 'primary' : ''" @click="setQuickFilter('today')">今日</el-button>
+          <el-button :type="activeQuick === 'month' ? 'primary' : ''" @click="setQuickFilter('month')">本月</el-button>
+          <el-button :type="activeQuick === 'year' ? 'primary' : ''" @click="setQuickFilter('year')">本年</el-button>
+        </el-button-group>
+      </el-form-item>
+      <el-form-item>
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" @change="onDateRangeChange" />
+      </el-form-item>
+    </el-form>
+
     <el-row :gutter="20" class="mb20">
       <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
-            <span>本月报销总额</span>
+            <span>报销总额</span>
           </template>
-          <div class="card-value">¥{{ formatMoney(monthTotal) }}</div>
+          <div class="card-value">¥{{ formatMoney(totalExpense) }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
-            <span>本年报销总额</span>
+            <span>报销次数</span>
           </template>
-          <div class="card-value">¥{{ formatMoney(yearTotal) }}</div>
+          <div class="card-value">{{ totalCount }} 次</div>
         </el-card>
       </el-col>
       <el-col :span="6">
@@ -95,12 +109,15 @@ import * as echarts from 'echarts'
 
 const monthChartRef = ref()
 const categoryChartRef = ref()
-const monthTotal = ref(0)
-const yearTotal = ref(0)
+const totalExpense = ref(0)
+const totalCount = ref(0)
 const employeeExpense = ref(0)
 const companyExpense = ref(0)
 const deptData = ref([])
 const userData = ref([])
+
+const activeQuick = ref('month')
+const dateRange = ref(null)
 
 let monthChart = null
 let categoryChart = null
@@ -109,34 +126,82 @@ function formatMoney(value) {
   return Number(value || 0).toFixed(2)
 }
 
-function loadReport() {
-  const currentYear = new Date().getFullYear()
+function getDateRange(type) {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = now.getMonth()
+  const d = now.getDate()
+  const pad = n => String(n).padStart(2, '0')
 
-  reportByMonth({ year: currentYear }).then(response => {
+  if (type === 'today') {
+    const date = `${y}-${pad(m + 1)}-${pad(d)}`
+    return [date, date]
+  } else if (type === 'month') {
+    const start = `${y}-${pad(m + 1)}-01`
+    const lastDay = new Date(y, m + 1, 0).getDate()
+    const end = `${y}-${pad(m + 1)}-${pad(lastDay)}`
+    return [start, end]
+  } else if (type === 'year') {
+    return [`${y}-01-01`, `${y}-12-31`]
+  }
+  return null
+}
+
+function setQuickFilter(type) {
+  activeQuick.value = type
+  dateRange.value = null
+  loadReport()
+}
+
+function onDateRangeChange(val) {
+  if (val) {
+    activeQuick.value = ''
+  } else {
+    activeQuick.value = 'month'
+  }
+  loadReport()
+}
+
+function loadReport() {
+  let applyDateStart = ''
+  let applyDateEnd = ''
+
+  if (dateRange.value && dateRange.value.length === 2) {
+    applyDateStart = dateRange.value[0]
+    applyDateEnd = dateRange.value[1]
+  } else if (activeQuick.value) {
+    const range = getDateRange(activeQuick.value)
+    if (range) {
+      applyDateStart = range[0]
+      applyDateEnd = range[1]
+    }
+  }
+
+  const params = { applyDateStart, applyDateEnd }
+
+  reportByMonth(params).then(response => {
     const data = response.data || []
-    const currentMonth = new Date().getMonth() + 1
-    const monthItem = data.find(d => d.month === currentMonth)
-    monthTotal.value = monthItem?.total_expense || 0
-    yearTotal.value = data.reduce((sum, d) => sum + (d.total_expense || 0), 0)
+    totalExpense.value = data.reduce((sum, d) => sum + (Number(d.totalExpense) || 0), 0)
+    totalCount.value = data.reduce((sum, d) => sum + (Number(d.count) || 0), 0)
     renderMonthChart(data)
   })
 
-  reportByCategory({}).then(response => {
+  reportByCategory(params).then(response => {
     renderCategoryChart(response.data || [])
   })
 
-  reportByDept({}).then(response => {
+  reportByDept(params).then(response => {
     deptData.value = response.data || []
   })
 
-  reportByUser({}).then(response => {
+  reportByUser(params).then(response => {
     userData.value = response.data || []
   })
 
-  reportByExpenseType({}).then(response => {
+  reportByExpenseType(params).then(response => {
     const data = response.data || []
-    employeeExpense.value = data.find(d => d.expense_type === '1')?.total_expense || 0
-    companyExpense.value = data.find(d => d.expense_type === '2')?.total_expense || 0
+    employeeExpense.value = data.find(d => d.expenseType === '1')?.totalExpense || 0
+    companyExpense.value = data.find(d => d.expenseType === '2')?.totalExpense || 0
   })
 }
 
@@ -146,7 +211,7 @@ function renderMonthChart(data) {
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
   const values = new Array(12).fill(0)
   data.forEach(d => {
-    values[d.month - 1] = Number(d.total_expense || 0)
+    values[d.month - 1] = Number(d.totalExpense || 0)
   })
   monthChart.setOption({
     tooltip: { trigger: 'axis', formatter: '{b}: ¥{c}' },
@@ -160,7 +225,7 @@ function renderCategoryChart(data) {
   if (!categoryChartRef.value) return
   categoryChart = echarts.init(categoryChartRef.value)
   const categoryNames = { '1': '行程买票', '2': '销售费用', '3': '行政支出', '4': '其它' }
-  const pieData = data.map(d => ({ name: categoryNames[d.category] || d.category, value: Number(d.total_expense || 0) }))
+  const pieData = data.map(d => ({ name: categoryNames[d.category] || d.category, value: Number(d.totalExpense || 0) }))
   categoryChart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)' },
     legend: { orient: 'vertical', left: 'left' },

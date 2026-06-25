@@ -37,10 +37,6 @@ class BizStoreService
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
         }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('server_user_id', $visibleUserIds);
-        }
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -58,6 +54,12 @@ class BizStoreService
 
     public function insertStore($data)
     {
+        if (isset($data['server_user_id']) && is_array($data['server_user_id'])) {
+            $data['server_user_id'] = !empty($data['server_user_id']) ? implode(',', $data['server_user_id']) : null;
+        }
+        if (isset($data['server_user_name']) && is_array($data['server_user_name'])) {
+            $data['server_user_name'] = !empty($data['server_user_name']) ? implode('、', $data['server_user_name']) : null;
+        }
         $data['create_time'] = date('Y-m-d H:i:s');
         if (!empty($data['enterprise_id'])) {
             $enterprise = BizEnterprise::find($data['enterprise_id']);
@@ -72,6 +74,12 @@ class BizStoreService
 
     public function updateStore($data)
     {
+        if (isset($data['server_user_id']) && is_array($data['server_user_id'])) {
+            $data['server_user_id'] = !empty($data['server_user_id']) ? implode(',', $data['server_user_id']) : null;
+        }
+        if (isset($data['server_user_name']) && is_array($data['server_user_name'])) {
+            $data['server_user_name'] = !empty($data['server_user_name']) ? implode('、', $data['server_user_name']) : null;
+        }
         $data['update_time'] = date('Y-m-d H:i:s');
         if (!empty($data['enterprise_id'])) {
             $enterprise = BizEnterprise::find($data['enterprise_id']);
@@ -79,7 +87,8 @@ class BizStoreService
                 $data['enterprise_name'] = $enterprise->enterprise_name;
             }
         }
-        return BizStore::where('store_id', $data['store_id'])->update($data);
+        $updateData = array_intersect_key($data, array_flip((new BizStore())->getFillable()));
+        return BizStore::where('store_id', $data['store_id'])->update($updateData);
     }
 
     public function selectStoreForSearch($keyword, $enterpriseId = null, $params = [])
@@ -95,11 +104,6 @@ class BizStoreService
 
         if (!empty($enterpriseId)) {
             $query->where('enterprise_id', $enterpriseId);
-        }
-
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('server_user_id', $visibleUserIds);
         }
 
         return $query->where('status', '0')

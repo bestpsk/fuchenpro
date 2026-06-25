@@ -105,7 +105,7 @@
               <view class="info-item"><text class="label">时间</text><text class="value">{{ formatTime(item.create_time || item.createTime) }}</text></view>
             </view>
           </view>
-          <view class="card-actions" v-if="checkPermi('business:sales:cancel') && ['0','1'].includes(String(item.order_status ?? item.orderStatus ?? item.status))">
+          <view class="card-actions" v-if="checkPermi('business:order:cancel') && ['0','1'].includes(String(item.order_status ?? item.orderStatus ?? item.status))">
             <view class="action-btn cancel" @click.stop="cancelOrder(item)">取消订单</view>
           </view>
         </view>
@@ -325,8 +325,11 @@ function goDetail(item) {
   const sourceType = String(item.source_type || item.sourceType || '0')
   const id = item.order_id || item.orderId
   if (sourceType === '1') {
-    const customerId = item.customer_id || item.customerId || ''
-    uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${customerId}` })
+    const cid = item.customer_id || item.customerId || ''
+    const cname = encodeURIComponent(item.customer_name || item.customerName || '')
+    const sname = encodeURIComponent(item.store_name || item.storeName || '')
+    const ename = encodeURIComponent(item.enterprise_name || item.enterpriseName || '')
+    uni.navigateTo({ url: `/pages/business/sales/operation?customerId=${cid}&customerName=${cname}&storeName=${sname}&enterpriseName=${ename}` })
   } else {
     uni.navigateTo({ url: `/pages/business/order/detail?id=${id}` })
   }
@@ -392,7 +395,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .list-scroll { flex: 1; overflow: hidden; padding: 20rpx 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
 
-.order-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+.order-card { background: #fff; border-radius: 16rpx; padding: 28rpx; box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
   &:active { transform: scale(0.98); opacity: 0.9; }
 }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }

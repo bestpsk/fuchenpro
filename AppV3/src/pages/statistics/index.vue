@@ -626,7 +626,7 @@ function changeMonth(delta) {
 
 function formatAmount(value) {
   const num = Number(value) || 0
-  return '¥' + num.toFixed(2)
+  return '¥' + Math.round(num)
 }
 
 onMounted(() => {
@@ -646,7 +646,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   border-radius: 16rpx;
   padding: 8rpx;
   flex-shrink: 0;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .tab-item {
   flex: 1;
@@ -691,7 +691,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   padding: 16rpx 20rpx;
   background: #fff;
   border-radius: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .date-item {
   flex: 1;
@@ -728,7 +728,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   background: #fff;
   border-radius: 16rpx;
   padding: 20rpx 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
   display: flex;
   flex-direction: column;
   gap: 6rpx;
@@ -747,7 +747,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   border-radius: 16rpx;
   padding: 24rpx;
   margin-top: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .block-title { font-size: 28rpx; font-weight: 600; color: #1D2129; }
 .block-header {
@@ -852,11 +852,11 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .attend-val { font-size: 40rpx; font-weight: 700; line-height: 1;
   &.green { color: #3D6DF7; }
-  &.orange { color: #F59E0B; }
+  &.orange { color: #FF7D00; }
   &.red { color: #F53F3F; }
 }
 .attend-label { font-size: 24rpx; color: #86909C; }

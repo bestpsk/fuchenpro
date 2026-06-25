@@ -41,10 +41,6 @@ class BizEnterpriseService
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
         }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('server_user_id', $visibleUserIds);
-        }
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -74,6 +70,12 @@ class BizEnterpriseService
 
     public function insertEnterprise($data)
     {
+        if (isset($data['server_user_id']) && is_array($data['server_user_id'])) {
+            $data['server_user_id'] = !empty($data['server_user_id']) ? implode(',', $data['server_user_id']) : null;
+        }
+        if (isset($data['server_user_name']) && is_array($data['server_user_name'])) {
+            $data['server_user_name'] = !empty($data['server_user_name']) ? implode('、', $data['server_user_name']) : null;
+        }
         $data['create_time'] = date('Y-m-d H:i:s');
         if (empty($data['pinyin']) && !empty($data['enterprise_name'])) {
             $data['pinyin'] = $this->getPinyin($data['enterprise_name']);
@@ -85,11 +87,18 @@ class BizEnterpriseService
 
     public function updateEnterprise($data)
     {
+        if (isset($data['server_user_id']) && is_array($data['server_user_id'])) {
+            $data['server_user_id'] = !empty($data['server_user_id']) ? implode(',', $data['server_user_id']) : null;
+        }
+        if (isset($data['server_user_name']) && is_array($data['server_user_name'])) {
+            $data['server_user_name'] = !empty($data['server_user_name']) ? implode('、', $data['server_user_name']) : null;
+        }
         $data['update_time'] = date('Y-m-d H:i:s');
         if (!empty($data['enterprise_name']) && empty($data['pinyin'])) {
             $data['pinyin'] = $this->getPinyin($data['enterprise_name']);
         }
-        return BizEnterprise::where('enterprise_id', $data['enterprise_id'])->update($data);
+        $updateData = array_intersect_key($data, array_flip((new BizEnterprise())->getFillable()));
+        return BizEnterprise::where('enterprise_id', $data['enterprise_id'])->update($updateData);
     }
 
     public function selectEnterpriseForSearch($keyword, $loginUser = null)
@@ -103,11 +112,6 @@ class BizEnterpriseService
             });
         }
 
-        if (!empty($loginUser) && !$loginUser->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
-            $query->whereIn('server_user_id', $visibleUserIds);
-        }
-        
         return $query->where('status', '0')
                     ->orderBy('enterprise_name', 'asc')
                     ->limit(50)

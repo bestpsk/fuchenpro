@@ -24,9 +24,6 @@ class BizCardItemService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
-        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('card_item_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -46,9 +43,6 @@ class BizCardItemService
                 $q->where('card_item_name', 'like', '%' . $keyword . '%')
                   ->orWhere('card_item_code', 'like', '%' . $keyword . '%');
             });
-        }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
         }
         return $query->orderBy('card_item_id', 'desc')->limit(50)->get();
     }
@@ -77,7 +71,8 @@ class BizCardItemService
             }
             $products = $data['products'] ?? null;
             unset($data['products']);
-            $result = BizCardItem::where('card_item_id', $data['card_item_id'])->update($data);
+            $updateData = array_intersect_key($data, array_flip((new BizCardItem())->getFillable()));
+            $result = BizCardItem::where('card_item_id', $data['card_item_id'])->update($updateData);
             if ($products !== null) {
                 $this->syncProducts($data['card_item_id'], $products);
             }

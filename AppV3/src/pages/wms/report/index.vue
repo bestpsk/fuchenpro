@@ -173,6 +173,7 @@
               <text class="card-value">1{{ getUnitLabel(item.unit) }}={{ item.packQty }}{{ getSpecLabel(item.spec) }}</text>
             </view>
             <view class="turnover-grid">
+              <!-- 第一行 -->
               <view class="turnover-cell">
                 <text class="turnover-label">期初库存</text>
                 <text class="turnover-val">{{ formatQty(item.beginQuantity, item) }}</text>
@@ -181,13 +182,14 @@
                 <text class="turnover-label">期间入库</text>
                 <text class="turnover-val">{{ formatQty(item.periodInQuantity, item) }}</text>
               </view>
+              <!-- 第二行 -->
               <view class="turnover-cell out">
                 <text class="turnover-label">期间出库</text>
                 <text class="turnover-val">{{ formatQty(item.periodOutQuantity, item) }}</text>
               </view>
-              <view class="turnover-cell">
+              <view class="turnover-cell end">
                 <text class="turnover-label">期末库存</text>
-                <text class="turnover-val end">{{ formatQty(item.endQuantity, item) }}</text>
+                <text class="turnover-val">{{ formatQty(item.endQuantity, item) }}</text>
               </view>
             </view>
           </view>
@@ -683,7 +685,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   background: #fff;
   border-radius: 16rpx;
   padding: 0 8rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
   overflow: hidden;
 }
 
@@ -699,7 +701,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   display: inline-flex; align-items: center; justify-content: center;
   padding: 12rpx 28rpx; background: #fff; border-radius: 28rpx;
   font-size: 26rpx; color: #4E5969; border: 2rpx solid #E5E6EB;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); white-space: nowrap;
+  box-shadow: 0 2rpx 8rpx rgba(61,109,247,0.06); white-space: nowrap;
   transition: all 0.2s;
   &.active { background: #3D6DF7; color: #fff; border-color: #3D6DF7; }
 }
@@ -711,7 +713,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   padding: 16rpx 20rpx;
   background: #fff;
   border-radius: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .date-item {
   flex: 1;
@@ -744,7 +746,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   padding: 0 20rpx;
   height: 72rpx;
   gap: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .category-input { flex: 1; font-size: 28rpx; color: #1D2129; height: 72rpx; min-width: 0; }
 .category-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
@@ -761,7 +763,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   padding: 0 20rpx;
   height: 72rpx;
   gap: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .product-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
 .product-placeholder { flex: 1; font-size: 28rpx; color: #C9CDD4; }
@@ -775,7 +777,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   padding: 0 20rpx;
   height: 72rpx;
   gap: 12rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .expiry-status-selected { flex: 1; font-size: 28rpx; color: #1D2129; }
 .expiry-status-placeholder { flex: 1; font-size: 28rpx; color: #C9CDD4; }
@@ -840,7 +842,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
 }
 .card-row {
   display: flex;
@@ -876,33 +878,37 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 }
 
 .turnover-grid {
-  display: flex;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12rpx;
   width: 100%;
-  margin-top: 8rpx;
+  margin-top: 16rpx;
 }
 .turnover-cell {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  background: #F7F8FA;
+  border-radius: 12rpx;
+  padding: 20rpx 12rpx;
   gap: 6rpx;
   &.in .turnover-val { color: #3D6DF7; }
   &.out .turnover-val { color: #FF6B35; }
+  &.end .turnover-val { color: #3D6DF7; font-weight: 600; font-size: 30rpx; }
 }
-.turnover-label { font-size: 22rpx; color: #C9CDD4; }
+.turnover-label { font-size: 22rpx; color: #86909C; }
 .turnover-val {
   font-size: 28rpx;
-  color: #4E5969;
+  color: #1D2129;
   font-weight: 500;
-  &.end { color: #3D6DF7; font-weight: 600; font-size: 30rpx; }
 }
 
 .summary-card {
   background: #fff;
   border-radius: 16rpx;
   padding: 28rpx 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(61,109,247,0.06);
   border-left: 6rpx solid #3D6DF7;
 }
 .summary-row {

@@ -149,7 +149,7 @@
     </view>
 
     <!-- 出库按钮 -->
-    <view v-if="canStockOut && checkPermi('business:stockPrepare:stockOut')" class="bottom-bar">
+    <view v-if="canStockOut && checkPermi('business:stockPrepare:createStockOut')" class="bottom-bar">
       <u-button type="primary" text="出库" @click="openStockOutPopup"></u-button>
     </view>
 

@@ -44,7 +44,7 @@
     <u-empty v-else-if="!loading" mode="data" text="反馈不存在" :marginTop="100"></u-empty>
 
     <view v-if="detail" class="bottom-actions">
-      <view v-if="checkPermi('admin:feedback:reply')" class="action-btn reply" @click="goReply">
+      <view v-if="checkPermi('admin:feedback:handle')" class="action-btn reply" @click="goReply">
         <u-icon name="chat" size="16"></u-icon>
         <text>回复</text>
       </view>

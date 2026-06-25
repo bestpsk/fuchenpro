@@ -28,10 +28,10 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['wms:stockTransfer:add']">新增调拨</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['wms:transfer:add']">新增调拨</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:stockTransfer:remove']">删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete" v-hasPermi="['wms:transfer:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport">导出</el-button>
@@ -67,9 +67,9 @@
       <el-table-column label="操作" min-width="220" align="center">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)">详情</el-button>
-          <el-button link type="primary" icon="Check" @click="handleConfirm(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:stockTransfer:confirm']">确认</el-button>
-          <el-button link type="warning" icon="RefreshLeft" @click="handleCancelConfirm(scope.row)" v-if="scope.row.status === '1'" v-hasPermi="['wms:stockTransfer:confirm']">取消确认</el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:stockTransfer:remove']">删除</el-button>
+          <el-button link type="primary" icon="Check" @click="handleConfirm(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:transfer:confirm']">确认</el-button>
+          <el-button link type="warning" icon="RefreshLeft" @click="handleCancelConfirm(scope.row)" v-if="scope.row.status === '1'" v-hasPermi="['wms:transfer:confirm']">取消确认</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-if="scope.row.status === '0'" v-hasPermi="['wms:transfer:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

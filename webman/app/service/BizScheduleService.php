@@ -56,7 +56,7 @@ class BizScheduleService
         $result = $query->orderBy('schedule_date', 'desc')->orderBy('schedule_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
         foreach ($result->items() as $item) {
-            $user = SysUser::find($item->user_id);
+            $user = SysUser::where('user_id', $item->user_id)->where('del_flag', '0')->first();
             if ($user) {
                 $item->user_name = $user->nick_name ?? $user->user_name;
                 $postInfo = Db::table('sys_user_post as up')
@@ -134,9 +134,10 @@ class BizScheduleService
             $conflictDates = [];
 
             foreach ($dataList as $item) {
-                // 检查同一员工同一天是否已有排班
+                // 检查同一员工同一天同一企业是否已有排班
                 $exists = BizSchedule::where('user_id', $item['user_id'])
                     ->where('schedule_date', $item['schedule_date'])
+                    ->where('enterprise_id', $item['enterprise_id'])
                     ->exists();
                 if ($exists) {
                     $conflictDates[] = $item['schedule_date'];
@@ -154,7 +155,12 @@ class BizScheduleService
                 throw new \Exception('没有可新增的排班数据');
             }
 
-            return BizSchedule::insert($insertData);
+            $fillable = (new BizSchedule())->getFillable();
+            $filteredData = array_map(function($item) use ($fillable) {
+                return array_intersect_key($item, array_flip($fillable));
+            }, $insertData);
+
+            return BizSchedule::insert($filteredData);
         });
     }
 
@@ -163,7 +169,9 @@ class BizScheduleService
     public function updateSchedule($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizSchedule::where('schedule_id', $data['schedule_id'])->update($data);
+        $updateData = $data;
+        unset($updateData['schedule_id']);  // 主键已在WHERE条件中
+        return BizSchedule::where('schedule_id', $data['schedule_id'])->update($updateData);
     }
 
     // 批量删除日程
@@ -187,6 +195,7 @@ class BizScheduleService
         } else {
             $userQuery->where('status', '0');
         }
+        $userQuery->where('del_flag', '0');
         DataScopeService::applyUserScope($userQuery, $params['login_user'], 'user_id');
         
         $users = $userQuery->get();

@@ -14,8 +14,8 @@ export default {
     site_url: "https://fuchenpro.com",
     /** 法律合规文档链接，登录/注册页展示 */
     agreements: [
-      { title: "隐私政策", url: "https://fuchenpro.com/privacy.html" },
-      { title: "用户服务协议", url: "https://fuchenpro.com/service.html" }
+      { title: "用户服务协议", url: "/pages/agreement/user" },
+      { title: "隐私政策", url: "/pages/agreement/privacy" }
     ]
   },
   /** 高德地图Web服务Key，用于考勤定位、门店地图等功能 */

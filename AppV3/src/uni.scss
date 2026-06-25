@@ -1,21 +1,22 @@
 @import 'uview-plus/theme.scss';
+@import '@/static/scss/design-tokens.scss';
 
-$uni-color-primary: #3c96f3;
-$uni-color-success: #4caf50;
-$uni-color-warning: #ff9800;
-$uni-color-error: #f44336;
+$uni-color-primary: $color-primary;
+$uni-color-success: $color-success;
+$uni-color-warning: $color-warning;
+$uni-color-error: $color-error;
 
-$uni-text-color: #333;
+$uni-text-color: $color-text-primary;
 $uni-text-color-inverse: #fff;
-$uni-text-color-grey: #999;
-$uni-text-color-placeholder: #cccccc;
+$uni-text-color-grey: $color-text-secondary;
+$uni-text-color-placeholder: $color-text-placeholder;
 
-$uni-bg-color: #f5f6f7;
-$uni-bg-color-grey: #f0f0f0;
-$uni-bg-color-hover: #f1f1f1;
+$uni-bg-color: $color-bg-page;
+$uni-bg-color-grey: $color-bg-divider;
+$uni-bg-color-hover: $color-bg-input;
 $uni-bg-color-mask: rgba(0, 0, 0, 0.4);
 
-$uni-border-color: #e5e5e5;
+$uni-border-color: $color-border;
 
 $uni-font-size-sm: 12px;
 $uni-font-size-base: 14px;

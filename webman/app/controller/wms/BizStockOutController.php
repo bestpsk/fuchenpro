@@ -43,19 +43,23 @@ class BizStockOutController
     // 新增出库单，含出库明细项，自动填充操作人信息
     public function add(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $realName = trim($request->loginUser->user->nick_name ?? '');
-        $userName = trim($request->loginUser->user->user_name ?? '');
-        $data['create_by'] = $realName ?: $userName;
-        $data['responsible_id'] = $request->loginUser->user->user_id;
-        $data['responsible_name'] = $realName ?: $userName;
-        $data['login_user'] = $request->loginUser;
-        if (isset($data['items'])) {
-            $data['items'] = convert_to_snake_case($data['items']);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $realName = trim($request->loginUser->user->nick_name ?? '');
+            $userName = trim($request->loginUser->user->user_name ?? '');
+            $data['create_by'] = $realName ?: $userName;
+            $data['responsible_id'] = $request->loginUser->user->user_id;
+            $data['responsible_name'] = $realName ?: $userName;
+            $data['login_user'] = $request->loginUser;
+            if (isset($data['items'])) {
+                $data['items'] = convert_to_snake_case($data['items']);
+            }
+            $service = new BizStockOutService();
+            $result = $service->insertStockOut($data);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $service = new BizStockOutService();
-        $result = $service->insertStockOut($data);
-        return AjaxResult::toAjax($result ? 1 : 0);
     }
 
     // 修改出库单及明细项，已确认的出库单不可修改
@@ -107,16 +111,20 @@ class BizStockOutController
     // 取消确认出库，将已扣减的数量归还库存
     public function cancelConfirm(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:cancelConfirm')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
+        try {
+            if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:confirm')) {
+                return json(['code' => 403, 'msg' => '没有操作权限']);
+            }
+            $parts = explode('/', $request->path());
+            $id = intval(end($parts));
+            $params['login_user'] = $request->loginUser;
+            $service = new BizStockOutService();
+            $result = $service->cancelConfirmStockOut($id, $params);
+            if (!$result['success']) return AjaxResult::error($result['msg']);
+            return AjaxResult::success($result['msg']);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $parts = explode('/', $request->path());
-        $id = intval(end($parts));
-        $params['login_user'] = $request->loginUser;
-        $service = new BizStockOutService();
-        $result = $service->cancelConfirmStockOut($id, $params);
-        if (!$result['success']) return AjaxResult::error($result['msg']);
-        return AjaxResult::success($result['msg']);
     }
 
     public function ship(Request $request)
@@ -136,16 +144,20 @@ class BizStockOutController
 
     public function confirmReceipt(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:receipt')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
+        try {
+            if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:receipt')) {
+                return json(['code' => 403, 'msg' => '没有操作权限']);
+            }
+            $parts = explode('/', $request->path());
+            $id = intval(end($parts));
+            $params['login_user'] = $request->loginUser;
+            $service = new BizStockOutService();
+            $result = $service->confirmReceipt($id, $params);
+            if (!$result['success']) return AjaxResult::error($result['msg']);
+            return AjaxResult::success($result['msg']);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $parts = explode('/', $request->path());
-        $id = intval(end($parts));
-        $params['login_user'] = $request->loginUser;
-        $service = new BizStockOutService();
-        $result = $service->confirmReceipt($id, $params);
-        if (!$result['success']) return AjaxResult::error($result['msg']);
-        return AjaxResult::success($result['msg']);
     }
 
     // 导出出库数据

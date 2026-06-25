@@ -91,7 +91,7 @@
                   <span class="stat-label">套餐名称</span>
                   <el-input v-model="orderPackageName" placeholder="请输入套餐名称" clearable style="width: 240px; margin-left: 8px" />
                 </div>
-                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:cardItem:edit']">添加品项</el-button>
+                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:salesOrder:add']">添加品项</el-button>
               </div>
               <el-table :data="orderItems" border style="width: 100%" >
                 <el-table-column label="品项" min-width="80">

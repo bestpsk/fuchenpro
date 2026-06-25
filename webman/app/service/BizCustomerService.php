@@ -27,7 +27,6 @@ class BizCustomerService
         if (!empty($params['phone'])) $query->where('phone', 'like', '%' . $params['phone'] . '%');
         if (!empty($params['tag'])) $query->where('tag', $params['tag']);
         if (!empty($params['status'])) $query->where('status', $params['status']);
-        DataScopeService::applyUserScope($query, $params['login_user'], 'enterprise_id', 'enterprise');
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -68,7 +67,6 @@ class BizCustomerService
                   ->orWhere('phone', 'like', '%' . $keyword . '%');
             });
         }
-        DataScopeService::applyUserScope($query, $loginUser, 'enterprise_id', 'enterprise');
         $customers = $query->where('status', '0')->orderBy('customer_name', 'asc')->limit(100)->get();
 
         $result = [];
@@ -134,7 +132,8 @@ class BizCustomerService
     public function updateCustomer($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizCustomer::where('customer_id', $data['customer_id'])->update($data);
+        $updateData = array_intersect_key($data, array_flip((new BizCustomer())->getFillable()));
+        return BizCustomer::where('customer_id', $data['customer_id'])->update($updateData);
     }
 
     // 根据ID批量删除客户

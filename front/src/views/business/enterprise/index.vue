@@ -136,7 +136,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="服务人" prop="serverUserName">
-              <el-select v-model="form.serverUserId" placeholder="请选择服务人" filterable remote :remote-method="searchServerUser" @focus="() => searchServerUser('')" @change="onServerUserChange" style="width: 100%" clearable>
+              <el-select v-model="form.serverUserId" placeholder="请选择服务人" filterable multiple collapse-tags collapse-tags-tooltip remote :remote-method="searchServerUser" @focus="() => searchServerUser('')" @change="onServerUserChange" style="width: 100%" clearable>
                 <el-option v-for="u in serverUserOptions" :key="u.userId" :label="u.nickName" :value="u.userId" />
               </el-select>
             </el-form-item>
@@ -502,7 +502,7 @@ function reset() {
   form.value = {
     enterpriseId: undefined, enterpriseName: undefined, bossName: undefined, phone: undefined,
     address: undefined, enterpriseType: "1", storeCount: 0, annualPerformance: 0,
-    enterpriseLevel: "3", serverUserId: undefined, serverUserName: undefined,
+    enterpriseLevel: "3", serverUserId: [], serverUserName: undefined,
     cooperationStartDate: undefined, cooperationEndDate: undefined, status: "0", remark: undefined
   }
   proxy.resetForm("enterpriseRef")
@@ -535,7 +535,13 @@ function handleUpdate(row) {
   const enterpriseId = row.enterpriseId || ids.value
   getEnterprise(enterpriseId).then(response => {
     form.value = response.data
-    if (form.value.serverUserId) {
+    // 多选回显：字符串转数组
+    if (form.value.serverUserId && typeof form.value.serverUserId === 'string') {
+      form.value.serverUserId = form.value.serverUserId.split(',').map(id => parseInt(id))
+    } else if (!form.value.serverUserId) {
+      form.value.serverUserId = []
+    }
+    if (form.value.serverUserId.length > 0) {
       searchServerUser('')
     }
     open.value = true

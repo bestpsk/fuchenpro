@@ -1,2 +1,9 @@
 node_modules/
 .trae/
+
+# 构建产物
+AppV3/dist/
+front/web/
+
+# IDE 配置
+.vscode/

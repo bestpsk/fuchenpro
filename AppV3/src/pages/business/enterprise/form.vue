@@ -60,10 +60,11 @@
         </view>
       </view>
 
-      <view class="form-field">
+      <view class="form-field" @click="mode !== 'view' && (showUserPicker = true)">
         <view class="field-input-box">
           <u-icon name="man-add" size="18" color="#86909C"></u-icon>
-          <input class="field-input" type="text" v-model="form.serverUserName" placeholder="服务人" placeholder-class="field-placeholder" />
+          <input class="field-input" :value="selectedUsersText" placeholder="服务人（可多选）" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
         </view>
       </view>
 
@@ -116,6 +117,35 @@
       @close="showLevelPicker = false"
     ></u-picker>
 
+    <!-- 服务人多选弹窗 -->
+    <u-popup :show="showUserPicker" mode="bottom" round="16" @close="showUserPicker = false">
+      <view class="picker-popup">
+        <view class="picker-header">
+          <text class="picker-title">选择服务人</text>
+          <view class="picker-close" @click="showUserPicker = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
+        </view>
+        <view class="picker-search">
+          <u-icon name="search" size="16" color="#86909C"></u-icon>
+          <input class="picker-search-input" v-model="userSearchKeyword" placeholder="搜索员工姓名" placeholder-class="field-placeholder" @input="filterUserList" />
+        </view>
+        <scroll-view scroll-y class="picker-list">
+          <view v-for="item in filteredUserList" :key="item.userId" class="picker-item" :class="{ 'picker-item-selected': isUserSelected(item.userId) }" @click="onUserToggle(item)">
+            <view class="picker-item-content">
+              <view class="picker-checkbox" :class="{ checked: isUserSelected(item.userId) }">
+                <u-icon v-if="isUserSelected(item.userId)" name="checkmark" size="14" color="#fff"></u-icon>
+              </view>
+              <text class="picker-item-text">{{ item.nickName || item.userName }}</text>
+            </view>
+          </view>
+          <u-empty v-if="filteredUserList.length === 0" mode="data" text="暂无员工数据" :marginTop="40"></u-empty>
+        </scroll-view>
+        <view class="picker-footer">
+          <text class="picker-footer-text">已选 {{ selectedUsers.length }} 人</text>
+          <view class="picker-footer-btn"><u-button type="primary" text="确认" size="small" @click="confirmUserSelect" :disabled="selectedUsers.length === 0"></u-button></view>
+        </view>
+      </view>
+    </u-popup>
+
     <view class="form-actions" v-if="mode !== 'view'">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
       <u-button type="primary" text="保存" :loading="submitting" @click="submitForm"></u-button>
@@ -134,13 +164,19 @@
  * @description 支持三种模式（add/edit/view），包含企业名称、老板、手机号（格式校验）、
  * 企业类型/级别选择、年业绩等字段，提交时区分新增和修改
  */
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { getEnterprise, addEnterprise, updateEnterprise, delEnterprise } from '@/api/business/enterprise'
+import { listUser } from '@/api/system/user'
 import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)
 const showTypePicker = ref(false)
 const showLevelPicker = ref(false)
+const showUserPicker = ref(false)
+const userSearchKeyword = ref('')
+const userList = ref([])
+const filteredUserList = ref([])
+const selectedUsers = ref([])
 /** 页面模式：add/edit/view */
 const mode = ref('add')
 const enterpriseId = ref(null)
@@ -157,6 +193,7 @@ const form = reactive({
   annualPerformance: '',
   enterpriseLevel: '',
   levelName: '',
+  serverUserId: '',
   serverUserName: '',
   status: '0',
   remark: ''
@@ -174,6 +211,44 @@ const levelColumns = ref([
   { label: 'C级', value: '3' },
   { label: 'D级', value: '4' }
 ])
+
+const selectedUsersText = computed(() => {
+  if (selectedUsers.value.length === 0) return ''
+  const names = selectedUsers.value.map(u => u.userName)
+  if (names.length <= 3) return names.join('、')
+  return `${names.slice(0, 3).join('、')} 等${names.length}人`
+})
+
+function isUserSelected(userId) {
+  return selectedUsers.value.some(u => u.userId === userId)
+}
+
+function onUserToggle(item) {
+  const idx = selectedUsers.value.findIndex(u => u.userId === item.userId)
+  if (idx >= 0) {
+    selectedUsers.value.splice(idx, 1)
+  } else {
+    selectedUsers.value.push({ userId: item.userId, userName: item.nickName || item.userName })
+  }
+}
+
+function confirmUserSelect() {
+  showUserPicker.value = false
+}
+
+function filterUserList() {
+  const keyword = userSearchKeyword.value.toLowerCase()
+  filteredUserList.value = userList.value.filter(u => (u.nickName || u.userName || '').toLowerCase().includes(keyword))
+}
+
+async function loadUserList() {
+  try {
+    const response = await listUser({ pageNum: 1, pageSize: 1000, status: '0' })
+    const data = response.data || response
+    userList.value = data.rows || []
+    filteredUserList.value = userList.value
+  } catch (e) { console.error('加载员工列表失败:', e) }
+}
 
 /** 企业类型选择确认，更新表单中的类型编码和名称 */
 function onTypeConfirm(e) {
@@ -210,10 +285,18 @@ async function loadDetail() {
       annualPerformance: data.annualPerformance ? String(data.annualPerformance) : '',
       enterpriseLevel: String(data.enterpriseLevel || ''),
       levelName: getLevelName(data.enterpriseLevel),
+      serverUserId: data.serverUserId || '',
       serverUserName: data.serverUserName || '',
       status: String(data.status ?? '0'),
       remark: data.remark || ''
     })
+    if (form.serverUserId && typeof form.serverUserId === 'string') {
+      const ids = form.serverUserId.split(',').map(id => parseInt(id))
+      const names = form.serverUserName ? form.serverUserName.split('、') : []
+      selectedUsers.value = ids.map((id, i) => ({ userId: id, userName: names[i] || '' }))
+    } else {
+      selectedUsers.value = []
+    }
   } catch (e) {
     console.error('加载详情失败:', e)
     uni.showToast({ title: '加载失败', icon: 'none' })
@@ -255,7 +338,8 @@ async function submitForm() {
       storeCount: form.storeCount ? parseInt(form.storeCount) : 0,
       annualPerformance: form.annualPerformance ? parseFloat(form.annualPerformance) : 0,
       enterpriseLevel: form.enterpriseLevel,
-      serverUserName: form.serverUserName || null,
+      serverUserId: selectedUsers.value.map(u => u.userId),
+      serverUserName: selectedUsers.value.map(u => u.userName),
       status: form.status,
       remark: form.remark || null
     }
@@ -308,6 +392,8 @@ onMounted(() => {
   const options = currentPage.options || {}
   mode.value = options.mode || 'add'
   enterpriseId.value = options.id ? parseInt(options.id) : null
+
+  loadUserList()
 
   if (mode.value === 'view') { uni.setNavigationBarTitle({ title: '企业详情' }); loadDetail() }
   else if (mode.value === 'edit') { uni.setNavigationBarTitle({ title: '编辑企业' }); loadDetail() }
@@ -446,5 +532,114 @@ page { background-color: #F5F7FA; }
   z-index: 100;
 
   .u-button { flex: 1; height: 88rpx; border-radius: 44rpx; font-size: 30rpx; font-weight: 600; }
+}
+
+.picker-popup {
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid #F2F3F5;
+}
+
+.picker-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+}
+
+.picker-close { padding: 8rpx; }
+
+.picker-search {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 20rpx 32rpx;
+  padding: 0 20rpx;
+  background: #F7F8FA;
+  border-radius: 36rpx;
+  height: 72rpx;
+}
+
+.picker-search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1D2129;
+  height: 72rpx;
+}
+
+.picker-list {
+  flex: 1;
+  padding: 0 32rpx 32rpx;
+  max-height: 50vh;
+}
+
+.picker-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #F2F3F5;
+
+  &:last-child { border-bottom: none; }
+  &:active { background: #F7F8FA; }
+}
+
+.picker-item-selected {
+  background: #F5F7FA;
+}
+
+.picker-item-content {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.picker-checkbox {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 6rpx;
+  border: 2rpx solid #C9CDD4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &.checked {
+    background: #3D6DF7;
+    border-color: #3D6DF7;
+  }
+}
+
+.picker-item-text {
+  font-size: 28rpx;
+  color: #1D2129;
+}
+
+.picker-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 32rpx;
+  border-top: 1rpx solid #F2F3F5;
+  background: #fff;
+}
+
+.picker-footer-text {
+  font-size: 26rpx;
+  color: #86909C;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.picker-footer-btn {
+  flex-shrink: 0;
+  width: auto;
 }
 </style>

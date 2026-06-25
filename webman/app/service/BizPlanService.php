@@ -22,11 +22,6 @@ class BizPlanService
             $query->where('enterprise_name', 'like', '%' . $params['enterprise_name'] . '%');
         }
 
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereIn('server_user_id', $visibleUserIds);
-        }
-
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         return $query->orderBy('enterprise_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -54,13 +49,6 @@ class BizPlanService
         }
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
-        }
-
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $enterpriseIds = BizEnterprise::whereIn('server_user_id', $visibleUserIds)
-                ->pluck('enterprise_id')->toArray();
-            $query->whereIn('enterprise_id', $enterpriseIds);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);

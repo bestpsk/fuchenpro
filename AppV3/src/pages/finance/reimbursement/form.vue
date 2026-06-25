@@ -34,7 +34,7 @@
       <view class="form-row">
         <view class="form-field half-width">
           <view class="field-input-box">
-            <u-icon name="money-cny-circle" size="16" color="#86909C"></u-icon>
+            <u-icon name="rmb-circle" size="16" color="#86909C"></u-icon>
             <input class="field-input" type="digit" v-model="form.expenseAmount" placeholder="* 支出金额" placeholder-class="field-placeholder" :disabled="mode === 'view'" :disabledColor="'#fff'" />
           </view>
         </view>

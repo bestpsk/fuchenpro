@@ -94,8 +94,11 @@ class DataScopeService
 
         switch ($scopeType) {
             case 'enterprise':
-                $enterpriseIds = BizEnterprise::whereIn('server_user_id', $visibleUserIds)
-                    ->pluck('enterprise_id')->toArray();
+                $enterpriseIds = BizEnterprise::where(function($q) use ($visibleUserIds) {
+                    foreach ($visibleUserIds as $uid) {
+                        $q->orWhereRaw('FIND_IN_SET(?, server_user_id)', [$uid]);
+                    }
+                })->pluck('enterprise_id')->toArray();
                 return $query->whereIn($userField, $enterpriseIds);
 
             case 'username':

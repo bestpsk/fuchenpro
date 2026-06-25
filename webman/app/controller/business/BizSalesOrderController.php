@@ -68,13 +68,17 @@ class BizSalesOrderController
     // 修改销售订单及明细项，自动填充更新人信息
     public function edit(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $items = $data['items'] ?? [];
-        unset($data['items']);
-        $data['update_by'] = $request->loginUser->user->user_name ?? '';
-        $service = new BizSalesOrderService();
-        $result = $service->updateOrder($data, $items);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $items = $data['items'] ?? [];
+            unset($data['items']);
+            $data['update_by'] = $request->loginUser->user->user_name ?? '';
+            $service = new BizSalesOrderService();
+            $result = $service->updateOrder($data, $items);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 批量删除销售订单
@@ -95,18 +99,22 @@ class BizSalesOrderController
     // 企业审核销售订单
     public function enterpriseAudit(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
-        $orderId = $request->post('orderId');
-        $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
-        $service = new BizSalesOrderService();
-        $result = $service->enterpriseAudit($orderId, $auditBy);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            if (PermissionService::lacksPermi($request->loginUser, 'business:order:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+            $orderId = $request->post('orderId');
+            $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
+            $service = new BizSalesOrderService();
+            $result = $service->enterpriseAudit($orderId, $auditBy);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 财务审核销售订单
     public function financeAudit(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:financeAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:order:financeAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
@@ -116,7 +124,7 @@ class BizSalesOrderController
 
     public function cancel(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:salesOrder:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:order:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $service = new BizSalesOrderService();
         $result = $service->cancelOrder($orderId);

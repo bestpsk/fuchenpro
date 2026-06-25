@@ -138,20 +138,20 @@
       
       <view class="timeline" v-if="false">
         <view class="timeline-item" :class="{ 'timeline-first': !todayRecord.clockInTime, 'timeline-last': todayRecord.clockOutTime }">
-          <view class="timeline-dot" :class="{ 'dot-done': todayRecord.clockInTime, 'dot-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' }">
+          <view class="timeline-dot" :class="{ 'dot-done': todayRecord.clockInTime, 'dot-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5' }">
             <u-icon v-if="todayRecord.clockInTime" name="checkmark" size="10" color="#fff" />
           </view>
           <view class="timeline-content">
             <text class="timeline-time">{{ formatTime(todayRecord.clockInTime) }}</text>
             <text class="timeline-label">上班打卡</text>
-            <view v-if="todayRecord.clockInTime" class="timeline-status" :class="{ 'status-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' }">
-              <text>{{ (todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3') ? '迟到' : '正常' }}</text>
+            <view v-if="todayRecord.clockInTime" class="timeline-status" :class="{ 'status-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5' }">
+              <text>{{ (todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5') ? '迟到' : '正常' }}</text>
             </view>
           </view>
         </view>
         <view class="timeline-line" v-if="!todayRecord.clockOutTime || !todayRecord.clockInTime"></view>
         <view class="timeline-item timeline-last" v-if="todayRecord.clockOutTime">
-          <view class="timeline-dot" :class="{ 'dot-done': true, 'dot-early': todayRecord.attendanceStatus === '2' || todayRecord.attendanceStatus === '3' }">
+          <view class="timeline-dot" :class="{ 'dot-done': true, 'dot-early': todayRecord.attendanceStatus === '2' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '6' }">
             <u-icon name="checkmark" size="10" color="#fff" />
           </view>
           <view class="timeline-content">
@@ -280,13 +280,13 @@ const clockBtnClass = computed(() => {
 /** 考勤状态标签：0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤 */
 const statusLabel = computed(() => {
   if (!todayRecord.value) return ''
-  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
+  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤', '5': '迟到+缺勤', '6': '早退+缺勤' }
   return map[todayRecord.value.attendanceStatus] || ''
 })
 
 const statusClass = computed(() => {
   if (!todayRecord.value) return ''
-  const map = { '0': 'tag-normal', '1': 'tag-late', '2': 'tag-early', '3': 'tag-danger', '4': 'tag-danger' }
+  const map = { '0': 'tag-normal', '1': 'tag-late', '2': 'tag-early', '3': 'tag-danger', '4': 'tag-danger', '5': 'tag-danger', '6': 'tag-danger' }
   return map[todayRecord.value.attendanceStatus] || ''
 })
 
@@ -1198,7 +1198,7 @@ page {
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4rpx 20rpx rgba(61, 109, 247, 0.06);
   box-sizing: border-box;
 }
 
@@ -1375,7 +1375,7 @@ page {
   border-radius: 20rpx;
   padding: 28rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4rpx 20rpx rgba(61, 109, 247, 0.06);
   animation: fade-up 0.4s ease-out;
 }
 
@@ -1583,7 +1583,7 @@ page {
   border-radius: 20rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4rpx 20rpx rgba(61, 109, 247, 0.06);
   animation: fade-up 0.5s ease-out;
 }
 

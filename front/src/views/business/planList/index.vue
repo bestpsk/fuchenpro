@@ -66,12 +66,35 @@
 
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
-    <el-dialog title="选择企业" v-model="enterpriseSelectOpen" width="500px" append-to-body>
+    <el-dialog title="选择企业" v-model="enterpriseSelectOpen" width="800px" append-to-body>
+      <el-form :inline="true" style="margin-bottom: 12px">
+        <el-form-item>
+          <el-input v-model="enterpriseQueryParams.enterpriseName" placeholder="搜索企业名称" clearable style="width: 240px" @keyup.enter="searchEnterprise" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="searchEnterprise">搜索</el-button>
+        </el-form-item>
+      </el-form>
       <el-table :data="enterpriseList" v-loading="enterpriseLoading" highlight-current-row @current-change="handleEnterpriseSelect" style="cursor: pointer">
-        <el-table-column label="企业名称" prop="enterpriseName" />
-        <el-table-column label="合作状态" align="center">
+        <el-table-column label="企业名称" prop="enterpriseName" min-width="120" show-overflow-tooltip />
+        <el-table-column label="老板" prop="bossName" width="80" />
+        <el-table-column label="企业类型" width="80" align="center">
           <template #default="scope">
-            <el-tag :type="scope.row.status === '0' ? 'success' : 'info'">{{ scope.row.status === '0' ? '合作中' : '已停止' }}</el-tag>
+            {{ scope.row.enterpriseType === '1' ? '直营' : scope.row.enterpriseType === '2' ? '加盟' : scope.row.enterpriseType === '3' ? '合作' : '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="门店数" prop="storeCount" width="70" align="center" />
+        <el-table-column label="级别" width="60" align="center">
+          <template #default="scope">
+            {{ scope.row.enterpriseLevel === '1' ? 'A' : scope.row.enterpriseLevel === '2' ? 'B' : 'C' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="服务人" prop="serverUserName" width="80" />
+        <el-table-column label="状态" width="70" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.status === '0' ? 'success' : 'info'" size="small">
+              {{ scope.row.status === '0' ? '合作中' : '已停止' }}
+            </el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -428,6 +451,11 @@ function getEnterpriseList() {
     enterpriseTotal.value = res.total
     enterpriseLoading.value = false
   })
+}
+
+function searchEnterprise() {
+  enterpriseQueryParams.value.pageNum = 1
+  getEnterpriseList()
 }
 
 function handleQuery() { queryParams.value.pageNum = 1; getList() }
