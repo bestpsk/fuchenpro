@@ -165,9 +165,9 @@ function getStatusText(status) {
   return map[status] || '--'
 }
 
-/** 考勤状态映射为样式类名（normal/late/absent） */
+/** 考勤状态映射为样式类名（normal/late/early/late-early/absent） */
 function getStatusColor(status) {
-  const map = { '0': 'normal', '1': 'late', '2': 'late', '3': 'absent', '4': 'absent', '5': 'absent', '6': 'absent' }
+  const map = { '0': 'normal', '1': 'late', '2': 'early', '3': 'late-early', '4': 'absent', '5': 'absent', '6': 'absent' }
   return map[status] || ''
 }
 
@@ -296,19 +296,35 @@ async function loadData() {
     console.log('[Record] Stats API返回:', statsRes)
     console.log('[Record] statsRes.data:', statsRes.data)
 
-    if (statsRes.data || statsRes.normal !== undefined) {
-      const rawData = statsRes.data || statsRes
-      stats.value = {
-        normal: rawData.normal ?? rawData.normalCount ?? 0,
-        late: rawData.late ?? rawData.lateCount ?? 0,
-        early: rawData.early ?? rawData.earlyCount ?? 0,
-        absent: rawData.absent ?? rawData.absentCount ?? 0
-      }
-      console.log('[Record] 统计数据赋值:', stats.value)
-    }
-
     const rows = listRes.rows || []
     recordList.value = rows
+
+    // 基于记录列表统计考勤数据
+    // status: '0'=正常, '1'=迟到, '2'=早退, '3'=迟到+早退, '4'=缺卡, '5'=迟到+缺勤, '6'=早退+缺勤
+    // 迟到+早退(status '3')同时计入迟到和早退
+    // 迟到+缺勤(status '5')同时计入迟到和缺勤
+    // 早退+缺勤(status '6')同时计入早退和缺勤
+    const computedStats = { normal: 0, late: 0, early: 0, absent: 0 }
+    for (const item of rows) {
+      const status = String(item.attendanceStatus)
+      if (status === '0') {
+        computedStats.normal++
+      }
+      // 迟到: status 1=迟到, 3=迟到+早退, 5=迟到+缺勤
+      if (status === '1' || status === '3' || status === '5') {
+        computedStats.late++
+      }
+      // 早退: status 2=早退, 3=迟到+早退, 6=早退+缺勤
+      if (status === '2' || status === '3' || status === '6') {
+        computedStats.early++
+      }
+      // 缺勤: status 4=缺卡, 5=迟到+缺勤, 6=早退+缺勤
+      if (status === '4' || status === '5' || status === '6') {
+        computedStats.absent++
+      }
+    }
+    stats.value = computedStats
+    console.log('[Record] 统计数据赋值:', stats.value)
 
     const map = {}
     const clockMap = {}
@@ -480,6 +496,8 @@ page {
 
   &.dot-normal { background: #52c41a; }
   &.dot-late { background: #fa8c16; }
+  &.dot-early { background: #fa8c16; }
+  &.dot-late-early { background: #722ed1; }
   &.dot-absent { background: #f5222d; }
 }
 
@@ -559,6 +577,8 @@ page {
 
   &.tag-normal { background: #f6ffed; color: #52c41a; }
   &.tag-late { background: #fff7e6; color: #fa8c16; }
+  &.tag-early { background: #fff7e6; color: #fa8c16; }
+  &.tag-late-early { background: #f9f0ff; color: #722ed1; }
   &.tag-absent { background: #fff1f0; color: #f5222d; }
 }
 

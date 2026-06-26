@@ -1,7 +1,10 @@
 <template>
   <view class="form-container">
     <view class="form-section">
-      <view class="section-title">入库信息</view>
+      <view class="section-title">
+        <u-icon name="list" size="16" color="#3D6DF7"></u-icon>
+        <text>入库信息</text>
+      </view>
 
       <view class="form-field" @click="showTypePicker = true">
         <view class="field-label"><text class="required">*</text> 入库类型</view>
@@ -36,7 +39,10 @@
 
     <view class="form-section">
       <view class="section-header">
-        <view class="section-title">入库明细</view>
+        <view class="section-title">
+          <u-icon name="arrow-down" size="16" color="#3D6DF7"></u-icon>
+          <text>入库明细</text>
+        </view>
         <view class="add-item-btn" @click="addItem">
           <u-icon name="plus" size="14" color="#3D6DF7"></u-icon>
           <text>添加明细</text>
@@ -429,17 +435,7 @@ async function submitForm() {
         const unitType = item.unitType || '2'
         const originalQuantity = Number(item.quantity) || 0
         const inputPrice = Number(item.price) || 0
-        // Backend stores in sub unit (minimum unit)
-        let quantity, purchasePrice
-        if (unitType === '1') {
-          // Main unit: quantity needs * packQty, price needs / packQty
-          quantity = Math.round(originalQuantity * packQty * 10000) / 10000
-          purchasePrice = packQty > 0 ? Math.round(inputPrice / packQty * 100) / 100 : inputPrice
-        } else {
-          // Sub unit: use directly
-          quantity = originalQuantity
-          purchasePrice = inputPrice
-        }
+        // 后端统一换算，前端发送原始值（避免与后端 insertStockIn/updateStockIn 双重换算）
         return {
           itemId: item.itemId || undefined,
           productId: item.productId,
@@ -449,8 +445,8 @@ async function submitForm() {
           packQty: packQty,
           unitType: unitType,
           originalQuantity: originalQuantity,
-          quantity: quantity,
-          purchasePrice: purchasePrice,
+          quantity: originalQuantity,  // 发送原始值，由后端按 unit_type/pack_qty 换算
+          purchasePrice: inputPrice,   // 发送原始值，由后端按 _main_price/pack_qty 换算
           _mainPrice: item._mainPrice || 0,
           amount: parseFloat(item.amount) || 0,
           productionDate: item.productionDate || undefined,
@@ -512,7 +508,7 @@ page { background-color: #F5F7FA; }
 .form-container { min-height: 100vh; padding-bottom: 140rpx; }
 
 .form-section { margin: 24rpx; background: #fff; border-radius: 20rpx; padding: 32rpx; box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05); }
-.section-title { font-size: 30rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; }
+.section-title { display: flex; align-items: center; gap: 8rpx; font-size: 30rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
 
 .add-item-btn { display: flex; align-items: center; gap: 6rpx; padding: 8rpx 20rpx; background: #E8F0FE; border-radius: 24rpx;

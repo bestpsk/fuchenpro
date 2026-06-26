@@ -48,7 +48,7 @@
       <view class="form-field">
         <view class="field-label">包装数量</view>
         <view class="field-input-box">
-          <input class="field-input" type="digit" v-model="form.packageQty" placeholder="用于换算" placeholder-class="field-placeholder" @input="calcSplitPrice" />
+          <input class="field-input" type="digit" v-model="form.packQty" placeholder="用于换算" placeholder-class="field-placeholder" @input="calcSplitPrice" />
         </view>
       </view>
 
@@ -160,7 +160,7 @@ const form = reactive({
   category: '',
   unit: '',
   spec: '',
-  packageQty: '',
+  packQty: '',
   purchasePrice: '',
   sellingPrice: '',
   splitPrice: '',
@@ -223,7 +223,7 @@ function onPurchasePriceInput() {
 
 function calcSplitPrice() {
   const price = parseFloat(form.sellingPrice)
-  const qty = parseFloat(form.packageQty)
+  const qty = parseFloat(form.packQty)
   if (!isNaN(price) && !isNaN(qty) && qty > 0) {
     form.splitPrice = (price / qty).toFixed(2)
   } else {
@@ -246,7 +246,7 @@ async function loadDetail() {
       category: data.category || '',
       unit: data.unit || '',
       spec: data.spec || '',
-      packageQty: data.packageQty ?? '',
+      packQty: data.packQty ?? '',
       purchasePrice: data.purchasePrice ?? '',
       sellingPrice: data.sellingPrice ?? '',
       splitPrice: data.splitPrice ?? '',
@@ -296,7 +296,7 @@ async function submitForm() {
       category: form.category.trim() || null,
       unit: form.unit.trim(),
       spec: form.spec.trim() || null,
-      packageQty: form.packageQty ? Number(form.packageQty) : null,
+      packQty: form.packQty ? Number(form.packQty) : null,
       purchasePrice: form.purchasePrice ? Number(form.purchasePrice) : null,
       sellingPrice: form.sellingPrice ? Number(form.sellingPrice) : null,
       splitPrice: form.splitPrice ? Number(form.splitPrice) : null,

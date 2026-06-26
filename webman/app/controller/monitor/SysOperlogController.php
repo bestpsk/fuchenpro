@@ -18,7 +18,8 @@ class SysOperlogController
     public function list(Request $request)
     {
         $service = new SysOperLogService();
-        $result = $service->selectOperLogList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectOperLogList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

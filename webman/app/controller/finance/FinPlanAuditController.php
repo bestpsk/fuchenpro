@@ -4,6 +4,7 @@ namespace app\controller\finance;
 
 use support\Request;
 use app\service\BizPlanService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -22,6 +23,9 @@ class FinPlanAuditController
     // 查询待审核方案列表（待审核和已驳回优先显示）
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:planAudit:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = $request->all();
 
         $result = $this->service->selectPlanList($params);
@@ -40,6 +44,9 @@ class FinPlanAuditController
     // 查询方案详情
     public function info(Request $request, $id)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:planAudit:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $result = $this->service->selectPlanById($id);
         return AjaxResult::success('', $result);
     }
@@ -47,6 +54,9 @@ class FinPlanAuditController
     // 审核方案
     public function audit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:planAudit:audit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = $request->post();
         $loginUser = $request->loginUser;
         $user = $loginUser->user;

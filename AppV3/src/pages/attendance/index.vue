@@ -227,6 +227,7 @@ const showManualInput = ref(false)
 const pageReady = ref(false)
 const photoUrl = ref('')
 const photoUploadedUrl = ref('')
+const uploading = ref(false)
 const clockType = ref('0')
 const outsideReason = ref('')
 const clockList = ref([])
@@ -255,14 +256,15 @@ const canClock = computed(() => {
   }
 
   if (clockType.value === '1') {
-    return !!(outsideReason.value.trim() && photoUploadedUrl.value && (hasLocation || hasManualAddress))
+    return !!(outsideReason.value.trim() && photoUrl.value && (hasLocation || hasManualAddress))
   }
 
   return false
 })
 
-/** 打卡按钮文字：首次打卡显示"上班打卡"，否则显示"打卡" */
+/** 打卡按钮文字：上传中显示"上传中..."，首次打卡显示"上班打卡"，否则显示"打卡" */
 const clockBtnText = computed(() => {
+  if (uploading.value) return '上传中...'
   if (!todayRecord.value || todayRecord.value.clockCount === 0) {
     return '上班打卡'
   }
@@ -270,6 +272,9 @@ const clockBtnText = computed(() => {
 })
 
 const clockBtnClass = computed(() => {
+  if (uploading.value) {
+    return 'btn-disabled'
+  }
   if (!canClock.value) {
     return 'btn-disabled'
   }
@@ -608,20 +613,16 @@ async function loadAttendanceConfig() {
   }
 }
 
-/** 拍照并上传，外勤打卡时必须拍照 */
+/** 拍照，仅保存本地预览路径，上传在提交打卡时进行 */
 function takePhoto() {
   uni.chooseImage({
     count: 1,
     sourceType: ['camera'],
-    success: async (res) => {
+    success: (res) => {
       const tempPath = res.tempFilePaths[0]
       photoUrl.value = tempPath
-      try {
-        const uploadRes = await uploadAttendancePhoto({ filePath: tempPath })
-        photoUploadedUrl.value = uploadRes.url || ''
-      } catch (e) {
-        uni.showToast({ title: '照片上传失败', icon: 'none' })
-      }
+      // 重置上传后的URL，提交时再上传
+      photoUploadedUrl.value = ''
     }
   })
 }
@@ -647,22 +648,41 @@ async function handleClock() {
       uni.showToast({ title: '请填写外勤事由', icon: 'none' })
       return
     }
-    if (!photoUploadedUrl.value) {
+    if (!photoUrl.value) {
       uni.showToast({ title: '外勤打卡必须拍照', icon: 'none' })
       return
     }
   }
 
-  const params = {
-    clockType: clockType.value,
-    outsideReason: outsideReason.value,
-    latitude: location.value.latitude,
-    longitude: location.value.longitude,
-    address: shortAddress.value || location.value.address || manualAddress.value,
-    photo: photoUploadedUrl.value
-  }
-
   try {
+    uploading.value = true
+
+    // 外勤打卡：如有本地照片但未上传，先上传照片
+    if (clockType.value === '1' && photoUrl.value && !photoUploadedUrl.value) {
+      try {
+        const uploadRes = await uploadAttendancePhoto({ filePath: photoUrl.value })
+        photoUploadedUrl.value = uploadRes.url || ''
+      } catch (e) {
+        uni.showToast({ title: '照片上传失败，请重试', icon: 'none' })
+        return
+      }
+    }
+
+    // 二次校验：确保上传成功
+    if (clockType.value === '1' && !photoUploadedUrl.value) {
+      uni.showToast({ title: '照片上传失败，请重试', icon: 'none' })
+      return
+    }
+
+    const params = {
+      clockType: clockType.value,
+      outsideReason: outsideReason.value,
+      latitude: location.value.latitude,
+      longitude: location.value.longitude,
+      address: shortAddress.value || location.value.address || manualAddress.value,
+      photo: photoUploadedUrl.value
+    }
+
     uni.showLoading({ title: '打卡中...', mask: true })
 
     const res = await clock(params)
@@ -709,6 +729,8 @@ async function handleClock() {
     uni.vibrateShort({
       type: 'heavy'
     })
+  } finally {
+    uploading.value = false
   }
 }
 
@@ -730,6 +752,9 @@ function getClockTagClass(index) {
 
 /** 打卡按钮点击处理，校验不通过时提示具体原因，通过则执行打卡 */
 function handleClockClick() {
+  // 上传中或打卡中时禁止重复点击
+  if (uploading.value) return
+
   if (!canClock.value) {
     if (clockType.value === '0') {
       uni.showToast({
@@ -742,7 +767,7 @@ function handleClockClick() {
         uni.showToast({ title: '请先获取定位或手动输入地址', icon: 'none' })
       } else if (!outsideReason.value.trim()) {
         uni.showToast({ title: '请填写外勤事由', icon: 'none' })
-      } else if (!photoUploadedUrl.value) {
+      } else if (!photoUrl.value) {
         uni.showToast({ title: '外勤打卡必须拍照', icon: 'none' })
       }
     }

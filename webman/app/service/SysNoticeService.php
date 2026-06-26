@@ -66,8 +66,18 @@ class SysNoticeService
 
     public function updateNotice($data)
     {
+        $noticeId = $data['notice_id'] ?? null;
+        if (!$noticeId) {
+            return false;
+        }
+        $notice = SysNotice::find($noticeId);
+        if (!$notice) {
+            return false;
+        }
         $data['update_time'] = date('Y-m-d H:i:s');
-        return SysNotice::where('notice_id', $data['notice_id'])->update($data);
+        // 使用 fill()->save() 恢复 $fillable 过滤，避免非数据库字段（如 create_nick_name）触发 SQL 错误
+        $notice->fill($data)->save();
+        return true;
     }
 
     // 批量删除通知公告

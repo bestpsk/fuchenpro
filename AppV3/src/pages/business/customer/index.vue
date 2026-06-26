@@ -176,7 +176,7 @@
         >
           <view class="card-header">
             <view class="avatar-wrap">
-              <image v-if="item.avatar" class="customer-avatar" :src="getAvatarUrl(item.avatar)" mode="aspectFill" />
+              <image v-if="item.avatar" class="customer-avatar" :src="getAvatarUrl(item.avatar)" mode="aspectFill" @click.stop="previewAvatar(item)" />
               <view v-else class="avatar-placeholder" :style="{ background: item.gender === '1' ? '#FF6B9D' : '#3D6DF7' }">
                 <text class="avatar-text">{{ item.customerName ? item.customerName.charAt(0) : '' }}</text>
               </view>
@@ -373,6 +373,17 @@ function getAvatarUrl(avatar) {
   if (!avatar || avatar === '') return ''
   if (avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar
   return config.baseUrl + avatar
+}
+
+/** 点击头像预览大图 */
+function previewAvatar(item) {
+  const url = getAvatarUrl(item.avatar)
+  if (url) {
+    uni.previewImage({
+      urls: [url],
+      current: url
+    })
+  }
 }
 
 /** 加载企业列表 */

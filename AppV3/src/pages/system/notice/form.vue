@@ -1,6 +1,7 @@
 <template>
   <view class="form-container">
-    <view class="form-section">
+    <view class="form-scroll">
+      <view class="form-section">
       <view class="form-item">
         <text class="form-label"><text class="required">*</text>公告标题</text>
         <input class="form-input" v-model="form.noticeTitle" placeholder="请输入公告标题" />
@@ -124,6 +125,7 @@
         <text class="char-count">{{ contentLength }} 字</text>
       </view>
     </view>
+    </view>
 
     <view class="form-actions">
       <u-button type="info" plain text="取消" @click="goBack" customStyle="flex:1; height:88rpx; border-radius:44rpx; font-size:30rpx; font-weight:600;"></u-button>
@@ -137,6 +139,7 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { getNotice, addNotice, updateNotice } from '@/api/system/notice'
 import { getDicts } from '@/api/system/dictData'
 import upload from '@/utils/upload'
+import config from '@/config'
 
 const submitting = ref(false)
 const mode = ref('add')
@@ -408,7 +411,23 @@ async function uploadFileAndInsert(filePath, type) {
   uni.showLoading({ title: '上传中...' })
   try {
     const data = await upload({ url: '/common/upload', name: 'file', filePath })
-    const url = data?.fileName || data?.url || data?.data?.fileName || data?.data?.url
+    // 优先使用后端返回的 url 字段（绝对地址或 /profile/upload/... 相对路径）
+    // 后端 fileName 仅作为业务字段，URL 拼接容易出错，统一用 url
+    let url = data?.url || data?.data?.url || ''
+    // 兜底：如果后端没有返回 url，用 fileName + 当前 origin 拼接
+    if (!url) {
+      const fileName = data?.fileName || data?.data?.fileName
+      if (fileName) {
+        if (fileName.startsWith('http')) {
+          url = fileName
+        } else {
+          // H5 端用 window.location.origin 拼绝对地址，小程序端 /profile/... 是相对路径也能直接用
+          url = (typeof window !== 'undefined' && window.location && fileName.startsWith('/'))
+            ? window.location.origin + fileName
+            : fileName
+        }
+      }
+    }
     if (!url) {
       uni.hideLoading()
       uni.showToast({ title: '上传失败', icon: 'none' })
@@ -423,12 +442,11 @@ async function uploadFileAndInsert(filePath, type) {
       editorCtx.value.insertImage({
         src: url,
         width: '100%',
-        alt: '图片',
         success: () => {},
         fail: (e) => { console.error('插入图片失败', e) }
       })
     } else if (type === 'video') {
-      // 视频用 <video> 标签插入到内容末尾（H5 端能直接渲染，小程序端走 rich-text）
+      // 视频用 <video> 标签插入到内容末尾
       const currentHtml = form.noticeContent || ''
       const videoHtml = `<p><video src="${url}" controls style="max-width:100%;width:100%"></video></p>`
       editorCtx.value.setContents({
@@ -504,10 +522,12 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; height: 100%; }
-.form-container { display: flex; flex-direction: column; height: 100%; padding: 24rpx; padding-bottom: 160rpx; }
+page { background-color: #F5F7FA; min-height: 100%; }
+.form-container { display: flex; flex-direction: column; height: 100vh; padding: 24rpx 24rpx 160rpx 24rpx; box-sizing: border-box; }
 
-.form-section { flex: 1; background: #fff; border-radius: 16rpx; padding: 32rpx; }
+.form-scroll { width: 100%; flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; }
+
+.form-section { background: #fff; border-radius: 16rpx; padding: 32rpx; }
 .form-item { margin-bottom: 32rpx; }
 .form-label { font-size: 28rpx; color: #1D2129; font-weight: 500; margin-bottom: 16rpx; display: block; }
 .required { color: #F53F3F; margin-right: 4rpx; }
@@ -541,9 +561,34 @@ page { background-color: #F5F7FA; height: 100%; }
 .toolbar-divider { width: 2rpx; height: 32rpx; background: #E5E6EB; margin: 0 8rpx; }
 
 .form-editor {
-  width: 100%; min-height: 360rpx; max-height: 800rpx; background: #fff;
+  width: 100%; min-height: 400rpx; background: #fff;
   border: 2rpx solid #E5E6EB; border-top: none; border-radius: 0 0 12rpx 12rpx;
   padding: 16rpx 20rpx; font-size: 28rpx; color: #1D2129; box-sizing: border-box;
+  display: block;
+  /* 编辑器内容自适应高度，不出现内部滚动条 */
+  overflow: visible;
+  max-height: none;
+  height: auto;
+  /* 编辑器内部图片最大高度限制，防止大图撑出屏外 */
+  :deep(img) { max-width: 100% !important; height: auto !important; max-height: 800rpx !important; }
+  :deep(p) { margin: 0 0 12rpx 0; }
+}
+
+/* H5 端 uni-editor 自定义元素及内部 contenteditable 自适应高度 */
+:deep(uni-editor.form-editor) {
+  display: block;
+  height: auto !important;
+  min-height: 400rpx;
+  overflow: visible !important;
+}
+:deep(uni-editor.form-editor [contenteditable]) {
+  min-height: 360rpx;
+  overflow: visible !important;
+  outline: none;
+  height: auto !important;
+  /* H5 编辑器内部图片限制 */
+  img { max-width: 100% !important; height: auto !important; max-height: 800rpx !important; }
+  p { margin: 0 0 12rpx 0; }
 }
 .char-count { display: block; text-align: right; font-size: 24rpx; color: #C9CDD4; margin-top: 8rpx; }
 

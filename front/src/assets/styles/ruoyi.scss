@@ -492,3 +492,14 @@
 .top-right-btn {
   margin-left: auto;
 }
+
+/* 修复权限按钮换行对齐与间距
+   说明：el-row 在设置 gutter 后会通过 inline style 自动添加 -gutter/2 的左右负 margin，
+   用于补偿 el-col 的 padding，使首列按钮与上方表单内容左边缘对齐。
+   此处不再用 !important 覆盖横向 margin，以免破坏 gutter=20 等其他布局；
+   仅增加换行时的行间距(row-gap)与底部间距，避免权限按钮过多换行后
+   行与行、按钮行与上下内容紧紧挨在一起。 */
+.el-row.mb8 {
+  margin-bottom: 12px;
+  row-gap: 8px;
+}

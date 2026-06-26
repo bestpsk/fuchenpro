@@ -140,7 +140,7 @@ class BizScheduleService
                     ->where('enterprise_id', $item['enterprise_id'])
                     ->exists();
                 if ($exists) {
-                    $conflictDates[] = $item['schedule_date'];
+                    $conflictDates[] = $item['schedule_date'] . '(' . ($item['user_name'] ?? '') . ')';
                     continue;
                 }
                 $item['create_time'] = $createTime;
@@ -168,6 +168,9 @@ class BizScheduleService
 
     public function updateSchedule($data)
     {
+        if (empty($data['schedule_id'])) {
+            throw new \Exception('行程ID不能为空');
+        }
         $data['update_time'] = date('Y-m-d H:i:s');
         $updateData = $data;
         unset($updateData['schedule_id']);  // 主键已在WHERE条件中
@@ -335,7 +338,7 @@ class BizScheduleService
 
             foreach ($enterpriseSchedules as $schedule) {
                 $day = date('j', strtotime($schedule->schedule_date));
-                $scheduleMap[$day][] = $schedule;
+                $scheduleMap[$day] = $schedule;
             }
 
             $result[] = [

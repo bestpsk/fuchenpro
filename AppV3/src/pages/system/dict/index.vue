@@ -171,7 +171,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { ref, reactive, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listType, delType, refreshCache } from '@/api/system/dictType'
 import { checkPermi } from '@/utils/permission'
 
@@ -361,7 +362,7 @@ function formatTime(time) {
   return time.substring(0, 10)
 }
 
-onMounted(() => {
+onShow(() => {
   getList(true)
 })
 </script>

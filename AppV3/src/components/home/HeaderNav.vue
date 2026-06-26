@@ -131,13 +131,40 @@ defineExpose({ loadUnreadCount })
 
 <style lang="scss" scoped>
 .header-section {
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: $gradient-hero;
   padding-bottom: 26rpx;
+  position: relative;
+  overflow: hidden;
+
+  /* 装饰光晕（克制使用） */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -100rpx;
+    right: -100rpx;
+    width: 360rpx;
+    height: 360rpx;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -150rpx;
+    left: -80rpx;
+    width: 280rpx;
+    height: 280rpx;
+    background: radial-gradient(circle, rgba(91, 143, 249, 0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
 }
 
 .header-nav {
   padding: 20rpx 30rpx 24rpx;
   color: #fff;
+  position: relative;
+  z-index: 1;
 }
 
 .nav-content {
@@ -150,6 +177,11 @@ defineExpose({ loadUnreadCount })
   display: flex;
   align-items: center;
   gap: 20rpx;
+  transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:active {
+    opacity: 0.75;
+  }
 
   .user-info {
     display: flex;
@@ -159,6 +191,7 @@ defineExpose({ loadUnreadCount })
     .user-name {
       font-size: 32rpx;
       font-weight: 600;
+      letter-spacing: 0.5rpx;
     }
 
     .user-role {
@@ -171,7 +204,7 @@ defineExpose({ loadUnreadCount })
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 28rpx;
+  gap: 16rpx;
 
   .icon-btn {
     position: relative;
@@ -181,6 +214,11 @@ defineExpose({ loadUnreadCount })
     align-items: center;
     justify-content: center;
     overflow: visible;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10rpx);
+    -webkit-backdrop-filter: blur(10rpx);
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
 
     :deep(.u-badge) {
       top: -4rpx !important;
@@ -188,20 +226,23 @@ defineExpose({ loadUnreadCount })
     }
 
     &:active {
-      opacity: 0.7;
-      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(0.92);
     }
   }
 }
 
 .welcome-text {
   margin-top: 24rpx;
-  font-size: 26rpx;
+  font-size: 28rpx;
   opacity: 0.95;
+  font-weight: 500;
+  letter-spacing: 0.5rpx;
 }
 
 .quick-menu-wrapper {
   margin: 0 24rpx;
   position: relative;
+  z-index: 1;
 }
 </style>

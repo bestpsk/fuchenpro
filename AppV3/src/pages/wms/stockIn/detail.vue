@@ -47,7 +47,10 @@
 
     <view class="info-card" v-if="stockInItems.length > 0">
       <view class="section-header">
-        <view class="card-title">入库明细</view>
+        <view class="card-title">
+          <u-icon name="arrow-down" size="16" color="#3D6DF7"></u-icon>
+          <text>入库明细</text>
+        </view>
         <text class="item-count">{{ stockInItems.length }}项</text>
       </view>
       <view v-for="(item, idx) in stockInItems" :key="idx" class="item-card">
@@ -246,7 +249,7 @@ page { background-color: #F5F7FA; }
   &.status-1 { background: #E8F0FE; color: #3D6DF7; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .item-count { font-size: 22rpx; color: #86909C; background: #F5F7FA; padding: 4rpx 16rpx; border-radius: 4rpx; }
 

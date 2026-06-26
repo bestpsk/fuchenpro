@@ -115,11 +115,14 @@ class BizProductService
     public function updateProduct($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        Db::transaction(function () use ($data) {
-            BizProduct::where('product_id', $data['product_id'])->update($data);
-            if (isset($data['warn_qty'])) {
+        // 按 fillable 过滤，移除 login_user 等非数据库字段，避免触发 SQL 错误
+        $fillable = (new BizProduct())->getFillable();
+        $filteredData = array_intersect_key($data, array_flip($fillable));
+        Db::transaction(function () use ($data, $filteredData) {
+            BizProduct::where('product_id', $data['product_id'])->update($filteredData);
+            if (isset($filteredData['warn_qty'])) {
                 BizInventory::where('product_id', $data['product_id'])->update([
-                    'warn_qty' => $data['warn_qty'],
+                    'warn_qty' => $filteredData['warn_qty'],
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             }

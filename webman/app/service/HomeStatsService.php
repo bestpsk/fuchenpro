@@ -10,215 +10,135 @@ class HomeStatsService
 {
     public static function getTodayStats($loginUser, $startDate = null, $endDate = null)
     {
-        $today = date('Y-m-d');
-        $monthStart = date('Y-m-01');
-
         $userIds = DataScopeService::getVisibleUserIds($loginUser);
 
-        $todayDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->whereDate('create_time', $today)
-            ->distinct()->count('customer_id');
+        $today = date('Y-m-d');
+        $monthStart = date('Y-m-01');
+        $monthEnd = date('Y-m-t');
+        $yearStart = date('Y-01-01');
+        $yearEnd = date('Y-12-31');
 
-        $monthDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $monthStart . ' 00:00:00')
-            ->distinct()->count('customer_id');
-
-        $todayDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->whereDate('create_time', $today)
-            ->sum('deal_amount');
-
-        $monthDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $monthStart . ' 00:00:00')
-            ->sum('deal_amount');
-
-        $todayPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->whereDate('create_time', $today)
-            ->sum('paid_amount');
-
-        $monthPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $monthStart . ' 00:00:00')
-            ->sum('paid_amount');
-
-        $todayOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->whereDate('create_time', $today)
-            ->sum('owed_amount');
-
-        $monthOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $monthStart . ' 00:00:00')
-            ->sum('owed_amount');
-
-        $todayCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->whereDate('biz_sales_order.create_time', $today)
-            ->where('biz_order_item.payment_method', 'cash')
-            ->sum('biz_order_item.deal_amount');
-
-        $monthCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
-            ->where('biz_order_item.payment_method', 'cash')
-            ->sum('biz_order_item.deal_amount');
-
-        $todayCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->whereDate('biz_sales_order.create_time', $today)
-            ->where('biz_order_item.payment_method', 'card')
-            ->sum('biz_order_item.deal_amount');
-
-        $monthCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
-            ->where('biz_order_item.payment_method', 'card')
-            ->sum('biz_order_item.deal_amount');
-
-        $todayGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->whereDate('biz_sales_order.create_time', $today)
-            ->where('biz_order_item.payment_method', 'gift')
-            ->count();
-
-        $monthGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->where('biz_sales_order.create_time', '>=', $monthStart . ' 00:00:00')
-            ->where('biz_order_item.payment_method', 'gift')
-            ->count();
-
-        $todayOperationCustomers = BizOperationRecord::whereIn('operator_user_id', $userIds)
-            ->whereDate('operation_date', $today)
-            ->distinct()->count('customer_id');
-
-        $monthOperationCustomers = BizOperationRecord::whereIn('operator_user_id', $userIds)
-            ->where('operation_date', '>=', $monthStart)
-            ->distinct()->count('customer_id');
-
-        $todayOperationAmount = BizOperationRecord::whereIn('operator_user_id', $userIds)
-            ->whereDate('operation_date', $today)
-            ->selectRaw('COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total')
-            ->value('total');
-
-        $monthOperationAmount = BizOperationRecord::whereIn('operator_user_id', $userIds)
-            ->where('operation_date', '>=', $monthStart)
-            ->selectRaw('COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total')
-            ->value('total');
+        $todayStats = self::computeRangeStats($userIds, $today, $today);
+        $monthStats = self::computeRangeStats($userIds, $monthStart, $monthEnd);
+        $yearStats = self::computeRangeStats($userIds, $yearStart, $yearEnd);
 
         $result = [
-            'dealCustomerCount' => ['today' => $todayDealCustomers, 'month' => $monthDealCustomers],
-            'dealAmount' => ['today' => $todayDealAmount, 'month' => $monthDealAmount],
-            'paidAmount' => ['today' => $todayPaidAmount, 'month' => $monthPaidAmount],
-            'owedAmount' => ['today' => $todayOwedAmount, 'month' => $monthOwedAmount],
-            'cashAmount' => ['today' => $todayCashAmount, 'month' => $monthCashAmount],
-            'cardAmount' => ['today' => $todayCardAmount, 'month' => $monthCardAmount],
-            'giftCount' => ['today' => $todayGiftCount, 'month' => $monthGiftCount],
-            'operationCustomerCount' => ['today' => $todayOperationCustomers, 'month' => $monthOperationCustomers],
-            'operationAmount' => ['today' => $todayOperationAmount, 'month' => $monthOperationAmount],
+            'dealCustomerCount' => ['today' => $todayStats['dealCustomerCount'], 'month' => $monthStats['dealCustomerCount'], 'year' => $yearStats['dealCustomerCount']],
+            'dealAmount' => ['today' => $todayStats['dealAmount'], 'month' => $monthStats['dealAmount'], 'year' => $yearStats['dealAmount']],
+            'paidAmount' => ['today' => $todayStats['paidAmount'], 'month' => $monthStats['paidAmount'], 'year' => $yearStats['paidAmount']],
+            'owedAmount' => ['today' => $todayStats['owedAmount'], 'month' => $monthStats['owedAmount'], 'year' => $yearStats['owedAmount']],
+            'cashAmount' => ['today' => $todayStats['cashAmount'], 'month' => $monthStats['cashAmount'], 'year' => $yearStats['cashAmount']],
+            'cardAmount' => ['today' => $todayStats['cardAmount'], 'month' => $monthStats['cardAmount'], 'year' => $yearStats['cardAmount']],
+            'giftCount' => ['today' => $todayStats['giftCount'], 'month' => $monthStats['giftCount'], 'year' => $yearStats['giftCount']],
+            'operationCustomerCount' => ['today' => $todayStats['operationCustomerCount'], 'month' => $monthStats['operationCustomerCount'], 'year' => $yearStats['operationCustomerCount']],
+            'operationAmount' => ['today' => $todayStats['operationAmount'], 'month' => $monthStats['operationAmount'], 'year' => $yearStats['operationAmount']],
         ];
 
         if ($startDate && $endDate) {
-            $customDealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-                ->whereIn('source_type', ['0', '2'])
-                ->whereIn('creator_user_id', $userIds)
-                ->where('create_time', '>=', $startDate . ' 00:00:00')
-                ->where('create_time', '<=', $endDate . ' 23:59:59')
-                ->distinct()->count('customer_id');
-
-            $customDealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-                ->whereIn('source_type', ['0', '2'])
-                ->whereIn('creator_user_id', $userIds)
-                ->where('create_time', '>=', $startDate . ' 00:00:00')
-                ->where('create_time', '<=', $endDate . ' 23:59:59')
-                ->sum('deal_amount');
-
-            $customPaidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-                ->whereIn('source_type', ['0', '2'])
-                ->whereIn('creator_user_id', $userIds)
-                ->where('create_time', '>=', $startDate . ' 00:00:00')
-                ->where('create_time', '<=', $endDate . ' 23:59:59')
-                ->sum('paid_amount');
-
-            $customOwedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-                ->whereIn('source_type', ['0', '2'])
-                ->whereIn('creator_user_id', $userIds)
-                ->where('create_time', '>=', $startDate . ' 00:00:00')
-                ->where('create_time', '<=', $endDate . ' 23:59:59')
-                ->sum('owed_amount');
-
-            $customCashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-                ->whereIn('biz_sales_order.source_type', ['0', '2'])
-                ->whereIn('biz_sales_order.creator_user_id', $userIds)
-                ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
-                ->where('biz_sales_order.create_time', '<=', $endDate . ' 23:59:59')
-                ->where('biz_order_item.payment_method', 'cash')
-                ->sum('biz_order_item.deal_amount');
-
-            $customCardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-                ->whereIn('biz_sales_order.source_type', ['0', '2'])
-                ->whereIn('biz_sales_order.creator_user_id', $userIds)
-                ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
-                ->where('biz_sales_order.create_time', '<=', $endDate . ' 23:59:59')
-                ->where('biz_order_item.payment_method', 'card')
-                ->sum('biz_order_item.deal_amount');
-
-            $customGiftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-                ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-                ->whereIn('biz_sales_order.source_type', ['0', '2'])
-                ->whereIn('biz_sales_order.creator_user_id', $userIds)
-                ->where('biz_sales_order.create_time', '>=', $startDate . ' 00:00:00')
-                ->where('biz_sales_order.create_time', '<=', $endDate . ' 23:59:59')
-                ->where('biz_order_item.payment_method', 'gift')
-                ->count();
-
-            $customOperationCustomers = BizOperationRecord::whereIn('operator_user_id', $userIds)
-                ->where('operation_date', '>=', $startDate)
-                ->where('operation_date', '<=', $endDate)
-                ->distinct()->count('customer_id');
-
-            $customOperationAmount = BizOperationRecord::whereIn('operator_user_id', $userIds)
-                ->where('operation_date', '>=', $startDate)
-                ->where('operation_date', '<=', $endDate)
-                ->selectRaw('COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total')
-                ->value('total');
-
-            $result['dealCustomerCount']['custom'] = $customDealCustomers;
-            $result['dealAmount']['custom'] = $customDealAmount;
-            $result['paidAmount']['custom'] = $customPaidAmount;
-            $result['owedAmount']['custom'] = $customOwedAmount;
-            $result['cashAmount']['custom'] = $customCashAmount;
-            $result['cardAmount']['custom'] = $customCardAmount;
-            $result['giftCount']['custom'] = $customGiftCount;
-            $result['operationCustomerCount']['custom'] = $customOperationCustomers;
-            $result['operationAmount']['custom'] = $customOperationAmount;
+            $customStats = self::computeRangeStats($userIds, $startDate, $endDate);
+            $result['dealCustomerCount']['custom'] = $customStats['dealCustomerCount'];
+            $result['dealAmount']['custom'] = $customStats['dealAmount'];
+            $result['paidAmount']['custom'] = $customStats['paidAmount'];
+            $result['owedAmount']['custom'] = $customStats['owedAmount'];
+            $result['cashAmount']['custom'] = $customStats['cashAmount'];
+            $result['cardAmount']['custom'] = $customStats['cardAmount'];
+            $result['giftCount']['custom'] = $customStats['giftCount'];
+            $result['operationCustomerCount']['custom'] = $customStats['operationCustomerCount'];
+            $result['operationAmount']['custom'] = $customStats['operationAmount'];
         }
 
         return $result;
+    }
+
+    /**
+     * 计算指定日期区间内的全部业务统计指标
+     *
+     * @param array $userIds 可见用户ID集合
+     * @param string $startDate 开始日期 Y-m-d
+     * @param string $endDate 结束日期 Y-m-d
+     * @return array 包含 dealCustomerCount/dealAmount/paidAmount/owedAmount/cashAmount/cardAmount/giftCount/operationCustomerCount/operationAmount 的数组
+     */
+    private static function computeRangeStats($userIds, $startDate, $endDate)
+    {
+        $start = $startDate . ' 00:00:00';
+        $end = $endDate . ' 23:59:59';
+
+        $dealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->distinct()->count('customer_id');
+
+        $dealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->sum('deal_amount');
+
+        $paidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->sum('paid_amount');
+
+        $owedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->sum('owed_amount');
+
+        $cashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
+            ->whereIn('biz_sales_order.source_type', ['0', '2'])
+            ->whereIn('biz_sales_order.creator_user_id', $userIds)
+            ->where('biz_sales_order.create_time', '>=', $start)
+            ->where('biz_sales_order.create_time', '<=', $end)
+            ->where('biz_order_item.payment_method', 'cash')
+            ->sum('biz_order_item.deal_amount');
+
+        $cardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
+            ->whereIn('biz_sales_order.source_type', ['0', '2'])
+            ->whereIn('biz_sales_order.creator_user_id', $userIds)
+            ->where('biz_sales_order.create_time', '>=', $start)
+            ->where('biz_sales_order.create_time', '<=', $end)
+            ->where('biz_order_item.payment_method', 'card')
+            ->sum('biz_order_item.deal_amount');
+
+        $giftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
+            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
+            ->whereIn('biz_sales_order.source_type', ['0', '2'])
+            ->whereIn('biz_sales_order.creator_user_id', $userIds)
+            ->where('biz_sales_order.create_time', '>=', $start)
+            ->where('biz_sales_order.create_time', '<=', $end)
+            ->where('biz_order_item.payment_method', 'gift')
+            ->count();
+
+        $operationCustomers = BizOperationRecord::whereIn('operator_user_id', $userIds)
+            ->where('operation_date', '>=', $startDate)
+            ->where('operation_date', '<=', $endDate)
+            ->distinct()->count('customer_id');
+
+        $operationAmount = BizOperationRecord::whereIn('operator_user_id', $userIds)
+            ->where('operation_date', '>=', $startDate)
+            ->where('operation_date', '<=', $endDate)
+            ->selectRaw('COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total')
+            ->value('total');
+
+        return [
+            'dealCustomerCount' => $dealCustomers,
+            'dealAmount' => $dealAmount,
+            'paidAmount' => $paidAmount,
+            'owedAmount' => $owedAmount,
+            'cashAmount' => $cashAmount,
+            'cardAmount' => $cardAmount,
+            'giftCount' => $giftCount,
+            'operationCustomerCount' => $operationCustomers,
+            'operationAmount' => $operationAmount,
+        ];
     }
 }

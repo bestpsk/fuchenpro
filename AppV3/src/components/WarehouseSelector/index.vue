@@ -3,8 +3,8 @@
     <text class="warehouse-label">当前仓库：</text>
     <picker :range="warehouseNames" @change="handleChange" :value="selectedIndex">
       <view class="warehouse-picker">
-        {{ currentWarehouseName }}
-        <uni-icons type="arrowdown" size="14" />
+        <text class="warehouse-name">{{ currentWarehouseName }}</text>
+        <uni-icons type="arrowdown" size="14" color="#3D6DF7" />
       </view>
     </picker>
   </view>
@@ -46,24 +46,34 @@ onMounted(() => {
 
 <style scoped>
 .warehouse-selector {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  padding: 0;
+  margin-top: 20rpx;
+  padding: 0 4rpx;
   background: transparent;
 }
 .warehouse-label {
   font-size: 28rpx;
-  color: #606266;
+  color: #4E5969;
   margin-right: 16rpx;
   white-space: nowrap;
+  font-weight: 500;
 }
 .warehouse-picker {
   display: flex;
   align-items: center;
+  gap: 8rpx;
   font-size: 28rpx;
-  color: #303133;
-  padding: 8rpx 16rpx;
-  border: 1rpx solid #dcdfe6;
-  border-radius: 8rpx;
+  color: #1D2129;
+  padding: 12rpx 20rpx;
+  background: #fff;
+  border: 2rpx solid #E5E6EB;
+  border-radius: 12rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+.warehouse-name {
+  font-size: 28rpx;
+  color: #1D2129;
+  font-weight: 500;
 }
 </style>

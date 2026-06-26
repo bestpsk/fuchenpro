@@ -65,16 +65,20 @@ class BizStockInController
     // 修改入库单及明细项，已确认的入库单不可修改
     public function edit(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $data['update_by'] = $request->loginUser->user->user_name ?? '';
-        $data['login_user'] = $request->loginUser;
-        if (isset($data['items'])) {
-            $data['items'] = convert_to_snake_case($data['items']);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $data['update_by'] = $request->loginUser->user->user_name ?? '';
+            $data['login_user'] = $request->loginUser;
+            if (isset($data['items'])) {
+                $data['items'] = convert_to_snake_case($data['items']);
+            }
+            $service = new BizStockInService();
+            $result = $service->updateStockIn($data);
+            if (!$result) return AjaxResult::error('修改失败，入库单不存在或已确认');
+            return AjaxResult::success();
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
         }
-        $service = new BizStockInService();
-        $result = $service->updateStockIn($data);
-        if (!$result) return AjaxResult::error('修改失败，入库单不存在或已确认');
-        return AjaxResult::success();
     }
 
     // 批量删除入库单，已确认的入库单不可删除

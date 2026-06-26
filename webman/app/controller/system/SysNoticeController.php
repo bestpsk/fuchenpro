@@ -48,6 +48,9 @@ class SysNoticeController
     public function edit(Request $request)
     {
         $data = convert_to_snake_case($request->post());
+        if (empty($data['notice_id'])) {
+            return AjaxResult::error('公告ID不能为空');
+        }
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysNoticeService();
         return AjaxResult::toAjax($service->updateNotice($data) ? 1 : 0);

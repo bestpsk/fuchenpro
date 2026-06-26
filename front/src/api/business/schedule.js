@@ -48,6 +48,15 @@ export function getEnterpriseSchedule(query) {
   })
 }
 
+/** 查询员工已安排的排班日期（用于前端冲突预检） */
+export function getScheduleDates(query) {
+  return request({
+    url: '/business/schedule/dates',
+    method: 'get',
+    params: query
+  })
+}
+
 /** 新增排班 */
 export function addSchedule(data) {
   return request({

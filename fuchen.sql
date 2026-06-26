@@ -124,9 +124,9 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_clock` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_clock_time` (`clock_time`),
   KEY `idx_user_date` (`user_id`,`clock_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='打卡明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='打卡明细表';
 
--- 正在导出表  fuchenpro.biz_attendance_clock 的数据：~18 rows (大约)
+-- 正在导出表  fuchenpro.biz_attendance_clock 的数据：~20 rows (大约)
 DELETE FROM `biz_attendance_clock`;
 /*!40000 ALTER TABLE `biz_attendance_clock` DISABLE KEYS */;
 INSERT INTO `biz_attendance_clock` (`clock_id`, `record_id`, `user_id`, `user_name`, `clock_time`, `clock_type`, `work_type`, `latitude`, `longitude`, `address`, `photo`, `outside_reason`, `remark`, `create_time`) VALUES
@@ -147,7 +147,11 @@ INSERT INTO `biz_attendance_clock` (`clock_id`, `record_id`, `user_id`, `user_na
 	(15, 5, 1, '若依', '2026-05-23 19:44:41', '0', '0', 31.2130010, 121.4782990, '中海·恒昌玖里(建设中)', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260523/5e90ca62cd1001e8dbeaa9e7ee4b176a.jpg', '', '', '2026-05-23 19:44:41'),
 	(16, 6, 1, '若依', '2026-06-19 23:35:21', '0', '0', NULL, NULL, '东方闪电', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/81962052c5dca9e44e9f1c0025f6f613.jpg', '', '', '2026-06-19 23:35:21'),
 	(17, 6, 1, '若依', '2026-06-19 23:35:43', '1', '0', NULL, NULL, '好', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/dd6a80150b80be05cc9ab64e31728160.jpg', '', '', '2026-06-19 23:35:43'),
-	(18, 6, 1, '若依', '2026-06-19 23:45:01', '1', '0', NULL, NULL, '111', '', '', '', '2026-06-19 23:45:01');
+	(18, 6, 1, '若依', '2026-06-19 23:45:01', '1', '0', NULL, NULL, '111', '', '', '', '2026-06-19 23:45:01'),
+	(19, 7, 1, '若依', '2026-06-26 02:09:44', '0', '0', NULL, NULL, '定位失败', '', '', '', '2026-06-26 02:09:44'),
+	(20, 7, 1, '若依', '2026-06-26 02:39:47', '1', '0', NULL, NULL, '77', '', '', '', '2026-06-26 02:39:47'),
+	(21, 7, 1, '若依', '2026-06-26 17:17:54', '1', '0', 31.2129690, 121.4783340, '顺昌路504弄小区', '', '', '', '2026-06-26 17:17:54'),
+	(22, 7, 1, '若依', '2026-06-26 22:22:33', '1', '1', 31.2129310, 121.4782640, '顺昌路504弄小区', '/profile/upload/20260626/d57aa17f2831c2980714aca0fd2fa3d5.jpg', '估计快了', '', '2026-06-26 22:22:33');
 /*!40000 ALTER TABLE `biz_attendance_clock` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_attendance_config 结构
@@ -214,9 +218,9 @@ CREATE TABLE IF NOT EXISTS `biz_attendance_record` (
   KEY `idx_attendance_date` (`attendance_date`),
   KEY `idx_user_id` (`user_id`),
   KEY `idx_attendance_status` (`attendance_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='考勤记录表';
 
--- 正在导出表  fuchenpro.biz_attendance_record 的数据：~6 rows (大约)
+-- 正在导出表  fuchenpro.biz_attendance_record 的数据：~7 rows (大约)
 DELETE FROM `biz_attendance_record`;
 /*!40000 ALTER TABLE `biz_attendance_record` DISABLE KEYS */;
 INSERT INTO `biz_attendance_record` (`record_id`, `user_id`, `user_name`, `attendance_date`, `clock_in_time`, `clock_out_time`, `clock_in_latitude`, `clock_in_longitude`, `clock_in_address`, `clock_in_photo`, `clock_out_latitude`, `clock_out_longitude`, `clock_out_address`, `clock_out_photo`, `attendance_status`, `clock_count`, `first_clock_time`, `last_clock_time`, `clock_type`, `outside_reason`, `rule_id`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -225,7 +229,8 @@ INSERT INTO `biz_attendance_record` (`record_id`, `user_id`, `user_name`, `atten
 	(3, 1, 'admin', '2026-05-02', '2026-05-02 00:31:06', '2026-05-02 21:44:26', 31.0443368, 121.4664212, '上海市闵行区吴泾镇闵行区吴泾第一幼儿园(永德园)永德小区北区', '', 31.0443450, 121.4662010, '永德小区北区', '/profile/upload/20260502/09b530786537df3e7b79f4335182dc22.jpg', '0', 6, '2026-05-02 00:31:06', '2026-05-02 21:44:26', '0', '', NULL, '', 'admin', '2026-05-02 00:31:06', '', '2026-05-02 21:44:26'),
 	(4, 1, 'admin', '2026-05-05', '2026-05-05 23:35:24', '2026-05-05 23:35:51', 31.0442870, 121.4661830, '永德小区北区', '', 31.0442870, 121.4661830, '永德小区北区', '', '1', 2, '2026-05-05 23:35:24', '2026-05-05 23:35:51', '0', '', NULL, '', 'admin', '2026-05-05 23:35:24', '', '2026-05-05 23:35:51'),
 	(5, 1, '若依', '2026-05-23', NULL, NULL, NULL, NULL, '', '', NULL, NULL, '', '', '0', 0, NULL, NULL, '0', '', NULL, '', '若依', '2026-05-23 19:44:21', '', '2026-05-23 19:44:21'),
-	(6, 1, '若依', '2026-06-19', '2026-06-19 23:35:21', '2026-06-19 23:45:01', NULL, NULL, '东方闪电', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/81962052c5dca9e44e9f1c0025f6f613.jpg', NULL, NULL, '111', '', '1', 3, '2026-06-19 23:35:21', '2026-06-19 23:45:01', '0', '', NULL, '', '若依', '2026-06-19 23:35:21', '', '2026-06-19 23:45:01');
+	(6, 1, '若依', '2026-06-19', '2026-06-19 23:35:21', '2026-06-19 23:45:01', NULL, NULL, '东方闪电', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260619/81962052c5dca9e44e9f1c0025f6f613.jpg', NULL, NULL, '111', '', '1', 3, '2026-06-19 23:35:21', '2026-06-19 23:45:01', '0', '', NULL, '', '若依', '2026-06-19 23:35:21', '', '2026-06-19 23:45:01'),
+	(7, 1, '若依', '2026-06-26', '2026-06-26 02:09:44', '2026-06-26 22:22:33', NULL, NULL, '定位失败', '', 31.2129310, 121.4782640, '顺昌路504弄小区', '/profile/upload/20260626/d57aa17f2831c2980714aca0fd2fa3d5.jpg', '0', 4, '2026-06-26 02:09:44', '2026-06-26 22:22:33', '0', '', NULL, '', '若依', '2026-06-26 02:09:44', '', '2026-06-26 22:22:33');
 /*!40000 ALTER TABLE `biz_attendance_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_attendance_rule 结构
@@ -283,7 +288,7 @@ CREATE TABLE IF NOT EXISTS `biz_card_item` (
 DELETE FROM `biz_card_item`;
 /*!40000 ALTER TABLE `biz_card_item` DISABLE KEYS */;
 INSERT INTO `biz_card_item` (`card_item_id`, `card_item_name`, `card_item_code`, `category`, `default_quantity`, `suggested_price`, `default_unit_price`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, '卡项1', 'KX1-20260601', '2', 10, 9380.00, 938.00, '0', NULL, 'admin', '2026-06-01 19:09:02', 'admin', '2026-06-03 09:01:05');
+	(1, '卡项1', 'KX1-20260601', '2', 10, 9380.00, 938.00, '0', NULL, 'admin', '2026-06-01 19:09:02', 'admin', '2026-06-26 11:27:40');
 /*!40000 ALTER TABLE `biz_card_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_card_item_product 结构
@@ -299,14 +304,14 @@ CREATE TABLE IF NOT EXISTS `biz_card_item_product` (
   PRIMARY KEY (`id`),
   KEY `idx_card_item_id` (`card_item_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='卡项关联货品表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='卡项关联货品表';
 
 -- 正在导出表  fuchenpro.biz_card_item_product 的数据：~2 rows (大约)
 DELETE FROM `biz_card_item_product`;
 /*!40000 ALTER TABLE `biz_card_item_product` DISABLE KEYS */;
 INSERT INTO `biz_card_item_product` (`id`, `card_item_id`, `product_id`, `unit_type`, `pack_qty`, `quantity`, `remark`) VALUES
-	(4, 1, 1, '2', 10, 10, NULL),
-	(5, 1, 2, '2', 10, 10, NULL);
+	(6, 1, 1, '2', 10, 10, NULL),
+	(7, 1, 2, '2', 10, 10, NULL);
 /*!40000 ALTER TABLE `biz_card_item_product` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer 结构
@@ -335,13 +340,14 @@ CREATE TABLE IF NOT EXISTS `biz_customer` (
   KEY `idx_store_id` (`store_id`),
   KEY `idx_customer_name` (`customer_name`),
   KEY `idx_phone` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户表';
 
--- 正在导出表  fuchenpro.biz_customer 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_customer 的数据：~2 rows (大约)
 DELETE FROM `biz_customer`;
 /*!40000 ALTER TABLE `biz_customer` DISABLE KEYS */;
 INSERT INTO `biz_customer` (`customer_id`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `customer_name`, `avatar`, `phone`, `wechat`, `gender`, `age`, `tag`, `remark`, `status`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 7, NULL, 8, NULL, '客户1', '', NULL, NULL, '1', 55, 'normal', '俄文', '0', 'admin', '2026-06-20 18:35:09', '', '2026-06-20 18:35:09');
+	(1, 7, '终测1', 8, '终测门店2', '客户1', 'https://synolife-1443627946.cos.ap-shanghai.myqcloud.com/customer_avatar/ad25eceeac53e52b75f3a4ef031c90c3.jpg', '', '', '1', 55, 'normal', '俄文', '0', 'admin', '2026-06-20 18:35:09', 'admin', '2026-06-26 02:41:45'),
+	(2, 7, NULL, 8, NULL, '111', '/profile/customer_avatar/b9f32df95027f927b827580f8471d45f.jpg', NULL, NULL, '1', NULL, NULL, NULL, '0', 'admin', '2026-06-26 07:40:01', '', '2026-06-26 07:40:01');
 /*!40000 ALTER TABLE `biz_customer` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_archive 结构
@@ -373,14 +379,15 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
   KEY `idx_archive_date` (`archive_date`),
   KEY `idx_source_type` (`source_type`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
 
--- 正在导出表  fuchenpro.biz_customer_archive 的数据：~2 rows (大约)
+-- 正在导出表  fuchenpro.biz_customer_archive 的数据：~3 rows (大约)
 DELETE FROM `biz_customer_archive`;
 /*!40000 ALTER TABLE `biz_customer_archive` DISABLE KEYS */;
 INSERT INTO `biz_customer_archive` (`archive_id`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `archive_date`, `archive_type`, `source_type`, `source_id`, `plan_items`, `amount`, `satisfaction`, `photos`, `customer_feedback`, `operator_user_id`, `operator_user_name`, `remark`, `create_by`, `create_time`) VALUES
 	(1, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '0', 1, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '11', 1, '若依', '套餐: 套餐1', 'admin', '2026-06-20 19:13:56'),
-	(2, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["\\/profile\\/upload\\/20260620\\/0996e45411a292d11f0d65c75d4b9ac7.jpg"]', '防守打法水电费第三方', 1, '若依', '放大发的', 'admin', '2026-06-20 19:16:59');
+	(2, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["\\/profile\\/upload\\/20260620\\/0996e45411a292d11f0d65c75d4b9ac7.jpg"]', '防守打法水电费第三方', 1, '若依', '放大发的', 'admin', '2026-06-20 19:16:59'),
+	(3, 2, '111', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '0', 3, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-26 22:08:49');
 /*!40000 ALTER TABLE `biz_customer_archive` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_package 结构
@@ -412,13 +419,14 @@ CREATE TABLE IF NOT EXISTS `biz_customer_package` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
 
--- 正在导出表  fuchenpro.biz_customer_package 的数据：~0 rows (大约)
+-- 正在导出表  fuchenpro.biz_customer_package 的数据：~1 rows (大约)
 DELETE FROM `biz_customer_package`;
 /*!40000 ALTER TABLE `biz_customer_package` DISABLE KEYS */;
 INSERT INTO `biz_customer_package` (`package_id`, `package_no`, `customer_id`, `customer_name`, `order_id`, `order_no`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `package_name`, `total_amount`, `paid_amount`, `owed_amount`, `status`, `expire_date`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'PK202606200001', 1, '客户1', 1, 'SO202606200001', 7, '终测1', 8, '终测门店2', '套餐1', 9380.00, 9380.00, 0.00, '1', NULL, '11', 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:13:56');
+	(1, 'PK202606200001', 1, '客户1', 1, 'SO202606200001', 7, '终测1', 8, '终测门店2', '套餐1', 9380.00, 9380.00, 0.00, '1', NULL, '11', 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:13:56'),
+	(2, 'PK202606260003', 2, '111', 3, 'SO202606260003', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:08:49');
 /*!40000 ALTER TABLE `biz_customer_package` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_employee_config 结构
@@ -492,7 +500,7 @@ INSERT INTO `biz_enterprise` (`enterprise_id`, `enterprise_name`, `pinyin`, `bos
 	(5, '测试3', '3', '哈哈', '16666666666', '急急急', '1', 0, 0.00, '2', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-05-29 17:09:35', 'admin', '2026-06-08 22:44:42'),
 	(6, '测试4', '4', '测试', '15555555555', NULL, '1', 0, 0.00, '2', 2, '若人头', '2026-06-09', '2028-06-01', '0', '地方', 'admin', '2026-06-09 14:11:29', '', '2026-06-09 14:11:29'),
 	(7, '终测1', '1', '11', '15555555555', '烦都烦死', '1', 5, 500.00, '1', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 16:04:08', 'admin', '2026-06-20 18:16:54'),
-	(8, '终测2', '2', '老板', '15666666666', NULL, '1', 0, 0.00, '3', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:19:25', '', '2026-06-21 11:19:25');
+	(8, '终测2', '2', '老板', '15666666666', NULL, '1', 0, 0.00, '3', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:19:25', 'admin', '2026-06-26 22:08:20');
 /*!40000 ALTER TABLE `biz_enterprise` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_feedback 结构
@@ -512,7 +520,7 @@ CREATE TABLE IF NOT EXISTS `biz_feedback` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='问题反馈表';
 
--- 正在导出表  fuchenpro.biz_feedback 的数据：~0 rows (大约)
+-- 正在导出表  fuchenpro.biz_feedback 的数据：~2 rows (大约)
 DELETE FROM `biz_feedback`;
 /*!40000 ALTER TABLE `biz_feedback` DISABLE KEYS */;
 INSERT INTO `biz_feedback` (`feedback_id`, `title`, `content`, `feedback_type`, `status`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -532,7 +540,7 @@ CREATE TABLE IF NOT EXISTS `biz_feedback_reply` (
   KEY `idx_feedback_id` (`feedback_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='反馈回复表';
 
--- 正在导出表  fuchenpro.biz_feedback_reply 的数据：~0 rows (大约)
+-- 正在导出表  fuchenpro.biz_feedback_reply 的数据：~3 rows (大约)
 DELETE FROM `biz_feedback_reply`;
 /*!40000 ALTER TABLE `biz_feedback_reply` DISABLE KEYS */;
 INSERT INTO `biz_feedback_reply` (`reply_id`, `feedback_id`, `content`, `create_by`, `create_time`) VALUES
@@ -562,10 +570,10 @@ CREATE TABLE IF NOT EXISTS `biz_inventory` (
 DELETE FROM `biz_inventory`;
 /*!40000 ALTER TABLE `biz_inventory` DISABLE KEYS */;
 INSERT INTO `biz_inventory` (`inventory_id`, `warehouse_id`, `product_id`, `quantity`, `earliest_expiry`, `warn_qty`, `last_stock_in_time`, `last_stock_out_time`, `create_time`, `update_time`) VALUES
-	(1, 1, 2, 90, '2027-06-01', 20, '2026-06-20 22:34:30', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-21 00:35:35'),
-	(2, 1, 1, 95, '2027-06-01', 50, '2026-06-20 23:18:57', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-21 00:35:35'),
-	(3, 2, 2, 0, NULL, 20, '2026-06-20 21:22:53', NULL, '2026-06-20 21:22:53', '2026-06-20 22:34:30'),
-	(4, 2, 1, 0, NULL, 50, '2026-06-20 21:22:53', NULL, '2026-06-20 21:22:53', '2026-06-20 23:18:57');
+	(1, 1, 2, 90, '2027-06-01', 20, '2026-06-20 22:34:30', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-26 22:29:23'),
+	(2, 1, 1, 95, '2027-06-01', 50, '2026-06-20 23:18:57', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-26 02:26:54'),
+	(3, 2, 2, 0, NULL, 20, '2026-06-20 21:22:53', NULL, '2026-06-20 21:22:53', '2026-06-26 22:29:23'),
+	(4, 2, 1, 0, NULL, 50, '2026-06-20 21:22:53', NULL, '2026-06-20 21:22:53', '2026-06-26 02:26:54');
 /*!40000 ALTER TABLE `biz_inventory` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_operation_record 结构
@@ -604,7 +612,7 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
   KEY `idx_operation_batch_id` (`operation_batch_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
 
--- 正在导出表  fuchenpro.biz_operation_record 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_operation_record 的数据：~0 rows (大约)
 DELETE FROM `biz_operation_record`;
 /*!40000 ALTER TABLE `biz_operation_record` DISABLE KEYS */;
 INSERT INTO `biz_operation_record` (`record_id`, `operation_type`, `customer_id`, `customer_name`, `package_id`, `package_no`, `operation_batch_id`, `package_item_id`, `product_name`, `operation_quantity`, `consume_amount`, `trial_price`, `customer_feedback`, `satisfaction`, `before_photo`, `after_photo`, `operator_user_id`, `operator_user_name`, `operation_date`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `remark`, `create_by`, `create_time`) VALUES
@@ -633,14 +641,15 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
 
--- 正在导出表  fuchenpro.biz_order_item 的数据：~2 rows (大约)
+-- 正在导出表  fuchenpro.biz_order_item 的数据：~3 rows (大约)
 DELETE FROM `biz_order_item`;
 /*!40000 ALTER TABLE `biz_order_item` DISABLE KEYS */;
 INSERT INTO `biz_order_item` (`item_id`, `order_id`, `card_item_id`, `product_name`, `quantity`, `deal_amount`, `paid_amount`, `unit_price`, `owed_amount`, `payment_method`, `is_our_operation`, `customer_feedback`, `before_photo`, `after_photo`, `remark`, `create_time`) VALUES
 	(1, 1, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:13:56'),
-	(2, 2, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:16:59');
+	(2, 2, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:16:59'),
+	(3, 3, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-26 22:08:49');
 /*!40000 ALTER TABLE `biz_order_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_package_item 结构
@@ -662,13 +671,14 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
   PRIMARY KEY (`package_item_id`),
   KEY `idx_package_id` (`package_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
 
--- 正在导出表  fuchenpro.biz_package_item 的数据：~0 rows (大约)
+-- 正在导出表  fuchenpro.biz_package_item 的数据：~1 rows (大约)
 DELETE FROM `biz_package_item`;
 /*!40000 ALTER TABLE `biz_package_item` DISABLE KEYS */;
 INSERT INTO `biz_package_item` (`package_item_id`, `package_id`, `card_item_id`, `product_name`, `unit_price`, `plan_price`, `deal_price`, `paid_amount`, `owed_amount`, `total_quantity`, `used_quantity`, `remaining_quantity`, `remark`) VALUES
-	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 1, 9, NULL);
+	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 1, 9, NULL),
+	(2, 2, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL);
 /*!40000 ALTER TABLE `biz_package_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan 结构
@@ -704,7 +714,7 @@ CREATE TABLE IF NOT EXISTS `biz_plan` (
   KEY `idx_enterprise_id` (`enterprise_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
 
--- 正在导出表  fuchenpro.biz_plan 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_plan 的数据：~0 rows (大约)
 DELETE FROM `biz_plan`;
 /*!40000 ALTER TABLE `biz_plan` DISABLE KEYS */;
 INSERT INTO `biz_plan` (`plan_id`, `plan_no`, `enterprise_id`, `plan_name`, `commission_rate`, `plan_amount`, `gift_amount`, `shipped_amount`, `remaining_amount`, `effective_date`, `expiry_date`, `audit_status`, `audit_by`, `audit_time`, `audit_remark`, `submit_by`, `submit_time`, `status_change_by`, `status_change_time`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -773,8 +783,8 @@ CREATE TABLE IF NOT EXISTS `biz_product` (
 DELETE FROM `biz_product`;
 /*!40000 ALTER TABLE `biz_product` DISABLE KEYS */;
 INSERT INTO `biz_product` (`product_id`, `product_name`, `product_code`, `supplier_id`, `spec`, `pack_qty`, `category`, `unit`, `purchase_price`, `sale_price`, `sale_price_spec`, `shelf_life_days`, `has_expiry`, `warn_qty`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'GCS-p7', 'gcs-p7', 1, '1', 10, '3', '5', 2580.00, 2580.00, 258.00, 365, '0', 50, '0', NULL, 'admin', '2026-04-29 15:10:14', 'admin', '2026-05-03 21:51:49'),
-	(2, '测试1', 'CS1-20260504', 1, '1', 10, '1', '5', 6800.00, 6800.00, 680.00, NULL, '0', 20, '0', NULL, 'admin', '2026-05-05 00:11:54', 'admin', '2026-05-17 19:56:56');
+	(1, 'GCS-p7', 'gcs-p7', 1, '1', 10, '3', '5', 2580.00, 2580.00, 258.00, 365, '0', 50, '0', NULL, 'admin', '2026-04-29 15:10:14', 'admin', '2026-06-26 02:26:54'),
+	(2, '测试1', 'CS1-20260504', 1, '1', 10, '1', '5', 6800.00, 6800.00, 680.00, NULL, '0', 20, '0', NULL, 'admin', '2026-05-05 00:11:54', 'admin', '2026-06-26 22:29:23');
 /*!40000 ALTER TABLE `biz_product` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_repayment_record 结构
@@ -860,14 +870,15 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_order_status` (`order_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
 
--- 正在导出表  fuchenpro.biz_sales_order 的数据：~2 rows (大约)
+-- 正在导出表  fuchenpro.biz_sales_order 的数据：~3 rows (大约)
 DELETE FROM `biz_sales_order`;
 /*!40000 ALTER TABLE `biz_sales_order` DISABLE KEYS */;
 INSERT INTO `biz_sales_order` (`order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `store_dealer`, `deal_amount`, `paid_amount`, `owed_amount`, `payment_method`, `order_status`, `source_type`, `operation_batch_id`, `package_name`, `enterprise_audit_status`, `finance_audit_status`, `enterprise_audit_by`, `enterprise_audit_time`, `finance_audit_by`, `finance_audit_time`, `creator_user_id`, `creator_user_name`, `remark`, `customer_feedback`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, 'SO202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '套餐1', '1', '1', '若依', '2026-06-20 19:14:28', '若依', '2026-06-20 19:20:18', 1, '若依', '11', NULL, 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:20:18'),
-	(2, 'OP202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606201916597727', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-20 19:16:59', '', '2026-06-20 19:16:59');
+	(2, 'OP202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606201916597727', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-20 19:16:59', '', '2026-06-20 19:16:59'),
+	(3, 'SO202606260003', 2, '111', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '11', '1', '1', '若依', '2026-06-26 22:08:58', '若依', '2026-06-26 22:09:27', 1, '若依', '', NULL, 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:09:27');
 /*!40000 ALTER TABLE `biz_sales_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_schedule 结构
@@ -892,15 +903,18 @@ CREATE TABLE IF NOT EXISTS `biz_schedule` (
   KEY `idx_schedule_date` (`schedule_date`),
   KEY `idx_user_date` (`user_id`,`schedule_date`),
   KEY `idx_enterprise_date` (`enterprise_id`,`schedule_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行程安排表';
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='行程安排表';
 
--- 正在导出表  fuchenpro.biz_schedule 的数据：~3 rows (大约)
+-- 正在导出表  fuchenpro.biz_schedule 的数据：~6 rows (大约)
 DELETE FROM `biz_schedule`;
 /*!40000 ALTER TABLE `biz_schedule` DISABLE KEYS */;
 INSERT INTO `biz_schedule` (`schedule_id`, `user_id`, `user_name`, `enterprise_id`, `enterprise_name`, `schedule_date`, `purpose`, `remark`, `status`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(9, 103, '鹏鹏', 7, '终测1', '2026-06-22', '2', '', '1', 'admin', '2026-06-20 18:28:59', 'admin', '2026-06-20 19:12:40'),
-	(10, 103, '鹏鹏', 7, '终测1', '2026-06-25', '2', '', '1', 'admin', '2026-06-20 18:28:59', 'admin', '2026-06-20 19:12:40'),
-	(12, 103, '鹏鹏', 7, '终测1', '2026-06-21', '2', '', '1', 'admin', '2026-06-20 19:12:40', '', '2026-06-20 19:12:40');
+	(24, 103, '鹏鹏', 7, '终测1', '2026-06-23', '2', '', '1', 'admin', '2026-06-26 20:02:37', 'admin', '2026-06-26 23:12:22'),
+	(30, 103, '鹏鹏', 7, '终测1', '2026-06-26', '2', '', '1', 'admin', '2026-06-26 22:49:39', 'admin', '2026-06-26 23:12:22'),
+	(35, 103, '鹏鹏', 7, '终测1', '2026-06-27', '2', '', '1', 'admin', '2026-06-26 23:02:28', 'admin', '2026-06-26 23:12:23'),
+	(36, 103, '鹏鹏', 7, '终测1', '2026-06-25', '2', NULL, '1', 'admin', '2026-06-26 23:12:02', 'admin', '2026-06-26 23:12:22'),
+	(37, 103, '鹏鹏', 7, '终测1', '2026-06-28', '2', NULL, '1', 'admin', '2026-06-26 23:12:18', 'admin', '2026-06-26 23:12:23'),
+	(38, 103, '鹏鹏', 7, '终测1', '2026-06-29', '2', NULL, '1', 'admin', '2026-06-26 23:12:18', 'admin', '2026-06-26 23:12:23');
 /*!40000 ALTER TABLE `biz_schedule` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_check 结构
@@ -981,7 +995,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单主表';
 
--- 正在导出表  fuchenpro.biz_stock_in 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_in 的数据：~0 rows (大约)
 DELETE FROM `biz_stock_in`;
 /*!40000 ALTER TABLE `biz_stock_in` DISABLE KEYS */;
 INSERT INTO `biz_stock_in` (`stock_in_id`, `stock_in_no`, `stock_in_type`, `warehouse_id`, `total_quantity`, `total_amount`, `stock_in_date`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -1068,7 +1082,7 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单主表';
 
--- 正在导出表  fuchenpro.biz_stock_out 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_out 的数据：~0 rows (大约)
 DELETE FROM `biz_stock_out`;
 /*!40000 ALTER TABLE `biz_stock_out` DISABLE KEYS */;
 INSERT INTO `biz_stock_out` (`stock_out_id`, `stock_out_no`, `stock_out_type`, `warehouse_id`, `out_target_type`, `prepare_id`, `plan_id`, `enterprise_id`, `enterprise_name`, `contact_person`, `contact_phone`, `shipping_address`, `logistics_company`, `logistics_no`, `shipment_date`, `receipt_date`, `shipment_images`, `audit_by`, `audit_time`, `contact_employee_id`, `contact_employee_name`, `responsible_id`, `responsible_name`, `total_quantity`, `total_amount`, `stock_out_date`, `status`, `ship_type`, `ship_status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
@@ -1146,11 +1160,11 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
   KEY `idx_plan_id` (`plan_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货表';
 
--- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~1 rows (大约)
+-- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~0 rows (大约)
 DELETE FROM `biz_stock_prepare`;
 /*!40000 ALTER TABLE `biz_stock_prepare` DISABLE KEYS */;
 INSERT INTO `biz_stock_prepare` (`prepare_id`, `prepare_no`, `plan_id`, `plan_no`, `order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `warehouse_id`, `store_id`, `store_name`, `total_quantity`, `total_amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `status`, `remark`, `create_by`, `creator_user_id`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'SP202606200001', NULL, NULL, 1, 'SO202606200001', 1, '客户1', 7, '终测1', NULL, 8, '终测门店2', 20, 9380.00, 15, 8090.00, 5, 1290.00, '1', NULL, 'admin', NULL, '2026-06-20 19:20:18', '', '2026-06-20 19:21:03');
+	(1, 'SP202606200001', NULL, NULL, 1, 'SO202606200001', 1, '客户1', 7, '终测1', NULL, 8, '终测门店2', 40, 18760.00, 15, 8090.00, 25, 10670.00, '1', NULL, 'admin', NULL, '2026-06-20 19:20:18', '', '2026-06-26 22:09:27');
 /*!40000 ALTER TABLE `biz_stock_prepare` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_item 结构
@@ -1184,8 +1198,8 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_item` (
 DELETE FROM `biz_stock_prepare_item`;
 /*!40000 ALTER TABLE `biz_stock_prepare_item` DISABLE KEYS */;
 INSERT INTO `biz_stock_prepare_item` (`item_id`, `prepare_id`, `plan_item_id`, `card_item_id`, `product_id`, `product_name`, `unit`, `spec`, `unit_type`, `pack_qty`, `sale_price`, `quantity`, `amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `remark`) VALUES
-	(1, 1, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 10, 2580.00, 5, 1290.00, 5, 1290.00, NULL),
-	(2, 1, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL);
+	(1, 1, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 20, 5160.00, 5, 1290.00, 15, 3870.00, NULL),
+	(2, 1, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 20, 13600.00, 10, 6800.00, 10, 6800.00, NULL);
 /*!40000 ALTER TABLE `biz_stock_prepare_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_order 结构
@@ -1202,13 +1216,14 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_order` (
   PRIMARY KEY (`id`),
   KEY `idx_prepare_id` (`prepare_id`),
   KEY `idx_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_order 的数据：~0 rows (大约)
 DELETE FROM `biz_stock_prepare_order`;
 /*!40000 ALTER TABLE `biz_stock_prepare_order` DISABLE KEYS */;
 INSERT INTO `biz_stock_prepare_order` (`id`, `prepare_id`, `order_id`, `order_no`, `customer_id`, `customer_name`, `store_id`, `store_name`) VALUES
-	(1, 1, 1, 'SO202606200001', 1, '客户1', 8, '终测门店2');
+	(1, 1, 1, 'SO202606200001', 1, '客户1', 8, '终测门店2'),
+	(2, 1, 3, 'SO202606260003', 2, '111', 8, '终测门店2');
 /*!40000 ALTER TABLE `biz_stock_prepare_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_transfer 结构
@@ -1311,7 +1326,7 @@ INSERT INTO `biz_store` (`store_id`, `enterprise_id`, `enterprise_name`, `store_
 	(9, 8, '终测2', '终测2门店1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:20:16', '', '2026-06-21 11:20:16'),
 	(10, 8, '终测2', 'mend2', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:23:56', '', '2026-06-21 11:23:56'),
 	(11, 8, '终测2', '测试1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 12:00:46', '', '2026-06-21 12:00:46'),
-	(12, 8, '终测2', '门顶上', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 12:24:40', '', '2026-06-21 12:24:40');
+	(12, 8, '终测2', '门顶上', '11', NULL, '11', NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 12:24:40', 'admin', '2026-06-26 22:08:34');
 /*!40000 ALTER TABLE `biz_store` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_supplier 结构
@@ -1331,11 +1346,13 @@ CREATE TABLE IF NOT EXISTS `biz_supplier` (
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`supplier_id`),
   KEY `idx_supplier_name` (`supplier_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='供货商表';
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='供货商表';
 
 -- 正在导出表  fuchenpro.biz_supplier 的数据：~0 rows (大约)
 DELETE FROM `biz_supplier`;
 /*!40000 ALTER TABLE `biz_supplier` DISABLE KEYS */;
+INSERT INTO `biz_supplier` (`supplier_id`, `supplier_name`, `contact_person`, `contact_phone`, `address`, `cooperation_start_date`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, '供货商1', '111', NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-26 02:26:44', 'admin', '2026-06-26 23:43:47');
 /*!40000 ALTER TABLE `biz_supplier` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_warehouse 结构
@@ -1413,25 +1430,26 @@ CREATE TABLE IF NOT EXISTS `fin_reimbursement` (
   KEY `idx_dept_id` (`dept_id`),
   KEY `idx_status` (`status`),
   KEY `idx_apply_date` (`apply_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报销单表';
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='报销单表';
 
--- 正在导出表  fuchenpro.fin_reimbursement 的数据：~13 rows (大约)
+-- 正在导出表  fuchenpro.fin_reimbursement 的数据：~14 rows (大约)
 DELETE FROM `fin_reimbursement`;
 /*!40000 ALTER TABLE `fin_reimbursement` DISABLE KEYS */;
 INSERT INTO `fin_reimbursement` (`reimbursement_id`, `reimbursement_no`, `applicant_id`, `applicant_name`, `dept_id`, `dept_name`, `apply_date`, `category`, `income_amount`, `expense_amount`, `expense_type`, `status`, `voucher_images`, `remark`, `audit_by`, `audit_time`, `audit_remark`, `pay_by`, `pay_time`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, 'BX202605180001', 1, '', 103, '', NULL, '1', 0.00, 0.00, '1', '0', NULL, '大叔大婶', NULL, NULL, NULL, NULL, NULL, '', '2026-05-18 19:58:07', NULL, NULL),
 	(2, 'BX202605180002', 1, '', 103, '', NULL, '1', 0.00, 0.00, '1', '0', NULL, '大叔大婶', NULL, NULL, NULL, NULL, NULL, '', '2026-05-18 22:40:01', NULL, NULL),
 	(3, 'BX202605180003', 1, '', 103, '', '2026-05-18', '1', 0.00, 598.00, '1', '0', '["blob:http://192.168.2.74:8088/8525e9f0-ea3b-4255-b5af-29c56346fadb"]', '222', NULL, NULL, NULL, NULL, NULL, '', '2026-05-18 23:00:38', '', '2026-05-19 13:40:45'),
-	(4, 'BX202605180004', 1, '', 103, '', '2026-05-18', '2', 0.00, 980.00, '1', '0', '[]', '电风扇', NULL, NULL, NULL, NULL, NULL, '', '2026-05-18 23:42:53', '', '2026-05-19 14:23:15'),
+	(4, 'BX202605180004', 1, '', 103, '', '2026-05-18', '2', 0.00, 980.00, '1', '1', '[]', '电风扇', '若依', '2026-06-26 07:19:23', '', NULL, NULL, '', '2026-05-18 23:42:53', '', '2026-06-26 07:19:23'),
 	(5, 'BX202605190001', 1, '', 103, '', '2026-05-18', '4', 66.00, 666.00, '2', '3', '["blob:http://192.168.2.74:8088/7d2c73c1-d312-40c5-9beb-70f17f09119a"]', '6666', '', '2026-05-19 12:15:59', '2120', '', '2026-05-19 12:16:06', '', '2026-05-19 00:00:41', NULL, '2026-05-19 12:16:06'),
-	(6, 'BX202605190002', 1, '', 103, '', '2026-05-19', '4', 22.00, 222.00, '1', '0', '["blob:http://192.168.2.74:8088/c620eb48-98ba-405b-8f9a-7767e52712b5"]', '22', NULL, NULL, NULL, NULL, NULL, '', '2026-05-19 12:57:13', '', '2026-05-19 13:40:58'),
-	(7, 'BX202605190003', 1, '', 103, '', '2026-05-19', '4', 99.00, 999.00, '1', '0', '[]', '25', NULL, NULL, NULL, NULL, NULL, '', '2026-05-19 14:23:42', NULL, NULL),
+	(6, 'BX202605190002', 1, '', 103, '', '2026-05-19', '4', 22.00, 222.00, '1', '1', '["blob:http://192.168.2.74:8088/c620eb48-98ba-405b-8f9a-7767e52712b5"]', '22', '若依', '2026-06-26 07:19:27', '', NULL, NULL, '', '2026-05-19 12:57:13', '', '2026-06-26 07:19:27'),
+	(7, 'BX202605190003', 1, '', 103, '', '2026-05-19', '4', 99.00, 999.00, '1', '1', '[]', '25', '若依', '2026-06-26 07:19:29', '', NULL, NULL, '', '2026-05-19 14:23:42', NULL, '2026-06-26 07:19:29'),
 	(11, 'BX202605190007', 1, '', 103, '', '2026-05-19', '4', 33.00, 333.00, '1', '0', '["blob:http://192.168.2.74:8088/4c5a4332-2bd5-40c2-98f6-bf47107047fa"]', '333', NULL, NULL, NULL, NULL, NULL, '', '2026-05-19 15:26:08', NULL, NULL),
 	(12, 'BX202605190008', 1, '若依', 103, '研发部门', NULL, '1', 0.00, 0.00, '1', '0', NULL, '33', NULL, NULL, NULL, NULL, NULL, '若依', '2026-05-19 17:21:05', NULL, NULL),
 	(13, 'BX202605190009', 1, '若依', 103, '研发部门', NULL, '2', 0.00, 0.00, '1', '0', NULL, '999', NULL, NULL, NULL, NULL, NULL, '若依', '2026-05-19 18:00:08', NULL, NULL),
 	(14, 'BX202605200001', 1, '若依', 103, '研发部门', NULL, '1', 0.00, 0.00, '1', '0', NULL, '999', NULL, NULL, NULL, NULL, NULL, '若依', '2026-05-20 09:14:00', NULL, NULL),
 	(15, 'BX202605200002', 1, '若依', 103, '研发部门', '2026-05-20', '3', 0.00, 0.00, '1', '0', '["blob:http://192.168.2.74:8088/fb0f399f-2e6e-40b0-8dc1-01ab65d12d58"]', '888', NULL, NULL, NULL, NULL, NULL, '若依', '2026-05-20 09:28:23', '若依', '2026-05-20 13:13:20'),
-	(16, 'BX202605200003', 1, '若依', 103, '研发部门', '2026-05-20', '3', 88.00, 888.00, '1', '1', '["https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260520/10b7e3bed417b223b36c9ffe69e5c851.jpg"]', '515153', '若依', '2026-06-06 00:07:10', '', NULL, NULL, '若依', '2026-05-20 12:23:08', '若依', '2026-06-06 00:07:10');
+	(16, 'BX202605200003', 1, '若依', 103, '研发部门', '2026-05-20', '3', 88.00, 888.00, '1', '1', '["https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/upload/20260520/10b7e3bed417b223b36c9ffe69e5c851.jpg"]', '515153', '若依', '2026-06-06 00:07:10', '', NULL, NULL, '若依', '2026-05-20 12:23:08', '若依', '2026-06-06 00:07:10'),
+	(17, 'BX202606260001', 1, '若依', 103, '事业1部', '2026-06-25', '4', 0.00, 555.00, '1', '1', '', '', '若依', '2026-06-26 07:23:48', '', NULL, NULL, '若依', '2026-06-26 07:23:44', NULL, '2026-06-26 07:23:48');
 /*!40000 ALTER TABLE `fin_reimbursement` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.fin_reimbursement_item 结构
@@ -1907,38 +1925,38 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
   PRIMARY KEY (`config_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=132 DEFAULT CHARSET=utf8 COMMENT='参数配置表';
 
--- 正在导出表  fuchenpro.sys_config 的数据：~28 rows (大约)
+-- 正在导出表  fuchenpro.sys_config 的数据：~35 rows (大约)
 DELETE FROM `sys_config`;
 /*!40000 ALTER TABLE `sys_config` DISABLE KEYS */;
 INSERT INTO `sys_config` (`config_id`, `config_name`, `config_key`, `config_value`, `config_type`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
 	(1, '主框架页-默认皮肤样式名称', 'sys.index.skinName', 'skin-blue', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '蓝色 skin-blue、绿色 skin-green、紫色 skin-purple、红色 skin-red、黄色 skin-yellow'),
 	(2, '用户管理-账号初始密码', 'sys.user.initPassword', '123456', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '初始化密码 123456'),
 	(3, '主框架页-侧边栏主题', 'sys.index.sideTheme', 'theme-dark', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '深色主题theme-dark，浅色主题theme-light'),
-	(4, '账号自助-验证码开关', 'sys.account.captchaEnabled', 'true', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '是否开启验证码功能（true开启，false关闭）'),
+	(4, '账号自助-验证码开关', 'sys.account.captchaEnabled', 'true', 'Y', 'admin', '2026-04-25 01:10:53', 'admin', '2026-06-26 02:43:03', '是否开启验证码功能（true开启，false关闭）'),
 	(5, '账号自助-是否开启用户注册功能', 'sys.account.registerUser', 'false', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '是否开启注册用户功能（true开启，false关闭）'),
-	(6, '用户登录-黑名单列表', 'sys.login.blackIPList', '', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '设置登录IP黑名单限制，多个匹配项以;分隔，支持匹配（*通配、网段）'),
-	(7, '用户管理-初始密码修改策略', 'sys.account.initPasswordModify', '1', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '0：初始密码修改策略关闭，没有任何提示，1：提醒用户，如果未修改初始密码，则在登录时就会提醒修改密码对话框'),
-	(8, '用户管理-账号密码更新周期', 'sys.account.passwordValidateDays', '0', 'Y', 'admin', '2026-04-25 01:10:53', '', NULL, '密码更新周期（填写数字，数据初始化值为0不限制，若修改必须为大于0小于365的正整数），如果超过这个周期登录系统时，则在登录时就会提醒修改密码对话框'),
-	(9, '用户管理-密码字符范围', 'sys.account.chrtype', '0', 'Y', 'admin', '2026-04-25 01:10:54', '', NULL, '默认任意字符范围，0任意（密码可以输入任意字符），1数字（密码只能为0-9数字），2英文字母（密码只能为a-z和A-Z字母），3字母和数字（密码必须包含字母，数字）,4字母数字和特殊字符（目前支持的特殊字符包括：~!@#$%^&*()-=_+）'),
-	(101, '登录过期时间', 'sys.login.expireTime', '1440', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', 'Token有效期（分钟），影响Web端和APP端'),
-	(102, '启用腾讯云COS', 'sys.cos.enabled', 'true', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '是否启用腾讯云对象存储'),
-	(103, '腾讯云SecretId', 'sys.cos.secretId', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '腾讯云COS SecretId'),
-	(104, '腾讯云SecretKey', 'sys.cos.secretKey', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '腾讯云COS SecretKey'),
-	(105, 'COS存储桶名称', 'sys.cos.bucket', 'mydream-1302682813', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '腾讯云COS存储桶名称'),
-	(106, 'COS地域', 'sys.cos.region', 'ap-shanghai', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '腾讯云COS地域'),
-	(107, 'COS自定义域名', 'sys.cos.domain', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-21 12:47:56', '腾讯云COS自定义域名'),
+	(6, '用户登录-黑名单列表', 'sys.login.blackIPList', '', 'Y', 'admin', '2026-04-25 01:10:53', 'admin', '2026-06-26 02:43:03', '设置登录IP黑名单限制，多个匹配项以;分隔，支持匹配（*通配、网段）'),
+	(7, '用户管理-初始密码修改策略', 'sys.account.initPasswordModify', '1', 'Y', 'admin', '2026-04-25 01:10:53', 'admin', '2026-06-26 02:43:03', '0：初始密码修改策略关闭，没有任何提示，1：提醒用户，如果未修改初始密码，则在登录时就会提醒修改密码对话框'),
+	(8, '用户管理-账号密码更新周期', 'sys.account.passwordValidateDays', '0', 'Y', 'admin', '2026-04-25 01:10:53', 'admin', '2026-06-26 02:43:03', '密码更新周期（填写数字，数据初始化值为0不限制，若修改必须为大于0小于365的正整数），如果超过这个周期登录系统时，则在登录时就会提醒修改密码对话框'),
+	(9, '用户管理-密码字符范围', 'sys.account.chrtype', '0', 'Y', 'admin', '2026-04-25 01:10:54', 'admin', '2026-06-26 02:43:03', '默认任意字符范围，0任意（密码可以输入任意字符），1数字（密码只能为0-9数字），2英文字母（密码只能为a-z和A-Z字母），3字母和数字（密码必须包含字母，数字）,4字母数字和特殊字符（目前支持的特殊字符包括：~!@#$%^&*()-=_+）'),
+	(101, '登录过期时间', 'sys.login.expireTime', '1440', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', 'Token有效期（分钟），影响Web端和APP端'),
+	(102, '启用腾讯云COS', 'sys.cos.enabled', 'true', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '是否启用腾讯云对象存储'),
+	(103, '腾讯云SecretId', 'sys.cos.secretId', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '腾讯云COS SecretId'),
+	(104, '腾讯云SecretKey', 'sys.cos.secretKey', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '腾讯云COS SecretKey'),
+	(105, 'COS存储桶名称', 'sys.cos.bucket', 'mydream-1302682813', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '腾讯云COS存储桶名称'),
+	(106, 'COS地域', 'sys.cos.region', 'ap-shanghai', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '腾讯云COS地域'),
+	(107, 'COS自定义域名', 'sys.cos.domain', '', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-26 02:43:03', '腾讯云COS自定义域名'),
 	(108, '允许修改套餐次数', 'biz.sales.packageQuantityEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:51', '销售开单中是否允许修改套餐次数，影响Web端和APP端'),
 	(109, '允许修改套餐成交金额', 'biz.sales.packageDealAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:52', '销售开单中是否允许修改套餐成交金额，影响Web端和APP端'),
 	(110, '允许修改套餐实付金额', 'biz.sales.packagePaidAmountEditable', 'false', 'Y', 'admin', '2026-06-08 13:31:42', 'admin', '2026-06-20 00:15:52', '销售开单中是否允许修改套餐实付金额，影响Web端和APP端'),
 	(111, '允许手动输入打卡地址', 'biz.attendance.allowManualAddress', 'false', 'Y', '', '2026-06-20 00:14:57', 'admin', '2026-06-20 00:15:52', '控制APP端考勤打卡是否允许手动输入地址，关闭后定位失败时无法手动输入'),
-	(112, '高德Web服务Key', 'sys.amap.webServiceKey', 'd184e115457658cbcf3f92ed8e3a1772', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-21 12:47:56', '高德地图Web服务API Key，用于逆地理编码和IP定位'),
-	(113, '高德JS API Key', 'sys.amap.jsKey', 'fa588d6bc9fbc9dce1f0c379e40f9faa', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-21 12:47:56', '高德地图JS API Key，用于前端地图组件加载'),
-	(114, '高德安全密钥', 'sys.amap.securityJsCode', '19ef226bdd6e4a6276d45ed1e5cb9a475', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-21 12:47:56', '高德地图JS API安全密钥'),
-	(115, '验证码有效期', 'sys.security.captchaExpire', '2', 'Y', 'admin', '2026-06-21 13:20:16', '', NULL, '验证码有效期（分钟）'),
-	(116, '密码最大错误次数', 'sys.security.pwdErrMaxCount', '5', 'Y', 'admin', '2026-06-21 13:20:16', '', NULL, '密码错误超过此次数后锁定账户'),
-	(117, '密码锁定时间', 'sys.security.pwdErrLockTime', '10', 'Y', 'admin', '2026-06-21 13:20:16', '', NULL, '密码错误锁定时间（分钟）'),
-	(118, '用户初始密码', 'sys.security.initPassword', '123456', 'Y', 'admin', '2026-06-21 13:20:16', '', NULL, '新建用户和重置密码时的默认密码'),
-	(119, '令牌续期阈值', 'sys.login.tokenRefreshThreshold', '20', 'Y', 'admin', '2026-06-21 13:20:16', '', NULL, '令牌剩余有效期低于此值时自动续期（分钟）'),
+	(112, '高德Web服务Key', 'sys.amap.webServiceKey', 'd184e115457658cbcf3f92ed8e3a1772', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-26 02:43:03', '高德地图Web服务API Key，用于逆地理编码和IP定位'),
+	(113, '高德JS API Key', 'sys.amap.jsKey', 'fa588d6bc9fbc9dce1f0c379e40f9faa', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-26 02:43:04', '高德地图JS API Key，用于前端地图组件加载'),
+	(114, '高德安全密钥', 'sys.amap.securityJsCode', '19ef226bdd6e4a6276d45ed1e5cb9a475', 'Y', 'admin', '2026-06-21 12:46:55', 'admin', '2026-06-26 02:43:04', '高德地图JS API安全密钥'),
+	(115, '验证码有效期', 'sys.security.captchaExpire', '2', 'Y', 'admin', '2026-06-21 13:20:16', 'admin', '2026-06-26 02:43:03', '验证码有效期（分钟）'),
+	(116, '密码最大错误次数', 'sys.security.pwdErrMaxCount', '5', 'Y', 'admin', '2026-06-21 13:20:16', 'admin', '2026-06-26 02:43:03', '密码错误超过此次数后锁定账户'),
+	(117, '密码锁定时间', 'sys.security.pwdErrLockTime', '10', 'Y', 'admin', '2026-06-21 13:20:16', 'admin', '2026-06-26 02:43:03', '密码错误锁定时间（分钟）'),
+	(118, '用户初始密码', 'sys.security.initPassword', '123456', 'Y', 'admin', '2026-06-21 13:20:16', 'admin', '2026-06-26 02:43:03', '新建用户和重置密码时的默认密码'),
+	(119, '令牌续期阈值', 'sys.login.tokenRefreshThreshold', '20', 'Y', 'admin', '2026-06-21 13:20:16', 'admin', '2026-06-26 02:43:03', '令牌剩余有效期低于此值时自动续期（分钟）'),
 	(125, '数据库备份启用', 'sys.backup.enabled', 'true', 'Y', '', '2026-06-21 23:58:36', '', NULL, NULL),
 	(126, '数据库备份时间', 'sys.backup.time', '02:00', 'Y', '', '2026-06-21 23:58:36', '', NULL, NULL),
 	(127, '备份保留天数', 'sys.backup.retainDays', '30', 'Y', '', '2026-06-21 23:58:36', '', NULL, NULL),
@@ -1962,14 +1980,15 @@ CREATE TABLE IF NOT EXISTS `sys_db_backup` (
   `error_message` text COMMENT '错误信息',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`backup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据库备份记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据库备份记录表';
 
 -- 正在导出表  fuchenpro.sys_db_backup 的数据：~2 rows (大约)
 DELETE FROM `sys_db_backup`;
 /*!40000 ALTER TABLE `sys_db_backup` DISABLE KEYS */;
 INSERT INTO `sys_db_backup` (`backup_id`, `file_name`, `file_size`, `cos_path`, `cos_url`, `backup_type`, `status`, `duration`, `error_message`, `create_time`) VALUES
 	(5, 'fuchenpro_20260622_003632.sql', 277009, '', '', 'manual', 'success', 0.76, '', '2026-06-22 00:36:33'),
-	(6, 'fuchenpro_20260622_004149.sql', 278179, '', '', 'manual', 'success', 0.78, '', '2026-06-22 00:41:49');
+	(6, 'fuchenpro_20260622_004149.sql', 278179, '', '', 'manual', 'success', 0.78, '', '2026-06-22 00:41:49'),
+	(7, 'fuchenpro_20260626_020033.sql', 0, '', '', 'auto', 'failed', 0.10, 'mysqldump执行失败', '2026-06-26 02:00:34');
 /*!40000 ALTER TABLE `sys_db_backup` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_dept 结构
@@ -1996,7 +2015,7 @@ CREATE TABLE IF NOT EXISTS `sys_dept` (
 DELETE FROM `sys_dept`;
 /*!40000 ALTER TABLE `sys_dept` DISABLE KEYS */;
 INSERT INTO `sys_dept` (`dept_id`, `parent_id`, `ancestors`, `dept_name`, `order_num`, `leader`, `phone`, `email`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(100, 0, '0', '赛诺美生', 0, '汪志', '15888888888', 'ry@qq.com', '0', '0', 'admin', '2026-04-25 01:10:44', 'admin', '2026-06-04 22:39:14'),
+	(100, 0, '0', '赛诺美生', 0, '汪志', '15888888888', 'ry@qq.com', '0', '0', 'admin', '2026-04-25 01:10:44', 'admin', '2026-06-26 02:33:34'),
 	(101, 100, '0,100', '赛诺·森品牌', 1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', '2026-04-25 01:10:44', 'admin', '2026-06-04 22:41:14'),
 	(102, 100, '0,100', '长沙分公司', 2, '若依', '15888888888', 'ry@qq.com', '0', '2', 'admin', '2026-04-25 01:10:44', '', NULL),
 	(103, 101, '0,100,101', '事业1部', 1, '若依', '15888888888', 'ry@qq.com', '0', '0', 'admin', '2026-04-25 01:10:44', 'admin', '2026-06-04 22:40:15'),
@@ -2295,9 +2314,9 @@ CREATE TABLE IF NOT EXISTS `sys_logininfor` (
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=378 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=391 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
 
--- 正在导出表  fuchenpro.sys_logininfor 的数据：~268 rows (大约)
+-- 正在导出表  fuchenpro.sys_logininfor 的数据：~278 rows (大约)
 DELETE FROM `sys_logininfor`;
 /*!40000 ALTER TABLE `sys_logininfor` DISABLE KEYS */;
 INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`, `browser`, `os`, `status`, `msg`, `login_time`, `login_source`) VALUES
@@ -2578,7 +2597,20 @@ INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`
 	(374, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-21 14:19:28', 'web'),
 	(375, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-21 22:53:52', 'web'),
 	(376, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-22 01:04:26', 'web'),
-	(377, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-22 01:49:26', 'app');
+	(377, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-22 01:49:26', 'app'),
+	(378, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 01:43:15', 'app'),
+	(379, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 01:43:36', 'web'),
+	(380, 'peng1', '127.0.0.1', '内网IP', 'Chrome', 'Android', '1', '用户不存在', '2026-06-26 02:46:52', 'app'),
+	(381, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 02:51:16', 'app'),
+	(382, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 02:51:41', 'app'),
+	(383, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 11:10:28', 'app'),
+	(384, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 12:45:39', 'app'),
+	(385, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 13:10:44', 'app'),
+	(386, 'admin', '127.0.0.1', '内网IP', 'Edge', 'Windows 10', '0', '登录成功', '2026-06-26 14:03:43', 'web'),
+	(387, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 15:23:17', 'app'),
+	(388, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 17:17:43', 'app'),
+	(389, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 17:21:30', 'web'),
+	(390, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 22:29:07', 'web');
 /*!40000 ALTER TABLE `sys_logininfor` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_menu 结构
@@ -2608,7 +2640,7 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   PRIMARY KEY (`menu_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3084 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
 
--- 正在导出表  fuchenpro.sys_menu 的数据：~235 rows (大约)
+-- 正在导出表  fuchenpro.sys_menu 的数据：~239 rows (大约)
 DELETE FROM `sys_menu`;
 /*!40000 ALTER TABLE `sys_menu` DISABLE KEYS */;
 INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`, `component`, `query`, `route_name`, `is_frame`, `is_cache`, `menu_type`, `visible`, `status`, `client_type`, `perms`, `icon`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
@@ -2869,15 +2901,13 @@ CREATE TABLE IF NOT EXISTS `sys_notice` (
   PRIMARY KEY (`notice_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8 COMMENT='通知公告表';
 
--- 正在导出表  fuchenpro.sys_notice 的数据：~5 rows (大约)
+-- 正在导出表  fuchenpro.sys_notice 的数据：~3 rows (大约)
 DELETE FROM `sys_notice`;
 /*!40000 ALTER TABLE `sys_notice` DISABLE KEYS */;
 INSERT INTO `sys_notice` (`notice_id`, `notice_title`, `notice_type`, `notice_content`, `status`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
-	(1, '温馨提醒：2018-07-01111 若依新版本发布啦', '2', _binary 0xE696B0E78988E69CACE58685E5AEB9, '0', 'admin', '2026-04-25 01:10:54', 'admin', '2026-06-22 01:53:13', '管理员'),
-	(2, '维护通知：2018-07-01 若依系统凌晨维护', '1', _binary 0xE7BBB4E68AA4E58685E5AEB9, '0', 'admin', '2026-04-25 01:10:54', '', NULL, '管理员'),
-	(3, '若依开源框架介绍', '1', _binary 0x3C703E3C7370616E207374796C653D22636F6C6F723A20726762283233302C20302C2030293B223EE9A1B9E79BAEE4BB8BE7BB8D3C2F7370616E3E3C2F703E3C703E3C666F6E7420636F6C6F723D2223333333333333223E52756F5969E5BC80E6BA90E9A1B9E79BAEE698AFE4B8BAE4BC81E4B89AE794A8E688B7E5AE9AE588B6E79A84E5908EE58FB0E8849AE6898BE69EB6E6A186E69EB6EFBC8CE4B8BAE4BC81E4B89AE68993E980A0E79A84E4B880E7AB99E5BC8FE8A7A3E586B3E696B9E6A188EFBC8CE9998DE4BD8EE4BC81E4B89AE5BC80E58F91E68890E69CACEFBC8CE68F90E58D87E5BC80E58F91E69588E78E87E38082E4B8BBE8A681E58C85E68BACE794A8E688B7E7AEA1E79086E38081E8A792E889B2E7AEA1E79086E38081E983A8E997A8E7AEA1E79086E38081E88F9CE58D95E7AEA1E79086E38081E58F82E695B0E7AEA1E79086E38081E5AD97E585B8E7AEA1E79086E380813C2F666F6E743E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE5B297E4BD8DE7AEA1E790863C2F7370616E3E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE38081E5AE9AE697B6E4BBBBE58AA13C2F7370616E3E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE380813C2F7370616E3E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE69C8DE58AA1E79B91E68EA7E38081E799BBE5BD95E697A5E5BF97E38081E6938DE4BD9CE697A5E5BF97E38081E4BBA3E7A081E7949FE68890E7AD89E58A9FE883BDE38082E585B6E4B8ADEFBC8CE8BF98E694AFE68C81E5A49AE695B0E68DAEE6BA90E38081E695B0E68DAEE69D83E99990E38081E59BBDE99985E58C96E380815265646973E7BC93E5AD98E38081446F636B6572E983A8E7BDB2E38081E6BB91E58AA8E9AA8CE8AF81E7A081E38081E7ACACE4B889E696B9E8AEA4E8AF81E799BBE5BD95E38081E58886E5B883E5BC8FE4BA8BE58AA1E380813C2F7370616E3E3C666F6E7420636F6C6F723D2223333333333333223EE58886E5B883E5BC8FE69687E4BBB6E5AD98E582A83C2F666F6E743E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE38081E58886E5BA93E58886E8A1A8E5A484E79086E7AD89E68A80E69CAFE789B9E782B9E380823C2F7370616E3E3C2F703E3C703E3C696D67207372633D2268747470733A2F2F666F727564612E67697465652E636F6D2F696D616765732F313737333933313834383334323433393033322F61346432323331335F313831353039352E706E6722207374796C653D2277696474683A20363470783B223E3C62723E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A20726762283233302C20302C2030293B223EE5AE98E7BD91E58F8AE6BC94E7A4BA3C2F7370616E3E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE88BA5E4BE9DE5AE98E7BD91E59CB0E59D80EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F72756F79692E7669703C2F613E3C6120687265663D22687474703A2F2F72756F79692E76697022207461726765743D225F626C616E6B223E3C2F613E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE88BA5E4BE9DE69687E6A1A3E59CB0E59D80EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F646F632E72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F646F632E72756F79692E7669703C2F613E3C62723E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE6BC94E7A4BAE59CB0E59D80E38090E4B88DE58886E7A6BBE78988E38091EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F64656D6F2E72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F64656D6F2E72756F79692E7669703C2F613E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE6BC94E7A4BAE59CB0E59D80E38090E58886E7A6BBE78988E69CACE38091EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F7675652E72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F7675652E72756F79692E7669703C2F613E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE6BC94E7A4BAE59CB0E59D80E38090E5BEAEE69C8DE58AA1E78988E38091EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F636C6F75642E72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F636C6F75642E72756F79692E7669703C2F613E3C2F703E3C703E3C7370616E207374796C653D22636F6C6F723A207267622835312C2035312C203531293B223EE6BC94E7A4BAE59CB0E59D80E38090E7A7BBE58AA8E7ABAFE78988E38091EFBC9A266E6273703B3C2F7370616E3E3C6120687265663D22687474703A2F2F68352E72756F79692E76697022207461726765743D225F626C616E6B223E687474703A2F2F68352E72756F79692E7669703C2F613E3C2F703E3C703E3C6272207374796C653D22636F6C6F723A207267622834382C2034392C203531293B20666F6E742D66616D696C793A202671756F743B48656C766574696361204E6575652671756F743B2C2048656C7665746963612C20417269616C2C2073616E732D73657269663B20666F6E742D73697A653A20313270783B223E3C2F703E, '0', 'admin', '2026-04-25 01:10:54', '', NULL, '管理员'),
-	(11, '今晚开会', '1', _binary 0x3C703EE4BB8AE6999AE8A681E5BC80E4BC9AE4BA86EFBC81EFBC81EFBC81EFBC813C696D67207372633D222F6465762D61706932303236303532342F62633263386465363631356464363662333566376464656434636531333534382E6A7067223E3C2F703E, '0', 'admin', '2026-05-24 20:19:42', '', NULL, NULL),
-	(12, '赛诺第一季度业绩爆红', '1', _binary 0x3C703EE6849FE8B0A2E5A4A7E5AEB6E4B880E5ADA3E5BAA6E4BBA5E69DA5E585B1E5908CE79A84E58AAAE58A9BEFBC8C36E69C8831E697A531393A3030E68891E4BBACE8819AE9A490E78B82E6ACA2EFBC8CE4B88DE98689E4B88DE5BD92EFBC813C696D67207372633D2268747470733A2F2F6D79647265616D2D313330323638323831332E636F732E61702D7368616E676861692E6D7971636C6F75642E636F6D2F75706C6F61642F32303236303532392F66343136626161373134376161343731346535336534646236343932633261312E6A7067223E3C2F703E, '0', 'admin', '2026-05-29 15:40:52', 'admin', '2026-06-08 00:34:14', NULL);
+	(2, '维护通知：2018-07-01 若依系统凌晨维护', '1', _binary 0x3C703EE7BBB4E68AA4E58685E5AEB931313C2F703E, '0', 'admin', '2026-04-25 01:10:54', 'admin', '2026-06-26 22:59:49', '管理员'),
+	(11, '今晚开会', '1', _binary 0x3C703E3C696D67207372633D222F70726F66696C652F75706C6F61642F32303236303632362F38643239376264363762613532646434343961353431323563396334346636652E6A70672220616C743D2222207374796C653D226D61782D77696474683A20313030253B206865696768743A206175746F3B2077696474683A20313030253B223EE4BB8AE6999AE8A681E5BC80E4BC9AE4BA86EFBC81EFBC81EFBC81EFBC813231313C696D67207372633D222F70726F66696C652F75706C6F61642F32303236303632362F31663866646539316263616662393736636535663232366137646239393261322E706E67223E3C2F703E, '0', 'admin', '2026-05-24 20:19:42', 'admin', '2026-06-26 22:53:02', NULL),
+	(12, '赛诺第一季度业绩爆红', '1', _binary 0x3C703EE6849FE8B0A2E5A4A7E5AEB6E4B880E5ADA3E5BAA6E4BBA5E69DA5E585B1E5908CE79A84E58AAAE58A9BEFBC8C36E69C8831E697A531393A3030E68891E4BBACE8819AE9A490E78B82E6ACA2EFBC8CE4B88DE98689E4B88DE5BD92EFBC81313C696D67207372633D2268747470733A2F2F6D79647265616D2D313330323638323831332E636F732E61702D7368616E676861692E6D7971636C6F75642E636F6D2F75706C6F61642F32303236303532392F66343136626161373134376161343731346535336534646236343932633261312E6A7067223E3C2F703E, '0', 'admin', '2026-05-29 15:40:52', 'admin', '2026-06-26 22:38:36', NULL);
 /*!40000 ALTER TABLE `sys_notice` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_notice_read 结构
@@ -2891,13 +2921,11 @@ CREATE TABLE IF NOT EXISTS `sys_notice_read` (
   UNIQUE KEY `uk_user_notice` (`user_id`,`notice_id`) COMMENT '同一用户同一公告只记录一次'
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COMMENT='公告已读记录表';
 
--- 正在导出表  fuchenpro.sys_notice_read 的数据：~5 rows (大约)
+-- 正在导出表  fuchenpro.sys_notice_read 的数据：~3 rows (大约)
 DELETE FROM `sys_notice_read`;
 /*!40000 ALTER TABLE `sys_notice_read` DISABLE KEYS */;
 INSERT INTO `sys_notice_read` (`read_id`, `notice_id`, `user_id`, `read_time`) VALUES
-	(1, 1, 1, '2026-05-24 20:18:33'),
 	(2, 2, 1, '2026-05-24 20:18:38'),
-	(3, 3, 1, '2026-05-24 20:18:44'),
 	(4, 11, 1, '2026-05-24 20:19:57'),
 	(5, 12, 1, '2026-05-29 15:41:14');
 /*!40000 ALTER TABLE `sys_notice_read` ENABLE KEYS */;
@@ -2926,9 +2954,9 @@ CREATE TABLE IF NOT EXISTS `sys_oper_log` (
   KEY `idx_sys_oper_log_bt` (`business_type`),
   KEY `idx_sys_oper_log_s` (`status`),
   KEY `idx_sys_oper_log_ot` (`oper_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=157 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
+) ENGINE=InnoDB AUTO_INCREMENT=318 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
 
--- 正在导出表  fuchenpro.sys_oper_log 的数据：~13 rows (大约)
+-- 正在导出表  fuchenpro.sys_oper_log 的数据：~218 rows (大约)
 DELETE FROM `sys_oper_log`;
 /*!40000 ALTER TABLE `sys_oper_log` DISABLE KEYS */;
 INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `request_method`, `operator_type`, `oper_name`, `dept_name`, `oper_url`, `oper_ip`, `oper_location`, `oper_param`, `json_result`, `status`, `error_msg`, `oper_time`, `cost_time`) VALUES
@@ -2988,7 +3016,168 @@ INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `requ
 	(153, '通知公告', 1, '/system/notice/markRead', 'POST', 1, 'admin', '', '//localhost:8787/system/notice/markRead', '127.0.0.1', '内网IP', '{"noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-22 01:52:55', 3),
 	(154, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"温馨提醒：2018-07-01111 若依新版本发布啦","noticeType":"2","status":"0","noticeContent":"新版本内容","noticeId":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-22 01:53:13', 77),
 	(155, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":2,"noticeTitle":"维护通知：2018-07-01 若依系统凌晨维护","noticeType":"1","noticeContent":"<p>维护内容111<\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"","updateTime":null,"remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-22 01:54:39', 7),
-	(156, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":2,"noticeTitle":"维护通知：2018-07-01 若依系统凌晨维护","noticeType":"1","noticeContent":"<p>维护内容111<\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"","updateTime":null,"remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-22 01:55:35', 1);
+	(156, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":2,"noticeTitle":"维护通知：2018-07-01 若依系统凌晨维护","noticeType":"1","noticeContent":"<p>维护内容111<\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"","updateTime":null,"remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-22 01:55:35', 1),
+	(157, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":0,"enterpriseLevel":"3","serverUserId":[],"serverUserName":[],"status":"0","remark":null}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 01:46:53', 77),
+	(158, '部门管理', 2, '/system/dept', 'PUT', 1, 'admin', '', '//localhost:8787/system/dept', '127.0.0.1', '内网IP', '{"deptId":100,"parentId":0,"deptName":"赛诺美生","orderNum":0,"leader":"汪志","phone":"15888888888","email":"ry@qq.com","status":"0"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:33:34', 112),
+	(159, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":12,"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-29 15:40:52","updateBy":"admin","updateTime":"2026-06-08 00:34:14","remark":null,"createNickName":"若依"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:38:07', 16),
+	(160, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"今晚开会","noticeType":"1","status":"0","noticeContent":"<p>今晚要开会了！！！！<img src=\\"https:\\/\\/synolife-1443627946.cos.ap-shanghai.myqcloud.com\\/upload\\/20260626\\/8f23e80be7f5fce0fa88f6e852bdea1a.jpg\\" alt=\\"图片\\" style=\\"max-width: 100%; height: auto; width: 100%;\\"><br><\\/p>","noticeId":"11"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:39:05', 96),
+	(161, '考勤管理', 1, '/business/attendance/clock', 'POST', 1, 'admin', '', '//localhost:8787/business/attendance/clock', '127.0.0.1', '内网IP', '{"clockType":"0","outsideReason":"","latitude":null,"longitude":null,"address":"77","photo":""}', '{"code":200,"msg":"打卡成功","data":{"recordId":7,"userId":1,"userName":"若依","attendanceDate":"2026-06-26","clockInTime":"2026-06-26 02:09:44","clockOutTime":"2026-06-26 02:39:47","clockInLatitude":null,"clockInLongitude":null,"clockInAddress":"定位失败","clockInPhoto":"","clockOutLatitude":null,"clockOutLongitude":null,"clockOutAddress":"77","clockOutPhoto":"","attendanceStatus":"2","clockCount":2,"firstClockTime":"2026-06-26 02:09:44","lastClockTime":"2026-06-26 02:39:47","clockType":"0","outsideReason":"","ruleId":null,"remark":"","createBy":"若依","createTime":"2026-06-26 02:09:44","updateBy":"","updateTime":"2026-06-26 02:39:47"}}', 0, '', '2026-06-26 02:39:47', 33),
+	(162, '客户管理', 2, '/business/customer', 'PUT', 1, 'admin', '', '//localhost:8787/business/customer', '127.0.0.1', '内网IP', '{"customerId":1,"customerName":"客户1","phone":"","wechat":"","gender":"1","age":55,"tag":"normal","remark":"俄文","enterpriseId":7,"enterpriseName":"终测1","storeId":8,"storeName":"终测门店2"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:41:45', 104),
+	(163, '客户管理', 1, '/business/customer/avatar', 'POST', 1, 'admin', '', '//localhost:8787/business/customer/avatar', '127.0.0.1', '内网IP', '{"customer_id":"1"}', '{"code":200,"msg":"","imgUrl":"https:\\/\\/synolife-1443627946.cos.ap-shanghai.myqcloud.com\\/customer_avatar\\/ad25eceeac53e52b75f3a4ef031c90c3.jpg"}', 0, '', '2026-06-26 02:41:45', 336),
+	(164, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":101,"configName":"登录过期时间","configKey":"sys.login.expireTime","configValue":"1440","configType":"Y","remark":"Token有效期（分钟），影响Web端和APP端"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 67),
+	(165, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":119,"configName":"令牌续期阈值","configKey":"sys.login.tokenRefreshThreshold","configValue":"20","configType":"Y","remark":"令牌剩余有效期低于此值时自动续期（分钟）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(166, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":102,"configName":"启用腾讯云COS","configKey":"sys.cos.enabled","configValue":"true","configType":"Y","remark":"是否启用腾讯云对象存储"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 7),
+	(167, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":103,"configName":"腾讯云SecretId","configKey":"sys.cos.secretId","configValue":"","configType":"Y","remark":"腾讯云COS SecretId"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 14),
+	(168, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":104,"configName":"腾讯云SecretKey","configKey":"sys.cos.secretKey","configValue":"","configType":"Y","remark":"腾讯云COS SecretKey"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 14),
+	(169, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":105,"configName":"COS存储桶名称","configKey":"sys.cos.bucket","configValue":"mydream-1302682813","configType":"Y","remark":"腾讯云COS存储桶名称"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 14),
+	(170, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":106,"configName":"COS地域","configKey":"sys.cos.region","configValue":"ap-shanghai","configType":"Y","remark":"腾讯云COS地域"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 14),
+	(171, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":107,"configName":"COS自定义域名","configKey":"sys.cos.domain","configValue":"","configType":"Y","remark":"腾讯云COS自定义域名"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(172, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":4,"configName":"账号自助-验证码开关","configKey":"sys.account.captchaEnabled","configValue":"true","configType":"Y","remark":"是否开启验证码功能（true开启，false关闭）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(173, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":115,"configName":"验证码有效期","configKey":"sys.security.captchaExpire","configValue":"2","configType":"Y","remark":"验证码有效期（分钟）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 16),
+	(174, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":116,"configName":"密码最大错误次数","configKey":"sys.security.pwdErrMaxCount","configValue":"5","configType":"Y","remark":"密码错误超过此次数后锁定账户"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 16),
+	(175, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":117,"configName":"密码锁定时间","configKey":"sys.security.pwdErrLockTime","configValue":"10","configType":"Y","remark":"密码错误锁定时间（分钟）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 7),
+	(176, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":9,"configName":"用户管理-密码字符范围","configKey":"sys.account.chrtype","configValue":"0","configType":"Y","remark":"默认任意字符范围，0任意（密码可以输入任意字符），1数字（密码只能为0-9数字），2英文字母（密码只能为a-z和A-Z字母），3字母和数字（密码必须包含字母，数字）,4字母数字和特殊字符（目前支持的特殊字符包括：~!@#$%^&*()-=_+）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 14),
+	(177, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":7,"configName":"用户管理-初始密码修改策略","configKey":"sys.account.initPasswordModify","configValue":"1","configType":"Y","remark":"0：初始密码修改策略关闭，没有任何提示，1：提醒用户，如果未修改初始密码，则在登录时就会提醒修改密码对话框"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(178, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":8,"configName":"用户管理-账号密码更新周期","configKey":"sys.account.passwordValidateDays","configValue":"0","configType":"Y","remark":"密码更新周期（填写数字，数据初始化值为0不限制，若修改必须为大于0小于365的正整数），如果超过这个周期登录系统时，则在登录时就会提醒修改密码对话框"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(179, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":118,"configName":"用户初始密码","configKey":"sys.security.initPassword","configValue":"123456","configType":"Y","remark":"新建用户和重置密码时的默认密码"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 13),
+	(180, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":6,"configName":"用户登录-黑名单列表","configKey":"sys.login.blackIPList","configValue":"","configType":"Y","remark":"设置登录IP黑名单限制，多个匹配项以;分隔，支持匹配（*通配、网段）"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:03', 15),
+	(181, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":112,"configName":"高德Web服务Key","configKey":"sys.amap.webServiceKey","configValue":"d184e115457658cbcf3f92ed8e3a1772","configType":"Y","remark":"高德地图Web服务API Key，用于逆地理编码和IP定位"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:04', 15),
+	(182, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":113,"configName":"高德JS API Key","configKey":"sys.amap.jsKey","configValue":"fa588d6bc9fbc9dce1f0c379e40f9faa","configType":"Y","remark":"高德地图JS API Key，用于前端地图组件加载"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:04', 15),
+	(183, '参数管理', 2, '/system/config', 'PUT', 1, 'admin', '', '//localhost:8787/system/config', '127.0.0.1', '内网IP', '{"configId":114,"configName":"高德安全密钥","configKey":"sys.amap.securityJsCode","configValue":"19ef226bdd6e4a6276d45ed1e5cb9a475","configType":"Y","remark":"高德地图JS API安全密钥"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:04', 14),
+	(184, '参数管理', 3, '/system/config/refreshCache', 'DELETE', 1, 'admin', '', '//localhost:8787/system/config/refreshCache', '127.0.0.1', '内网IP', '[]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:43:04', 7),
+	(185, '用户管理', 2, '/system/user', 'PUT', 1, 'admin', '', '//localhost:8787/system/user', '127.0.0.1', '内网IP', '{"userId":103,"deptId":101,"userName":"pengpeng","nickName":"鹏鹏","userType":"00","email":"","phonenumber":"","sex":"0","avatar":"","status":"0","delFlag":"0","loginIp":"127.0.0.1","loginDate":"2026-06-03 15:17:16","pwdUpdateDate":null,"createBy":"admin","createTime":"2026-06-03 15:16:56","updateBy":"","updateTime":null,"remark":null,"postIds":[2],"roleIds":[100]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:47:23', 65),
+	(186, '用户详情', 1, '/system/user/detail', 'POST', 1, 'admin', '', '//localhost:8787/system/user/detail', '127.0.0.1', '内网IP', '{"detailId":null,"userId":103,"wechat":"","birthday":null,"idCard":"","address":"","hireDate":null,"employmentStatus":"0","resignDate":null,"remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:47:23', 9),
+	(187, '角色管理', 2, '/system/role', 'PUT', 1, 'admin', '', '//localhost:8787/system/role', '127.0.0.1', '内网IP', '{"roleId":100,"roleName":"测试角色","roleKey":"1","roleSort":3,"dataScope":"1","menuCheckStrictly":1,"deptCheckStrictly":1,"status":"0","delFlag":"0","createBy":"admin","createTime":"2026-06-03 07:08:47","updateBy":"","updateTime":null,"remark":null,"menuIds":[2000,2001,2059,2007,2065,2072,2076,3044,3058,3031,2013,2012,2002,2003,2008,2009,2015,2016,2060,2061,2066,2067,2068,2069,2070,2073,2074,2077,3045,3059]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 02:48:55', 94),
+	(188, '报销管理', 1, '/finance/reimbursement/audit', 'POST', 1, 'admin', '', '//localhost:8787/finance/reimbursement/audit', '127.0.0.1', '内网IP', '{"reimbursementId":4,"passed":true,"auditRemark":""}', '{"code":200,"msg":"审核成功"}', 0, '', '2026-06-26 07:19:23', 22),
+	(189, '报销管理', 1, '/finance/reimbursement/audit', 'POST', 1, 'admin', '', '//localhost:8787/finance/reimbursement/audit', '127.0.0.1', '内网IP', '{"reimbursementId":6,"passed":true,"auditRemark":""}', '{"code":200,"msg":"审核成功"}', 0, '', '2026-06-26 07:19:27', 16),
+	(190, '报销管理', 1, '/finance/reimbursement/audit', 'POST', 1, 'admin', '', '//localhost:8787/finance/reimbursement/audit', '127.0.0.1', '内网IP', '{"reimbursementId":7,"passed":true,"auditRemark":""}', '{"code":200,"msg":"审核成功"}', 0, '', '2026-06-26 07:19:29', 21),
+	(191, '报销管理', 1, '/finance/reimbursement', 'POST', 1, 'admin', '', '//localhost:8787/finance/reimbursement', '127.0.0.1', '内网IP', '{"applyDate":"2026-06-25","category":"4","expenseAmount":555,"incomeAmount":0,"expenseType":"1","voucherImages":"","remark":""}', '{"code":200,"msg":"新增成功","data":{"applyDate":"2026-06-25","category":"4","expenseAmount":"555.00","incomeAmount":"0.00","expenseType":"1","voucherImages":"","remark":"","applicantId":1,"applicantName":"若依","deptId":103,"deptName":"事业1部","createBy":"若依","reimbursementNo":"BX202606260001","status":"0","createTime":"2026-06-26 07:23:44","reimbursementId":17}}', 0, '', '2026-06-26 07:23:44', 110),
+	(192, '报销管理', 1, '/finance/reimbursement/audit', 'POST', 1, 'admin', '', '//localhost:8787/finance/reimbursement/audit', '127.0.0.1', '内网IP', '{"reimbursementId":17,"passed":true,"auditRemark":""}', '{"code":200,"msg":"审核成功"}', 0, '', '2026-06-26 07:23:48', 19),
+	(193, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":12,"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！1<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-29 15:40:52","updateBy":"admin","updateTime":"2026-06-26 02:38:07","remark":null,"createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 07:35:28', 7),
+	(194, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[]', '{"code":500,"msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 07:35:47', 2),
+	(195, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierId":1,"supplierName":"供货商1","contactPerson":null,"contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-26 02:26:44","updateBy":"","updateTime":"2026-06-26 02:26:44"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 07:37:10', 1),
+	(196, '货品管理', 2, '/wms/product', 'PUT', 1, 'admin', '', '//localhost:8787/wms/product', '127.0.0.1', '内网IP', '{"productId":2,"productName":"测试1","productCode":"CS1-20260504","supplierId":1,"spec":"1","packQty":10,"category":"1","unit":"5","purchasePrice":6800,"salePrice":6800,"salePriceSpec":680,"shelfLifeDays":null,"hasExpiry":"0","warnQty":20,"status":"0","remark":null,"createBy":"admin","createTime":"2026-05-05 00:11:54","updateBy":"admin","updateTime":"2026-06-26 02:26:50"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 07:38:03', 1),
+	(197, '客户管理', 1, '/business/customer', 'POST', 1, 'admin', '', '//localhost:8787/business/customer', '127.0.0.1', '内网IP', '{"customerName":"111","enterpriseId":7,"storeId":8,"status":"0","gender":"1"}', '{"code":200,"msg":"","customerId":2}', 0, '', '2026-06-26 07:40:01', 113),
+	(198, '客户管理', 1, '/business/customer/avatar', 'POST', 1, 'admin', '', '//localhost:8787/business/customer/avatar', '127.0.0.1', '内网IP', '{"customer_id":"2"}', '{"code":200,"msg":"","imgUrl":"\\/profile\\/customer_avatar\\/b9f32df95027f927b827580f8471d45f.jpg"}', 0, '', '2026-06-26 07:40:01', 11),
+	(199, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","pinyin":"2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":0,"enterpriseLevel":"3","serverUserId":[],"serverUserName":null,"cooperationStartDate":null,"cooperationEndDate":null,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-21 11:19:25","updateBy":"admin","updateTime":"2026-06-26 02:08:57"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 09:53:46', 100),
+	(200, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","pinyin":"2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":"0.00","enterpriseLevel":"3","serverUserId":[1,2],"serverUserName":"","cooperationStartDate":null,"cooperationEndDate":null,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-21 11:19:25","updateBy":"admin","updateTime":"2026-06-26 09:53:45"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 09:53:52', 32),
+	(201, '门店管理', 2, '/business/store', 'PUT', 1, 'admin', '', '//localhost:8787/business/store', '127.0.0.1', '内网IP', '{"storeId":12,"enterpriseId":8,"enterpriseName":"终测2","storeName":"门顶上","managerName":null,"phone":null,"wechat":null,"address":null,"annualPerformance":0,"regularCustomers":0,"creatorName":"若依","serverUserId":[2,100],"serverUserName":"若人头、测试","status":"0","remark":null,"createBy":"admin","createTime":"2026-06-21 12:24:40","updateBy":"","updateTime":"2026-06-21 12:24:40"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 09:54:01', 30),
+	(202, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":0,"enterpriseLevel":"3","serverUserId":[],"serverUserName":[],"status":"0","remark":null}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 11:26:02', 113),
+	(203, '卡项管理', 2, '/business/cardItem', 'PUT', 1, 'admin', '', '//localhost:8787/business/cardItem', '127.0.0.1', '内网IP', '{"cardItemId":1,"cardItemName":"卡项1","cardItemCode":"KX1-20260601","category":"2","defaultQuantity":10,"suggestedPrice":"9380.00","defaultUnitPrice":"938.00","status":"0","remark":null,"products":[{"productId":1,"unitType":"2","packQty":10,"quantity":10},{"productId":2,"unitType":"2","packQty":10,"quantity":10}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 11:27:40', 108),
+	(204, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","status":"0","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 11:27:59', 83),
+	(205, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":12,"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-29 15:40:52","updateBy":"admin","updateTime":"2026-06-26 11:27:59","remark":null,"createNickName":"若依"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 11:59:51', 111),
+	(206, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":11,"noticeTitle":"今晚开会","noticeType":"1","noticeContent":"<p>今晚要开会了！！！！<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-24 20:19:42","updateBy":"admin","updateTime":"2026-06-26 02:39:05","remark":null,"createNickName":"若依"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 12:00:10', 77),
+	(207, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","status":"0","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！1<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 12:00:23', 11),
+	(208, '通知公告', 1, '/system/notice/markRead', 'POST', 1, 'admin', '', '//localhost:8787/system/notice/markRead', '127.0.0.1', '内网IP', '{"noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 12:00:26', 1),
+	(209, '通知公告', 1, '/system/notice/markRead', 'POST', 1, 'admin', '', '//localhost:8787/system/notice/markRead', '127.0.0.1', '内网IP', '{"noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 12:00:26', 1),
+	(210, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[]', '{"code":500,"msg":"没有可新增的排班数据"}', 1, '没有可新增的排班数据', '2026-06-26 12:04:22', 0),
+	(211, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[]', '{"code":500,"msg":"没有可新增的排班数据"}', 1, '没有可新增的排班数据', '2026-06-26 13:09:54', 0),
+	(212, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"今晚开会","noticeType":"1","status":"0","noticeContent":"<p>今晚要开会了！！！！<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","noticeId":"11"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 13:21:31', 91),
+	(213, '考勤管理', 1, '/business/attendance/clock', 'POST', 1, 'admin', '', '//localhost:8787/business/attendance/clock', '127.0.0.1', '内网IP', '{"clockType":"0","outsideReason":"","latitude":31.212969,"longitude":121.478334,"address":"顺昌路504弄小区","photo":""}', '{"code":200,"msg":"打卡成功","data":{"recordId":7,"userId":1,"userName":"若依","attendanceDate":"2026-06-26","clockInTime":"2026-06-26 02:09:44","clockOutTime":"2026-06-26 17:17:54","clockInLatitude":null,"clockInLongitude":null,"clockInAddress":"定位失败","clockInPhoto":"","clockOutLatitude":"31.2129690","clockOutLongitude":"121.4783340","clockOutAddress":"顺昌路504弄小区","clockOutPhoto":"","attendanceStatus":"2","clockCount":3,"firstClockTime":"2026-06-26 02:09:44","lastClockTime":"2026-06-26 17:17:54","clockType":"0","outsideReason":"","ruleId":null,"remark":"","createBy":"若依","createTime":"2026-06-26 02:09:44","updateBy":"","updateTime":"2026-06-26 17:17:54"}}', 0, '', '2026-06-26 17:17:54', 43),
+	(214, '通知公告', 3, '/system/notice', 'DELETE', 1, 'admin', '', '//localhost:8787/system/notice?noticeId=3', '127.0.0.1', '内网IP', '{"noticeId":"3"}', '{"code":500,"msg":"操作失败"}', 1, '操作失败', '2026-06-26 17:18:41', 1),
+	(215, '通知公告', 3, '/system/notice', 'DELETE', 1, 'admin', '', '//localhost:8787/system/notice?noticeId=3', '127.0.0.1', '内网IP', '{"noticeId":"3"}', '{"code":500,"msg":"操作失败"}', 1, '操作失败', '2026-06-26 17:18:43', 1),
+	(216, '通知公告', 3, '/system/notice', 'DELETE', 1, 'admin', '', '//localhost:8787/system/notice?noticeId=2', '127.0.0.1', '内网IP', '{"noticeId":"2"}', '{"code":500,"msg":"操作失败"}', 1, '操作失败', '2026-06-26 17:18:45', 1),
+	(217, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"今晚开会","noticeType":"1","status":"0","noticeContent":"<p>今晚要开会了！！！！2<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","noticeId":"11"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:18:57', 52),
+	(218, '通知公告', 1, '/system/notice/markRead', 'POST', 1, 'admin', '', '//localhost:8787/system/notice/markRead', '127.0.0.1', '内网IP', '{"noticeId":"3"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:19:01', 1),
+	(219, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=12%2C13%2C9%2C10', '127.0.0.1', '内网IP', '{"scheduleIds":"12,13,9,10"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:22:04', 85),
+	(220, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-21","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-22","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-23","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-24","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-25","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-26","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:22:04', 17),
+	(221, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=19%2C18%2C17%2C16%2C15%2C14', '127.0.0.1', '内网IP', '{"scheduleIds":"19,18,17,16,15,14"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:22:13', 54),
+	(222, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-23","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-24","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-25","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-26","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 17:22:13', 22),
+	(223, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=23%2C22%2C21%2C20', '127.0.0.1', '内网IP', '{"scheduleIds":"23,22,21,20"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 20:02:37', 32),
+	(224, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-23","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-24","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-25","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-26","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 20:02:37', 20),
+	(225, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:09', 9),
+	(226, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:10', 1),
+	(227, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:10', 1),
+	(228, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:14', 1),
+	(229, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:14', 1),
+	(230, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:19', 1),
+	(231, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:20', 1),
+	(232, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:20', 1),
+	(233, '考勤管理', 2, '/business/attendance/rule', 'PUT', 1, 'admin', '', '//localhost:8787/business/attendance/rule', '127.0.0.1', '内网IP', '{"ruleId":1,"ruleName":"标准班","workStartTime":"09:00:00","workEndTime":"18:00:00","lateTolerance":0,"earlyLeaveTolerance":0,"workAddress":"上海市黄浦区半淞园路街道恒升大厦","workLongitude":"121.4824490","workLatitude":"31.2109990","allowedDistance":500,"status":"0","remark":"默认考勤规则"}', '', 0, '', '2026-06-26 21:30:29', 1),
+	(234, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":0,"enterpriseLevel":"3","serverUserId":[],"serverUserName":[],"status":"0","remark":null}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:08:21', 56),
+	(235, '门店管理', 2, '/business/store', 'PUT', 1, 'admin', '', '//localhost:8787/business/store', '127.0.0.1', '内网IP', '{"storeId":12,"enterpriseId":8,"storeName":"门顶上","managerName":"11","phone":null,"wechat":"11","address":null,"businessHours":null,"annualPerformance":0,"regularCustomers":0,"serverUserId":[],"serverUserName":[],"status":"0","remark":null}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:08:34', 43),
+	(236, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":"2","customerName":"111","storeId":"8","storeName":"终测门店2","enterpriseId":7,"enterpriseName":"终测1","orderStatus":"0","packageName":"11","storeDealer":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":9380,"paidAmount":9380,"paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:08:49', 36),
+	(237, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":3}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:08:58', 31),
+	(238, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":3}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:09:27', 96),
+	(239, '考勤管理', 1, '/business/attendance/clock', 'POST', 1, 'admin', '', '//localhost:8787/business/attendance/clock', '127.0.0.1', '内网IP', '{"clockType":"1","outsideReason":"估计快了","latitude":31.212931,"longitude":121.478264,"address":"顺昌路504弄小区","photo":"\\/profile\\/upload\\/20260626\\/d57aa17f2831c2980714aca0fd2fa3d5.jpg"}', '{"code":200,"msg":"打卡成功","data":{"recordId":7,"userId":1,"userName":"若依","attendanceDate":"2026-06-26","clockInTime":"2026-06-26 02:09:44","clockOutTime":"2026-06-26 22:22:33","clockInLatitude":null,"clockInLongitude":null,"clockInAddress":"定位失败","clockInPhoto":"","clockOutLatitude":"31.2129310","clockOutLongitude":"121.4782640","clockOutAddress":"顺昌路504弄小区","clockOutPhoto":"\\/profile\\/upload\\/20260626\\/d57aa17f2831c2980714aca0fd2fa3d5.jpg","attendanceStatus":"0","clockCount":4,"firstClockTime":"2026-06-26 02:09:44","lastClockTime":"2026-06-26 22:22:33","clockType":"0","outsideReason":"","ruleId":null,"remark":"","createBy":"若依","createTime":"2026-06-26 02:09:44","updateBy":"","updateTime":"2026-06-26 22:22:33"}}', 0, '', '2026-06-26 22:22:33', 66),
+	(240, '货品管理', 2, '/wms/product', 'PUT', 1, 'admin', '', '//localhost:8787/wms/product', '127.0.0.1', '内网IP', '{"productId":2,"productName":"测试1","productCode":"CS1-20260504","supplierId":1,"spec":"1","packQty":10,"category":"1","unit":"5","purchasePrice":6800,"salePrice":6800,"salePriceSpec":680,"shelfLifeDays":null,"hasExpiry":"0","warnQty":20,"status":"0","remark":null,"createBy":"admin","createTime":"2026-05-05 00:11:54","updateBy":"admin","updateTime":"2026-06-26 02:26:50"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:29:23', 57),
+	(241, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":12,"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！1<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-29 15:40:52","updateBy":"admin","updateTime":"2026-06-26 12:00:23","remark":null,"createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 22:29:51', 1),
+	(242, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":12,"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！1<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-05-29 15:40:52","updateBy":"admin","updateTime":"2026-06-26 12:00:23","remark":null,"createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 22:31:46', 1),
+	(243, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:31:59', 4),
+	(244, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:31:59', 4),
+	(245, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":26,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:31:59', 8),
+	(246, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":27,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:31:59', 6),
+	(247, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-27","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:32:06', 12),
+	(248, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:32:06', 5),
+	(249, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:32:06', 7),
+	(250, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":26,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:32:06', 7),
+	(251, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":27,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:32:06', 6),
+	(252, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"赛诺第一季度业绩爆红","noticeType":"1","status":"0","noticeContent":"<p>感谢大家一季度以来共同的努力，6月1日19:00我们聚餐狂欢，不醉不归！1<img src=\\"https:\\/\\/mydream-1302682813.cos.ap-shanghai.myqcloud.com\\/upload\\/20260529\\/f416baa7147aa4714e53e4db6492c2a1.jpg\\"><\\/p>","noticeId":"12"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:38:36', 7),
+	(253, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeTitle":"今晚开会","noticeType":"1","status":"0","noticeContent":"<p><img src=\\"\\/profile\\/upload\\/20260626\\/8d297bd67ba52dd449a54125c9c44f6e.jpg\\" alt=\\"\\" style=\\"max-width: 100%; height: auto; width: 100%;\\"><br>今晚要开会了！！！！2<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","noticeId":"11"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:38:49', 50),
+	(254, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":3,"noticeTitle":"若依开源框架介绍","noticeType":"1","noticeContent":"<p><span style=\\"color: rgb(230, 0, 0);\\">项目介绍<\\/span><\\/p><p><span style=\\"color: rgb(51, 51, 51);\\">岗位管理、定时任务、服务监控、登录日志、操作日志、代码生成等功能。其中，还支持多数据源、数据权限、国际化、Redis缓存、Docker部署、滑动验证码、第三方认证登录、分布式事务、、分库分表处理等技术特点。<\\/span><\\/p><p><br style=\\"color: rgb(48, 49, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 12px;\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"","updateTime":null,"remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 22:39:11', 2),
+	(255, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":3,"noticeTitle":"若依开源框架介绍","noticeType":"1","noticeContent":"<p><span style=\\"color: rgb(230, 0, 0);\\">项目介绍<\\/span><\\/p><p><span style=\\"color: rgb(51, 51, 51);\\">岗位管理、定时任务、服务监控、登录日志、操作日志、代码生成等功能。其中，还支持多数据源、数据权限、国际化、Redis缓存、Docker部署、滑动验证码、第三方认证登录、分布式事务、、分库分表处理等技术特点。<\\/span><\\/p><p><br style=\\"color: rgb(48, 49, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 12px;\\"><\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"","updateTime":null,"remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 22:39:12', 1),
+	(256, '通知公告', 3, '/system/notice', 'DELETE', 1, 'admin', '', '//localhost:8787/system/notice?noticeIds=3', '127.0.0.1', '内网IP', '{"noticeIds":"3"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:39:19', 17),
+	(257, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":1,"noticeTitle":"温馨提醒：2018-07-01111 若依新版本发布啦","noticeType":"2","noticeContent":"<p>新版本内容1111<\\/p>","status":"0","createBy":"admin","createTime":"2026-04-25 01:10:54","updateBy":"admin","updateTime":"2026-06-22 01:53:13","remark":"管理员","createNickName":"若依"}', '{"code":"42S22","msg":"Server internal error"}', 1, 'Server internal error', '2026-06-26 22:39:24', 1),
+	(258, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:47:43', 82),
+	(259, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:47:43', 8),
+	(260, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":26,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:47:44', 7),
+	(261, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":27,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:47:44', 9),
+	(262, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:48:16', 43),
+	(263, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:48:16', 8),
+	(264, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":26,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:48:16', 8),
+	(265, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":27,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:48:16', 8),
+	(266, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":28,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:48:16', 9),
+	(267, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":28,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:09', 148),
+	(268, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":27,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:09', 4),
+	(269, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":26,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:09', 9),
+	(270, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:09', 9),
+	(271, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:09', 9),
+	(272, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=28%2C27%2C26', '127.0.0.1', '内网IP', '{"scheduleIds":"28,27,26"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:17', 23),
+	(273, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-28","purpose":"2","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:17', 6),
+	(274, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:17', 8),
+	(275, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:18', 6),
+	(276, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=29%2C25', '127.0.0.1', '内网IP', '{"scheduleIds":"29,25"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:39', 11),
+	(277, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-26","purpose":"2","status":"1","remark":""},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-27","purpose":"2","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:39', 7),
+	(278, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:39', 6),
+	(279, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=31', '127.0.0.1', '内网IP', '{"scheduleIds":"31"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:52', 2),
+	(280, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-28","purpose":"2","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:52', 9),
+	(281, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:52', 8),
+	(282, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:49:52', 9),
+	(283, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=32', '127.0.0.1', '内网IP', '{"scheduleIds":"32"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:50:10', 30),
+	(284, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-27","purpose":"3","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:50:10', 7),
+	(285, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:50:10', 9),
+	(286, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:50:10', 10),
+	(287, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":11,"noticeTitle":"今晚开会","noticeType":"1","noticeContent":"<p><img src=\\"\\/profile\\/upload\\/20260626\\/8d297bd67ba52dd449a54125c9c44f6e.jpg\\" alt=\\"\\" style=\\"max-width: 100%; height: auto; width: 100%;\\">今晚要开会了！！！！2<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","status":"0"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:51:23', 25),
+	(288, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":11,"noticeTitle":"今晚开会","noticeType":"1","noticeContent":"<p><img src=\\"\\/profile\\/upload\\/20260626\\/8d297bd67ba52dd449a54125c9c44f6e.jpg\\" alt=\\"\\" style=\\"max-width: 100%; height: auto; width: 100%;\\">今晚要开会了！！！！211<img src=\\"\\/profile\\/upload\\/20260626\\/1f8fde91bcafb976ce5f226a7db992a2.png\\"><\\/p>","status":"0"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:53:02', 105),
+	(289, '通知公告', 3, '/system/notice', 'DELETE', 1, 'admin', '', '//localhost:8787/system/notice?noticeIds=1', '127.0.0.1', '内网IP', '{"noticeIds":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:53:06', 14),
+	(290, '通知公告', 2, '/system/notice', 'PUT', 1, 'admin', '', '//localhost:8787/system/notice', '127.0.0.1', '内网IP', '{"noticeId":2,"noticeTitle":"维护通知：2018-07-01 若依系统凌晨维护","noticeType":"1","noticeContent":"<p>维护内容11<\\/p>","status":"0"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 22:59:49', 110),
+	(291, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=33', '127.0.0.1', '内网IP', '{"scheduleIds":"33"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:01:02', 53),
+	(292, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-28","purpose":"3","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:01:02', 5),
+	(293, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:01:03', 5),
+	(294, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:01:03', 6),
+	(295, '排班管理', 3, '/business/schedule', 'DELETE', 1, 'admin', '', '//localhost:8787/business/schedule?scheduleIds=34', '127.0.0.1', '内网IP', '{"scheduleIds":"34"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:02:28', 100),
+	(296, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-27","purpose":"3","status":"1","remark":""}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:02:28', 9),
+	(297, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:02:28', 7),
+	(298, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"3","status":"1","remark":""}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:02:28', 7),
+	(299, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:11:50', 81),
+	(300, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":500,"msg":"操作失败"}', 1, '操作失败', '2026-06-26 23:11:50', 1),
+	(301, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:11:51', 10),
+	(302, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":25,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":500,"msg":"操作失败"}', 1, '操作失败', '2026-06-26 23:11:51', 1),
+	(303, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-25","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:02', 33),
+	(304, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:02', 9),
+	(305, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":35,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:02', 6),
+	(306, '排班管理', 1, '/business/schedule/batch', 'POST', 1, 'admin', '', '//localhost:8787/business/schedule/batch', '127.0.0.1', '内网IP', '[{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-28","purpose":"2","status":"1"},{"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","scheduleDate":"2026-06-29","purpose":"2","status":"1"}]', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:19', 92),
+	(307, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:19', 6),
+	(308, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":36,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:19', 6),
+	(309, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:19', 7),
+	(310, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":35,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:19', 6),
+	(311, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":24,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:22', 4),
+	(312, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":36,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:22', 6),
+	(313, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":30,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 6),
+	(314, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":35,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 7),
+	(315, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":37,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 5),
+	(316, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":38,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 7),
+	(317, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"supplierId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:43:47', 103);
 /*!40000 ALTER TABLE `sys_oper_log` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_post 结构
@@ -3043,7 +3232,7 @@ DELETE FROM `sys_role`;
 INSERT INTO `sys_role` (`role_id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `menu_check_strictly`, `dept_check_strictly`, `status`, `del_flag`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
 	(1, '超级管理员', 'admin', 1, '1', 1, 1, '0', '0', 'admin', '2026-04-25 01:10:45', '', NULL, '超级管理员'),
 	(2, '普通角色', 'common', 2, '2', 1, 1, '0', '0', 'admin', '2026-04-25 01:10:45', 'admin', '2026-05-08 00:29:26', '普通角色'),
-	(100, '测试角色', '1', 3, '1', 1, 1, '0', '0', 'admin', '2026-06-03 07:08:47', '', NULL, NULL);
+	(100, '测试角色', '1', 3, '1', 1, 1, '0', '0', 'admin', '2026-06-03 07:08:47', 'admin', '2026-06-26 02:48:55', NULL);
 /*!40000 ALTER TABLE `sys_role` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_role_dept 结构
@@ -3071,7 +3260,7 @@ CREATE TABLE IF NOT EXISTS `sys_role_menu` (
   PRIMARY KEY (`role_id`,`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色和菜单关联表';
 
--- 正在导出表  fuchenpro.sys_role_menu 的数据：~359 rows (大约)
+-- 正在导出表  fuchenpro.sys_role_menu 的数据：~363 rows (大约)
 DELETE FROM `sys_role_menu`;
 /*!40000 ALTER TABLE `sys_role_menu` DISABLE KEYS */;
 INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
@@ -3432,12 +3621,34 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 	(2, 2087),
 	(100, 2000),
 	(100, 2001),
+	(100, 2002),
+	(100, 2003),
 	(100, 2007),
+	(100, 2008),
+	(100, 2009),
+	(100, 2012),
+	(100, 2013),
+	(100, 2015),
+	(100, 2016),
 	(100, 2059),
+	(100, 2060),
+	(100, 2061),
 	(100, 2065),
+	(100, 2066),
+	(100, 2067),
+	(100, 2068),
+	(100, 2069),
+	(100, 2070),
 	(100, 2072),
+	(100, 2073),
+	(100, 2074),
 	(100, 2076),
-	(100, 3044);
+	(100, 2077),
+	(100, 3031),
+	(100, 3044),
+	(100, 3045),
+	(100, 3058),
+	(100, 3059);
 /*!40000 ALTER TABLE `sys_role_menu` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_user 结构
@@ -3470,12 +3681,12 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 DELETE FROM `sys_user`;
 /*!40000 ALTER TABLE `sys_user` DISABLE KEYS */;
 INSERT INTO `sys_user` (`user_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `pwd_update_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
-	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-22 01:49:26', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
+	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-26 22:29:07', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
 	(2, 106, 'ry', '若人头', '00', 'ry@qq.com', '15666666666', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-04-25 01:10:45', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', 'admin', '2026-04-28 22:24:11', '测试员'),
 	(100, 101, '测试', '测试', '00', '', '15877778888', '0', '', '$2y$10$XouudTyFvzABxDZVRaQhZ.Jh9TSE9Qil2RA2N9mzv6hPqcyo.O4Uy', '0', '0', '', NULL, NULL, 'admin', '2026-04-25 21:08:28', 'admin', '2026-06-20 12:28:59', '111'),
 	(101, NULL, '辅导费', '奋斗奋斗', '00', '', '', '0', '', '$2y$10$GiUlf1m6QaMIwgfxTHuDfeEoedCiiS0O1HBb3bcR.rW0DKPuua8gK', '0', '2', '', NULL, NULL, 'admin', '2026-05-20 19:52:31', '', NULL, NULL),
 	(102, 103, '测试1', 'ceshi1', '00', '', '', '0', '', '$2y$10$wEWrRMhpcXRoi2k4wwXk4e5k/uAafpDT9XeVWUlymXgneSA66TvbS', '0', '0', '', NULL, NULL, 'admin', '2026-06-02 20:57:05', 'admin', '2026-06-03 00:31:47', NULL),
-	(103, 101, 'pengpeng', '鹏鹏', '00', '', '', '0', '', '$2y$10$aWTIHTZYrU2/PMSR/qXQMev.E5y8KxlXSy1ZcBjznzu1nsTMUwLH6', '0', '0', '127.0.0.1', '2026-06-03 15:17:16', NULL, 'admin', '2026-06-03 15:16:56', '', NULL, NULL);
+	(103, 101, 'pengpeng', '鹏鹏', '00', '', '', '0', '', '$2y$10$aWTIHTZYrU2/PMSR/qXQMev.E5y8KxlXSy1ZcBjznzu1nsTMUwLH6', '0', '0', '127.0.0.1', '2026-06-03 15:17:16', NULL, 'admin', '2026-06-03 15:16:56', 'admin', '2026-06-26 02:47:23', NULL);
 /*!40000 ALTER TABLE `sys_user` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_user_detail 结构
@@ -3498,7 +3709,7 @@ CREATE TABLE IF NOT EXISTS `sys_user_detail` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`detail_id`),
   UNIQUE KEY `uk_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='员工详情表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 COMMENT='员工详情表';
 
 -- 正在导出表  fuchenpro.sys_user_detail 的数据：~3 rows (大约)
 DELETE FROM `sys_user_detail`;
@@ -3506,7 +3717,8 @@ DELETE FROM `sys_user_detail`;
 INSERT INTO `sys_user_detail` (`detail_id`, `user_id`, `wechat`, `birthday`, `id_card`, `address`, `welcome_slogan`, `hire_date`, `employment_status`, `resign_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
 	(1, 2, '', NULL, '', '', NULL, NULL, '0', NULL, 'admin', '2026-04-28 16:00:14', 'admin', '2026-04-28 22:24:11', ''),
 	(2, 1, '', NULL, '', '', '永远相信美好的事情即将发生！', NULL, '0', NULL, '', '2026-05-24 22:33:34', '', NULL, NULL),
-	(3, 102, '', NULL, '', '', NULL, NULL, '0', NULL, 'admin', '2026-06-03 00:31:47', '', NULL, '');
+	(3, 102, '', NULL, '', '', NULL, NULL, '0', NULL, 'admin', '2026-06-03 00:31:47', '', NULL, ''),
+	(4, 103, '', NULL, '', '', NULL, NULL, '0', NULL, 'admin', '2026-06-26 02:47:23', '', NULL, '');
 /*!40000 ALTER TABLE `sys_user_detail` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_user_post 结构

@@ -290,15 +290,17 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="开始日期" prop="startDate">
-              <el-date-picker v-model="form.startDate" type="date" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="结束日期" prop="endDate">
-              <el-date-picker v-model="form.endDate" type="date" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 100%" />
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="排班日期" prop="selectedDates">
+              <el-date-picker
+                v-model="form.selectedDates"
+                type="dates"
+                placeholder="选择一个或多个日期（可分散点选）"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+                :disabled-date="disabledDate"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -383,7 +385,7 @@
  * @description 提供按月查看员工/企业排班甘特图、拖拽选择日期批量添加行程、
  * 行程编辑/删除、员工排班配置（是否可排班/休息日设置）等功能
  */
-import { listSchedule, getSchedule, getEmployeeSchedule, getEnterpriseSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule } from "@/api/business/schedule"
+import { listSchedule, getSchedule, getEmployeeSchedule, getEnterpriseSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from "@/api/business/schedule"
 import { listUser } from "@/api/system/user"
 import { listEnterprise, searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
 import { listEmployeeConfig, updateSchedulable, saveRestDates as saveRestDatesApi, getRestDates } from "@/api/business/employeeConfig"
@@ -418,6 +420,25 @@ const dragEndInfo = ref(null)
 const selectedDays = ref(new Set())
 const restDateValue = ref(new Date())
 const currentConfigRow = ref({})
+const bookedDates = ref([])
+
+// 禁用已安排日期（同员工同企业，排除当前行程自身日期）
+function disabledDate(date) {
+  const dateStr = date.toISOString().slice(0, 10)
+  return bookedDates.value.includes(dateStr)
+}
+
+// 加载已安排日期（从已加载的当月排班列表中计算，排除当前行程自身日期）
+function loadBookedDates(userId, enterpriseId, originalDates) {
+  if (!userId || !enterpriseId) { bookedDates.value = []; return }
+  bookedDates.value = scheduleListData.value
+    .filter(item =>
+      item.userId === userId &&
+      item.enterpriseId === enterpriseId &&
+      !originalDates.includes(item.scheduleDate)
+    )
+    .map(item => item.scheduleDate)
+}
 
 const data = reactive({
   form: {},
@@ -438,8 +459,7 @@ const data = reactive({
   rules: {
     userIds: [{ required: true, message: "请选择员工", trigger: "change", type: 'array' }],
     enterpriseId: [{ required: true, message: "请选择企业", trigger: "change" }],
-    startDate: [{ required: true, message: "开始日期不能为空", trigger: "change" }],
-    endDate: [{ required: true, message: "结束日期不能为空", trigger: "change" }],
+    selectedDates: [{ required: true, message: "请选择排班日期", trigger: "change", type: 'array' }],
     purpose: [{ required: true, message: "下店目的不能为空", trigger: "change" }]
   }
 })
@@ -580,7 +600,8 @@ function resetQuery() {
 function cancel() { open.value = false; reset() }
 
 function reset() {
-  form.value = { scheduleId: undefined, userIds: [], userId: undefined, userName: undefined, enterpriseId: undefined, enterpriseName: undefined, startDate: undefined, endDate: undefined, purpose: undefined, status: "1", remark: undefined }
+  form.value = { scheduleId: undefined, userIds: [], userId: undefined, userName: undefined, enterpriseId: undefined, enterpriseName: undefined, selectedDates: [], purpose: undefined, status: "1", remark: undefined, scheduleIds: [], originalDates: [] }
+  bookedDates.value = []
   proxy.resetForm("scheduleRef")
 }
 
@@ -649,8 +670,12 @@ function handleRowMouseUp() {
   const endDay = Math.max(dragStartInfo.value.day, dragEndInfo.value.day)
 
   reset()
-  form.value.startDate = `${year}-${month}-${String(startDay).padStart(2, '0')}`
-  form.value.endDate = `${year}-${month}-${String(endDay).padStart(2, '0')}`
+  // 拖拽选择的是连续日期区间，展开为 selectedDates 数组
+  const draggedDates = []
+  for (let d = startDay; d <= endDay; d++) {
+    draggedDates.push(`${year}-${month}-${String(d).padStart(2, '0')}`)
+  }
+  form.value.selectedDates = draggedDates
 
   if (activeTab.value === 'employee') {
     form.value.userIds = [dragStartInfo.value.row.userId]
@@ -690,19 +715,22 @@ function handleEdit() {
   const relatedSchedules = scheduleListData.value.filter(item =>
     item.userId === schedule.userId &&
     item.enterpriseId === schedule.enterpriseId &&
-    item.purpose === schedule.purpose
-  )
+    item.purpose === schedule.purpose &&
+    String(item.status) === String(schedule.status)
+  ).sort((a, b) => a.scheduleDate.localeCompare(b.scheduleDate))
 
-  const dates = relatedSchedules.map(item => item.scheduleDate).sort()
+  const selectedDates = relatedSchedules.map(item => item.scheduleDate)
+  const scheduleIds = relatedSchedules.map(item => item.scheduleId)
 
   form.value = {
     ...schedule,
     userIds: [schedule.userId],
-    startDate: dates[0],
-    endDate: dates[dates.length - 1],
+    selectedDates: [...selectedDates],
     status: String(schedule.status),
-    updateIds: relatedSchedules.map(item => item.scheduleId)
+    scheduleIds: [...scheduleIds],
+    originalDates: [...selectedDates]
   }
+  loadBookedDates(schedule.userId, schedule.enterpriseId, selectedDates)
   open.value = true
   title.value = "修改行程"
 }
@@ -717,7 +745,33 @@ function handleDelete() {
 
 function handleGroupEdit(row) {
   reset()
-  form.value = { userIds: [row.userId], userId: row.userId, userName: row.userName, enterpriseId: row.enterpriseId, enterpriseName: row.enterpriseName, startDate: row.dates[0], endDate: row.dates[row.dates.length - 1], purpose: row.purpose, status: row.status }
+  // 按 userId+enterpriseId+purpose+status 精确匹配当前分组行对应的排班记录，
+  // 装配 selectedDates/scheduleIds/originalDates 支持差量更新，
+  // 避免落入新增分支触发冲突检测导致编辑提交报错。
+  const relatedSchedules = scheduleListData.value.filter(item =>
+    item.userId === row.userId &&
+    item.enterpriseId === row.enterpriseId &&
+    item.purpose === row.purpose &&
+    String(item.status) === String(row.status)
+  ).sort((a, b) => a.scheduleDate.localeCompare(b.scheduleDate))
+
+  const selectedDates = relatedSchedules.map(item => item.scheduleDate)
+  const scheduleIds = relatedSchedules.map(item => item.scheduleId)
+
+  form.value = {
+    userIds: [row.userId],
+    userId: row.userId,
+    userName: row.userName,
+    enterpriseId: row.enterpriseId,
+    enterpriseName: row.enterpriseName,
+    selectedDates: [...selectedDates],
+    purpose: row.purpose,
+    status: String(row.status),
+    scheduleId: scheduleIds[0],
+    scheduleIds: [...scheduleIds],
+    originalDates: [...selectedDates]
+  }
+  loadBookedDates(row.userId, row.enterpriseId, selectedDates)
   open.value = true
   title.value = "修改行程"
 }
@@ -736,41 +790,103 @@ function handleEnterpriseChange(enterpriseId) {
 
 function submitForm() {
   proxy.$refs["scheduleRef"].validate(valid => {
-    if (valid) {
-      const startDate = new Date(form.value.startDate)
-      const endDate = new Date(form.value.endDate)
-      const scheduleList = []
-      const userIds = form.value.userIds?.length ? form.value.userIds : [form.value.userId].filter(Boolean)
+    if (!valid) return
 
-      for (let d = startDate; d <= endDate; d.setDate(d.getDate() + 1)) {
-        userIds.forEach(userId => {
-          const user = userList.value.find(u => u.userId === userId)
-          scheduleList.push({ userId: userId, userName: user?.nickName || user?.userName || form.value.userName, enterpriseId: form.value.enterpriseId, enterpriseName: form.value.enterpriseName, scheduleDate: d.toISOString().slice(0, 10), purpose: form.value.purpose, status: form.value.status, remark: form.value.remark })
-        })
-      }
+    // 校验 selectedDates 非空
+    if (!form.value.selectedDates || form.value.selectedDates.length === 0) {
+      proxy.$modal.msgError("请至少选择一个排班日期")
+      return
+    }
 
-      if (form.value.updateIds?.length > 1) {
-        delSchedule(form.value.updateIds.join(',')).then(() => {
-          return addScheduleBatch(scheduleList)
-        }).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
-      } else if (form.value.scheduleId != undefined) {
-        const updateData = {
-          scheduleId: form.value.scheduleId,
-          userId: form.value.userId,
-          userName: form.value.userName,
+    // 前端冲突预检（排除当前行程自身日期）
+    const conflictDates = form.value.selectedDates.filter(
+      date => bookedDates.value.includes(date) && !form.value.originalDates.includes(date)
+    )
+    if (conflictDates.length > 0) {
+      proxy.$modal.msgError(`以下日期已有排班安排：${conflictDates.join('、')}`)
+      return
+    }
+
+    const userIds = form.value.userIds?.length ? form.value.userIds : [form.value.userId].filter(Boolean)
+
+    // 构造 scheduleList（每个日期每个用户一条记录）
+    const scheduleList = []
+    form.value.selectedDates.forEach(scheduleDate => {
+      userIds.forEach(userId => {
+        const user = userList.value.find(u => u.userId === userId)
+        scheduleList.push({
+          userId: userId,
+          userName: user?.nickName || user?.userName || form.value.userName,
           enterpriseId: form.value.enterpriseId,
           enterpriseName: form.value.enterpriseName,
-          scheduleDate: form.value.startDate,
+          scheduleDate: scheduleDate,
           purpose: form.value.purpose,
           status: form.value.status,
           remark: form.value.remark
-        }
-        updateSchedule(updateData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
-      } else {
-        addScheduleBatch(scheduleList).then(() => { proxy.$modal.msgSuccess("新增成功"); open.value = false; getList() })
-      }
+        })
+      })
+    })
+
+    if (form.value.scheduleIds && form.value.scheduleIds.length > 0) {
+      // 编辑模式：差量更新
+      const newDates = form.value.selectedDates.filter(d => !form.value.originalDates.includes(d))
+      const removedDates = form.value.originalDates.filter(d => !form.value.selectedDates.includes(d))
+      const keptDates = form.value.selectedDates.filter(d => form.value.originalDates.includes(d))
+      doDiffUpdate(newDates, removedDates, keptDates, scheduleList)
+    } else {
+      // 新增模式：批量新增
+      addScheduleBatch(scheduleList).then(() => {
+        proxy.$modal.msgSuccess("新增成功")
+        open.value = false
+        getList()
+      })
     }
   })
+}
+
+// 差量更新三步走：删除移除的、新增新选的、更新保留的（不传 scheduleDate）
+async function doDiffUpdate(newDates, removedDates, keptDates, scheduleList) {
+  try {
+    // 1. 删除被移除日期对应的记录
+    if (removedDates.length > 0) {
+      const removedIds = removedDates.map(date => {
+        const idx = form.value.originalDates.indexOf(date)
+        return form.value.scheduleIds[idx]
+      }).filter(Boolean)
+      if (removedIds.length > 0) {
+        await delSchedule(removedIds.join(','))
+      }
+    }
+
+    // 2. 新增新选中的日期
+    if (newDates.length > 0) {
+      const newSchedules = scheduleList.filter(item => newDates.includes(item.scheduleDate))
+      await addScheduleBatch(newSchedules)
+    }
+
+    // 3. 更新保留日期的非日期字段（不传 scheduleDate，避免日期字段被误改）
+    if (keptDates.length > 0) {
+      const keptIds = keptDates.map(date => form.value.scheduleIds[form.value.originalDates.indexOf(date)]).filter(Boolean)
+      for (const id of keptIds) {
+        await updateSchedule({
+          scheduleId: id,
+          userId: form.value.userId || form.value.userIds[0],
+          userName: form.value.userName,
+          enterpriseId: form.value.enterpriseId,
+          enterpriseName: form.value.enterpriseName,
+          purpose: form.value.purpose,
+          status: form.value.status,
+          remark: form.value.remark
+        })
+      }
+    }
+
+    proxy.$modal.msgSuccess("修改成功")
+    open.value = false
+    getList()
+  } catch (e) {
+    proxy.$modal.msgError("修改失败：" + (e.msg || e.message || e))
+  }
 }
 
 function getScheduleTooltip(schedule) {
@@ -970,10 +1086,12 @@ onBeforeUnmount(() => {
 .day-cell {
   flex: 1;
   min-width: 0;
-  height: 52px;
+  min-height: 52px;
   border-right: 1px solid #ebeef5;
   cursor: crosshair;
   transition: all 0.15s ease;
+  position: relative;
+  align-self: stretch;
 }
 
 .day-cell:hover:not(.selected):not(.rest-day) {
@@ -1004,6 +1122,14 @@ onBeforeUnmount(() => {
 }
 
 .rest-label {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
   color: #F56C6C;
   font-weight: 600;

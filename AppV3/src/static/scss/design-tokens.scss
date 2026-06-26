@@ -1,18 +1,43 @@
-// ============ 品牌色 ============
-$color-primary: #3D6DF7;
-$color-primary-light: #5B8FF9;
-$color-primary-lighter: #E8F0FE;
-$color-primary-dark: #2B5DD9;
+// ============ 品牌色梯度（钉钉/企业微信风，5阶亮度） ============
+// 旧 $color-primary 保留兼容，新代码优先使用梯度变量
+$color-primary-50:  #E8F0FE;  // 极浅背景
+$color-primary-100: #D4E2FD;  // 浅背景（hover/激活）
+$color-primary-200: #A8C5FB;  // 弱化图标
+$color-primary-500: #3D6DF7;  // 主色（保持与原 $color-primary 一致）
+$color-primary-600: #2B5DD9;  // 深色（按下/激活态）
+$color-primary-700: #1E48B8;  // 重要文字
 
 // ============ 状态色（Arco Design 色系） ============
 $color-success: #00B42A;
 $color-success-light: #E8FFEA;
+$color-success-dark: #009A21;
 $color-warning: #FF7D00;
 $color-warning-light: #FFF7E8;
+$color-warning-dark: #D96500;
 $color-error: #F53F3F;
 $color-error-light: #FFF1F0;
+$color-error-dark: #CB272D;
 $color-info: #3D6DF7;
 $color-info-light: #E8F0FE;
+
+// ============ 品牌渐变（核心品牌锚点） ============
+$gradient-brand: linear-gradient(135deg, #3D6DF7 0%, #5B8FF9 100%);
+$gradient-brand-soft: linear-gradient(135deg, #E8F0FE 0%, #F5F8FF 100%);
+$gradient-hero: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 60%, #F5F7FA 100%);
+$gradient-success: linear-gradient(135deg, #00B42A 0%, #4ECB3D 100%);
+$gradient-warning: linear-gradient(135deg, #FF7D00 0%, #FFA940 100%);
+$gradient-error: linear-gradient(135deg, #F53F3F 0%, #F76560 100%);
+
+// ============ 毛玻璃（克制使用，仅 hero/弹窗） ============
+$bg-glass: rgba(255, 255, 255, 0.85);
+$bg-glass-dark: rgba(0, 0, 0, 0.4);
+$backdrop-blur: blur(20rpx) saturate(180%);
+
+// ============ 旧主色（保留兼容，1版本后清理） ============
+$color-primary: #3D6DF7;
+$color-primary-light: #5B8FF9;
+$color-primary-lighter: #E8F0FE;
+$color-primary-dark: #2B5DD9;
 
 // ============ 文字色阶（4级） ============
 $color-text-primary: #1D2129;
@@ -30,33 +55,75 @@ $color-bg-divider: #F2F3F5;
 $color-border: #E5E6EB;
 $color-border-light: #F2F3F5;
 
-// ============ 字号（4rpx步进） ============
+// ============ 字号（7级字阶） ============
+// 旧字号变量保留兼容
 $font-size-xs: 20rpx;
 $font-size-sm: 24rpx;
 $font-size-base: 28rpx;
 $font-size-md: 30rpx;
 $font-size-lg: 32rpx;
 $font-size-xl: 36rpx;
+// 新语义化字号
+$font-caption: 22rpx;    // 辅助说明
+$font-body: 26rpx;       // 正文
+$font-body-lg: 28rpx;    // 列表项主文
+$font-title: 30rpx;      // 卡片标题
+$font-title-lg: 32rpx;   // 页面主标题
+$font-display: 36rpx;    // 统计大数字
+$font-hero: 48rpx;       // hero 区数字
 
-// ============ 圆角 ============
+// ============ 圆角（4级 + 胶囊 + 圆） ============
+// 旧圆角保留兼容
 $radius-sm: 8rpx;
 $radius-base: 12rpx;
 $radius-card: 16rpx;
 $radius-lg: 20rpx;
 $radius-pill: 36rpx;
 $radius-circle: 50%;
+// 新语义化圆角
+$radius-xs: 6rpx;        // tag/badge
+$radius-sm-new: 12rpx;   // 按钮、输入框
+$radius-md: 16rpx;       // 列表项、卡片
+$radius-lg-new: 24rpx;   // 抽屉、弹窗
+$radius-pill-new: 999rpx;// 胶囊
 
-// ============ 间距（4rpx步进） ============
+// ============ 间距（8rpx主步进 + 4rpx辅步进） ============
+// 旧间距保留兼容
 $spacing-xs: 8rpx;
 $spacing-sm: 12rpx;
 $spacing-base: 16rpx;
 $spacing-md: 20rpx;
 $spacing-lg: 24rpx;
 $spacing-xl: 32rpx;
+// 新间距系统
+$space-1: 4rpx;
+$space-2: 8rpx;
+$space-3: 12rpx;
+$space-4: 16rpx;
+$space-5: 20rpx;
+$space-6: 24rpx;
+$space-8: 32rpx;
+$space-10: 40rpx;
+$space-12: 48rpx;
 
-// ============ 阴影（统一蓝色调） ============
+// ============ 阴影（5级 + 品牌光晕） ============
+// 旧阴影保留兼容
 $shadow-card: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
 $shadow-card-hover: 0 4rpx 20rpx rgba(61, 109, 247, 0.10);
 $shadow-fab: 0 8rpx 24rpx rgba(61, 109, 247, 0.30);
 $shadow-bottom-bar: 0 -4rpx 20rpx rgba(0, 0, 0, 0.06);
 $shadow-search: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+// 新阴影系统
+$shadow-xs: 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+$shadow-sm: 0 2rpx 8rpx rgba(61, 109, 247, 0.06);
+$shadow-md: 0 4rpx 16rpx rgba(61, 109, 247, 0.10);
+$shadow-lg: 0 8rpx 24rpx rgba(61, 109, 247, 0.14);
+$shadow-xl: 0 16rpx 40rpx rgba(61, 109, 247, 0.18);
+$shadow-brand-glow: 0 8rpx 24rpx rgba(61, 109, 247, 0.30);
+
+// ============ 动效（统一过渡曲线与时长） ============
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+$dur-fast: 150ms;
+$dur-base: 240ms;
+$dur-slow: 360ms;

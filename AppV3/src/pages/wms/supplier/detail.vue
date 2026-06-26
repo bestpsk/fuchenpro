@@ -31,7 +31,10 @@
     </view>
 
     <view class="info-card" v-if="info.createBy || info.updateBy">
-      <view class="card-title">操作记录</view>
+      <view class="card-title">
+        <u-icon name="clock" size="16" color="#3D6DF7"></u-icon>
+        <text>操作记录</text>
+      </view>
       <view class="info-body">
         <view v-if="info.createBy" class="info-row">
           <text class="info-label">创建人</text>
@@ -58,6 +61,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getSupplier, delSupplier } from '@/api/wms/supplier'
+import { checkPermi } from '@/utils/permission'
 
 const info = ref({})
 const supplierId = ref(null)
@@ -84,7 +88,16 @@ function callPhone() {
 }
 
 function goEdit() {
-  uni.navigateTo({ url: `/pages/wms/supplier/form?mode=edit&id=${supplierId.value}` })
+  const pages = getCurrentPages()
+  const prevPage = pages[pages.length - 2]
+  // 上一页是供货商列表时，返回并触发抽屉编辑
+  if (prevPage && prevPage.route === 'pages/wms/supplier/index') {
+    uni.navigateBack()
+    uni.$emit('editSupplier', supplierId.value)
+  } else {
+    // 否则跳转到列表页并带上编辑参数
+    uni.redirectTo({ url: `/pages/wms/supplier/index?editId=${supplierId.value}` })
+  }
 }
 
 function handleDelete() {
@@ -129,7 +142,7 @@ page { background-color: #F5F7FA; }
   &.status-1 { background: #F2F3F5; color: #86909C; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
 
 .info-body { display: flex; flex-direction: column; gap: 16rpx; }
 .info-row { display: flex; align-items: center; gap: 12rpx; }

@@ -60,8 +60,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
+import { ref, reactive, onUnmounted } from 'vue'
+import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { listWarehouse, delWarehouse } from '@/api/wms/warehouse'
 
 const warehouseList = ref([])
@@ -142,7 +142,7 @@ function handleDelete(item) {
   })
 }
 
-onMounted(() => { getList(true) })
+onShow(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>

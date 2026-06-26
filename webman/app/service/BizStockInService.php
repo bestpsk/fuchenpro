@@ -51,7 +51,7 @@ class BizStockInService
         
         $stockInIds = $list->pluck('stock_in_id')->toArray();
         $firstItemsMap = BizStockInItem::whereIn('stock_in_id', $stockInIds)
-            ->orderBy('id', 'asc')
+            ->orderBy('item_id', 'asc')
             ->get()
             ->groupBy('stock_in_id');
         foreach ($list->items() as $stockIn) {
@@ -83,7 +83,7 @@ class BizStockInService
             $items = BizStockInItem::where('stock_in_id', $stockInId)->get()->toArray();
             $stockIn->items = array_map(function ($item) {
                 return [
-                    'itemId' => $item['id'] ?? null,
+                    'itemId' => $item['item_id'] ?? null,
                     'productId' => $item['product_id'],
                     'productName' => $item['product_name'],
                     'supplierId' => $item['supplier_id'],
@@ -220,12 +220,15 @@ class BizStockInService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_amount'] = $totalAmount;
-        Db::transaction(function () use ($stockInId, $data, $items) {
-            BizStockIn::where('stock_in_id', $stockInId)->update($data);
+        // 按 fillable 过滤，移除 login_user 等非数据库字段，避免触发 SQL 错误
+        $fillable = (new BizStockIn())->getFillable();
+        $filteredData = array_intersect_key($data, array_flip($fillable));
+        Db::transaction(function () use ($stockInId, $filteredData, $items) {
+            BizStockIn::where('stock_in_id', $stockInId)->update($filteredData);
             BizStockInItem::where('stock_in_id', $stockInId)->delete();
             foreach ($items as $item) {
                 $item['stock_in_id'] = $stockInId;
-                $item['warehouse_id'] = $data['warehouse_id'] ?? null;
+                $item['warehouse_id'] = $filteredData['warehouse_id'] ?? null;
                 BizStockInItem::create($item);
             }
         });

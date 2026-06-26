@@ -182,10 +182,19 @@ function handleWarehouseChange(warehouseId) {
   getList(true)
 }
 
+const isFirstShow = ref(true)
+
 onMounted(() => { getList(true) })
 
 onShow(() => {
   loadWarehouses()
+  // 首次进入页面 onShow 会紧随 onMounted 触发，此时列表已由 onMounted 加载，跳过避免重复请求；
+  // 后续从编辑页返回时刷新列表
+  if (isFirstShow.value) {
+    isFirstShow.value = false
+    return
+  }
+  getList(true)
 })
 </script>
 

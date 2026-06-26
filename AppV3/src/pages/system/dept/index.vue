@@ -147,7 +147,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { ref, reactive, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listDept, delDept } from '@/api/system/dept'
 import { checkPermi } from '@/utils/permission'
 
@@ -283,8 +284,8 @@ function handleDelete(item) {
   })
 }
 
-onMounted(() => {
-  getList()
+onShow(() => {
+  getList(true)
 })
 </script>
 

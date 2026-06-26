@@ -61,12 +61,16 @@ class BizProductController
     // 修改货品信息
     public function edit(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $data['update_by'] = $request->loginUser->user->user_name ?? '';
-        $data['login_user'] = $request->loginUser;
-        $service = new BizProductService();
-        $result = $service->updateProduct($data);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $data['update_by'] = $request->loginUser->user->user_name ?? '';
+            $data['login_user'] = $request->loginUser;
+            $service = new BizProductService();
+            $result = $service->updateProduct($data);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 批量删除货品

@@ -1,7 +1,10 @@
 <template>
   <view class="form-container">
     <view class="form-section">
-      <view class="section-title">出库信息</view>
+      <view class="section-title">
+        <u-icon name="list" size="16" color="#3D6DF7"></u-icon>
+        <text>出库信息</text>
+      </view>
 
       <view class="form-field" @click="showTypePicker = true">
         <view class="field-label"><text class="required">*</text> 出库类型</view>
@@ -77,7 +80,10 @@
 
     <view class="form-section">
       <view class="section-header">
-        <view class="section-title">出库明细</view>
+        <view class="section-title">
+          <u-icon name="arrow-up" size="16" color="#3D6DF7"></u-icon>
+          <text>出库明细</text>
+        </view>
         <view class="add-item-btn" @click="addItem">
           <u-icon name="plus" size="14" color="#3D6DF7"></u-icon>
           <text>添加明细</text>
@@ -674,7 +680,7 @@ page { background-color: #F5F7FA; }
 .form-container { min-height: 100vh; padding-bottom: 140rpx; }
 
 .form-section { margin: 24rpx; background: #fff; border-radius: 20rpx; padding: 32rpx; box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05); }
-.section-title { font-size: 30rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; }
+.section-title { display: flex; align-items: center; gap: 8rpx; font-size: 30rpx; font-weight: 600; color: #1D2129; margin-bottom: 24rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
 
 .add-item-btn { display: flex; align-items: center; gap: 6rpx; padding: 8rpx 20rpx; background: #E8F0FE; border-radius: 24rpx;

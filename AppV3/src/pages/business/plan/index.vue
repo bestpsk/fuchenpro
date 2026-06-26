@@ -99,7 +99,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { ref, reactive, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listPlan, listEnterprise, delPlan } from '@/api/business/plan'
 import { checkPermi } from '@/utils/permission'
 
@@ -206,7 +207,7 @@ function handleAdd() {
   uni.navigateTo({ url: '/pages/business/plan/form?mode=add' })
 }
 
-onMounted(() => { getList(true) })
+onShow(() => { getList(true) })
 </script>
 
 <style lang="scss" scoped>

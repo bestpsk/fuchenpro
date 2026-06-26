@@ -375,10 +375,25 @@ function groupScheduleList(list) {
   })
 
   const result = Array.from(groupMap.values())
-    .map(group => ({
-      ...group,
-      scheduleDates: [...new Set(group.scheduleDates)].sort()
-    }))
+    .map(group => {
+      // 以 {id, date} 配对后按 date 同步排序，确保 scheduleIds 与 scheduleDates 索引一致
+      const pairs = []
+      const seen = new Set()
+      group.scheduleDates.forEach((date, idx) => {
+        const id = group.scheduleIds[idx]
+        const key = `${date}_${id}`
+        if (!seen.has(key)) {
+          seen.add(key)
+          pairs.push({ id, date })
+        }
+      })
+      pairs.sort((a, b) => new Date(a.date) - new Date(b.date))
+      return {
+        ...group,
+        scheduleIds: pairs.map(p => p.id),
+        scheduleDates: pairs.map(p => p.date)
+      }
+    })
     .sort((a, b) => new Date(a.scheduleDates[0]) - new Date(b.scheduleDates[0]))
 
   return result

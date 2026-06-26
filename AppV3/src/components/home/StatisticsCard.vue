@@ -1,7 +1,10 @@
 <template>
   <view class="statistics-card">
     <view class="card-header">
-      <text class="card-title">数据概览</text>
+      <view class="header-left">
+        <view class="title-bar"></view>
+        <text class="card-title">数据概览</text>
+      </view>
       <view class="header-actions">
         <view class="refresh-btn" @click="handleRefresh">
           <u-icon name="reload" size="16" color="#86909C" />
@@ -13,14 +16,13 @@
       </view>
     </view>
 
-    <view class="divider"></view>
-
     <view class="stats-grid">
       <view
         v-for="(item, index) in statsList"
         :key="index"
         class="stat-item"
       >
+        <view class="stat-indicator"></view>
         <text class="stat-label">{{ item.label }}</text>
         <text class="stat-value-today">{{ item.todayValue }}</text>
         <text class="stat-value-month">本月 {{ item.monthValue }}</text>
@@ -79,19 +81,35 @@ function handleMore() {
   margin: 16rpx 24rpx 0;
   background: #fff;
   border-radius: 20rpx;
-  padding: 24rpx;
+  padding: 24rpx 24rpx 20rpx;
   box-shadow: 0 2rpx 12rpx rgba(61, 109, 247, 0.06);
+  position: relative;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24rpx;
 
-  .card-title {
-    font-size: 30rpx;
-    font-weight: 600;
-    color: #1D2129;
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+
+    .title-bar {
+      width: 6rpx;
+      height: 28rpx;
+      background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
+      border-radius: 4rpx;
+    }
+
+    .card-title {
+      font-size: 30rpx;
+      font-weight: 600;
+      color: #1D2129;
+      letter-spacing: 0.5rpx;
+    }
   }
 
   .header-actions {
@@ -107,9 +125,11 @@ function handleMore() {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
 
     &:active {
       background: #F5F7FA;
+      transform: scale(0.92);
     }
   }
 
@@ -119,6 +139,7 @@ function handleMore() {
     gap: 4rpx;
     padding: 8rpx 12rpx;
     border-radius: 24rpx;
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
 
     &:active {
       background: #F5F7FA;
@@ -129,12 +150,6 @@ function handleMore() {
       color: #86909C;
     }
   }
-}
-
-.divider {
-  height: 1rpx;
-  background: #E5E6EB;
-  margin: 18rpx 0;
 }
 
 .stats-grid {
@@ -150,6 +165,27 @@ function handleMore() {
   align-items: center;
   gap: 6rpx;
   box-sizing: border-box;
+  padding: 8rpx 0;
+  position: relative;
+  transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* 左侧 4rpx 装饰条（hover 激活） */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 30%;
+    top: 20%;
+    height: 60%;
+    width: 4rpx;
+    background: #3D6DF7;
+    border-radius: 2rpx;
+    opacity: 0;
+    transition: opacity 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &:active::before {
+    opacity: 1;
+  }
 
   .stat-label {
     font-size: 22rpx;
@@ -157,17 +193,18 @@ function handleMore() {
   }
 
   .stat-value-today {
-    font-size: 32rpx;
+    font-size: 36rpx;
     font-weight: 700;
     color: #3D6DF7;
-    line-height: 1;
+    line-height: 1.1;
+    letter-spacing: -0.5rpx;
   }
 
   .stat-value-month {
     font-size: 20rpx;
     color: #86909C;
     font-weight: 400;
-    line-height: 1.4;
+    line-height: 1.3;
   }
 }
 </style>

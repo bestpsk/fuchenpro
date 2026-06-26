@@ -31,7 +31,7 @@ class BizAttendanceController
     public function clock(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $data['user_id'] = $user->user_id;
         $data['user_name'] = $user->nick_name ?? $user->user_name;
 
@@ -73,7 +73,7 @@ class BizAttendanceController
     public function clockIn(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $data['user_id'] = $user->user_id;
         $data['user_name'] = $user->nick_name ?? $user->user_name;
 
@@ -91,7 +91,7 @@ class BizAttendanceController
     public function clockOut(Request $request)
     {
         $user = $request->loginUser->user;
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $data['user_id'] = $user->user_id;
         $data['user_name'] = $user->nick_name ?? $user->user_name;
 
@@ -120,7 +120,7 @@ class BizAttendanceController
     public function recordList(Request $request)
     {
         $service = new BizAttendanceRecordService();
-        $params = $request->all();
+        $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $result = $service->selectRecordList($params);
         return TableDataInfo::result($result->items(), $result->total());
@@ -130,9 +130,9 @@ class BizAttendanceController
     public function exportRecord(Request $request)
     {
         $service = new BizAttendanceRecordService();
-        $params = $request->all();
+        $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
-        $params['pageSize'] = 10000;
+        $params['page_size'] = 10000;
         $result = $service->selectRecordList($params);
         $list = $result->items();
         $excelUtil = new ExcelUtil(BizAttendanceRecord::class);
@@ -156,7 +156,7 @@ class BizAttendanceController
     public function ruleList(Request $request)
     {
         $service = new BizAttendanceRuleService();
-        $params = $request->all();
+        $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $result = $service->selectRuleList($params);
         return TableDataInfo::result($result->items(), $result->total());
@@ -178,7 +178,7 @@ class BizAttendanceController
     // 新增考勤规则
     public function addRule(Request $request)
     {
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizAttendanceRuleService();
         $result = $service->insertRule($data);
@@ -188,7 +188,7 @@ class BizAttendanceController
     // 修改考勤规则
     public function editRule(Request $request)
     {
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizAttendanceRuleService();
         $result = $service->updateRule($data);

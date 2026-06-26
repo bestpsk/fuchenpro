@@ -615,7 +615,7 @@ function reset() {
 }
 
 function handleAdd() { reset(); isView.value = false; dialogTitle.value = "新增出库单"; open.value = true }
-function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; form.value.shipType = String(form.value.shipType ?? '2'); form.value.items.forEach(item => { item.quantity = item.originalQuantity || item.quantity; if (item.unitType === '1' && item.packQty > 1) { item._mainPrice = Math.round(parseFloat(item.salePrice) * item.packQty * 100) / 100; item.salePrice = item._mainPrice; } else { item._mainPrice = item.salePrice; } }); if (data.enterpriseId && data.enterpriseName) { enterpriseOptions.value = [{ enterpriseId: data.enterpriseId, enterpriseName: data.enterpriseName }] } if (data.contactEmployeeId && data.contactEmployeeName) { employeeOptions.value = [{ userId: data.contactEmployeeId, userName: data.contactEmployeeName }] } if (data.responsibleId && data.responsibleName) { if (!employeeOptions.value.find(e => e.userId === data.responsibleId)) { employeeOptions.value.push({ userId: data.responsibleId, userName: data.responsibleName }) } } form.value.items.forEach(item => { if (item.productId && item.productName && !productOptions.value.find(p => p.productId === item.productId)) { productOptions.value.push({ productId: item.productId, productName: item.productName, productCode: item.productCode || '' }) } }); isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
+function handleUpdate(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; form.value.shipType = String(form.value.shipType ?? '2'); form.value.items.forEach(item => { if (item.originalQuantity != null) { item.quantity = item.originalQuantity } if (item.unitType === '1' && item.packQty > 1) { item._mainPrice = Math.round(parseFloat(item.salePrice) * item.packQty * 100) / 100; item.salePrice = item._mainPrice; } else { item._mainPrice = parseFloat(item.salePrice) || 0; } }); if (data.enterpriseId && data.enterpriseName) { enterpriseOptions.value = [{ enterpriseId: data.enterpriseId, enterpriseName: data.enterpriseName }] } if (data.contactEmployeeId && data.contactEmployeeName) { employeeOptions.value = [{ userId: data.contactEmployeeId, userName: data.contactEmployeeName }] } if (data.responsibleId && data.responsibleName) { if (!employeeOptions.value.find(e => e.userId === data.responsibleId)) { employeeOptions.value.push({ userId: data.responsibleId, userName: data.responsibleName }) } } form.value.items.forEach(item => { if (item.productId && item.productName && !productOptions.value.find(p => p.productId === item.productId)) { productOptions.value.push({ productId: item.productId, productName: item.productName, productCode: item.productCode || '' }) } }); isView.value = false; dialogTitle.value = "修改出库单"; open.value = true }) }
 function handleView(row) { reset(); getStockOut(row.stockOutId).then(response => { const data = response.data || response; form.value = data; if (!form.value.items) form.value.items = []; isView.value = true; dialogTitle.value = "查看出库单"; open.value = true }) }
 
 function handleConfirm(row) {
@@ -733,7 +733,7 @@ function handleConfirmReceipt(row) {
   }).catch(() => {})
 }
 
-function addItem() { form.value.items.push({ productId: undefined, productName: undefined, spec: undefined, unit: undefined, packQty: 1, unitType: '1', quantity: 1, salePrice: 0, salePriceSpec: 0, inventoryQty: undefined, amount: 0, remark: undefined }) }
+function addItem() { form.value.items.push({ productId: undefined, productName: undefined, spec: undefined, unit: undefined, packQty: 1, unitType: '1', _prevUnitType: '1', quantity: 1, salePrice: 0, _mainPrice: 0, salePriceSpec: 0, inventoryQty: undefined, amount: 0, remark: undefined }) }
 function removeItem(index) { form.value.items.splice(index, 1) }
 
 function onProductSelect(index) {
@@ -753,13 +753,7 @@ function onProductSelect(index) {
 }
 
 function onUnitTypeChange(index) {
-  const item = form.value.items[index]
-  const packQty = item.packQty || 1
-  if (item.unitType === '1') { item.salePrice = item._mainPrice || item.salePrice || 0 }
-  else {
-    if (!item._mainPrice && item.salePrice) { item._mainPrice = item.salePrice }
-    if (item._mainPrice && packQty > 0) { item.salePrice = Math.round((item._mainPrice / packQty) * 100) / 100 }
-  }
+  // 单位类型切换仅切换显示状态，数值换算统一由后端处理
   calcAmount(index)
 }
 
@@ -785,6 +779,21 @@ function submitForm() {
       submitData.enterpriseName = form.value.enterpriseName || null
       submitData.contactEmployeeId = form.value.contactEmployeeId || null
       submitData.contactEmployeeName = form.value.contactEmployeeName || null
+      submitData.items = form.value.items.map(item => ({
+        itemId: item.itemId || undefined,
+        productId: item.productId,
+        productName: item.productName,
+        spec: item.spec || '',
+        unit: item.unit || '',
+        packQty: item.packQty || 1,
+        unitType: item.unitType || '1',
+        originalQuantity: Number(item.quantity) || 0,
+        quantity: Number(item.quantity) || 0,
+        salePrice: Number(item.salePrice) || 0,
+        _mainPrice: Number(item._mainPrice) || 0,
+        amount: parseFloat(item.amount) || 0,
+        remark: item.remark
+      }))
 
       if (form.value.stockOutId != undefined) { updateStockOut(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() }) }
       else { addStockOut(submitData).then(() => { proxy.$modal.msgSuccess("新增成功"); open.value = false; getList() }) }

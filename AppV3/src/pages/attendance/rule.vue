@@ -97,11 +97,11 @@
             <view class="info-row">
               <view class="info-item">
                 <text class="label">迟到容忍</text>
-                <text class="value">{{ item.lateTolerance != null ? item.lateTolerance + ' 分钟' : '-' }}</text>
+                <text class="value">{{ item.lateThreshold != null ? item.lateThreshold + ' 分钟' : '-' }}</text>
               </view>
               <view class="info-item">
                 <text class="label">早退容忍</text>
-                <text class="value">{{ item.earlyLeaveTolerance != null ? item.earlyLeaveTolerance + ' 分钟' : '-' }}</text>
+                <text class="value">{{ item.earlyLeaveThreshold != null ? item.earlyLeaveThreshold + ' 分钟' : '-' }}</text>
               </view>
             </view>
             <view class="info-row">
@@ -201,11 +201,11 @@
           </view>
           <view class="form-item">
             <text class="form-label">迟到容忍(分钟)</text>
-            <input class="form-input" type="number" v-model="form.lateTolerance" placeholder="请输入迟到容忍分钟数" />
+            <input class="form-input" type="number" v-model="form.lateThreshold" placeholder="请输入迟到容忍分钟数" />
           </view>
           <view class="form-item">
             <text class="form-label">早退容忍(分钟)</text>
-            <input class="form-input" type="number" v-model="form.earlyLeaveTolerance" placeholder="请输入早退容忍分钟数" />
+            <input class="form-input" type="number" v-model="form.earlyLeaveThreshold" placeholder="请输入早退容忍分钟数" />
           </view>
           <view class="form-item">
             <text class="form-label">考勤地点</text>
@@ -289,8 +289,8 @@ const form = ref({
   ruleName: '',
   workStartTime: '',
   workEndTime: '',
-  lateTolerance: 0,
-  earlyLeaveTolerance: 0,
+  lateThreshold: 0,
+  earlyLeaveThreshold: 0,
   workAddress: '',
   workLongitude: '',
   workLatitude: '',
@@ -393,8 +393,8 @@ function resetForm() {
     ruleName: '',
     workStartTime: '',
     workEndTime: '',
-    lateTolerance: 0,
-    earlyLeaveTolerance: 0,
+    lateThreshold: 0,
+    earlyLeaveThreshold: 0,
     workAddress: '',
     workLongitude: '',
     workLatitude: '',
@@ -418,8 +418,8 @@ function handleEdit(item) {
       ruleName: data.ruleName || '',
       workStartTime: data.workStartTime ? data.workStartTime.substring(0, 5) : '',
       workEndTime: data.workEndTime ? data.workEndTime.substring(0, 5) : '',
-      lateTolerance: data.lateTolerance ?? 0,
-      earlyLeaveTolerance: data.earlyLeaveTolerance ?? 0,
+      lateThreshold: data.lateThreshold ?? 0,
+      earlyLeaveThreshold: data.earlyLeaveThreshold ?? 0,
       workAddress: data.workAddress || '',
       workLongitude: data.workLongitude || '',
       workLatitude: data.workLatitude || '',
@@ -503,8 +503,8 @@ function submitForm() {
     ...form.value,
     workStartTime: form.value.workStartTime ? form.value.workStartTime + ':00' : undefined,
     workEndTime: form.value.workEndTime ? form.value.workEndTime + ':00' : undefined,
-    lateTolerance: Number(form.value.lateTolerance) || 0,
-    earlyLeaveTolerance: Number(form.value.earlyLeaveTolerance) || 0,
+    lateThreshold: Number(form.value.lateThreshold) || 0,
+    earlyLeaveThreshold: Number(form.value.earlyLeaveThreshold) || 0,
     allowedDistance: Number(form.value.allowedDistance) || 0
   }
 
@@ -866,9 +866,10 @@ page {
 }
 
 .form-container {
-  max-height: 80vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .form-header {
@@ -891,7 +892,10 @@ page {
 
 .form-scroll {
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
   padding: 24rpx 32rpx;
+  box-sizing: border-box;
 }
 
 .form-item {
@@ -971,6 +975,7 @@ page {
   font-size: 26rpx;
   color: #1D2129;
   border: 2rpx solid #E5E6EB;
+  box-sizing: border-box;
 }
 
 .picker-placeholder {

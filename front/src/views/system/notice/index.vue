@@ -264,7 +264,17 @@ function handleUpdate(row) {
   reset()
   const noticeId = row.noticeId || ids.value
   getNotice(noticeId).then(response => {
-    form.value = response.data
+    // 后端 AjaxResult 关联数组直接 merge 到外层，这里 response 可能是扁平对象
+    // 过滤出业务字段，避免提交时把 code/msg 一起提交
+    const data = response.data || response
+    form.value = {
+      noticeId: data.noticeId,
+      noticeTitle: data.noticeTitle,
+      noticeType: data.noticeType,
+      noticeContent: data.noticeContent,
+      status: data.status,
+      remark: data.remark
+    }
     open.value = true
     title.value = "修改公告"
   })
@@ -274,17 +284,38 @@ function handleUpdate(row) {
 function submitForm() {
   proxy.$refs["noticeRef"].validate(valid => {
     if (valid) {
+      // 只提取表单字段，避免把后端返回的虚拟字段（如 create_nick_name）和审计字段一起提交
+      // 表单只有 4 个输入字段：noticeTitle, noticeType, status, noticeContent（已确认 L120-156 无 remark 输入框）
+      const submitData = {
+        noticeId: form.value.noticeId,
+        noticeTitle: form.value.noticeTitle,
+        noticeType: form.value.noticeType,
+        noticeContent: form.value.noticeContent,
+        status: form.value.status
+      }
       if (form.value.noticeId != undefined) {
-        updateNotice(form.value).then(response => {
-          proxy.$modal.msgSuccess("修改成功")
-          open.value = false
-          getList()
+        updateNotice(submitData).then(response => {
+          if (response.code === 200) {
+            proxy.$modal.msgSuccess("修改成功")
+            open.value = false
+            getList()
+          } else {
+            proxy.$modal.msgError(response.msg || "修改失败")
+          }
+        }).catch(err => {
+          proxy.$modal.msgError(err.msg || err.message || "修改失败")
         })
       } else {
-        addNotice(form.value).then(response => {
-          proxy.$modal.msgSuccess("新增成功")
-          open.value = false
-          getList()
+        addNotice(submitData).then(response => {
+          if (response.code === 200) {
+            proxy.$modal.msgSuccess("新增成功")
+            open.value = false
+            getList()
+          } else {
+            proxy.$modal.msgError(response.msg || "新增失败")
+          }
+        }).catch(err => {
+          proxy.$modal.msgError(err.msg || err.message || "新增失败")
         })
       }
     }

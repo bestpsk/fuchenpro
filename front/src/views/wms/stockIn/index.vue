@@ -498,14 +498,18 @@ function handleUpdate(row) {
     form.value = response.data
     if (!form.value.items) form.value.items = []
     form.value.items.forEach(item => {
+      // 后端返回 originalQuantity 为用户输入原始值，直接用于显示
+      if (item.originalQuantity != null) {
+        item.quantity = item.originalQuantity
+      }
+      // 价格反算：主单位价 = 后端副单位价 * packQty
       if (item.unitType === '1' && item.packQty > 1) {
         item._mainPrice = Math.round(parseFloat(item.purchasePrice) * item.packQty * 100) / 100
         item.purchasePrice = item._mainPrice
-        item.originalQuantity = item.quantity
-        item.quantity = Math.round(item.quantity / item.packQty * 100) / 100
       } else {
-        item._mainPrice = item.purchasePrice
+        item._mainPrice = parseFloat(item.purchasePrice) || 0
       }
+      item._prevUnitType = item.unitType
     })
     isView.value = false
     dialogTitle.value = "修改入库单"
@@ -536,9 +540,10 @@ function addItem() {
     unit: undefined,
     packQty: 1,
     unitType: '1',
+    _prevUnitType: '1',
     quantity: 1,
     purchasePrice: 0,
-    _mainPrice: null,
+    _mainPrice: 0,
     amount: 0,
     productionDate: undefined,
     expiryDate: undefined,
@@ -560,6 +565,7 @@ function onProductSelect(index) {
     form.value.items[index].purchasePrice = product.purchasePrice || 0
     form.value.items[index]._mainPrice = product.purchasePrice || 0
     form.value.items[index].unitType = '1'
+    form.value.items[index]._prevUnitType = '1'
     calcAmount(index)
   }
 }
@@ -578,20 +584,7 @@ function isExpired(expiryDate) {
 }
 
 function onUnitTypeChange(index) {
-  const item = form.value.items[index]
-  const packQty = item.packQty || 1
-
-  if (item.unitType === '1') {
-    item.purchasePrice = item._mainPrice || item.purchasePrice || 0
-  } else {
-    if (!item._mainPrice && item.purchasePrice) {
-      item._mainPrice = item.purchasePrice
-    }
-    if (item._mainPrice && packQty > 0) {
-      item.purchasePrice = Math.round((item._mainPrice / packQty) * 100) / 100
-    }
-  }
-
+  // 单位类型切换仅切换显示状态，数值换算统一由后端处理
   calcAmount(index)
 }
 
@@ -617,10 +610,31 @@ function submitForm() {
         proxy.$modal.msgWarning("请至少添加一条入库明细")
         return
       }
+      // 构造提交数据：前端发原始值，后端统一换算
+      const submitData = { ...form.value }
+      submitData.items = form.value.items.map(item => ({
+        itemId: item.itemId || undefined,
+        productId: item.productId,
+        productName: item.productName,
+        supplierId: item.supplierId || null,
+        supplierName: item.supplierName || null,
+        spec: item.spec || '',
+        unit: item.unit || '',
+        packQty: item.packQty || 1,
+        unitType: item.unitType || '1',
+        originalQuantity: Number(item.quantity) || 0,
+        quantity: Number(item.quantity) || 0,
+        purchasePrice: Number(item.purchasePrice) || 0,
+        _mainPrice: Number(item._mainPrice) || 0,
+        amount: parseFloat(item.amount) || 0,
+        productionDate: item.productionDate || undefined,
+        expiryDate: item.expiryDate || undefined,
+        remark: item.remark
+      }))
       if (form.value.stockInId != undefined) {
-        updateStockIn(form.value).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
+        updateStockIn(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
       } else {
-        addStockIn(form.value).then(() => { proxy.$modal.msgSuccess("新增成功"); open.value = false; getList() })
+        addStockIn(submitData).then(() => { proxy.$modal.msgSuccess("新增成功"); open.value = false; getList() })
       }
     }
   })

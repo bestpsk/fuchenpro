@@ -1,7 +1,7 @@
 <template>
   <div class="warehouse-selector" v-if="warehouseList.length > 1">
     <span class="warehouse-label">当前仓库：</span>
-    <el-select v-model="currentWarehouseId" @change="handleChange" size="small" style="width: 160px">
+    <el-select v-model="currentWarehouseId" @change="handleChange" style="width: 180px">
       <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
     </el-select>
   </div>

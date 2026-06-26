@@ -35,7 +35,10 @@
 
     <view class="info-card" v-if="transferItems.length > 0">
       <view class="section-header">
-        <view class="card-title">调拨明细</view>
+        <view class="card-title">
+          <u-icon name="reload" size="16" color="#3D6DF7"></u-icon>
+          <text>调拨明细</text>
+        </view>
         <text class="item-count">{{ transferItems.length }}项</text>
       </view>
       <view v-for="(item, idx) in transferItems" :key="idx" class="item-card">
@@ -207,7 +210,7 @@ page { background-color: #F5F7FA; }
   &.status-2 { background: #F2F3F5; color: #86909c; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 16rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 16rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
 .item-count { font-size: 22rpx; color: #86909C; background: #F5F7FA; padding: 4rpx 14rpx; border-radius: 6rpx; }
 

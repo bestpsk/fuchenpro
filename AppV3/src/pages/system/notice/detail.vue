@@ -39,6 +39,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getNotice, markNoticeRead } from '@/api/system/notice'
+import config from '@/config'
 
 const detail = ref(null)
 const loading = ref(false)
@@ -46,7 +47,11 @@ const loading = ref(false)
 const processedContent = computed(() => {
   const html = detail.value?.noticeContent
   if (!html) return ''
-  return html.replace(/<img\s+/gi, '<img style="max-width:100%;height:auto;" ')
+  // 补全相对路径图片为绝对 URL（以 /profile/ 开头），已是绝对 URL(http)的不重复拼接
+  let result = html.replace(/src="\/profile\//g, `src="${config.baseUrl}/profile/`)
+  // 统一图片样式，确保自适应宽度
+  result = result.replace(/<img\s+/gi, '<img style="max-width:100%;height:auto;" ')
+  return result
 })
 
 onLoad((options) => {

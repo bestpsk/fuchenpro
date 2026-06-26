@@ -31,7 +31,10 @@
     </view>
 
     <view class="info-card" v-if="info.createBy || info.updateBy">
-      <view class="card-title">操作记录</view>
+      <view class="card-title">
+        <u-icon name="clock" size="16" color="#3D6DF7"></u-icon>
+        <text>操作记录</text>
+      </view>
       <view class="info-body">
         <view v-if="info.createBy" class="info-row">
           <text class="info-label">创建人</text>
@@ -130,7 +133,7 @@ page { background-color: #F5F7FA; }
   &.status-1 { background: #F2F3F5; color: #86909C; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
 
 .info-body { display: flex; flex-direction: column; gap: 16rpx; }
 .info-row { display: flex; align-items: center; gap: 12rpx; }

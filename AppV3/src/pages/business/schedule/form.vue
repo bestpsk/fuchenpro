@@ -551,12 +551,17 @@ async function submitForm() {
         const removedDates = originalDates.value.filter(d => !form.selectedDates.includes(d))
         const keptDates = form.selectedDates.filter(d => originalDates.value.includes(d))
 
+        // 构建 date -> id 映射，避免依赖数组索引对齐
+        const dateToIdMap = new Map()
+        originalDates.value.forEach((date, idx) => {
+          if (form.scheduleIds[idx] != null) {
+            dateToIdMap.set(date, form.scheduleIds[idx])
+          }
+        })
+
         // 1. 删除被移除的日期对应的记录
         if (removedDates.length > 0) {
-          const removedIds = removedDates.map(date => {
-            const idx = originalDates.value.indexOf(date)
-            return form.scheduleIds[idx]
-          }).filter(Boolean)
+          const removedIds = removedDates.map(date => dateToIdMap.get(date)).filter(Boolean)
           if (removedIds.length > 0) {
             await delSchedule(removedIds.join(','))
           }
@@ -579,10 +584,7 @@ async function submitForm() {
 
         // 3. 更新保留日期的非日期字段
         if (keptDates.length > 0) {
-          const keptIds = keptDates.map(date => {
-            const idx = originalDates.value.indexOf(date)
-            return form.scheduleIds[idx]
-          }).filter(Boolean)
+          const keptIds = keptDates.map(date => dateToIdMap.get(date)).filter(Boolean)
           for (const id of keptIds) {
             await updateSchedule({
               scheduleId: id,

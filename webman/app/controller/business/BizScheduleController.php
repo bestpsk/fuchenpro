@@ -110,11 +110,15 @@ class BizScheduleController
     // 修改行程信息
     public function edit(Request $request)
     {
-        $data = convert_to_snake_case($request->post());
-        $data['update_by'] = $request->loginUser->user->user_name ?? '';
-        $service = new BizScheduleService();
-        $result = $service->updateSchedule($data);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $data['update_by'] = $request->loginUser->user->user_name ?? '';
+            $service = new BizScheduleService();
+            $result = $service->updateSchedule($data);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Exception $e) {
+            return AjaxResult::error('修改行程失败：' . $e->getMessage());
+        }
     }
 
     // 批量删除行程

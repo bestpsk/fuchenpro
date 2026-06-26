@@ -579,9 +579,10 @@ page { background-color: #F5F7FA; }
 }
 
 .form-container {
-  max-height: 80vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .form-header {
@@ -595,7 +596,13 @@ page { background-color: #F5F7FA; }
 .form-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
 .form-close { padding: 8rpx; }
 
-.form-scroll { flex: 1; padding: 24rpx 32rpx; }
+.form-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 24rpx 32rpx;
+  box-sizing: border-box;
+}
 
 .form-item {
   margin-bottom: 28rpx;
@@ -669,6 +676,7 @@ page { background-color: #F5F7FA; }
   font-size: 26rpx;
   color: #1D2129;
   border: 2rpx solid #E5E6EB;
+  box-sizing: border-box;
 }
 
 .picker-placeholder { color: #c0c4cc; }

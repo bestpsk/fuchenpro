@@ -922,7 +922,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   align-items: center;
   gap: 8rpx;
 }
-.summary-label { font-size: 24rpx; color: #86909C; }
+.summary-label { font-size: 24rpx; color: #86909C; white-space: nowrap; }
 .summary-value { font-size: 36rpx; font-weight: 700; color: #1D2129;
   &.amount { color: #FF6B35; }
 }

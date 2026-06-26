@@ -27,7 +27,10 @@
 
     <view class="form-section detail-section">
       <view class="section-header">
-        <view class="card-title">盘点明细</view>
+        <view class="card-title">
+          <u-icon name="checkmark-circle" size="16" color="#3D6DF7"></u-icon>
+          <text>盘点明细</text>
+        </view>
         <text class="item-count">{{ filteredItems.length }}项</text>
       </view>
       <view class="detail-search">
@@ -357,7 +360,7 @@ page { background-color: #F5F7FA; }
 .field-textarea { width: 100%; min-height: 120rpx; font-size: 28rpx; color: #1D2129; line-height: 1.6; background: transparent; }
 
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; }
 .item-count { font-size: 22rpx; color: #86909C; background: #F5F7FA; padding: 4rpx 16rpx; border-radius: 4rpx; }
 
 .detail-search { display: flex; align-items: center; background: #F7F8FA; border-radius: 36rpx; padding: 0 20rpx; height: 64rpx; gap: 10rpx; margin-bottom: 20rpx; }

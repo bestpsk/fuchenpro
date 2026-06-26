@@ -195,87 +195,95 @@ class FinReimbursementService
     // 按月统计报销金额
     public function reportByMonth($params = [])
     {
-        $year = $params['year'] ?? date('Y');
-
-        $results = FinReimbursement::selectRaw("
+        $query = FinReimbursement::selectRaw("
             YEAR(apply_date) as year,
             MONTH(apply_date) as month,
             SUM(expense_amount) as total_expense,
             SUM(income_amount) as total_income,
             COUNT(*) as count
-        ")
-            ->where('status', '3')
-            ->whereYear('apply_date', $year)
-            ->groupByRaw('YEAR(apply_date), MONTH(apply_date)')
-            ->orderBy('month')
-            ->get();
+        ")->whereIn('status', ['0', '1', '3']);
 
-        return $results;
+        if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
+            $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        } else {
+            $year = $params['year'] ?? date('Y');
+            $query->whereYear('apply_date', $year);
+        }
+
+        return $query->groupByRaw('YEAR(apply_date), MONTH(apply_date)')->orderBy('month')->get();
     }
 
     // 按分类统计
     public function reportByCategory($params = [])
     {
-        $results = FinReimbursement::selectRaw("
+        $query = FinReimbursement::selectRaw("
             category,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")
-            ->where('status', '3')
-            ->groupBy('category')
-            ->get();
+        ")->whereIn('status', ['0', '1', '3']);
 
-        return $results;
+        if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
+            $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        return $query->groupBy('category')->get();
     }
 
     // 按部门统计
     public function reportByDept($params = [])
     {
-        $results = FinReimbursement::selectRaw("
+        $query = FinReimbursement::selectRaw("
             dept_id,
             dept_name,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")
-            ->where('status', '3')
-            ->whereNotNull('dept_id')
-            ->groupBy('dept_id', 'dept_name')
-            ->orderByDesc('total_expense')
-            ->get();
+        ")->whereIn('status', ['0', '1', '3'])->whereNotNull('dept_id');
 
-        return $results;
+        if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
+            $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        return $query->groupBy('dept_id', 'dept_name')->orderByDesc('total_expense')->get();
     }
 
     // 按人员统计
     public function reportByUser($params = [])
     {
-        $results = FinReimbursement::selectRaw("
+        $query = FinReimbursement::selectRaw("
             applicant_id,
             applicant_name,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")
-            ->where('status', '3')
-            ->groupBy('applicant_id', 'applicant_name')
-            ->orderByDesc('total_expense')
-            ->limit(20)
-            ->get();
+        ")->whereIn('status', ['0', '1', '3']);
 
-        return $results;
+        if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
+            $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        return $query->groupBy('applicant_id', 'applicant_name')->orderByDesc('total_expense')->limit(20)->get();
     }
 
     // 按支出类型统计
     public function reportByExpenseType($params = [])
     {
-        $results = FinReimbursement::selectRaw("
+        $query = FinReimbursement::selectRaw("
             expense_type,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")
-            ->where('status', '3')
-            ->groupBy('expense_type')
-            ->get();
+        ")->whereIn('status', ['0', '1', '3']);
 
-        return $results;
+        if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
+            $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        $result = $query->groupBy('expense_type')->get();
+        // 转换为驼峰命名以匹配前端 expenseType 字段
+        return $result->map(function ($item) {
+            return [
+                'expenseType' => $item->expense_type,
+                'totalExpense' => (float)$item->total_expense,
+                'count' => (int)$item->count
+            ];
+        });
     }
 }

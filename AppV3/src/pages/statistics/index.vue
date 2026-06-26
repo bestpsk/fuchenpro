@@ -310,30 +310,39 @@ const tabs = [
 const bizStats = reactive({
   dealCustomerToday: '0',
   dealCustomerMonth: '0',
+  dealCustomerYear: '0',
   dealCustomerCustom: '0',
   dealAmountToday: '¥0',
   dealAmountMonth: '¥0',
+  dealAmountYear: '¥0',
   dealAmountCustom: '¥0',
   paidAmountToday: '¥0',
   paidAmountMonth: '¥0',
+  paidAmountYear: '¥0',
   paidAmountCustom: '¥0',
   owedAmountToday: '¥0',
   owedAmountMonth: '¥0',
+  owedAmountYear: '¥0',
   owedAmountCustom: '¥0',
   cashAmountToday: '¥0',
   cashAmountMonth: '¥0',
+  cashAmountYear: '¥0',
   cashAmountCustom: '¥0',
   cardAmountToday: '¥0',
   cardAmountMonth: '¥0',
+  cardAmountYear: '¥0',
   cardAmountCustom: '¥0',
   giftCountToday: '0',
   giftCountMonth: '0',
+  giftCountYear: '0',
   giftCountCustom: '0',
   operationCustomerToday: '0',
   operationCustomerMonth: '0',
+  operationCustomerYear: '0',
   operationCustomerCustom: '0',
   operationAmountToday: '¥0',
   operationAmountMonth: '¥0',
+  operationAmountYear: '¥0',
   operationAmountCustom: '¥0'
 })
 
@@ -341,6 +350,7 @@ const bizTimeType = ref('today')
 const bizTimeOptions = [
   { label: '今日', value: 'today' },
   { label: '本月', value: 'month' },
+  { label: '本年', value: 'year' },
   { label: '自定义', value: 'custom' }
 ]
 
@@ -354,30 +364,24 @@ const endDatePickerValue = ref(Date.now())
 const enterpriseStats = ref([])
 
 const currentBizData = computed(() => {
-  if (bizTimeType.value === 'custom') {
-    return {
-      dealCustomer: bizStats.dealCustomerCustom,
-      dealAmount: bizStats.dealAmountCustom,
-      paidAmount: bizStats.paidAmountCustom,
-      owedAmount: bizStats.owedAmountCustom,
-      cashAmount: bizStats.cashAmountCustom,
-      cardAmount: bizStats.cardAmountCustom,
-      giftCount: bizStats.giftCountCustom,
-      operationCustomer: bizStats.operationCustomerCustom,
-      operationAmount: bizStats.operationAmountCustom
-    }
+  const suffixMap = {
+    today: 'Today',
+    month: 'Month',
+    year: 'Year',
+    custom: 'Custom'
   }
-  const isToday = bizTimeType.value === 'today'
-  const dealCustomer = isToday ? bizStats.dealCustomerToday : bizStats.dealCustomerMonth
-  const dealAmount = isToday ? bizStats.dealAmountToday : bizStats.dealAmountMonth
-  const paidAmount = isToday ? bizStats.paidAmountToday : bizStats.paidAmountMonth
-  const owedAmount = isToday ? bizStats.owedAmountToday : bizStats.owedAmountMonth
-  const cashAmount = isToday ? bizStats.cashAmountToday : bizStats.cashAmountMonth
-  const cardAmount = isToday ? bizStats.cardAmountToday : bizStats.cardAmountMonth
-  const giftCount = isToday ? bizStats.giftCountToday : bizStats.giftCountMonth
-  const operationCustomer = isToday ? bizStats.operationCustomerToday : bizStats.operationCustomerMonth
-  const operationAmount = isToday ? bizStats.operationAmountToday : bizStats.operationAmountMonth
-  return { dealCustomer, dealAmount, paidAmount, owedAmount, cashAmount, cardAmount, giftCount, operationCustomer, operationAmount }
+  const suffix = suffixMap[bizTimeType.value] || 'Today'
+  return {
+    dealCustomer: bizStats['dealCustomer' + suffix],
+    dealAmount: bizStats['dealAmount' + suffix],
+    paidAmount: bizStats['paidAmount' + suffix],
+    owedAmount: bizStats['owedAmount' + suffix],
+    cashAmount: bizStats['cashAmount' + suffix],
+    cardAmount: bizStats['cardAmount' + suffix],
+    giftCount: bizStats['giftCount' + suffix],
+    operationCustomer: bizStats['operationCustomer' + suffix],
+    operationAmount: bizStats['operationAmount' + suffix]
+  }
 })
 
 const wmsTimeType = ref('month')
@@ -426,7 +430,7 @@ function switchTab(idx) {
 
 function selectBizTime(value) {
   bizTimeType.value = value
-  if (value === 'today' || value === 'month') {
+  if (value === 'today' || value === 'month' || value === 'year') {
     loadEnterpriseStats()
   }
 }
@@ -479,6 +483,10 @@ function getDateRange(type) {
     const start = `${y}-${pad(m + 1)}-01`
     return { start, end: today }
   }
+  if (type === 'year') {
+    const start = `${y}-01-01`
+    return { start, end: today }
+  }
   if (type === 'quarter') {
     const qStart = new Date(y, m - 2, 1)
     const start = `${qStart.getFullYear()}-${pad(qStart.getMonth() + 1)}-01`
@@ -503,22 +511,31 @@ async function loadBizData() {
 
     bizStats.dealCustomerToday = String(dc.today || 0)
     bizStats.dealCustomerMonth = String(dc.month || 0)
+    bizStats.dealCustomerYear = String(dc.year || 0)
     bizStats.dealAmountToday = formatAmount(da.today || 0)
     bizStats.dealAmountMonth = formatAmount(da.month || 0)
+    bizStats.dealAmountYear = formatAmount(da.year || 0)
     bizStats.paidAmountToday = formatAmount(pa.today || 0)
     bizStats.paidAmountMonth = formatAmount(pa.month || 0)
+    bizStats.paidAmountYear = formatAmount(pa.year || 0)
     bizStats.owedAmountToday = formatAmount(oa_field.today || 0)
     bizStats.owedAmountMonth = formatAmount(oa_field.month || 0)
+    bizStats.owedAmountYear = formatAmount(oa_field.year || 0)
     bizStats.cashAmountToday = formatAmount(ca.today || 0)
     bizStats.cashAmountMonth = formatAmount(ca.month || 0)
+    bizStats.cashAmountYear = formatAmount(ca.year || 0)
     bizStats.cardAmountToday = formatAmount(cda.today || 0)
     bizStats.cardAmountMonth = formatAmount(cda.month || 0)
+    bizStats.cardAmountYear = formatAmount(cda.year || 0)
     bizStats.giftCountToday = String(gc.today || 0)
     bizStats.giftCountMonth = String(gc.month || 0)
+    bizStats.giftCountYear = String(gc.year || 0)
     bizStats.operationCustomerToday = String(oc.today || 0)
     bizStats.operationCustomerMonth = String(oc.month || 0)
+    bizStats.operationCustomerYear = String(oc.year || 0)
     bizStats.operationAmountToday = formatAmount(oa.today || 0)
     bizStats.operationAmountMonth = formatAmount(oa.month || 0)
+    bizStats.operationAmountYear = formatAmount(oa.year || 0)
   } catch (e) {
     console.error('加载业务统计失败:', e)
   }

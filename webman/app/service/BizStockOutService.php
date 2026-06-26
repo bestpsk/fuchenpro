@@ -55,7 +55,7 @@ class BizStockOutService
         
         $stockOutIds = $list->pluck('stock_out_id')->toArray();
         $firstItemsMap = BizStockOutItem::whereIn('stock_out_id', $stockOutIds)
-            ->orderBy('id', 'asc')
+            ->orderBy('item_id', 'asc')
             ->get()
             ->groupBy('stock_out_id');
         foreach ($list->items() as $stockOut) {
@@ -89,7 +89,7 @@ class BizStockOutService
             $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get()->toArray();
             $stockOut->items = array_map(function ($item) {
                 return [
-                    'itemId' => $item['id'] ?? null,
+                    'itemId' => $item['item_id'] ?? null,
                     'productId' => $item['product_id'],
                     'productName' => $item['product_name'],
                     'spec' => $item['spec'],
@@ -190,8 +190,6 @@ class BizStockOutService
     {
         $items = $data['items'] ?? [];
         unset($data['items']);
-
-        $data = convert_to_snake_case($data);
 
         $data['stock_out_no'] = $this->generateStockOutNo();
         $data['create_time'] = date('Y-m-d H:i:s');

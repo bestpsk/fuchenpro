@@ -4,6 +4,7 @@ namespace app\controller\finance;
 
 use support\Request;
 use app\service\FinReimbursementService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\ExcelUtil;
 use app\common\TableDataInfo;
@@ -43,6 +44,9 @@ class FinReimbursementController
     // 查询报销单列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $result = $this->service->selectReimbursementList($params);
@@ -52,6 +56,9 @@ class FinReimbursementController
     // 查询报销单详情
     public function info(Request $request, $id)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $result = $this->service->selectReimbursementById($id);
         if (!$result) return AjaxResult::error('数据不存在');
         return AjaxResult::success($result);
@@ -60,6 +67,9 @@ class FinReimbursementController
     // 新增报销单
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser;
         $userName = $this->getUserName($loginUser);
@@ -78,6 +88,9 @@ class FinReimbursementController
     // 编辑报销单
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser;
 
@@ -93,6 +106,9 @@ class FinReimbursementController
     // 删除报销单
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $ids = $request->input('ids', []);
         if (!is_array($ids)) {
             $ids = explode(',', $ids);
@@ -109,6 +125,9 @@ class FinReimbursementController
     // 审核报销单
     public function audit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:audit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser;
 
@@ -124,6 +143,9 @@ class FinReimbursementController
     // 确认支付
     public function pay(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:pay')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser;
 
@@ -139,6 +161,9 @@ class FinReimbursementController
     // 按月统计
     public function reportByMonth(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursementReport:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByMonth($params);
         return AjaxResult::success('', $result);
@@ -147,6 +172,9 @@ class FinReimbursementController
     // 按分类统计
     public function reportByCategory(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursementReport:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByCategory($params);
         return AjaxResult::success('', $result);
@@ -155,6 +183,9 @@ class FinReimbursementController
     // 按部门统计
     public function reportByDept(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursementReport:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByDept($params);
         return AjaxResult::success('', $result);
@@ -163,6 +194,9 @@ class FinReimbursementController
     // 按人员统计
     public function reportByUser(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursementReport:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByUser($params);
         return AjaxResult::success('', $result);
@@ -171,6 +205,9 @@ class FinReimbursementController
     // 按支出类型统计
     public function reportByExpenseType(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursementReport:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->get());
         $result = $this->service->reportByExpenseType($params);
         return AjaxResult::success('', $result);
@@ -179,6 +216,9 @@ class FinReimbursementController
     // 导出报销数据为Excel文件
     public function export(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'finance:reimbursement:export')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $params['page_size'] = 10000;

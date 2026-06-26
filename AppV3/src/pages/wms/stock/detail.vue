@@ -18,7 +18,10 @@
     </view>
 
     <view class="info-card">
-      <view class="card-title">库存信息</view>
+      <view class="card-title">
+        <u-icon name="bookmark" size="16" color="#3D6DF7"></u-icon>
+        <text>库存信息</text>
+      </view>
       <view class="info-body">
         <view class="info-row">
           <text class="info-label">库存数量</text>
@@ -44,7 +47,10 @@
     </view>
 
     <view class="info-card">
-      <view class="card-title">价格信息</view>
+      <view class="card-title">
+        <u-icon name="tags" size="16" color="#3D6DF7"></u-icon>
+        <text>价格信息</text>
+      </view>
       <view class="info-body">
         <view class="info-row">
           <text class="info-label">进货价</text>
@@ -58,7 +64,10 @@
     </view>
 
     <view class="info-card">
-      <view class="card-title">时间记录</view>
+      <view class="card-title">
+        <u-icon name="clock" size="16" color="#3D6DF7"></u-icon>
+        <text>时间记录</text>
+      </view>
       <view class="info-body">
         <view class="info-row">
           <text class="info-label">最后入库</text>
@@ -171,7 +180,7 @@ page { background-color: #F5F7FA; }
   &.status-warn { background: #FFECE8; color: #F53F3F; }
 }
 
-.card-title { font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
+.card-title { display: flex; align-items: center; gap: 8rpx; font-size: 28rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; }
 
 .info-body { display: flex; flex-direction: column; gap: 16rpx; }
 .info-row { display: flex; align-items: center; gap: 12rpx; }

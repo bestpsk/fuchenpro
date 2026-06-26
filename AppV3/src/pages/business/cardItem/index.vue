@@ -195,6 +195,7 @@
  * 分页加载、下拉刷新、状态切换、跳转新增/编辑、删除卡项
  */
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listCardItem, delCardItem, updateCardItem } from '@/api/business/cardItem'
 import { getDicts } from '@/api/system/dict/data'
 import { checkPermi } from '@/utils/permission'
@@ -379,6 +380,17 @@ onMounted(() => {
   getDicts('biz_card_item_category').then(res => {
     categoryOptions.value = (res.data || []).map(d => ({ label: d.dictLabel, value: d.dictValue }))
   })
+  getList(true)
+})
+
+const isFirstShow = ref(true)
+onShow(() => {
+  // 首次进入页面 onShow 会紧随 onMounted 触发，此时列表已由 onMounted 加载，跳过避免重复请求；
+  // 后续从编辑页返回时刷新列表
+  if (isFirstShow.value) {
+    isFirstShow.value = false
+    return
+  }
   getList(true)
 })
 </script>
