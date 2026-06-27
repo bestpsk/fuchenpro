@@ -69,16 +69,6 @@ INSERT INTO `app_menu_config` (`id`, `group_name`, `group_key`, `group_sort`, `t
 	(28, '个人菜单', 'mine_menu', 8, '常见问题', 'question-circle', '/pages/mine/help/index', '', '#3c96f3', '#e8f2ff', 2, 0, '0', '', NULL, '', NULL, ''),
 	(29, '个人菜单', 'mine_menu', 8, '关于我们', 'info-circle', '/pages/mine/about/index', '', '#3c96f3', '#e8f2ff', 3, 0, '0', '', NULL, '', NULL, ''),
 	(30, '个人菜单', 'mine_menu', 8, '应用设置', 'setting', '/pages/mine/setting/index', '', '#3c96f3', '#e8f2ff', 4, 0, '0', '', NULL, '', NULL, ''),
-	(32, '进销存管理', 'wms', 4, '供货商管理', 'account', '/pages/wms/supplier/index', 'wms:supplier:list', '#fff', '#00B42A', 1, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(33, '进销存管理', 'wms', 4, '货品管理', 'grid', '/pages/wms/product/index', 'wms:product:list', '#fff', '#00B42A', 2, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(34, '进销存管理', 'wms', 4, '入库管理', 'arrow-down', '/pages/wms/stockIn/index', 'wms:stockIn:list', '#fff', '#00B42A', 3, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(35, '进销存管理', 'wms', 4, '出库管理', 'arrow-up', '/pages/wms/shipment/index', 'wms:stockOut:list', '#fff', '#00B42A', 4, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(36, '进销存管理', 'wms', 4, '库存查看', 'list', '/pages/wms/stock/index', 'wms:inventory:list', '#fff', '#00B42A', 5, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(37, '进销存管理', 'wms', 4, '库存盘点', 'file-text', '/pages/wms/stockCheck/index', 'wms:stockCheck:list', '#fff', '#00B42A', 6, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(38, '进销存管理', 'wms', 4, '进销存报表', 'chart', '', 'wms:report:list', '#fff', '#00B42A', 7, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(39, '财务管理', 'finance', 5, '方案审核', 'edit-pen', '/pages/finance/planAudit/index', 'finance:planAudit:list', '#fff', '#F53F3F', 1, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(40, '财务管理', 'finance', 5, '报销管理', 'file-text', '/pages/finance/reimbursement/index', 'finance:reimbursement:list', '#fff', '#F53F3F', 2, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
-	(41, '财务管理', 'finance', 5, '报销统计', 'level', '/pages/finance/reimbursementReport/index', 'finance:reimbursementReport:list', '#fff', '#F53F3F', 3, 0, '0', 'admin', '2026-05-23 14:08:03', '', NULL, ''),
 	(42, '考勤管理', 'attendance', 3, '考勤打卡', 'clock', '/pages/attendance/index', '', '#fff', '#F59E0B', 1, 1, '0', '', NULL, '', NULL, ''),
 	(43, '考勤管理', 'attendance', 3, '考勤记录', 'file-text', '/pages/attendance/record', '', '#fff', '#F59E0B', 2, 1, '0', '', NULL, '', NULL, ''),
 	(44, '考勤管理', 'attendance', 3, '考勤规则', 'setting', '/pages/attendance/rule', '', '#fff', '#F59E0B', 3, 1, '0', '', NULL, '', NULL, ''),
@@ -379,7 +369,7 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
   KEY `idx_archive_date` (`archive_date`),
   KEY `idx_source_type` (`source_type`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
 
 -- 正在导出表  fuchenpro.biz_customer_archive 的数据：~3 rows (大约)
 DELETE FROM `biz_customer_archive`;
@@ -387,7 +377,8 @@ DELETE FROM `biz_customer_archive`;
 INSERT INTO `biz_customer_archive` (`archive_id`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `archive_date`, `archive_type`, `source_type`, `source_id`, `plan_items`, `amount`, `satisfaction`, `photos`, `customer_feedback`, `operator_user_id`, `operator_user_name`, `remark`, `create_by`, `create_time`) VALUES
 	(1, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '0', 1, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '11', 1, '若依', '套餐: 套餐1', 'admin', '2026-06-20 19:13:56'),
 	(2, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["\\/profile\\/upload\\/20260620\\/0996e45411a292d11f0d65c75d4b9ac7.jpg"]', '防守打法水电费第三方', 1, '若依', '放大发的', 'admin', '2026-06-20 19:16:59'),
-	(3, 2, '111', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '0', 3, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-26 22:08:49');
+	(3, 2, '111', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '0', 3, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-26 22:08:49'),
+	(4, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '1', 2, '[{"name":"卡项1","quantity":1}]', 938.00, 5, NULL, '', 1, '若依', '', 'admin', '2026-06-27 06:13:24');
 /*!40000 ALTER TABLE `biz_customer_archive` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_package 结构
@@ -500,7 +491,7 @@ INSERT INTO `biz_enterprise` (`enterprise_id`, `enterprise_name`, `pinyin`, `bos
 	(5, '测试3', '3', '哈哈', '16666666666', '急急急', '1', 0, 0.00, '2', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-05-29 17:09:35', 'admin', '2026-06-08 22:44:42'),
 	(6, '测试4', '4', '测试', '15555555555', NULL, '1', 0, 0.00, '2', 2, '若人头', '2026-06-09', '2028-06-01', '0', '地方', 'admin', '2026-06-09 14:11:29', '', '2026-06-09 14:11:29'),
 	(7, '终测1', '1', '11', '15555555555', '烦都烦死', '1', 5, 500.00, '1', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 16:04:08', 'admin', '2026-06-20 18:16:54'),
-	(8, '终测2', '2', '老板', '15666666666', NULL, '1', 0, 0.00, '3', NULL, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:19:25', 'admin', '2026-06-26 22:08:20');
+	(8, '终测2', '2', '老板', '15666666666', NULL, '1', 0, 0.00, '3', 1, '', NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:19:25', 'admin', '2026-06-26 23:57:17');
 /*!40000 ALTER TABLE `biz_enterprise` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_feedback 结构
@@ -610,13 +601,14 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
   KEY `idx_package_id` (`package_id`),
   KEY `idx_operation_date` (`operation_date`),
   KEY `idx_operation_batch_id` (`operation_batch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='操作记录表';
 
 -- 正在导出表  fuchenpro.biz_operation_record 的数据：~0 rows (大约)
 DELETE FROM `biz_operation_record`;
 /*!40000 ALTER TABLE `biz_operation_record` DISABLE KEYS */;
 INSERT INTO `biz_operation_record` (`record_id`, `operation_type`, `customer_id`, `customer_name`, `package_id`, `package_no`, `operation_batch_id`, `package_item_id`, `product_name`, `operation_quantity`, `consume_amount`, `trial_price`, `customer_feedback`, `satisfaction`, `before_photo`, `after_photo`, `operator_user_id`, `operator_user_name`, `operation_date`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `remark`, `create_by`, `create_time`) VALUES
-	(1, '0', 1, '客户1', 1, NULL, 'OB202606201916597727', 1, '卡项1', 1, 938.00, NULL, '防守打法水电费第三方', 4, '/profile/upload/20260620/0996e45411a292d11f0d65c75d4b9ac7.jpg', '', 1, '若依', '2026-06-20', 7, NULL, 8, NULL, '放大发的', 'admin', '2026-06-20 19:16:59');
+	(1, '0', 1, '客户1', 1, NULL, 'OB202606201916597727', 1, '卡项1', 1, 938.00, NULL, '防守打法水电费第三方', 4, '/profile/upload/20260620/0996e45411a292d11f0d65c75d4b9ac7.jpg', '', 1, '若依', '2026-06-20', 7, NULL, 8, NULL, '放大发的', 'admin', '2026-06-20 19:16:59'),
+	(2, '0', 1, '客户1', 1, NULL, 'OB202606270613247312', 1, '卡项1', 1, 938.00, NULL, '', 5, '', '', 1, '若依', '2026-06-26', 7, NULL, 8, NULL, '', 'admin', '2026-06-27 06:13:24');
 /*!40000 ALTER TABLE `biz_operation_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_order_item 结构
@@ -641,7 +633,7 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单明细表';
 
 -- 正在导出表  fuchenpro.biz_order_item 的数据：~3 rows (大约)
 DELETE FROM `biz_order_item`;
@@ -649,7 +641,8 @@ DELETE FROM `biz_order_item`;
 INSERT INTO `biz_order_item` (`item_id`, `order_id`, `card_item_id`, `product_name`, `quantity`, `deal_amount`, `paid_amount`, `unit_price`, `owed_amount`, `payment_method`, `is_our_operation`, `customer_feedback`, `before_photo`, `after_photo`, `remark`, `create_time`) VALUES
 	(1, 1, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:13:56'),
 	(2, 2, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:16:59'),
-	(3, 3, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-26 22:08:49');
+	(3, 3, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-26 22:08:49'),
+	(4, 4, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-27 06:13:24');
 /*!40000 ALTER TABLE `biz_order_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_package_item 结构
@@ -677,7 +670,7 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
 DELETE FROM `biz_package_item`;
 /*!40000 ALTER TABLE `biz_package_item` DISABLE KEYS */;
 INSERT INTO `biz_package_item` (`package_item_id`, `package_id`, `card_item_id`, `product_name`, `unit_price`, `plan_price`, `deal_price`, `paid_amount`, `owed_amount`, `total_quantity`, `used_quantity`, `remaining_quantity`, `remark`) VALUES
-	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 1, 9, NULL),
+	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 2, 8, NULL),
 	(2, 2, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL);
 /*!40000 ALTER TABLE `biz_package_item` ENABLE KEYS */;
 
@@ -870,7 +863,7 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
   KEY `idx_enterprise_id` (`enterprise_id`),
   KEY `idx_store_id` (`store_id`),
   KEY `idx_order_status` (`order_status`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售订单表';
 
 -- 正在导出表  fuchenpro.biz_sales_order 的数据：~3 rows (大约)
 DELETE FROM `biz_sales_order`;
@@ -878,7 +871,8 @@ DELETE FROM `biz_sales_order`;
 INSERT INTO `biz_sales_order` (`order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `store_dealer`, `deal_amount`, `paid_amount`, `owed_amount`, `payment_method`, `order_status`, `source_type`, `operation_batch_id`, `package_name`, `enterprise_audit_status`, `finance_audit_status`, `enterprise_audit_by`, `enterprise_audit_time`, `finance_audit_by`, `finance_audit_time`, `creator_user_id`, `creator_user_name`, `remark`, `customer_feedback`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
 	(1, 'SO202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '套餐1', '1', '1', '若依', '2026-06-20 19:14:28', '若依', '2026-06-20 19:20:18', 1, '若依', '11', NULL, 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:20:18'),
 	(2, 'OP202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606201916597727', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-20 19:16:59', '', '2026-06-20 19:16:59'),
-	(3, 'SO202606260003', 2, '111', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '11', '1', '1', '若依', '2026-06-26 22:08:58', '若依', '2026-06-26 22:09:27', 1, '若依', '', NULL, 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:09:27');
+	(3, 'SO202606260003', 2, '111', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '11', '1', '1', '若依', '2026-06-26 22:08:58', '若依', '2026-06-26 22:09:27', 1, '若依', '', NULL, 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:09:27'),
+	(4, 'OP202606270001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606270613247312', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-27 06:13:24', '', '2026-06-27 06:13:24');
 /*!40000 ALTER TABLE `biz_sales_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_schedule 结构
@@ -1324,7 +1318,7 @@ INSERT INTO `biz_store` (`store_id`, `enterprise_id`, `enterprise_name`, `store_
 	(7, 7, '终测1', '终测门店1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-19 16:04:49', '', '2026-06-19 16:04:49'),
 	(8, 7, '终测1', '终测门店2', '11', '1522222222', '11', '11', '9 - 21', 500.00, 200, NULL, NULL, '1212', '0', NULL, 'admin', '2026-06-19 20:57:09', 'admin', '2026-06-20 14:33:45'),
 	(9, 8, '终测2', '终测2门店1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:20:16', '', '2026-06-21 11:20:16'),
-	(10, 8, '终测2', 'mend2', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 11:23:56', '', '2026-06-21 11:23:56'),
+	(10, 8, '终测2', 'mend2', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', 1, '若依、若人头', '0', NULL, 'admin', '2026-06-21 11:23:56', 'admin', '2026-06-26 23:57:26'),
 	(11, 8, '终测2', '测试1', NULL, NULL, NULL, NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 12:00:46', '', '2026-06-21 12:00:46'),
 	(12, 8, '终测2', '门顶上', '11', NULL, '11', NULL, NULL, 0.00, 0, '若依', NULL, NULL, '0', NULL, 'admin', '2026-06-21 12:24:40', 'admin', '2026-06-26 22:08:34');
 /*!40000 ALTER TABLE `biz_store` ENABLE KEYS */;
@@ -1352,7 +1346,7 @@ CREATE TABLE IF NOT EXISTS `biz_supplier` (
 DELETE FROM `biz_supplier`;
 /*!40000 ALTER TABLE `biz_supplier` DISABLE KEYS */;
 INSERT INTO `biz_supplier` (`supplier_id`, `supplier_name`, `contact_person`, `contact_phone`, `address`, `cooperation_start_date`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, '供货商1', '111', NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-26 02:26:44', 'admin', '2026-06-26 23:43:47');
+	(1, '供货商1', '111', NULL, NULL, NULL, '0', NULL, 'admin', '2026-06-26 02:26:44', 'admin', '2026-06-27 06:01:24');
 /*!40000 ALTER TABLE `biz_supplier` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_warehouse 结构
@@ -1980,7 +1974,7 @@ CREATE TABLE IF NOT EXISTS `sys_db_backup` (
   `error_message` text COMMENT '错误信息',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`backup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据库备份记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据库备份记录表';
 
 -- 正在导出表  fuchenpro.sys_db_backup 的数据：~2 rows (大约)
 DELETE FROM `sys_db_backup`;
@@ -1988,7 +1982,9 @@ DELETE FROM `sys_db_backup`;
 INSERT INTO `sys_db_backup` (`backup_id`, `file_name`, `file_size`, `cos_path`, `cos_url`, `backup_type`, `status`, `duration`, `error_message`, `create_time`) VALUES
 	(5, 'fuchenpro_20260622_003632.sql', 277009, '', '', 'manual', 'success', 0.76, '', '2026-06-22 00:36:33'),
 	(6, 'fuchenpro_20260622_004149.sql', 278179, '', '', 'manual', 'success', 0.78, '', '2026-06-22 00:41:49'),
-	(7, 'fuchenpro_20260626_020033.sql', 0, '', '', 'auto', 'failed', 0.10, 'mysqldump执行失败', '2026-06-26 02:00:34');
+	(7, 'fuchenpro_20260626_020033.sql', 0, '', '', 'auto', 'failed', 0.10, 'mysqldump执行失败', '2026-06-26 02:00:34'),
+	(8, 'fuchenpro_20260627_020047.sql', 0, '', '', 'auto', 'failed', 0.18, 'mysqldump执行失败', '2026-06-27 02:00:47'),
+	(9, 'fuchenpro_20260627_020047.sql', 0, '', '', 'auto', 'failed', 0.20, 'mysqldump执行失败', '2026-06-27 02:00:47');
 /*!40000 ALTER TABLE `sys_db_backup` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_dept 结构
@@ -2314,7 +2310,7 @@ CREATE TABLE IF NOT EXISTS `sys_logininfor` (
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=391 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=394 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
 
 -- 正在导出表  fuchenpro.sys_logininfor 的数据：~278 rows (大约)
 DELETE FROM `sys_logininfor`;
@@ -2610,7 +2606,10 @@ INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`
 	(387, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 15:23:17', 'app'),
 	(388, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-26 17:17:43', 'app'),
 	(389, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 17:21:30', 'web'),
-	(390, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 22:29:07', 'web');
+	(390, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-26 22:29:07', 'web'),
+	(391, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-27 06:14:41', 'app'),
+	(392, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Android', '0', '登录成功', '2026-06-27 16:43:35', 'app'),
+	(393, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-06-27 19:25:36', 'web');
 /*!40000 ALTER TABLE `sys_logininfor` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_menu 结构
@@ -2638,7 +2637,7 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`menu_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3084 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
+) ENGINE=InnoDB AUTO_INCREMENT=3086 DEFAULT CHARSET=utf8 COMMENT='菜单权限表';
 
 -- 正在导出表  fuchenpro.sys_menu 的数据：~239 rows (大约)
 DELETE FROM `sys_menu`;
@@ -2817,13 +2816,6 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 	(2085, '方案修改', 2076, 4, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:plan:edit', '#', 'admin', '2026-05-06 23:01:44', '', NULL, ''),
 	(2086, '方案删除', 2076, 5, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:plan:remove', '#', 'admin', '2026-05-06 23:01:44', '', NULL, ''),
 	(2087, '提交审核', 2076, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:plan:submitAudit', '#', 'admin', '2026-05-06 23:01:44', '', NULL, ''),
-	(2094, '方案审核操作', 3001, 2, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:planAudit:audit', '#', 'admin', '2026-05-18 18:01:58', NULL, NULL, ''),
-	(2095, '报销新增', 3002, 2, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:add', '#', 'admin', '2026-05-18 18:01:58', NULL, NULL, ''),
-	(2096, '报销编辑', 3002, 3, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:edit', '#', 'admin', '2026-05-18 18:01:58', NULL, NULL, ''),
-	(2097, '报销删除', 3002, 4, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:remove', '#', 'admin', '2026-05-18 18:01:58', NULL, NULL, ''),
-	(2098, '报销审核', 3002, 5, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:audit', '#', 'admin', '2026-05-18 18:01:58', NULL, NULL, ''),
-	(2099, '报销支付', 3002, 6, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:pay', '#', 'admin', '2026-05-18 18:01:59', NULL, NULL, ''),
-	(2100, '报销导出', 3002, 7, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'finance:reimbursement:export', '#', 'admin', '2026-05-18 18:01:59', NULL, NULL, ''),
 	(3000, '财务管理', 0, 3, 'finance', NULL, NULL, NULL, 1, 0, 'M', '0', '0', 'all', '', 'money', 'admin', '2026-05-18 18:03:48', NULL, NULL, '财务管理目录'),
 	(3001, '方案审核', 3000, 1, 'planAudit', 'finance/planAudit/index', NULL, NULL, 1, 0, 'C', '0', '0', 'all', 'finance:planAudit:list', 'edit', 'admin', '2026-05-18 18:03:48', NULL, NULL, '方案审核菜单'),
 	(3002, '报销管理', 3000, 2, 'reimbursement', 'finance/reimbursement/index', NULL, NULL, 1, 0, 'C', '0', '0', 'all', 'finance:reimbursement:list', 'form', 'admin', '2026-05-18 18:03:48', NULL, NULL, '报销管理菜单'),
@@ -2882,7 +2874,9 @@ INSERT INTO `sys_menu` (`menu_id`, `menu_name`, `parent_id`, `order_num`, `path`
 	(3080, '数据统计', 0, 3, 'statistics', NULL, NULL, NULL, 1, 0, 'M', '0', '0', 'all', '', 'chart', 'admin', '2026-06-21 23:19:49', '', NULL, '数据统计目录'),
 	(3081, '业绩统计', 3080, 1, 'performance', 'statistics/performance/index', NULL, 'PerformanceStats', 1, 0, 'C', '0', '0', 'all', 'statistics:performance:list', 'peoples', 'admin', '2026-06-21 23:19:49', '', NULL, '业绩统计菜单'),
 	(3082, '企业业绩', 3080, 2, 'enterprise', 'statistics/enterprise/index', NULL, 'EnterpriseStats', 1, 0, 'C', '0', '0', 'all', 'statistics:enterprise:list', 'build', 'admin', '2026-06-21 23:19:49', '', NULL, '企业业绩菜单'),
-	(3083, '数据库备份', 1, 10, 'dbBackup', 'system/backup/index', NULL, 'DbBackup', 1, 0, 'C', '0', '0', 'all', 'system:backup:list', 'upload', 'admin', '2026-06-21 23:58:36', '', NULL, '数据库备份菜单');
+	(3083, '数据库备份', 1, 10, 'dbBackup', 'system/backup/index', NULL, 'DbBackup', 1, 0, 'C', '0', '0', 'all', 'system:backup:list', 'upload', 'admin', '2026-06-21 23:58:36', '', NULL, '数据库备份菜单'),
+	(3084, '员工配置列表', 2007, 10, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:employeeConfig:list', '#', 'admin', '2026-06-27 01:03:16', '', NULL, '员工配置查询（行程安排页内嵌功能）'),
+	(3085, '员工配置修改', 2007, 11, '', NULL, NULL, NULL, 1, 0, 'F', '0', '0', 'all', 'business:employeeConfig:edit', '#', 'admin', '2026-06-27 01:03:16', '', NULL, '员工配置修改（可排班/休息日期）');
 /*!40000 ALTER TABLE `sys_menu` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_notice 结构
@@ -2954,7 +2948,7 @@ CREATE TABLE IF NOT EXISTS `sys_oper_log` (
   KEY `idx_sys_oper_log_bt` (`business_type`),
   KEY `idx_sys_oper_log_s` (`status`),
   KEY `idx_sys_oper_log_ot` (`oper_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=318 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
+) ENGINE=InnoDB AUTO_INCREMENT=325 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
 
 -- 正在导出表  fuchenpro.sys_oper_log 的数据：~218 rows (大约)
 DELETE FROM `sys_oper_log`;
@@ -3177,7 +3171,14 @@ INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `requ
 	(314, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":35,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 7),
 	(315, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":37,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 5),
 	(316, '排班管理', 2, '/business/schedule', 'PUT', 1, 'admin', '', '//localhost:8787/business/schedule', '127.0.0.1', '内网IP', '{"scheduleId":38,"userId":103,"userName":"鹏鹏","enterpriseId":7,"enterpriseName":"终测1","purpose":"2","status":"1"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:12:23', 7),
-	(317, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"supplierId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:43:47', 103);
+	(317, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"supplierId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:43:47', 103),
+	(318, '企业管理', 2, '/business/enterprise', 'PUT', 1, 'admin', '', '//localhost:8787/business/enterprise', '127.0.0.1', '内网IP', '{"enterpriseId":8,"enterpriseName":"终测2","pinyin":"2","bossName":"老板","phone":"15666666666","address":null,"enterpriseType":"1","storeCount":0,"annualPerformance":"0.00","enterpriseLevel":"3","serverUserId":[1,2],"serverUserName":"","cooperationStartDate":null,"cooperationEndDate":null,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-21 11:19:25","updateBy":"admin","updateTime":"2026-06-26 22:08:20"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:57:17', 71),
+	(319, '门店管理', 2, '/business/store', 'PUT', 1, 'admin', '', '//localhost:8787/business/store', '127.0.0.1', '内网IP', '{"storeId":10,"enterpriseId":8,"enterpriseName":"终测2","storeName":"mend2","managerName":null,"phone":null,"wechat":null,"address":null,"annualPerformance":0,"regularCustomers":0,"creatorName":"若依","serverUserId":[1,2],"serverUserName":"若依、若人头","status":"0","remark":null,"createBy":"admin","createTime":"2026-06-21 11:23:56","updateBy":"","updateTime":"2026-06-21 11:23:56"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-26 23:57:26', 7),
+	(320, '通知公告', 1, '/system/notice/markRead', 'POST', 1, 'admin', '', '//localhost:8787/system/notice/markRead', '127.0.0.1', '内网IP', '{"noticeId":"11"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-27 01:17:41', 1),
+	(321, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"supplierId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-27 05:54:21', 39),
+	(322, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"supplierId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-27 05:59:20', 28),
+	(323, '供货商管理', 2, '/wms/supplier', 'PUT', 1, 'admin', '', '//localhost:8787/wms/supplier', '127.0.0.1', '内网IP', '{"supplierId":1,"supplierName":"供货商1","contactPerson":"111","contactPhone":null,"address":null,"cooperationStartDate":null,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-26 02:26:44","updateBy":"admin","updateTime":"2026-06-27 05:59:20"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-27 06:01:24', 87),
+	(324, '操作记录', 1, '/business/operation', 'POST', 1, 'admin', '', '//localhost:8787/business/operation', '127.0.0.1', '内网IP', '{"customerId":"1","customerName":"客户1","packageId":1,"packageItemId":1,"productName":"卡项1","operationType":"0","operationQuantity":1,"consumeAmount":"938.00","unitPrice":"938.00","operationDate":"2026-06-26","operatorUserId":null,"operatorUserName":"若依","satisfaction":5,"customerFeedback":"","beforePhoto":"","afterPhoto":"","remark":"","enterpriseId":"7","storeId":"8"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-06-27 06:13:24', 55);
 /*!40000 ALTER TABLE `sys_oper_log` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_post 结构
@@ -3376,13 +3377,6 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 	(1, 2085),
 	(1, 2086),
 	(1, 2087),
-	(1, 2094),
-	(1, 2095),
-	(1, 2096),
-	(1, 2097),
-	(1, 2098),
-	(1, 2099),
-	(1, 2100),
 	(1, 3000),
 	(1, 3001),
 	(1, 3002),
@@ -3414,19 +3408,9 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 	(1, 3036),
 	(1, 3037),
 	(1, 3038),
-	(1, 3039),
 	(1, 3044),
 	(1, 3045),
 	(1, 3046),
-	(1, 3047),
-	(1, 3048),
-	(1, 3049),
-	(1, 3050),
-	(1, 3052),
-	(1, 3053),
-	(1, 3054),
-	(1, 3056),
-	(1, 3057),
 	(1, 3058),
 	(1, 3059),
 	(1, 3060),
@@ -3446,6 +3430,8 @@ INSERT INTO `sys_role_menu` (`role_id`, `menu_id`) VALUES
 	(1, 3081),
 	(1, 3082),
 	(1, 3083),
+	(1, 3084),
+	(1, 3085),
 	(2, 1),
 	(2, 2),
 	(2, 3),
@@ -3681,7 +3667,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 DELETE FROM `sys_user`;
 /*!40000 ALTER TABLE `sys_user` DISABLE KEYS */;
 INSERT INTO `sys_user` (`user_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `pwd_update_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
-	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-26 22:29:07', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
+	(1, 103, 'admin', '若依', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-06-27 19:25:36', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
 	(2, 106, 'ry', '若人头', '00', 'ry@qq.com', '15666666666', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-04-25 01:10:45', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', 'admin', '2026-04-28 22:24:11', '测试员'),
 	(100, 101, '测试', '测试', '00', '', '15877778888', '0', '', '$2y$10$XouudTyFvzABxDZVRaQhZ.Jh9TSE9Qil2RA2N9mzv6hPqcyo.O4Uy', '0', '0', '', NULL, NULL, 'admin', '2026-04-25 21:08:28', 'admin', '2026-06-20 12:28:59', '111'),
 	(101, NULL, '辅导费', '奋斗奋斗', '00', '', '', '0', '', '$2y$10$GiUlf1m6QaMIwgfxTHuDfeEoedCiiS0O1HBb3bcR.rW0DKPuua8gK', '0', '2', '', NULL, NULL, 'admin', '2026-05-20 19:52:31', '', NULL, NULL),
