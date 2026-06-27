@@ -106,7 +106,7 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="方案名称" prop="planName">
-              <el-input v-model="planForm.planName" placeholder="请输入方案名称" />
+              <el-input v-model="planForm.planName" @change="onPlanNameChange" placeholder="请输入方案名称" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -380,6 +380,8 @@ const enterpriseList = ref([])
 const enterpriseLoading = ref(false)
 const enterpriseTotal = ref(0)
 const giftAmountManuallyModified = ref(false)
+const isAutoCalc = ref(false)
+const planNameManuallyModified = ref(false)
 
 // 备货相关
 const planDetailTab = ref('items')
@@ -471,7 +473,8 @@ function handleEnterpriseSelect(row) {
     enterpriseSelectOpen.value = false
     resetPlanForm()
     planForm.value.enterpriseId = row.enterpriseId
-    planForm.value.planName = row.enterpriseName + ' ' + '0%方案'
+    planForm.value.enterpriseName = row.enterpriseName
+    planForm.value.planName = row.enterpriseName
     planOpen.value = true
     planTitle.value = "开方案 - " + row.enterpriseName
   }
@@ -479,6 +482,7 @@ function handleEnterpriseSelect(row) {
 
 function handleEditPlan(row) {
   giftAmountManuallyModified.value = false
+  planNameManuallyModified.value = true
   getPlan(row.planId).then(res => {
     planForm.value = { ...res.data, items: (res.data.items || []).map(item => ({ ...item })) }
     planOpen.value = true
@@ -488,8 +492,9 @@ function handleEditPlan(row) {
 
 function resetPlanForm() {
   giftAmountManuallyModified.value = false
+  planNameManuallyModified.value = false
   planForm.value = {
-    planId: undefined, enterpriseId: undefined, planName: undefined,
+    planId: undefined, enterpriseId: undefined, enterpriseName: undefined, planName: undefined,
     commissionRate: 0, planAmount: 0, giftAmount: 0, remainingAmount: 0,
     effectiveDate: undefined, expiryDate: undefined, remark: undefined, items: []
   }
@@ -497,6 +502,7 @@ function resetPlanForm() {
 }
 
 function onGiftAmountChange() {
+  if (isAutoCalc.value) return
   giftAmountManuallyModified.value = true
   planForm.value.remainingAmount = planForm.value.giftAmount
 }
@@ -506,13 +512,30 @@ function calcGiftAmount() {
   const planAmount = parseFloat(planForm.value.planAmount)
   const commissionRate = parseFloat(planForm.value.commissionRate)
   if (planAmount > 0 && commissionRate > 0) {
+    isAutoCalc.value = true
     planForm.value.giftAmount = Math.round(planAmount * 100 / commissionRate * 100) / 100
     planForm.value.remainingAmount = planForm.value.giftAmount
+    nextTick(() => { isAutoCalc.value = false })
   }
 }
 
+function updatePlanName() {
+  if (planNameManuallyModified.value) return
+  const enterpriseName = planForm.value.enterpriseName || ''
+  const rate = parseFloat(planForm.value.commissionRate)
+  if (rate > 0) {
+    planForm.value.planName = `${enterpriseName}-${rate}%`
+  } else {
+    planForm.value.planName = enterpriseName
+  }
+}
+
+function onPlanNameChange() {
+  planNameManuallyModified.value = true
+}
+
 watch(() => planForm.value.planAmount, () => calcGiftAmount())
-watch(() => planForm.value.commissionRate, () => calcGiftAmount())
+watch(() => planForm.value.commissionRate, () => { calcGiftAmount(); updatePlanName() })
 
 function addPlanItem() {
   planForm.value.items.push({

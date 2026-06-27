@@ -34,6 +34,8 @@ class BizStockPrepareController
     {
         $prepareId = intval($request->input('prepareId', 0));
         $items = $request->input('items', []);
+        // 统一转 snake_case，与 BizStockTransferController 约定一致
+        $items = convert_to_snake_case($items);
         $warehouseId = $request->input('warehouseId');
         if (!$prepareId) return AjaxResult::error('备货ID不能为空');
         if (empty($items)) return AjaxResult::error('出库明细不能为空');

@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizOperationRecordService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -29,6 +30,9 @@ class BizOperationRecordController
     // 新增操作记录，自动填充操作人信息，套餐消费类型时扣减套餐次数并写入客户档案
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:operation:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         if (empty($data['operator_user_id'])) {
@@ -45,6 +49,9 @@ class BizOperationRecordController
     // 批量删除操作记录（按ID逗号分隔）
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:operation:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $recordIds = $request->input('recordIds', '');
         if (!is_array($recordIds)) {
             $recordIds = explode(',', $recordIds);

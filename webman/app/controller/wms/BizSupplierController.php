@@ -4,6 +4,7 @@ namespace app\controller\wms;
 
 use support\Request;
 use app\service\BizSupplierService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\ExcelUtil;
 use app\common\TableDataInfo;
@@ -50,6 +51,9 @@ class BizSupplierController
     // 新增供应商
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:supplier:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $data['login_user'] = $request->loginUser;
@@ -61,6 +65,9 @@ class BizSupplierController
     // 修改供应商信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:supplier:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $data['update_by'] = $request->loginUser->user->user_name ?? '';
@@ -76,6 +83,9 @@ class BizSupplierController
     // 批量删除供应商
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:supplier:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $supplierIds = $request->input('supplierIds', '');
         if (!is_array($supplierIds)) {
             $supplierIds = explode(',', $supplierIds);

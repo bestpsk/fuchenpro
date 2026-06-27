@@ -42,6 +42,9 @@ class BizSalesOrderController
     // 新增销售订单，包含订单明细项，自动填充创建人信息并记录错误日志
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:order:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $items = $data['items'] ?? [];
@@ -68,6 +71,9 @@ class BizSalesOrderController
     // 修改销售订单及明细项，自动填充更新人信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:order:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $items = $data['items'] ?? [];
@@ -84,6 +90,9 @@ class BizSalesOrderController
     // 批量删除销售订单
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:order:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $orderIds = $request->input('orderIds');
         if (empty($orderIds)) {
             $parts = explode('/', $request->path());

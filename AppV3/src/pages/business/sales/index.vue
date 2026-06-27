@@ -458,7 +458,7 @@ function goCustomerDetail(item) {
 
 /** 跳转客户开单页，携带门店信息 */
 function goCreateOrder(item) {
-  uni.navigateTo({ url: `/pages/business/sales/order?customerId=${item.customerId}&storeId=${currentStoreId.value}&storeName=${currentStoreName.value}&enterpriseName=${currentEnterpriseName.value}` })
+  uni.navigateTo({ url: `/pages/business/sales/order?customerId=${item.customerId}&storeId=${currentStoreId.value}&storeName=${currentStoreName.value}&enterpriseId=${currentEnterpriseId.value}&enterpriseName=${currentEnterpriseName.value}` })
 }
 
 /** 跳转客户操作页，携带企业和门店信息 */

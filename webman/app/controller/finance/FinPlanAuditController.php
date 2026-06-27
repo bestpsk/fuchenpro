@@ -57,13 +57,13 @@ class FinPlanAuditController
         if (PermissionService::lacksPermi($request->loginUser, 'finance:planAudit:audit')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $data = $request->post();
+        $data = convert_to_snake_case($request->post());
         $loginUser = $request->loginUser;
         $user = $loginUser->user;
 
         $data['audit_by'] = $user ? ($user->nick_name ?: $user->user_name) : '';
 
-        $result = $this->service->auditPlan($data);
+        $result = $this->service->audit($data);
         if ($result === false) {
             return AjaxResult::error('审核失败');
         }

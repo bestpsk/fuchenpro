@@ -43,6 +43,9 @@ class BizStockOutController
     // 新增出库单，含出库明细项，自动填充操作人信息
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $realName = trim($request->loginUser->user->nick_name ?? '');
@@ -65,6 +68,9 @@ class BizStockOutController
     // 修改出库单及明细项，已确认的出库单不可修改
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $data['login_user'] = $request->loginUser;
@@ -80,6 +86,9 @@ class BizStockOutController
     // 批量删除出库单，已确认的出库单不可删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockOut:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $stockOutIds = $request->input('stockOutIds', '');
         if (!is_array($stockOutIds)) {
             $stockOutIds = explode(',', $stockOutIds);

@@ -60,7 +60,7 @@ const usePermissionStore = defineStore(
        * @returns {Promise<Array>} 重写后的动态路由数组（用于router.addRoute）
        */
       generateRoutes(roles) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
           getRouters().then(res => {
             // 三份深拷贝避免引用污染：侧边栏路由、重写路由、默认路由各自独立处理
             const sdata = JSON.parse(JSON.stringify(res.data))
@@ -78,6 +78,8 @@ const usePermissionStore = defineStore(
             this.setDefaultRoutes(sidebarRoutes)
             this.setTopbarRoutes(defaultRoutes)
             resolve(rewriteRoutes)
+          }).catch(err => {
+            reject(err)
           })
         })
       }

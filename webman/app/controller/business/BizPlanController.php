@@ -56,6 +56,9 @@ class BizPlanController
     // 新增方案，含方案明细项
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $result = $this->planService->insertPlan($data);
@@ -68,6 +71,9 @@ class BizPlanController
     // 修改方案信息，已审核的方案不可修改
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $result = $this->planService->updatePlan($data);
@@ -80,6 +86,9 @@ class BizPlanController
     // 批量删除方案，已审核的方案不可删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:plan:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $planIds = $request->input('planIds', '');
         if (!is_array($planIds)) {
             $planIds = explode(',', $planIds);

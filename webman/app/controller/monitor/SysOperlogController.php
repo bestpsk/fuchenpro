@@ -4,6 +4,7 @@ namespace app\controller\monitor;
 
 use support\Request;
 use app\service\SysOperLogService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -17,6 +18,9 @@ class SysOperlogController
     // 分页查询操作日志列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:operlog:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysOperLogService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectOperLogList($params);
@@ -26,6 +30,9 @@ class SysOperlogController
     // 批量删除操作日志
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:operlog:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $operIds = explode(',', $request->input('operIds', ''));
         $operIds = array_map('intval', array_filter($operIds));
         $service = new SysOperLogService();
@@ -35,6 +42,9 @@ class SysOperlogController
     // 清空全部操作日志
     public function clean(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:operlog:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysOperLogService();
         $service->cleanOperLog();
         return AjaxResult::success();

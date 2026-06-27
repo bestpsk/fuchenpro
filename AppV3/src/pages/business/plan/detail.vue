@@ -197,7 +197,7 @@
 
     <view class="action-section" v-if="showActions">
       <view class="action-btns">
-        <u-button v-if="canEdit" type="primary" plain text="编辑" @click="goEdit"></u-button>
+        <u-button v-if="canEdit && checkPermi('business:plan:edit')" type="primary" plain text="编辑" @click="goEdit"></u-button>
         <u-button v-if="canSubmitAudit && checkPermi('business:plan:submitAudit')" type="warning" text="提交审核" @click="handleSubmitAudit"></u-button>
         <u-button v-if="canAuditPass && checkPermi('business:plan:audit')" type="success" text="审核通过" @click="handleAuditPass"></u-button>
         <u-button v-if="canAuditReject && checkPermi('business:plan:audit')" type="error" plain text="审核驳回" @click="handleAuditReject"></u-button>

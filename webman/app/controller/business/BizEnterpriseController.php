@@ -51,6 +51,9 @@ class BizEnterpriseController
     // 新增企业，自动填充创建人信息
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:enterprise:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizEnterpriseService();
@@ -61,6 +64,9 @@ class BizEnterpriseController
     // 修改企业信息，自动填充更新人信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:enterprise:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizEnterpriseService();
@@ -71,6 +77,9 @@ class BizEnterpriseController
     // 批量删除企业
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:enterprise:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $enterpriseIds = explode(',', $request->input('enterpriseIds', ''));
         $enterpriseIds = array_map('intval', array_filter($enterpriseIds));
         $service = new BizEnterpriseService();

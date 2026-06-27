@@ -35,10 +35,7 @@ class AuthMiddleware implements MiddlewareInterface
             return $handler($request);
         }
 
-        if (str_starts_with($path, '/common/')) {
-            return $handler($request);
-        }
-
+        // 安全加固：/common/ 路径不再免登录，上传/下载接口均需认证
         $tokenService = new TokenService();
         $loginUser = $tokenService->getLoginUser($request);
 

@@ -43,6 +43,9 @@ class BizStockInController
     // 新增入库单，含入库明细项，自动填充操作人信息
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $loginUser = $request->loginUser->user;
@@ -65,6 +68,9 @@ class BizStockInController
     // 修改入库单及明细项，已确认的入库单不可修改
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $data['update_by'] = $request->loginUser->user->user_name ?? '';
@@ -84,6 +90,9 @@ class BizStockInController
     // 批量删除入库单，已确认的入库单不可删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockIn:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $stockInIds = $request->input('stockInIds', '');
         if (!is_array($stockInIds)) {
             $stockInIds = explode(',', $stockInIds);

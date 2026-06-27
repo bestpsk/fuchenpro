@@ -14,7 +14,7 @@
       <view class="form-field">
         <view class="field-input-box">
           <u-icon name="file-text" size="18" color="#86909C"></u-icon>
-          <input class="field-input" type="text" v-model="form.planName" placeholder="* 方案名称" placeholder-class="field-placeholder" :disabled="mode === 'view'" :disabledColor="'#fff'" />
+          <input class="field-input" type="text" v-model="form.planName" @input="onPlanNameChange" placeholder="* 方案名称" placeholder-class="field-placeholder" :disabled="mode === 'view'" :disabledColor="'#fff'" />
         </view>
       </view>
 
@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { listPlan, listEnterprise, getPlan, addPlan, updatePlan, submitAuditPlan } from '@/api/business/plan'
 import { listProduct } from '@/api/wms/product'
 import { checkPermi } from '@/utils/permission'
@@ -255,6 +255,8 @@ const editingItemIndex = ref(-1)
 
 let productSearchTimer = null
 const giftAmountManuallyModified = ref(false)
+const isAutoCalc = ref(false)
+const planNameManuallyModified = ref(false)
 
 const form = reactive({
   planId: undefined,
@@ -305,6 +307,7 @@ function formatAmount(val) {
 }
 
 function onGiftAmountChange() {
+  if (isAutoCalc.value) return
   giftAmountManuallyModified.value = true
   if (!form.planId) {
     form.remainingAmount = parseFloat(form.giftAmount) || 0
@@ -316,13 +319,30 @@ function calcGiftAmount() {
   const planAmount = parseFloat(form.planAmount)
   const commissionRate = parseFloat(form.commissionRate)
   if (planAmount > 0 && commissionRate > 0) {
+    isAutoCalc.value = true
     form.giftAmount = String(Math.round(planAmount * 100 / commissionRate * 100) / 100)
     form.remainingAmount = parseFloat(form.giftAmount) || 0
+    nextTick(() => { isAutoCalc.value = false })
   }
 }
 
+function updatePlanName() {
+  if (planNameManuallyModified.value) return
+  const enterpriseName = form.enterpriseName || ''
+  const rate = parseFloat(form.commissionRate)
+  if (rate > 0) {
+    form.planName = `${enterpriseName}-${rate}%`
+  } else {
+    form.planName = enterpriseName
+  }
+}
+
+function onPlanNameChange() {
+  planNameManuallyModified.value = true
+}
+
 watch(() => form.planAmount, () => calcGiftAmount())
-watch(() => form.commissionRate, () => calcGiftAmount())
+watch(() => form.commissionRate, () => { calcGiftAmount(); updatePlanName() })
 
 async function loadEnterprises() {
   try {
@@ -335,8 +355,8 @@ async function loadEnterprises() {
 function selectEnterprise(item) {
   form.enterpriseId = item.enterpriseId
   form.enterpriseName = item.enterpriseName
-  if (!form.planName) {
-    form.planName = item.enterpriseName + ' 方案'
+  if (!planNameManuallyModified.value) {
+    form.planName = item.enterpriseName
   }
   showEnterprisePicker.value = false
 }
@@ -449,6 +469,7 @@ function onExpiryDateConfirm(e) {
 async function loadDetail() {
   if (!planId.value) return
   giftAmountManuallyModified.value = false
+  planNameManuallyModified.value = true
   try {
     uni.showLoading({ title: '加载中...' })
     const response = await getPlan(planId.value)

@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizScheduleService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 use app\common\ExcelUtil;
@@ -81,6 +82,9 @@ class BizScheduleController
     // 新增单条行程
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizScheduleService();
@@ -110,6 +114,9 @@ class BizScheduleController
     // 修改行程信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         try {
             $data = convert_to_snake_case($request->post());
             $data['update_by'] = $request->loginUser->user->user_name ?? '';
@@ -124,6 +131,9 @@ class BizScheduleController
     // 批量删除行程
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $scheduleIds = $request->input('scheduleIds', '');
         if (!is_array($scheduleIds)) {
             $scheduleIds = explode(',', $scheduleIds);

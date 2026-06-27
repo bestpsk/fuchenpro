@@ -54,8 +54,11 @@ class BizRepaymentController
     // 新增还款记录，支持自动审核模式，需指定客户、套餐和还款金额
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
-        
+
         if (empty($data['customer_id'])) {
             return AjaxResult::error('客户ID不能为空');
         }

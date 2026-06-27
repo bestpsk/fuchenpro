@@ -250,8 +250,8 @@ function selectProduct(p) {
   item.spec = p.spec || ''
   item.unit = p.unit || ''
   item.packQty = p.packQty || 1
-  item.price = p.purchasePrice || p.sellingPrice || 0
-  item._mainPrice = p.purchasePrice || 0
+  item.price = p.purchasePrice ?? 0
+    item._mainPrice = p.purchasePrice || 0
   item.unitType = '1'
   item._prevUnitType = '1'
   item._prevQuantity = undefined
@@ -432,7 +432,7 @@ async function submitForm() {
       remark: form.remark.trim() || undefined,
       items: form.items.map(item => {
         const packQty = item.packQty || 1
-        const unitType = item.unitType || '2'
+        const unitType = item.unitType || '1'
         const originalQuantity = Number(item.quantity) || 0
         const inputPrice = Number(item.price) || 0
         // 后端统一换算，前端发送原始值（避免与后端 insertStockIn/updateStockIn 双重换算）

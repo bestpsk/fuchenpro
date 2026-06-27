@@ -123,7 +123,7 @@ class SysUserService
             $this->insertUserPost($userId, $data['post_ids']);
         }
 
-        unset($data['role_ids'], $data['post_ids']);
+        unset($data['role_ids'], $data['post_ids'], $data['del_flag']);
         return SysUser::where('user_id', $userId)->update($data);
     }
 
@@ -192,7 +192,8 @@ class SysUserService
     public function updateUserProfile($userId, $data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        unset($data['user_id'], $data['password'], $data['user_name']);
+        // 安全防护：禁止用户通过修改个人资料篡改敏感字段（防止越权提权）
+        unset($data['user_id'], $data['password'], $data['user_name'], $data['status'], $data['del_flag'], $data['dept_id'], $data['role_id'], $data['role_ids'], $data['post_ids']);
         return SysUser::where('user_id', $userId)->update($data);
     }
 

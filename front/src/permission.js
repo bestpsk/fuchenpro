@@ -75,7 +75,7 @@ router.beforeEach(async (to, from) => {
       } catch (err) {
         console.error('[permission.js] 路由守卫错误:', err)
         // 获取用户信息失败时清除登录状态并跳转首页
-        await useUserStore().logOut()
+        try { await useUserStore().logOut() } catch (e) { /* 登出失败忽略，避免逃逸 */ }
         ElMessage.error(err || '获取用户信息失败')
         return { path: '/' }
       }

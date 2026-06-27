@@ -332,6 +332,7 @@ function formatDay(dateStr) {
 
 // ==================== Tab 0: 员工行程 ====================
 const scheduleList = ref([])
+const rawLoadedCount = ref(0)
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
@@ -425,15 +426,17 @@ async function getList(isRefresh = false) {
 
     if (isRefresh) {
       scheduleList.value = grouped
+      rawLoadedCount.value = list.length
     } else {
       const existingIds = new Set(scheduleList.value.flatMap(item => item.scheduleIds))
       const newItems = grouped.filter(item =>
         !item.scheduleIds.some(id => existingIds.has(id))
       )
       scheduleList.value = [...scheduleList.value, ...newItems]
+      rawLoadedCount.value += list.length
     }
 
-    loadStatus.value = scheduleList.value.length >= total ? 'nomore' : 'loadmore'
+    loadStatus.value = rawLoadedCount.value >= total ? 'nomore' : 'loadmore'
   } catch (e) {
     console.error('获取行程列表失败:', e)
     loadStatus.value = 'error'

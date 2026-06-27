@@ -127,7 +127,7 @@
         </view>
 
         <view class="submit-bar">
-          <u-button type="primary" text="提交订单" :loading="submitting" @click="submitOrder" :customStyle="{ borderRadius: '12rpx', height: '84rpx' }"></u-button>
+          <u-button v-if="checkPermi('business:order:add')" type="primary" text="提交订单" :loading="submitting" @click="submitOrder" :customStyle="{ borderRadius: '12rpx', height: '84rpx' }"></u-button>
         </view>
       </view>
 
@@ -350,7 +350,7 @@
           </view>
         </view>
         <view class="popup-actions">
-          <u-button type="primary" text="确认还款" :loading="repaySubmitting" @click="submitRepay"></u-button>
+          <u-button v-if="checkPermi('business:repayment:add')" type="primary" text="确认还款" :loading="repaySubmitting" @click="submitRepay"></u-button>
         </view>
       </view>
     </u-popup>

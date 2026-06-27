@@ -416,9 +416,9 @@ function calcStockOutAmount(index) {
 
 function submitStockOut() {
   const items = stockOutDetails.value.filter(item => item.outQuantity > 0).map(item => ({
-    item_id: item.itemId,
-    unit_type: item.unitType,
-    original_quantity: item.outQuantity
+    itemId: item.itemId,
+    unitType: item.unitType,
+    originalQuantity: item.outQuantity
   }))
   if (items.length === 0) {
     proxy.$modal.msgWarning("请至少填写一项出库数量")

@@ -22,6 +22,12 @@ class CommonController
         }
 
         $ext = $file->getUploadExtension() ?: 'bin';
+        // 安全防护：扩展名白名单，禁止上传可执行文件
+        $extLower = strtolower(ltrim($ext, '.'));
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'mp4', 'mp3'];
+        if (!in_array($extLower, $allowedExts)) {
+            return AjaxResult::error('不支持的文件类型: ' . $extLower);
+        }
         $filename = date('Ymd') . '/' . md5(uniqid()) . '.' . $ext;
 
         $cosService = new CosService();
@@ -59,7 +65,17 @@ class CommonController
     public function downloads(Request $request)
     {
         $fileName = $request->input('fileName', '');
-        $filePath = public_path() . '/profile/upload/' . $fileName;
+        // 安全防护：仅取文件名部分，禁止目录穿越
+        $fileName = basename($fileName);
+        if (empty($fileName) || strpos($fileName, '..') !== false) {
+            return AjaxResult::error('非法文件名');
+        }
+        // 限制只能访问 upload 子目录下的文件，禁止跨目录
+        $uploadDir = realpath(public_path() . '/profile/upload/');
+        $filePath = realpath(public_path() . '/profile/upload/' . $fileName);
+        if ($filePath === false || strpos($filePath, $uploadDir) !== 0) {
+            return AjaxResult::error('文件不存在');
+        }
         if (!file_exists($filePath)) {
             return AjaxResult::error('文件不存在');
         }

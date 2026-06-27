@@ -395,7 +395,7 @@
                   <el-table-column label="创建时间" prop="createTime" width="160" />
                   <el-table-column label="操作" width="80" align="center" fixed="right">
                     <template #default="scope">
-                      <el-button v-if="scope.row.status === '0'" type="success" size="small" link @click="handleAuditRepayment(scope.row.repaymentId)">审核</el-button>
+                      <el-button v-if="scope.row.status === '0'" v-hasPermi="['business:repayment:audit']" type="success" size="small" link @click="handleAuditRepayment(scope.row.repaymentId)">审核</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -1021,8 +1021,8 @@ function submitOrder() {
     orderStatus: '0',
     packageName: orderPackageName.value,
     storeDealer: orderStoreDealer.value,
-    customerFeedback: '',
-    remark: orderCustomerFeedback.value,
+    customerFeedback: orderCustomerFeedback.value,
+    remark: '',
     items: orderItems.value
   }
   addSalesOrder(data).then(() => {

@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizCardItemService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\ExcelUtil;
 use app\common\TableDataInfo;
@@ -41,6 +42,9 @@ class BizCardItemController
 
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizCardItemService();
@@ -50,6 +54,9 @@ class BizCardItemController
 
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizCardItemService();
@@ -59,6 +66,9 @@ class BizCardItemController
 
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $cardItemIds = $request->input('cardItemIds', '');
         if (!is_array($cardItemIds)) {
             $cardItemIds = explode(',', $cardItemIds);

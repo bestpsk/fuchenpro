@@ -15,8 +15,8 @@ class SysUser extends Model
 
     protected $fillable = [
         'dept_id', 'user_name', 'nick_name', 'user_type', 'email', 'phonenumber',
-        'sex', 'avatar', 'password', 'status', 'del_flag', 'login_ip', 'login_date',
-        'pwd_update_date', 'create_by', 'create_time', 'update_by', 'update_time', 'remark'
+        'sex', 'avatar', 'password', 'status', 'del_flag',
+        'create_by', 'create_time', 'update_by', 'update_time', 'remark'
     ];
 
     // 定义用户数据的Excel导入导出字段映射配置

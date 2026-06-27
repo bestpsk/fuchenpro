@@ -12,9 +12,9 @@ const useDictStore = defineStore(
     actions: {
       /** 根据字典类型key获取缓存的字典数据 */
       getDict(_key) {
-        if (_key == null && _key == "") {
-          return null
-        }
+        if (_key == null || _key == "") {
+        return null
+      }
         try {
           for (let i = 0; i < this.dict.length; i++) {
             if (this.dict[i].key == _key) {

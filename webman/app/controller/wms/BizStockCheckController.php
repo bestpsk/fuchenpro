@@ -41,6 +41,9 @@ class BizStockCheckController
     // 新增盘点单，含盘点明细项，自动填充操作人信息
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockCheck:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $data['operator_id'] = $request->loginUser->userId ?? 0;
@@ -57,6 +60,9 @@ class BizStockCheckController
     // 修改盘点单及明细项，已确认的盘点单不可修改
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockCheck:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $data['login_user'] = $request->loginUser;
@@ -72,6 +78,9 @@ class BizStockCheckController
     // 批量删除盘点单，已确认的盘点单不可删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:stockCheck:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $stockCheckIds = $request->input('stockCheckIds', '');
         if (!is_array($stockCheckIds)) {
             $stockCheckIds = explode(',', $stockCheckIds);

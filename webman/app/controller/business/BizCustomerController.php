@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizCustomerService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 use app\service\CosService;
@@ -55,6 +56,9 @@ class BizCustomerController
     // 新增客户，自动填充创建人信息
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:customer:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizCustomerService();
@@ -68,6 +72,9 @@ class BizCustomerController
     // 修改客户信息，自动填充更新人信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:customer:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new BizCustomerService();
@@ -78,6 +85,9 @@ class BizCustomerController
     // 批量删除客户（按ID逗号分隔）
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:customer:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $customerIds = $request->input('customerIds', '');
         if (!is_array($customerIds)) {
             $customerIds = explode(',', $customerIds);
