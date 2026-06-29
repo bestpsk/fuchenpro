@@ -71,6 +71,8 @@ class BizStockCheckService
                     'actualQuantity' => $item['actual_quantity'] ?? 0,
                     'diffQuantity' => $item['diff_quantity'] ?? 0,
                     'remark' => $item['remark'] ?? '',
+                    'productionDate' => $item['production_date'] ?? null,
+                    'expiryDate' => $item['expiry_date'] ?? null,
                 ];
             }, $items);
         }

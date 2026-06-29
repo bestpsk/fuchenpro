@@ -247,19 +247,19 @@
               <text class="card-value">{{ getCategoryLabel(item.category) || '-' }}</text>
             </view>
             <view class="card-row">
-              <text class="card-label">入库单号</text>
+              <text class="card-label">单据编号</text>
               <text class="card-value">{{ item.stockInNo || '-' }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">批次数量</text>
-              <text class="card-value bold">{{ item.remainingQuantity || 0 }}</text>
+              <text class="card-value bold">{{ formatQty(item.remainingQuantity, item) }}</text>
             </view>
             <view class="card-row">
               <text class="card-label">生产日期</text>
               <text class="card-value">{{ formatDate(item.productionDate) }}</text>
             </view>
             <view class="card-row">
-              <text class="card-label">有效期至</text>
+              <text class="card-label">到期日期</text>
               <text class="card-value">{{ formatDate(item.expiryDate) }}</text>
             </view>
             <view class="card-row">

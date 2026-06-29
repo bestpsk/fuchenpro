@@ -125,6 +125,18 @@
               <span :style="{ color: scope.row.diffQuantity > 0 ? '#67C23A' : scope.row.diffQuantity < 0 ? '#F56C6C' : '' }">{{ formatDiffQuantity(scope.row) }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="生产日期" min-width="110" align="center" header-align="center">
+            <template #default="scope">
+              <el-date-picker v-if="!isView" v-model="scope.row.productionDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width: 100%" />
+              <span v-else>{{ scope.row.productionDate || '-' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="到期日期" min-width="110" align="center" header-align="center">
+            <template #default="scope">
+              <el-date-picker v-if="!isView" v-model="scope.row.expiryDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width: 100%" />
+              <span v-else :style="{ color: isExpiringSoon(scope.row.expiryDate) ? '#e6a23c' : (isExpired(scope.row.expiryDate) ? '#f56c6c' : '') }">{{ scope.row.expiryDate || '-' }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="备注" min-width="180">
             <template #default="scope">
               <el-input v-if="!isView" v-model="scope.row.remark" placeholder="备注" />
@@ -268,6 +280,19 @@ function handleWarehouseChange(warehouseId) {
   handleQuery()
 }
 
+function isExpiringSoon(expiryDate) {
+  if (!expiryDate) return false
+  const now = new Date()
+  const expiry = new Date(expiryDate)
+  const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24))
+  return daysLeft > 0 && daysLeft <= 30
+}
+
+function isExpired(expiryDate) {
+  if (!expiryDate) return false
+  return new Date(expiryDate) < new Date(new Date().toISOString().slice(0, 10))
+}
+
 function reset() {
   form.value = { stockCheckId: undefined, checkDate: new Date().toISOString().slice(0, 10), warehouseId: currentWarehouseId.value, remark: undefined, items: [] }
   proxy.resetForm("stockCheckRef")
@@ -370,7 +395,7 @@ function submitForm() {
   proxy.$refs["stockCheckRef"].validate(valid => {
     if (valid) {
       if (!form.value.items || form.value.items.length === 0) { proxy.$modal.msgWarning("盘点明细不能为空"); return }
-      const submitData = { ...form.value, items: form.value.items.map(item => ({ ...item, actualQuantity: convertToMinUnit(item), systemQuantity: convertSystemQtyToMinUnit(item) })) }
+      const submitData = { ...form.value, items: form.value.items.map(item => ({ ...item, productionDate: item.productionDate || undefined, expiryDate: item.expiryDate || undefined, actualQuantity: convertToMinUnit(item), systemQuantity: convertSystemQtyToMinUnit(item) })) }
       if (form.value.stockCheckId != undefined) {
         updateStockCheck(submitData).then(() => { proxy.$modal.msgSuccess("修改成功"); open.value = false; getList() })
       } else {
@@ -387,6 +412,8 @@ function handleDelete(row) {
 
 function cancel() { open.value = false; reset() }
 
-onMounted(() => { loadWarehouses() })
-getList()
+onMounted(async () => {
+  await loadWarehouses()
+  getList()
+})
 </script>

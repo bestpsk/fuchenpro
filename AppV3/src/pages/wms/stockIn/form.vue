@@ -98,7 +98,7 @@
                 </view>
               </view>
               <view class="form-field mini half" @click="openDatePicker(index, 'expiryDate')">
-                <view class="field-label">有效期至</view>
+                <view class="field-label">到期日期</view>
                 <view class="field-input-box picker-field mini">
                   <input class="field-input" :value="item.expiryDate" placeholder="选择日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
                   <u-icon name="arrow-right" size="12" color="#C9CDD4"></u-icon>

@@ -9,7 +9,7 @@
         </view>
       </view>
 
-      <view class="form-field" @click="showDatePicker = true">
+      <view class="form-field" @click="openCheckDatePicker">
         <view class="field-label"><text class="required">*</text> 盘点日期</view>
         <view class="field-input-box picker-field">
           <input class="field-input" :value="form.checkDate" placeholder="请选择盘点日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
@@ -72,6 +72,22 @@
               </view>
               <text v-if="item.packQty > 1" class="unit-convert-tip">1主单位={{ item.packQty }}副单位</text>
             </view>
+            <view class="item-row">
+              <view class="form-field mini half" @click="openDatePicker(idx, 'productionDate')">
+                <view class="field-label">生产日期</view>
+                <view class="field-input-box picker-field mini">
+                  <input class="field-input" :value="item.productionDate" placeholder="选择日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
+                  <u-icon name="arrow-right" size="12" color="#C9CDD4"></u-icon>
+                </view>
+              </view>
+              <view class="form-field mini half" @click="openDatePicker(idx, 'expiryDate')">
+                <view class="field-label">到期日期</view>
+                <view class="field-input-box picker-field mini">
+                  <input class="field-input" :value="item.expiryDate" placeholder="选择日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
+                  <u-icon name="arrow-right" size="12" color="#C9CDD4"></u-icon>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -102,6 +118,9 @@ const stockCheckId = ref(null)
 const showDatePicker = ref(false)
 const showWarehousePicker = ref(false)
 const detailKeyword = ref('')
+const currentEditIndex = ref(-1)
+const currentDateField = ref('')
+const datePickerModel = ref(Date.now())
 
 const warehouseColumns = computed(() => [warehouseList.value])
 const currentWarehouseName = computed(() => {
@@ -131,9 +150,29 @@ function getToday() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 }
 
+function openCheckDatePicker() {
+  currentEditIndex.value = -1
+  datePickerModel.value = Date.now()
+  showDatePicker.value = true
+}
+
+function openDatePicker(index, field) {
+  currentEditIndex.value = index
+  currentDateField.value = field
+  datePickerModel.value = Date.now()
+  showDatePicker.value = true
+}
+
 function onDateConfirm(e) {
-  const date = new Date(e.value)
-  form.checkDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+  const timestamp = Number(e.value) || e.value
+  const date = new Date(timestamp)
+  const dateStr = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
+  const index = currentEditIndex.value
+  if (index >= 0 && index < form.items.length) {
+    form.items[index][currentDateField.value] = dateStr
+  } else {
+    form.checkDate = dateStr
+  }
   showDatePicker.value = false
 }
 
@@ -220,7 +259,9 @@ async function loadInventory() {
       packQty: item.packQty || 1,
       unitType: '2',
       unitLabel: item.unitLabel || '',
-      specLabel: item.specLabel || ''
+      specLabel: item.specLabel || '',
+      productionDate: '',
+      expiryDate: ''
     }))
   } catch (e) {
     console.error('加载库存数据失败:', e)
@@ -290,7 +331,9 @@ async function submitForm() {
           systemQuantity: item.systemQuantity,
           actualQuantity,
           unitType: item.unitType,
-          originalQuantity: inputQty
+          originalQuantity: inputQty,
+          productionDate: item.productionDate || undefined,
+          expiryDate: item.expiryDate || undefined
         }
       })
     }

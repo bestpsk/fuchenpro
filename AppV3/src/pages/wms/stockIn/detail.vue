@@ -85,7 +85,7 @@
               <text class="info-value">{{ formatTime(item.productionDate) }}</text>
             </view>
             <view class="info-right" v-if="item.expiryDate">
-              <text class="info-label">有效期至</text>
+              <text class="info-label">到期日期</text>
               <text class="info-value" :class="{ 'expiry-warn': getExpiryClass(item.expiryDate) === 'warning', 'expiry-expired': getExpiryClass(item.expiryDate) === 'expired' }">{{ formatTime(item.expiryDate) }}</text>
             </view>
           </view>

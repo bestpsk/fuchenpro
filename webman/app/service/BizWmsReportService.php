@@ -6,6 +6,8 @@ use app\model\BizStockIn;
 use app\model\BizStockInItem;
 use app\model\BizStockOut;
 use app\model\BizStockOutItem;
+use app\model\BizStockCheck;
+use app\model\BizStockCheckItem;
 use app\model\BizInventory;
 use app\model\BizProduct;
 use app\service\DataScopeService;
@@ -308,57 +310,53 @@ class BizWmsReportService
 
     public function expiryInventory($params)
     {
-        $query = BizStockInItem::from('biz_stock_in_item as sii')
+        // 到期状态筛选闭包（复用于入库明细和盘点明细查询）
+        $applyExpiryFilter = function ($query, $expiryField) use ($params) {
+            if (!empty($params['expiry_status'])) {
+                $today = date('Y-m-d');
+                switch ($params['expiry_status']) {
+                    case 'expired':
+                        $query->where($expiryField, '<', $today);
+                        break;
+                    case '30':
+                        $query->where($expiryField, '>=', $today)
+                              ->where($expiryField, '<=', date('Y-m-d', strtotime('+30 days')));
+                        break;
+                    case '60':
+                        $query->where($expiryField, '>', date('Y-m-d', strtotime('+30 days')))
+                              ->where($expiryField, '<=', date('Y-m-d', strtotime('+60 days')));
+                        break;
+                    case '90':
+                        $query->where($expiryField, '>', date('Y-m-d', strtotime('+60 days')))
+                              ->where($expiryField, '<=', date('Y-m-d', strtotime('+90 days')));
+                        break;
+                    case 'normal':
+                        $query->where($expiryField, '>', date('Y-m-d', strtotime('+90 days')));
+                        break;
+                }
+            }
+            return $query;
+        };
+
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+
+        // 1. 入库明细查询（还有剩余未发出的批次）
+        $inQuery = BizStockInItem::from('biz_stock_in_item as sii')
             ->join('biz_product as p', 'sii.product_id', '=', 'p.product_id')
             ->join('biz_stock_in as si', 'sii.stock_in_id', '=', 'si.stock_in_id')
             ->whereRaw('sii.quantity > sii.shipped_quantity')
             ->whereNotNull('sii.expiry_date')
             ->where('si.status', '1'); // 只统计已确认的入库单
 
-        // 仓库筛选
         if (!empty($params['warehouse_id'])) {
-            $query->where('si.warehouse_id', $params['warehouse_id']);
+            $inQuery->where('si.warehouse_id', $params['warehouse_id']);
         }
-
-        // 到期状态筛选
-        if (!empty($params['expiry_status'])) {
-            $today = date('Y-m-d');
-            switch ($params['expiry_status']) {
-                case 'expired':
-                    $query->where('sii.expiry_date', '<', $today);
-                    break;
-                case '30':
-                    $query->where('sii.expiry_date', '>=', $today)
-                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+30 days')));
-                    break;
-                case '60':
-                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+30 days')))
-                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+60 days')));
-                    break;
-                case '90':
-                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+60 days')))
-                          ->where('sii.expiry_date', '<=', date('Y-m-d', strtotime('+90 days')));
-                    break;
-                case 'normal':
-                    $query->where('sii.expiry_date', '>', date('Y-m-d', strtotime('+90 days')));
-                    break;
-            }
-        }
-
-        // 进销存数据属于公共数据，不受数据权限约束
-        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-        //     $query->where(function ($q) use ($visibleUserIds) {
-        //         $q->whereIn('si.operator_id', $visibleUserIds)
-        //           ->orWhereNull('si.operator_id');
-        //     });
-        // }
-        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        $applyExpiryFilter($inQuery, 'sii.expiry_date');
         if ($authorizedWhIds !== null) {
-            $query->whereIn('si.warehouse_id', $authorizedWhIds);
+            $inQuery->whereIn('si.warehouse_id', $authorizedWhIds);
         }
 
-        $items = $query->select([
+        $inItems = $inQuery->select([
                 'sii.item_id',
                 'si.stock_in_no',
                 'si.warehouse_id',
@@ -371,11 +369,51 @@ class BizWmsReportService
                 'sii.production_date',
                 'sii.expiry_date',
                 Db::raw('DATEDIFF(sii.expiry_date, CURDATE()) as remaining_days'),
+                'p.unit',
+                'p.spec',
+                'p.pack_qty',
             ])
-            ->orderBy('remaining_days', 'asc')
             ->get();
 
-        // 计算到期状态
+        // 2. 盘点明细查询（盘盈且填写了有效期的记录）
+        $checkQuery = BizStockCheckItem::from('biz_stock_check_item as sci')
+            ->join('biz_product as p', 'sci.product_id', '=', 'p.product_id')
+            ->join('biz_stock_check as sc', 'sci.stock_check_id', '=', 'sc.stock_check_id')
+            ->where('sci.diff_quantity', '>', 0)
+            ->whereNotNull('sci.expiry_date')
+            ->where('sc.status', '1'); // 只统计已确认的盘点单
+
+        if (!empty($params['warehouse_id'])) {
+            $checkQuery->where('sc.warehouse_id', $params['warehouse_id']);
+        }
+        $applyExpiryFilter($checkQuery, 'sci.expiry_date');
+        if ($authorizedWhIds !== null) {
+            $checkQuery->whereIn('sc.warehouse_id', $authorizedWhIds);
+        }
+
+        $checkItems = $checkQuery->select([
+                'sci.item_id',
+                'sc.stock_check_no as stock_in_no',
+                'sc.warehouse_id',
+                'sci.product_id',
+                'p.product_name',
+                'p.category',
+                'sci.diff_quantity as quantity',
+                Db::raw('0 as shipped_quantity'),
+                'sci.diff_quantity as remaining_quantity',
+                'sci.production_date',
+                'sci.expiry_date',
+                Db::raw('DATEDIFF(sci.expiry_date, CURDATE()) as remaining_days'),
+                'p.unit',
+                'p.spec',
+                'p.pack_qty',
+            ])
+            ->get();
+
+        // 3. 合并结果，按剩余天数升序排列
+        $items = $inItems->concat($checkItems)->sortBy('remaining_days')->values();
+
+        // 4. 计算到期状态
         $result = $items->map(function ($item) {
             $remainingDays = intval($item->remaining_days);
             if ($remainingDays <= 0) {

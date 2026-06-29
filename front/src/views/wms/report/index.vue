@@ -184,14 +184,16 @@
           </el-form-item>
         </el-form>
         <el-table :data="expiryList" border v-loading="expiryLoading" style="width: 100%">
-          <el-table-column label="入库单号" prop="stockInNo" width="150" />
+          <el-table-column label="单据编号" prop="stockInNo" width="150" />
           <el-table-column label="货品名称" prop="productName" min-width="120" />
           <el-table-column label="类别" min-width="80" align="center">
             <template #default="scope"><dict-tag :options="biz_product_category" :value="scope.row.category" /></template>
           </el-table-column>
-          <el-table-column label="批次数量" prop="remainingQuantity" width="100" />
+          <el-table-column label="批次数量" min-width="140" align="center">
+            <template #default="scope">{{ formatQty(scope.row.remainingQuantity, scope.row) }}</template>
+          </el-table-column>
           <el-table-column label="生产日期" prop="productionDate" width="110" />
-          <el-table-column label="有效期至" prop="expiryDate" width="110" />
+          <el-table-column label="到期日期" prop="expiryDate" width="110" />
           <el-table-column label="剩余天数" prop="remainingDays" width="100" />
           <el-table-column label="到期状态" width="120">
             <template #default="scope">

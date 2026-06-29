@@ -159,12 +159,12 @@ class BizWmsReportController
         $list = is_array($result) ? $result : ($result->toArray() ?? []);
 
         $fields = [
-            'stockInNo' => ['name' => '入库单号', 'sort' => 1],
+            'stockInNo' => ['name' => '单据编号', 'sort' => 1],
             'productName' => ['name' => '货品名称', 'sort' => 2],
             'category' => ['name' => '类别', 'dictType' => 'biz_product_category', 'sort' => 3],
             'remainingQuantity' => ['name' => '批次数量', 'cellType' => 'numeric', 'sort' => 4],
             'productionDate' => ['name' => '生产日期', 'dateFormat' => 'Y-m-d', 'sort' => 5],
-            'expiryDate' => ['name' => '有效期至', 'dateFormat' => 'Y-m-d', 'sort' => 6],
+            'expiryDate' => ['name' => '到期日期', 'dateFormat' => 'Y-m-d', 'sort' => 6],
             'remainingDays' => ['name' => '剩余天数', 'cellType' => 'numeric', 'sort' => 7],
             'expiryStatusText' => ['name' => '到期状态', 'sort' => 8],
         ];

@@ -66,7 +66,7 @@ const request = (options) => {
         } else if (code === 500) {
           // 500服务端错误：弹出错误提示
           toast(msg)
-          reject('500')
+          reject(new Error(msg))
         } else if (code !== 200) {
           // 其他非200状态码：弹出提示
           toast(msg)

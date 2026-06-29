@@ -818,8 +818,10 @@ function handleExport() {
 
 function cancel() { open.value = false; reset() }
 
-onMounted(() => { loadWarehouses() })
-getList()
+onMounted(async () => {
+  await loadWarehouses()
+  getList()
+})
 </script>
 
 <style scoped>

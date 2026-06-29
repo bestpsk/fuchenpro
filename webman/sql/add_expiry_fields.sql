@@ -17,12 +17,12 @@ SET @sql = IF(@col_exists = 0, 'ALTER TABLE `biz_stock_in_item` ADD COLUMN `prod
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'biz_stock_in_item' AND COLUMN_NAME = 'expiry_date');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `biz_stock_in_item` ADD COLUMN `expiry_date` date DEFAULT NULL COMMENT \'有效期至\' AFTER `production_date`', 'SELECT \'expiry_date already exists\' as result');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `biz_stock_in_item` ADD COLUMN `expiry_date` date DEFAULT NULL COMMENT \'到期日期\' AFTER `production_date`', 'SELECT \'expiry_date already exists\' as result');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 3. 库存表添加最早到期时间字段
 SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'biz_inventory' AND COLUMN_NAME = 'earliest_expiry');
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE `biz_inventory` ADD COLUMN `earliest_expiry` date DEFAULT NULL COMMENT \'最早批次有效期至\' AFTER `quantity`', 'SELECT \'earliest_expiry already exists\' as result');
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE `biz_inventory` ADD COLUMN `earliest_expiry` date DEFAULT NULL COMMENT \'最早批次到期日期\' AFTER `quantity`', 'SELECT \'earliest_expiry already exists\' as result');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 4. 验证

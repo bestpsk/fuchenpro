@@ -157,6 +157,8 @@ function handleExport() {
 function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { warnOnly.value = ""; proxy.resetForm("queryRef"); handleQuery() }
 
-onMounted(() => { loadWarehouses() })
-getList()
+onMounted(async () => {
+  await loadWarehouses()
+  getList()
+})
 </script>

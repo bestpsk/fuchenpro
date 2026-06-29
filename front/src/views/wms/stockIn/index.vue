@@ -64,7 +64,7 @@
         </template>
       </el-table-column>
       <el-table-column label="创建时间" prop="createTime" min-width="130" align="center" />
-      <el-table-column label="有效期至" min-width="100" align="center">
+      <el-table-column label="到期日期" min-width="100" align="center">
         <template #default="scope">
           <span v-if="scope.row.earliestExpiry" :style="{ color: isExpiringSoon(scope.row.earliestExpiry) ? '#e6a23c' : (isExpired(scope.row.earliestExpiry) ? '#f56c6c' : '') }">{{ scope.row.earliestExpiry }}</span>
           <span v-else>-</span>
@@ -170,7 +170,7 @@
               <span v-else>{{ scope.row.productionDate || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="有效期至" min-width="110" align="center" header-align="center">
+          <el-table-column label="到期日期" min-width="110" align="center" header-align="center">
             <template #default="scope">
               <el-date-picker v-if="!isView" v-model="scope.row.expiryDate" type="date" value-format="YYYY-MM-DD" placeholder="选择日期" style="width: 100%" />
               <span v-else :style="{ color: isExpiringSoon(scope.row.expiryDate) ? '#e6a23c' : (isExpired(scope.row.expiryDate) ? '#f56c6c' : '') }">{{ scope.row.expiryDate || '-' }}</span>
@@ -584,7 +584,42 @@ function isExpired(expiryDate) {
 }
 
 function onUnitTypeChange(index) {
-  // 单位类型切换仅切换显示状态，数值换算统一由后端处理
+  const item = form.value.items[index]
+  const packQty = item.packQty || 1
+  const newType = item.unitType
+  const oldType = item._prevUnitType
+
+  if (!oldType || newType === oldType) {
+    item._prevUnitType = newType
+    return
+  }
+
+  const currentQty = Number(item.quantity) || 0
+  const currentPrice = Number(item.purchasePrice) || 0
+
+  // 来回切换时还原历史值
+  if (item._prevQuantity !== undefined && item._prevPrice !== undefined) {
+    const tempQty = currentQty
+    const tempPrice = currentPrice
+    item.quantity = item._prevQuantity
+    item.purchasePrice = item._prevPrice
+    item._prevQuantity = tempQty
+    item._prevPrice = tempPrice
+  } else {
+    if (newType === '1') {
+      // 副 → 主: quantity / packQty, price * packQty
+      item.quantity = packQty > 0 ? Math.round(currentQty / packQty * 10000) / 10000 : 0
+      item.purchasePrice = Math.round(currentPrice * packQty * 100) / 100
+    } else {
+      // 主 → 副: quantity * packQty, price / packQty
+      item.quantity = Math.round(currentQty * packQty * 10000) / 10000
+      item.purchasePrice = packQty > 0 ? Math.round(currentPrice / packQty * 100) / 100 : 0
+    }
+    item._prevQuantity = currentQty
+    item._prevPrice = currentPrice
+  }
+
+  item._prevUnitType = newType
   calcAmount(index)
 }
 
@@ -703,8 +738,10 @@ function handleExport() {
 
 function cancel() { open.value = false; reset() }
 
-onMounted(() => { loadWarehouses() })
-getList()
+onMounted(async () => {
+  await loadWarehouses()
+  getList()
+})
 </script>
 
 <style scoped>
