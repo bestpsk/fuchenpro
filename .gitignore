@@ -7,3 +7,13 @@ front/web/
 
 # IDE 配置
 .vscode/
+
+# 运行时上传目录
+webman/public/profile/avatar/
+webman/public/profile/customer_avatar/
+webman/public/profile/upload/
+
+# 运行时备份与临时文件
+webman/runtimebackup/
+1.txt
+docs/
