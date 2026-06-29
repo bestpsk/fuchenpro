@@ -124,32 +124,20 @@ class SysRoleController
     // 分页查询已分配该角色的用户列表
     public function allocatedList(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $roleId = 0;
-        foreach ($parts as $i => $p) {
-            if ($p === 'authUser' && isset($parts[$i - 1])) {
-                $roleId = intval($parts[$i - 1]);
-                break;
-            }
-        }
+        $params = convert_to_snake_case($request->all());
+        $roleId = intval($params['role_id'] ?? 0);
         $service = new SysRoleService();
-        $result = $service->allocatedUserList($roleId, $request->all());
+        $result = $service->allocatedUserList($roleId, $params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 
     // 分页查询未分配该角色的用户列表
     public function unallocatedList(Request $request)
     {
-        $parts = explode('/', $request->path());
-        $roleId = 0;
-        foreach ($parts as $i => $p) {
-            if ($p === 'authUser' && isset($parts[$i - 1])) {
-                $roleId = intval($parts[$i - 1]);
-                break;
-            }
-        }
+        $params = convert_to_snake_case($request->all());
+        $roleId = intval($params['role_id'] ?? 0);
         $service = new SysRoleService();
-        $result = $service->unallocatedUserList($roleId, $request->all());
+        $result = $service->unallocatedUserList($roleId, $params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 

@@ -42,7 +42,7 @@ class BizSalesOrderController
     // 新增销售订单，包含订单明细项，自动填充创建人信息并记录错误日志
     public function add(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:order:add')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:add')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         try {
@@ -71,7 +71,7 @@ class BizSalesOrderController
     // 修改销售订单及明细项，自动填充更新人信息
     public function edit(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:order:edit')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:edit')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         try {
@@ -90,7 +90,7 @@ class BizSalesOrderController
     // 批量删除销售订单
     public function remove(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:order:remove')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:remove')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $orderIds = $request->input('orderIds');
@@ -109,7 +109,7 @@ class BizSalesOrderController
     public function enterpriseAudit(Request $request)
     {
         try {
-            if (PermissionService::lacksPermi($request->loginUser, 'business:order:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+            if (PermissionService::lacksPermi($request->loginUser, 'business:sales:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
             $orderId = $request->post('orderId');
             $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
             $service = new BizSalesOrderService();
@@ -123,7 +123,7 @@ class BizSalesOrderController
     // 财务审核销售订单
     public function financeAudit(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:order:financeAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:financeAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
         $service = new BizSalesOrderService();
@@ -133,7 +133,7 @@ class BizSalesOrderController
 
     public function cancel(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:order:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $orderId = $request->post('orderId');
         $service = new BizSalesOrderService();
         $result = $service->cancelOrder($orderId);

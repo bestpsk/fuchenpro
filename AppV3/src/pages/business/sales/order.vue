@@ -127,7 +127,7 @@
         </view>
 
         <view class="submit-bar">
-          <u-button v-if="checkPermi('business:order:add')" type="primary" text="提交订单" :loading="submitting" @click="submitOrder" :customStyle="{ borderRadius: '12rpx', height: '84rpx' }"></u-button>
+          <u-button v-if="checkPermi('business:sales:add')" type="primary" text="提交订单" :loading="submitting" @click="submitOrder" :customStyle="{ borderRadius: '12rpx', height: '84rpx' }"></u-button>
         </view>
       </view>
 
@@ -265,7 +265,7 @@
 
               <view class="rc-repay-footer">
                 <text class="rc-time">{{ formatTimeShort(item.createTime) }}</text>
-                <view class="rc-repay-actions" v-if="item.status === '0' && checkPermi('business:repayment:audit')">
+                <view class="rc-repay-actions" v-if="item.status === '0' && checkPermi('business:sales:repaymentAudit')">
                   <view class="rc-action-btn rc-btn-pass" @click.stop="handleAuditPass(item.repaymentId)">
                     <u-icon name="checkmark" size="14" color="#fff"></u-icon>
                     <text>通过</text>
@@ -350,7 +350,7 @@
           </view>
         </view>
         <view class="popup-actions">
-          <u-button v-if="checkPermi('business:repayment:add')" type="primary" text="确认还款" :loading="repaySubmitting" @click="submitRepay"></u-button>
+          <u-button v-if="checkPermi('business:sales:repayment')" type="primary" text="确认还款" :loading="repaySubmitting" @click="submitRepay"></u-button>
         </view>
       </view>
     </u-popup>
@@ -401,7 +401,7 @@
             <text class="repay-value">{{ repayDetail.remark }}</text>
           </view>
         </view>
-        <view class="popup-actions" v-if="repayDetail?.status === '0' && checkPermi('business:repayment:audit')">
+        <view class="popup-actions" v-if="repayDetail?.status === '0' && checkPermi('business:sales:repaymentAudit')">
           <view class="detail-action-row">
             <u-button type="success" text="通过" @click="handleAuditPass(repayDetail.repaymentId); closeRepayDetailPopup()"></u-button>
             <u-button type="error" text="驳回" @click="closeRepayDetailPopup(); openRejectPopup(repayDetail.repaymentId)"></u-button>

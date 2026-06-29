@@ -452,6 +452,13 @@ async function loadDetail() {
       remark: data.remark || ''
     })
     originalDates.value = [...scheduleDates]
+    // 企业模式编辑时，将当前员工加入 selectedUsers
+    if (formMode.value === 'enterprise' && data.userId) {
+      selectedUsers.value = [{
+        userId: data.userId,
+        userName: data.userName || ''
+      }]
+    }
   } catch (e) { console.error('加载详情失败:', e); uni.showToast({ title: '加载失败', icon: 'none' }) }
   finally { uni.hideLoading() }
 }
@@ -476,7 +483,12 @@ async function submitForm() {
         const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
         const response = await getScheduleDates({ userId: user.userId, yearMonth })
         const userBooked = response.data || []
-        const conflictDates = form.selectedDates.filter(date => userBooked.includes(date))
+        // 编辑模式下，当前员工排除自身原有日期
+        const isOriginalUser = mode.value === 'edit' && form.userId && String(user.userId) === String(form.userId)
+        const datesToCheck = isOriginalUser
+          ? form.selectedDates.filter(d => !originalDates.value.includes(d))
+          : form.selectedDates
+        const conflictDates = datesToCheck.filter(date => userBooked.includes(date))
         if (conflictDates.length > 0) {
           conflicts.push(`${user.userName}：${conflictDates.join('、')}`)
         }
@@ -505,8 +517,17 @@ async function submitForm() {
           })
         }
       }
-      await addScheduleBatch(scheduleList)
-      uni.showToast({ title: `新增成功（${selectedUsers.value.length}人×${form.selectedDates.length}天）`, icon: 'success' })
+      if (mode.value === 'edit' && form.scheduleId) {
+        // 编辑模式：先删除原有行程，再批量新增
+        if (form.scheduleIds && form.scheduleIds.length > 0) {
+          await delSchedule(form.scheduleIds.join(','))
+        }
+        await addScheduleBatch(scheduleList)
+        uni.showToast({ title: '修改成功', icon: 'success' })
+      } else {
+        await addScheduleBatch(scheduleList)
+        uni.showToast({ title: `新增成功（${selectedUsers.value.length}人×${form.selectedDates.length}天）`, icon: 'success' })
+      }
       setTimeout(() => goBack(), 1500)
     } catch (e) {
       console.error('提交失败:', e)

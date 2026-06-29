@@ -52,22 +52,24 @@ const selectedPoint = reactive({ latitude: null, longitude: null, address: '' })
 
 let map = null
 let marker = null
-let placeSearch = null
-let geocoder = null
 
 // 高德地图配置：默认使用 .env，运行时从后端覆盖
 const AMAP_KEY = ref(import.meta.env.VITE_AMAP_KEY)
 const AMAP_SECURITY_CODE = ref(import.meta.env.VITE_AMAP_SECURITY_CODE)
+// REST API 配置（用于搜索和逆地理编码，无需域名白名单）
+const AMAP_WEB_SERVICE_KEY = ref('')
 
 /** 从后端加载高德地图配置，覆盖 .env 默认值 */
 async function loadAmapConfig() {
   try {
-    const [keyRes, securityRes] = await Promise.all([
-      getConfigKey('sys.amap.jsApiKey'),
-      getConfigKey('sys.amap.securityJsCode')
+    const [keyRes, securityRes, webKeyRes] = await Promise.all([
+      getConfigKey('sys.amap.jsKey'),
+      getConfigKey('sys.amap.securityJsCode'),
+      getConfigKey('sys.amap.webServiceKey')
     ])
     if (keyRes.data) AMAP_KEY.value = keyRes.data
     if (securityRes.data) AMAP_SECURITY_CODE.value = securityRes.data
+    if (webKeyRes.data) AMAP_WEB_SERVICE_KEY.value = webKeyRes.data
   } catch (e) {
     console.warn('获取高德地图配置失败，使用默认配置', e)
   }
@@ -81,7 +83,6 @@ async function initMap() {
   AMapLoader.load({
     key: AMAP_KEY.value,
     version: '2.0',
-    plugins: ['AMap.PlaceSearch', 'AMap.Geocoder', 'AMap.AutoComplete'],
     securityJsCode: AMAP_SECURITY_CODE.value
   }).then((AMap) => {
     const center = (props.latitude && props.longitude)
@@ -96,14 +97,6 @@ async function initMap() {
     if (props.latitude && props.longitude) {
       addMarker(center[0], center[1])
     }
-
-    geocoder = new AMap.Geocoder()
-    placeSearch = new AMap.PlaceSearch({ 
-      pageSize: 10, 
-      pageIndex: 1,
-      city: '全国',
-      citylimit: false
-    })
 
     map.on('click', (e) => {
       const lng = e.lnglat.getLng()
@@ -135,38 +128,52 @@ function addMarker(lng, lat) {
   map?.setCenter([lng, lat])
 }
 
-function reverseGeocode(lat, lng) {
-  if (!geocoder) return
-  geocoder.getAddress([lng, lat], (status, result) => {
-    if (status === 'complete' && result.info === 'OK') {
-      selectedPoint.address = result.regeocode.formattedAddress
+/**
+ * 逆地理编码（REST API）
+ * 调用 restapi.amap.com/v3/geocode/regeo，使用 webServiceKey 无需域名白名单
+ */
+async function reverseGeocode(lat, lng) {
+  try {
+    const key = AMAP_WEB_SERVICE_KEY.value
+    const url = `https://restapi.amap.com/v3/geocode/regeo?location=${lng},${lat}&key=${key}&extensions=all&output=JSON`
+    const resp = await fetch(url)
+    const data = await resp.json()
+    if (data?.regeocode) {
+      selectedPoint.address = data.regeocode.formatted_address || ''
       selectedPoint.latitude = lat
       selectedPoint.longitude = lng
     }
-  })
+  } catch (e) {
+    console.warn('逆地理编码失败', e)
+  }
 }
 
-function handleSearch() {
+/**
+ * 搜索地点（REST API）
+ * 调用 restapi.amap.com/v3/place/text，使用 webServiceKey 无需域名白名单
+ */
+async function handleSearch() {
   if (!searchKeyword.value.trim()) {
     return
   }
-  if (!placeSearch) {
-    console.error('placeSearch未初始化')
-    return
-  }
-  placeSearch.search(searchKeyword.value, (status, result) => {
-    if (status === 'complete' && result.poiList && result.poiList.pois && result.poiList.pois.length) {
-      const poi = result.poiList.pois[0]
-      const lng = poi.location.lng
-      const lat = poi.location.lat
+  try {
+    const key = AMAP_WEB_SERVICE_KEY.value
+    const url = `https://restapi.amap.com/v3/place/text?keywords=${encodeURIComponent(searchKeyword.value)}&key=${key}&offset=10&page=1&extensions=base`
+    const resp = await fetch(url)
+    const data = await resp.json()
+    if (data?.pois && data.pois.length > 0) {
+      const poi = data.pois[0]
+      const [lngStr, latStr] = poi.location.split(',')
+      const lng = parseFloat(lngStr)
+      const lat = parseFloat(latStr)
       addMarker(lng, lat)
       reverseGeocode(lat, lng)
-    } else if (status === 'no_data') {
-      console.warn('搜索无结果')
     } else {
-      console.error('搜索失败', status, result)
+      console.warn('搜索无结果')
     }
-  })
+  } catch (e) {
+    console.warn('搜索失败', e)
+  }
 }
 
 function handleConfirm() {

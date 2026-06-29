@@ -528,6 +528,13 @@ function processScheduleListGroup() {
   processedScheduleList.value = Object.values(grouped)
 }
 
+/** 兼容后端数组格式：取 schedules[day] 的首元素（单对象场景直接返回） */
+function getScheduleOfDay(schedules, day) {
+  const arr = schedules?.[day]
+  if (!arr) return null
+  return Array.isArray(arr) ? arr[0] : arr
+}
+
 function getMergedSchedules(row) {
   if (!row.schedules) return []
   const schedules = row.schedules
@@ -535,7 +542,7 @@ function getMergedSchedules(row) {
   let currentMerge = null
 
   for (let day = 1; day <= daysInMonth.value; day++) {
-    const schedule = schedules[day]
+    const schedule = getScheduleOfDay(schedules, day)
     if (!schedule) {
       if (currentMerge) { merged.push(currentMerge); currentMerge = null }
       continue
@@ -622,7 +629,7 @@ function handleRowMouseDown(event, row, rowIndex) {
 
   const day = parseInt(cell.getAttribute('data-day'))
   if (activeTab.value === 'employee' && isRestDayForUser(row.userId, day)) return
-  const schedule = row.schedules?.[day]
+  const schedule = getScheduleOfDay(row.schedules, day)
   if (!canSelectCell(schedule)) return
 
   isDragging.value = true
@@ -645,7 +652,7 @@ function handleCellEnter(rowIndex, day) {
       selectedDays.value.clear()
       return
     }
-    const sched = dragStartInfo.value.row.schedules?.[d]
+    const sched = getScheduleOfDay(dragStartInfo.value.row.schedules, d)
     if (!canSelectCell(sched)) {
       selectedDays.value.clear()
       return
@@ -697,7 +704,7 @@ function handleMouseLeave() {}
 
 function handleCellClick(row, day) {
   if (isDragging.value) return
-  const schedule = row.schedules?.[day]
+  const schedule = getScheduleOfDay(row.schedules, day)
   if (schedule && schedule.status !== '4') handleScheduleClick(schedule)
 }
 

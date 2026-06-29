@@ -19,7 +19,7 @@
           <view class="section-line"></view>
           <text class="section-title">选择要操作的品项</text>
           <text class="section-subtitle" v-if="packageList.length > 0">共 {{ packageList.length }} 个套餐</text>
-          <button class="trial-entry-btn" v-if="checkPermi('business:operation:add')" @click="openTrialDrawer">
+          <button class="trial-entry-btn" v-if="checkPermi('business:sales:operation')" @click="openTrialDrawer">
           <u-icon name="plus" size="12" color="#3D6DF7"></u-icon>
           <text>体验操作</text>
         </button>
@@ -54,7 +54,7 @@
             <text class="bar-total" v-if="selectedItems.length > 0">合计 ¥{{ getTotalPrice() }}</text>
           </view>
           <view class="bar-actions">
-            <button class="bar-btn" :class="{ active: selectedItems.length > 0 }" :disabled="selectedItems.length === 0" v-if="checkPermi('business:operation:add')" @click="openDetailDrawer">确认操作</button>
+            <button class="bar-btn" :class="{ active: selectedItems.length > 0 }" :disabled="selectedItems.length === 0" v-if="checkPermi('business:sales:operation')" @click="openDetailDrawer">确认操作</button>
           </view>
         </view>
       </view>

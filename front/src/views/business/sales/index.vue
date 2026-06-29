@@ -91,7 +91,7 @@
                   <span class="stat-label">套餐名称</span>
                   <el-input v-model="orderPackageName" placeholder="请输入套餐名称" clearable style="width: 240px; margin-left: 8px" />
                 </div>
-                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:salesOrder:add']">添加品项</el-button>
+                <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:sales:add']">添加品项</el-button>
               </div>
               <el-table :data="orderItems" border style="width: 100%" >
                 <el-table-column label="品项" min-width="80">
@@ -138,7 +138,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="65" align="center">
                   <template #default="scope">
-                    <el-button link type="danger" icon="Delete" @click="orderItems.splice(scope.$index, 1)" v-hasPermi="['business:salesOrder:add']" />
+                    <el-button link type="danger" icon="Delete" @click="orderItems.splice(scope.$index, 1)" v-hasPermi="['business:sales:add']" />
                   </template>
                 </el-table-column>
               </el-table>
@@ -153,7 +153,7 @@
               <el-row style="margin-top: 12px; text-align: right; background: var(--el-fill-color-lighter); padding: 10px 16px; border-radius: 4px">
                 <el-col :span="24">
                   <span style="margin-right: 12px">合计: <b style="color: #409eff">{{ totalDealAmount }}</b> 元</span>
-                  <el-button type="primary" @click="submitOrder" v-hasPermi="['business:salesOrder:add']">提交订单</el-button>
+                  <el-button type="primary" @click="submitOrder" v-hasPermi="['business:sales:add']">提交订单</el-button>
                 </el-col>
               </el-row>
             </el-tab-pane>
@@ -261,7 +261,7 @@
                     <el-input v-model="operationForm.remark" type="textarea" :rows="2" />
                   </el-form-item>
                   <el-form-item style="text-align: right">
-                    <el-button type="primary" @click="submitOperation('0')" v-hasPermi="['business:operation:add']">提交持卡操作</el-button>
+                    <el-button type="primary" @click="submitOperation('0')" v-hasPermi="['business:sales:operation']">提交持卡操作</el-button>
                   </el-form-item>
                 </el-form>
               </el-drawer>
@@ -325,7 +325,7 @@
                     <el-input v-model="trialForm.remark" type="textarea" :rows="2" />
                   </el-form-item>
                   <el-form-item>
-                    <el-button type="warning" @click="submitOperation('1')" v-hasPermi="['business:operation:add']">提交体验操作</el-button>
+                    <el-button type="warning" @click="submitOperation('1')" v-hasPermi="['business:sales:operation']">提交体验操作</el-button>
                     <el-button @click="trialDrawerVisible = false">取消</el-button>
                   </el-form-item>
                 </el-form>
@@ -359,7 +359,7 @@
                   <el-table-column label="创建时间" prop="createTime" width="160" />
                   <el-table-column label="操作" width="100" align="center" fixed="right">
                     <template #default="scope">
-                      <el-button type="primary" size="small" @click="openRepayDialog(scope.row)" v-hasPermi="['business:repayment:add']">还款</el-button>
+                      <el-button type="primary" size="small" @click="openRepayDialog(scope.row)" v-hasPermi="['business:sales:repayment']">还款</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -395,7 +395,7 @@
                   <el-table-column label="创建时间" prop="createTime" width="160" />
                   <el-table-column label="操作" width="80" align="center" fixed="right">
                     <template #default="scope">
-                      <el-button v-if="scope.row.status === '0'" v-hasPermi="['business:repayment:audit']" type="success" size="small" link @click="handleAuditRepayment(scope.row.repaymentId)">审核</el-button>
+                      <el-button v-if="scope.row.status === '0'" v-hasPermi="['business:sales:repaymentAudit']" type="success" size="small" link @click="handleAuditRepayment(scope.row.repaymentId)">审核</el-button>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -405,7 +405,7 @@
 
             <el-tab-pane label="档案" name="archive">
               <div style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
-                <el-button type="primary" size="small" icon="Plus" @click="handleAddArchive" v-hasPermi="['business:archive:add']">新增档案</el-button>
+                <el-button type="primary" size="small" icon="Plus" @click="handleAddArchive" v-hasPermi="['business:sales:archiveAdd']">新增档案</el-button>
                 <el-select v-model="archiveFilterType" placeholder="类型" clearable size="small" style="width: 100px" @change="loadArchiveList">
                   <el-option label="开单" value="0" />
                   <el-option label="操作" value="1" />
@@ -423,7 +423,7 @@
                       <el-tag v-if="item.archiveType && item.archiveType !== 'sales'" type="info" size="small" style="margin-left: 4px">{{ getArchiveTypeLabel(item.archiveType) }}</el-tag>
                       <span v-if="item.operatorUserName" class="archive-operator">{{ item.operatorUserName }}</span>
                     </div>
-                    <el-button v-if="item.sourceType === '3'" link type="danger" size="small" icon="Delete" @click="handleDeleteArchive(item)" v-hasPermi="['business:archive:remove']" />
+                    <el-button v-if="item.sourceType === '3'" link type="danger" size="small" icon="Delete" @click="handleDeleteArchive(item)" v-hasPermi="['business:sales:archiveRemove']" />
                   </div>
                   <div class="archive-card-body">
                     <div class="archive-main">

@@ -37,7 +37,7 @@
               </view>
             </view>
           </view>
-          <view class="card-actions" v-if="checkPermi('business:operation:remove')">
+          <view class="card-actions" v-if="checkPermi('business:sales:operationRemove')">
             <view class="action-btn delete" @click.stop="deleteOperation(item)">删除</view>
           </view>
         </view>

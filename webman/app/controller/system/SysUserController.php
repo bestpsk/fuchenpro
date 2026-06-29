@@ -308,30 +308,49 @@ class SysUserController
 
         $roleService = new \app\service\SysRoleService();
         $roles = $roleService->selectAllRoles();
+        // 标记用户已分配的角色
+        $userRoleIds = \app\model\SysUserRole::where('user_id', $userId)->pluck('role_id')->toArray();
+        $rolesArray = $roles->toArray();
+        foreach ($rolesArray as &$role) {
+            $role['flag'] = in_array($role['role_id'], $userRoleIds);
+        }
+        unset($role);
+
         $userData = $user->toArray();
         unset($userData['password']);
 
         return AjaxResult::success('', [
             'user' => $userData,
-            'roles' => $roles,
+            'roles' => $rolesArray,
         ]);
     }
 
     // 保存用户角色授权关系
     public function insertAuthRole(Request $request)
     {
-        $userId = $request->post('userId');
-        $roleIds = $request->post('roleIds', []);
+        $userId = $request->input('userId');
+        $roleIds = $request->input('roleIds', []);
         if (is_string($roleIds)) {
             $roleIds = explode(',', $roleIds);
         }
+        if (!$userId) {
+            return AjaxResult::error('参数错误');
+        }
 
-        $userService = new SysUserService();
-        $result = $userService->updateUser([
-            'user_id' => $userId,
-            'role_ids' => $roleIds,
-        ]);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        // 直接处理角色关联，避免 updateUser 清空岗位
+        \app\model\SysUserRole::where('user_id', $userId)->delete();
+        if (!empty($roleIds)) {
+            $data = [];
+            foreach ($roleIds as $roleId) {
+                if ($roleId) {
+                    $data[] = ['user_id' => $userId, 'role_id' => $roleId];
+                }
+            }
+            if (!empty($data)) {
+                \app\model\SysUserRole::insert($data);
+            }
+        }
+        return AjaxResult::success();
     }
 
     // 获取部门树下拉选择数据

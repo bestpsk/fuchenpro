@@ -151,9 +151,17 @@ class SysNoticeService
     public function readUsersList($noticeId, $params = [])
     {
         $query = SysNoticeRead::join('sys_user', 'sys_notice_read.user_id', '=', 'sys_user.user_id')
+            ->leftJoin('sys_dept', 'sys_user.dept_id', '=', 'sys_dept.dept_id')
             ->where('sys_notice_read.notice_id', $noticeId)
             ->where('sys_user.del_flag', '0')
-            ->select('sys_user.user_id', 'sys_user.user_name', 'sys_user.nick_name', 'sys_notice_read.read_time');
+            ->select(
+                'sys_user.user_id',
+                'sys_user.user_name',
+                'sys_user.nick_name',
+                'sys_user.phonenumber',
+                'sys_dept.dept_name as deptName',
+                'sys_notice_read.read_time'
+            );
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);

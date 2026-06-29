@@ -136,6 +136,12 @@
                 <text class="value">{{ item.address }}</text>
               </view>
             </view>
+            <view class="info-row" v-if="item.serverUserName">
+              <view class="info-item full">
+                <text class="label">服务员工</text>
+                <text class="value">{{ item.serverUserName }}</text>
+              </view>
+            </view>
           </view>
           <view class="card-footer">
             <view class="time-text">{{ formatTime(item.createTime) }}</view>

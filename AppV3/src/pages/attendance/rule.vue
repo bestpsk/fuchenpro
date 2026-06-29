@@ -179,25 +179,21 @@
           </view>
           <view class="form-item">
             <text class="form-label">上班时间</text>
-            <picker mode="time" :value="form.workStartTime" @change="onStartTimeChange">
-              <view class="form-picker">
-                <text :class="{ 'picker-placeholder': !form.workStartTime }">
-                  {{ form.workStartTime || '请选择上班时间' }}
-                </text>
-                <u-icon name="arrow-right" size="14" color="#86909C" />
-              </view>
-            </picker>
+            <view class="form-picker" @click="showStartTimePicker = true">
+              <text :class="{ 'picker-placeholder': !form.workStartTime }">
+                {{ form.workStartTime || '请选择上班时间' }}
+              </text>
+              <u-icon name="arrow-right" size="14" color="#86909C" />
+            </view>
           </view>
           <view class="form-item">
             <text class="form-label">下班时间</text>
-            <picker mode="time" :value="form.workEndTime" @change="onEndTimeChange">
-              <view class="form-picker">
-                <text :class="{ 'picker-placeholder': !form.workEndTime }">
-                  {{ form.workEndTime || '请选择下班时间' }}
-                </text>
-                <u-icon name="arrow-right" size="14" color="#86909C" />
-              </view>
-            </picker>
+            <view class="form-picker" @click="showEndTimePicker = true">
+              <text :class="{ 'picker-placeholder': !form.workEndTime }">
+                {{ form.workEndTime || '请选择下班时间' }}
+              </text>
+              <u-icon name="arrow-right" size="14" color="#86909C" />
+            </view>
           </view>
           <view class="form-item">
             <text class="form-label">迟到容忍(分钟)</text>
@@ -249,6 +245,28 @@
         </view>
       </view>
     </u-popup>
+
+    <view class="datetime-picker-wrap">
+      <u-datetime-picker
+        :show="showStartTimePicker"
+        v-model="form.workStartTime"
+        mode="time"
+        title="选择上班时间"
+        @confirm="onStartTimeConfirm"
+        @cancel="showStartTimePicker = false"
+        @close="showStartTimePicker = false"
+      ></u-datetime-picker>
+
+      <u-datetime-picker
+        :show="showEndTimePicker"
+        v-model="form.workEndTime"
+        mode="time"
+        title="选择下班时间"
+        @confirm="onEndTimeConfirm"
+        @cancel="showEndTimePicker = false"
+        @close="showEndTimePicker = false"
+      ></u-datetime-picker>
+    </view>
   </view>
 </template>
 
@@ -269,6 +287,8 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showForm = ref(false)
 const isEdit = ref(false)
+const showStartTimePicker = ref(false)
+const showEndTimePicker = ref(false)
 
 let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
@@ -471,24 +491,28 @@ function toggleStatus(item) {
   })
 }
 
-function onStartTimeChange(e) {
-  form.value.workStartTime = e.detail.value
+function onStartTimeConfirm(e) {
+  form.value.workStartTime = e.value
+  showStartTimePicker.value = false
 }
 
-function onEndTimeChange(e) {
-  form.value.workEndTime = e.detail.value
+function onEndTimeConfirm(e) {
+  form.value.workEndTime = e.value
+  showEndTimePicker.value = false
 }
 
-/** 调用地图选择考勤地点 */
+/** 跳转到地图选点页面选择考勤地点 */
 function chooseLocation() {
-  uni.chooseLocation({
-    success: (res) => {
-      form.value.workAddress = res.address || res.name || ''
-      form.value.workLatitude = String(res.latitude)
-      form.value.workLongitude = String(res.longitude)
-    },
-    fail: (err) => {
-      console.error('选择位置失败:', err)
+  const lat = form.value.workLatitude || ''
+  const lng = form.value.workLongitude || ''
+  uni.navigateTo({
+    url: `/pages/common/mapPicker/index?lat=${lat}&lng=${lng}`,
+    events: {
+      mapPickerConfirm: (data) => {
+        form.value.workAddress = data.address || ''
+        form.value.workLatitude = String(data.latitude)
+        form.value.workLongitude = String(data.longitude)
+      }
     }
   })
 }
@@ -540,6 +564,18 @@ page {
   :deep(.u-popup) {
     flex: none !important;
   }
+}
+
+/* u-datetime-picker 容器：脱离 flex 布局，避免占据 .rule-container 的 flex 子项空间 */
+/* picker 弹层用 position: fixed 渲染，不受父容器 overflow: hidden 裁切 */
+.datetime-picker-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .search-section {
@@ -893,7 +929,8 @@ page {
 .form-scroll {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  /* 移除 overflow: hidden，避免裁切 picker 弹层和桌面端 popover */
+  overflow: visible;
   padding: 24rpx 32rpx;
   box-sizing: border-box;
 }

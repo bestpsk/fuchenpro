@@ -681,27 +681,55 @@ getList()
 <style scoped>
 .custom-tree-node {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   flex: 1;
   padding-right: 8px;
-  padding: 4px 0;
+  padding: 6px 0;
+  gap: 12px;
 }
 .menu-label {
-  min-width: 80px;
+  min-width: 88px;
+  max-width: 120px;
+  padding: 4px 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  color: #303133;
+  font-weight: 500;
   line-height: 24px;
+  text-align: center;
+  align-self: flex-start;
+  flex-shrink: 0;
 }
 .button-permissions {
-  margin-left: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px 14px;
+  flex: 1;
+  padding: 6px 10px;
+  background: #fafbfc;
+  border: 1px dashed #e4e7ed;
+  border-radius: 4px;
+  align-self: stretch;
 }
 .button-permissions :deep(.el-checkbox) {
   margin-right: 0;
   height: 24px;
+  display: flex;
+  align-items: center;
 }
 .tree-border {
   max-height: 780px;
   overflow-y: auto;
+}
+.tree-border :deep(.el-tree-node__content) {
+  height: auto;
+  min-height: 32px;
+  padding: 2px 0;
+}
+.tree-border :deep(.el-tree-node) {
+  margin-bottom: 6px;
+}
+.tree-border :deep(.el-tree-node.is-leaf > .el-tree-node__content) {
+  min-height: 28px;
 }
 </style>

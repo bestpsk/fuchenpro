@@ -186,6 +186,17 @@
                 </view>
               </view>
             </view>
+            <view class="card-footer">
+              <view class="time-text">共{{ item.scheduleDates.length }}天</view>
+              <view class="action-btns">
+                <view class="action-btn edit" v-if="checkPermi('business:schedule:edit')" @click.stop="goEdit(item, true)">
+                  <u-icon name="edit-pen" size="14"></u-icon><text>编辑</text>
+                </view>
+                <view class="action-btn delete" v-if="checkPermi('business:schedule:remove')" @click.stop="handleDelete(item, getEnterpriseList)">
+                  <u-icon name="trash" size="14"></u-icon><text>删除</text>
+                </view>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -463,9 +474,11 @@ function goDetail(item) {
   uni.setStorageSync('scheduleGroupData', { scheduleIds: item.scheduleIds, scheduleDates: item.scheduleDates })
   uni.navigateTo({ url: `/pages/business/schedule/form?id=${item.scheduleIds[0]}&mode=view` })
 }
-function goEdit(item) {
+function goEdit(item, fromEnterprise = false) {
   uni.setStorageSync('scheduleGroupData', { scheduleIds: item.scheduleIds, scheduleDates: item.scheduleDates })
-  uni.navigateTo({ url: `/pages/business/schedule/form?id=${item.scheduleIds[0]}&mode=edit` })
+  let url = `/pages/business/schedule/form?id=${item.scheduleIds[0]}&mode=edit`
+  if (fromEnterprise) url += '&from=enterprise'
+  uni.navigateTo({ url })
 }
 function goAdd() {
   let url = '/pages/business/schedule/form?mode=add'
@@ -479,12 +492,12 @@ function goAdd() {
   uni.navigateTo({ url })
 }
 
-function handleDelete(item) {
+function handleDelete(item, refreshFn = getList) {
   uni.showModal({
     title: '提示', content: `是否确认删除该行程（共${item.scheduleIds.length}天）?`,
     success: async (res) => {
       if (res.confirm) {
-        try { await delSchedule(item.scheduleIds.join(',')); uni.showToast({ title: '删除成功', icon: 'success' }); getList(true) }
+        try { await delSchedule(item.scheduleIds.join(',')); uni.showToast({ title: '删除成功', icon: 'success' }); refreshFn(true) }
         catch (e) { console.error('删除失败:', e) }
       }
     }
@@ -528,10 +541,15 @@ async function getEnterpriseList() {
         if (!employeeMap.has(key)) {
           employeeMap.set(key, {
             ...s,
+            scheduleIds: [s.scheduleId || s.schedule_id],
             scheduleDates: [s.scheduleDate]
           })
         } else {
           const existing = employeeMap.get(key)
+          const sid = s.scheduleId || s.schedule_id
+          if (sid && !existing.scheduleIds.includes(sid)) {
+            existing.scheduleIds.push(sid)
+          }
           if (!existing.scheduleDates.includes(s.scheduleDate)) {
             existing.scheduleDates.push(s.scheduleDate)
           }

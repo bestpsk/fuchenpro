@@ -113,7 +113,7 @@
       </template>
     </el-dialog>
 
-    <MapPicker ref="mapPickerRef" @confirm="handleMapConfirm" />
+    <MapPicker ref="mapPickerRef" :latitude="form.workLatitude" :longitude="form.workLongitude" @confirm="handleMapConfirm" />
   </div>
 </template>
 

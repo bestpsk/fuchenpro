@@ -222,7 +222,7 @@ class BizScheduleService
             
             foreach ($userSchedules as $schedule) {
                 $day = date('j', strtotime($schedule->schedule_date));
-                $scheduleMap[$day] = $schedule;
+                $scheduleMap[$day][] = $schedule;
             }
             
             $postInfo = Db::table('sys_user_post as up')
@@ -338,7 +338,7 @@ class BizScheduleService
 
             foreach ($enterpriseSchedules as $schedule) {
                 $day = date('j', strtotime($schedule->schedule_date));
-                $scheduleMap[$day] = $schedule;
+                $scheduleMap[$day][] = $schedule;
             }
 
             $result[] = [

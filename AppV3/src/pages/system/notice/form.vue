@@ -233,9 +233,26 @@ function createH5EditorCtx() {
     contentLength.value = (root.innerText || '').length
   }
 
+  // 保存最后有效的选区（仅当选区落在编辑器内时），用于失焦后恢复光标
+  let lastRange = null
+  function saveSelection() {
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0) return
+    const range = sel.getRangeAt(0)
+    // 仅当选区的公共祖先容器在 root 内时才保存，避免保存到工具栏按钮等外部选区
+    if (root.contains(range.commonAncestorContainer)) {
+      lastRange = range.cloneRange()
+    }
+  }
+
   // 监听原生 input 事件
   root.addEventListener('input', sync)
   root.addEventListener('blur', sync)
+  // 保存光标选区，用于失焦后恢复（图片插入等场景）
+  root.addEventListener('keyup', saveSelection)
+  root.addEventListener('mouseup', saveSelection)
+  root.addEventListener('input', saveSelection)
+  document.addEventListener('selectionchange', saveSelection)
 
   return {
     format(name, value) {
@@ -308,9 +325,13 @@ function createH5EditorCtx() {
         if (width) img.style.width = width
         img.alt = alt || ''
 
-        // 插入到当前光标位置
+        // 插入到当前光标位置：先聚焦，再恢复上次保存的选区
         root.focus()
         const sel = window.getSelection()
+        if (lastRange) {
+          sel.removeAllRanges()
+          sel.addRange(lastRange)
+        }
         if (sel && sel.rangeCount > 0) {
           const range = sel.getRangeAt(0)
           range.deleteContents()
@@ -322,6 +343,7 @@ function createH5EditorCtx() {
           range.setEndAfter(br)
           sel.removeAllRanges()
           sel.addRange(range)
+          lastRange = range.cloneRange()
         } else {
           root.appendChild(img)
           root.appendChild(document.createElement('br'))

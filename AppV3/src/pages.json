@@ -24,6 +24,7 @@
     { "path": "pages/mine/about/index", "style": { "navigationBarTitleText": "关于我们" } },
     { "path": "pages/common/webview/index", "style": { "navigationBarTitleText": "浏览网页" } },
     { "path": "pages/common/textview/index", "style": { "navigationBarTitleText": "浏览文本" } },
+    { "path": "pages/common/mapPicker/index", "style": { "navigationBarTitleText": "选择地点" } },
     { "path": "pages/attendance/index", "style": { "navigationBarTitleText": "考勤打卡" } },
     { "path": "pages/attendance/record", "style": { "navigationBarTitleText": "打卡记录" } },
     { "path": "pages/attendance/config", "style": { "navigationBarTitleText": "考勤配置" } },

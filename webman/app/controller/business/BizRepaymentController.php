@@ -54,7 +54,7 @@ class BizRepaymentController
     // 新增还款记录，支持自动审核模式，需指定客户、套餐和还款金额
     public function add(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:add')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repayment')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $data = convert_to_snake_case($request->post());
@@ -88,7 +88,7 @@ class BizRepaymentController
     // 审核还款记录，审核通过后更新套餐还款状态
     public function audit(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:audit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repaymentAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');
         if (!$repaymentId) {
             return AjaxResult::error('还款ID不能为空');
@@ -112,7 +112,7 @@ class BizRepaymentController
     // 取消还款记录，仅未审核的记录可取消
     public function cancel(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:repayment:cancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repaymentCancel')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
         $repaymentId = $request->post('repaymentId') ?? $request->post('repayment_id');
         if (!$repaymentId) {
             return AjaxResult::error('还款ID不能为空');

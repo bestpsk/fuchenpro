@@ -12,7 +12,7 @@
     </view>
 
     <view class="toolbar">
-      <view v-if="checkPermi('business:archive:add')" class="tb-btn" @click="openAddDrawer"><u-icon name="plus" size="14" color="#fff"></u-icon><text>新增档案</text></view>
+      <view v-if="checkPermi('business:sales:archiveAdd')" class="tb-btn" @click="openAddDrawer"><u-icon name="plus" size="14" color="#fff"></u-icon><text>新增档案</text></view>
       <scroll-view scroll-x class="tb-filter">
         <view class="filter-tags">
           <view class="ft" :class="{ active: !filterKey }" @click="switchFilter('')">全部</view>
@@ -32,7 +32,7 @@
             </view>
             <view class="arc-head-right">
               <text class="arc-op" v-if="item.operatorUserName">{{ item.operatorUserName }}</text>
-              <view class="arc-del" v-if="item.sourceType === '3' && checkPermi('business:archive:remove')" @click="handleDelete(item)"><u-icon name="trash" size="16" color="#F53F3F"></u-icon></view>
+              <view class="arc-del" v-if="item.sourceType === '3' && checkPermi('business:sales:archiveRemove')" @click="handleDelete(item)"><u-icon name="trash" size="16" color="#F53F3F"></u-icon></view>
             </view>
           </view>
 
@@ -55,10 +55,10 @@
       <u-empty v-else mode="data" text="暂无档案记录" :marginTop="80"></u-empty>
     </scroll-view>
 
-    <u-popup :show="showAddDrawer" mode="bottom" round="24" :closeable="true" @close="showAddDrawer = false" :customStyle="{ width: '100vw', maxWidth: '100vw', left: 0, maxHeight: '85vh' }">
+    <u-popup :show="showAddDrawer" mode="bottom" round="24" :closeable="true" @close="showAddDrawer = false" :customStyle="{ width: '100vw', maxWidth: '100vw', left: 0 }">
       <view class="drawer-wrapper">
         <view class="drawer-title">新增档案</view>
-        <scroll-view scroll-y class="drawer-scroll">
+        <scroll-view scroll-y class="drawer-scroll" :style="{ height: drawerScrollHeight + 'px' }">
           <view class="fg">
             <text class="fl">档案日期</text>
             <view class="fv" @click="showDatePicker = true"><text :class="{ ph: !form.archiveDate }">{{ form.archiveDate || '请选择日期' }}</text><u-icon name="arrow-right" size="14" color="#86909C"></u-icon></view>
@@ -138,6 +138,7 @@ import { getDicts } from '@/api/system/dict/data'
 import { useUserStore } from '@/store/modules/user'
 import config from '@/config'
 import { checkPermi } from '@/utils/permission'
+import { useScrollHeight } from '@/utils/useScrollHeight'
 
 const userStore = useUserStore()
 
@@ -158,6 +159,15 @@ const submitting = ref(false)
 const operatorList = ref([])
 const archiveTypeDict = ref([])
 const sourceTypeDict = ref([])
+
+/** 抽屉内滚动区域高度（对齐 operation.vue 模式） */
+const { scrollHeight: drawerScrollHeight, recalc: recalcDrawerHeight } = useScrollHeight(() => {
+  const sysInfo = uni.getSystemInfoSync()
+  const safeBottom = sysInfo.safeAreaInsets?.bottom || 0
+  const titleH = uni.upx2px ? uni.upx2px(70) : 35      // drawer-title 大致高度（字号30+margin20+padding）
+  const footH = uni.upx2px ? uni.upx2px(92) : 46 + safeBottom  // drawer-footer（padding12+button68+safe）
+  return Math.floor(sysInfo.windowHeight * 0.88) - titleH - footH
+})
 
 async function loadDictData() {
   try {
@@ -299,6 +309,7 @@ function openAddDrawer() {
   form.remark = ''
   datePickerVal.value = Number(new Date())
   loadOperators()
+  recalcDrawerHeight()
   showAddDrawer.value = true
 }
 
@@ -439,7 +450,7 @@ page { background-color: #F5F7FA; }
 .arc-photos { display: flex; flex-wrap: wrap; gap: 10rpx; margin-top: 8rpx; }
 .arc-photo-img { width: 120rpx; height: 120rpx; border-radius: 8rpx; }
 
-.drawer-wrapper { display: flex; flex-direction: column; max-height: 85vh; }
+.drawer-wrapper { display: flex; flex-direction: column; height: 88vh; overflow: hidden; }
 .drawer-title { font-size: 30rpx; font-weight: 600; color: #1D2129; margin-bottom: 20rpx; padding: 0 24rpx; flex-shrink: 0; }
 .drawer-scroll { flex: 1; overflow-y: auto; padding: 0 24rpx; }
 .fg { margin-bottom: 18rpx; }
