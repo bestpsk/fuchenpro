@@ -37,13 +37,17 @@ class BizWmsReportService
         if (!empty($params['warehouse_id'])) {
             $query->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
         }
-        // 数据权限过滤
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->where(function ($q) use ($visibleUserIds) {
-                $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
-                  ->orWhereNull('biz_stock_in.operator_id');
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $query->where(function ($q) use ($visibleUserIds) {
+        //         $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
+        //           ->orWhereNull('biz_stock_in.operator_id');
+        //     });
+        // }
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('biz_stock_in.warehouse_id', $authorizedWhIds);
         }
         $results = $query->groupBy([
                 'biz_stock_in_item.product_id',
@@ -91,13 +95,17 @@ class BizWmsReportService
                   ->orWhereNull('biz_stock_out.warehouse_id');
             });
         }
-        // 数据权限过滤
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->where(function ($q) use ($visibleUserIds) {
-                $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds)
-                  ->orWhereNull('biz_stock_out.responsible_id');
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $query->where(function ($q) use ($visibleUserIds) {
+        //         $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds)
+        //           ->orWhereNull('biz_stock_out.responsible_id');
+        //     });
+        // }
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('biz_stock_out.warehouse_id', $authorizedWhIds);
         }
         $results = $query->groupBy([
                 'biz_stock_out_item.product_id',
@@ -132,16 +140,20 @@ class BizWmsReportService
         if (!empty($params['warehouse_id'])) {
             $query->where('biz_inventory.warehouse_id', $params['warehouse_id']);
         }
-        // 数据权限过滤：非管理员只能查看其可见用户操作入库的产品
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereExists(function ($q) use ($visibleUserIds) {
-                $q->select(Db::raw(1))
-                    ->from('biz_stock_in_item')
-                    ->join('biz_stock_in', 'biz_stock_in_item.stock_in_id', '=', 'biz_stock_in.stock_in_id')
-                    ->whereColumn('biz_stock_in_item.product_id', 'biz_product.product_id')
-                    ->whereIn('biz_stock_in.operator_id', $visibleUserIds);
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $query->whereExists(function ($q) use ($visibleUserIds) {
+        //         $q->select(Db::raw(1))
+        //             ->from('biz_stock_in_item')
+        //             ->join('biz_stock_in', 'biz_stock_in_item.stock_in_id', '=', 'biz_stock_in.stock_in_id')
+        //             ->whereColumn('biz_stock_in_item.product_id', 'biz_product.product_id')
+        //             ->whereIn('biz_stock_in.operator_id', $visibleUserIds);
+        //     });
+        // }
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('biz_inventory.warehouse_id', $authorizedWhIds);
         }
         $products = $query->select([
                 'biz_product.product_id',
@@ -212,13 +224,17 @@ class BizWmsReportService
         if (!empty($params['warehouse_id'])) {
             $stockInItems->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
         }
-        // 数据权限过滤
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $stockInItems->where(function ($q) use ($visibleUserIds) {
-                $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
-                  ->orWhereNull('biz_stock_in.operator_id');
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $stockInItems->where(function ($q) use ($visibleUserIds) {
+        //         $q->whereIn('biz_stock_in.operator_id', $visibleUserIds)
+        //           ->orWhereNull('biz_stock_in.operator_id');
+        //     });
+        // }
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $stockInItems->whereIn('biz_stock_in.warehouse_id', $authorizedWhIds);
         }
         $stockInList = $stockInItems->select([
                 'biz_stock_in.stock_in_no as doc_no',
@@ -249,13 +265,16 @@ class BizWmsReportService
                   ->orWhereNull('biz_stock_out.warehouse_id');
             });
         }
-        // 数据权限过滤
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds2 = DataScopeService::getVisibleUserIds($params['login_user']);
-            $stockOutItems->where(function ($q) use ($visibleUserIds2) {
-                $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds2)
-                  ->orWhereNull('biz_stock_out.responsible_id');
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds2 = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $stockOutItems->where(function ($q) use ($visibleUserIds2) {
+        //         $q->whereIn('biz_stock_out.responsible_id', $visibleUserIds2)
+        //           ->orWhereNull('biz_stock_out.responsible_id');
+        //     });
+        // }
+        if ($authorizedWhIds !== null) {
+            $stockOutItems->whereIn('biz_stock_out.warehouse_id', $authorizedWhIds);
         }
         $stockOutList = $stockOutItems->select([
                 'biz_stock_out.stock_out_no as doc_no',
@@ -326,13 +345,17 @@ class BizWmsReportService
             }
         }
 
-        // 数据权限过滤
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->where(function ($q) use ($visibleUserIds) {
-                $q->whereIn('si.operator_id', $visibleUserIds)
-                  ->orWhereNull('si.operator_id');
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $query->where(function ($q) use ($visibleUserIds) {
+        //         $q->whereIn('si.operator_id', $visibleUserIds)
+        //           ->orWhereNull('si.operator_id');
+        //     });
+        // }
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('si.warehouse_id', $authorizedWhIds);
         }
 
         $items = $query->select([

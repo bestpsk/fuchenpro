@@ -37,16 +37,21 @@ class BizInventoryService
         if (!empty($params['warehouse_id'])) {
             $query->where('warehouse_id', $params['warehouse_id']);
         }
-        // 数据权限过滤：非管理员只能查看其可见用户操作入库的产品库存
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $query->whereHas('product', function ($q) use ($visibleUserIds) {
-                $q->whereHas('stockInItems', function ($sq) use ($visibleUserIds) {
-                    $sq->whereHas('stockIn', function ($sq2) use ($visibleUserIds) {
-                        $sq2->whereIn('operator_id', $visibleUserIds);
-                    });
-                });
-            });
+        // 进销存数据属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $query->whereHas('product', function ($q) use ($visibleUserIds) {
+        //         $q->whereHas('stockInItems', function ($sq) use ($visibleUserIds) {
+        //             $sq->whereHas('stockIn', function ($sq2) use ($visibleUserIds) {
+        //                 $sq2->whereIn('operator_id', $visibleUserIds);
+        //             });
+        //         });
+        //     });
+        // }
+        // 仓库权限过滤：非管理员只能查看授权仓库的数据
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('warehouse_id', $authorizedWhIds);
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);

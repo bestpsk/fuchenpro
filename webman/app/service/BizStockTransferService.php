@@ -37,6 +37,14 @@ class BizStockTransferService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
+        // 仓库权限过滤：非管理员只能查看授权仓库的调拨单
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->where(function ($q) use ($authorizedWhIds) {
+                $q->whereIn('from_warehouse_id', $authorizedWhIds)
+                  ->whereIn('to_warehouse_id', $authorizedWhIds);
+            });
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $list = $query->orderBy('transfer_id', 'desc')

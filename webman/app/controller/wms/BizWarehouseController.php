@@ -23,6 +23,7 @@ class BizWarehouseController
         }
         $service = new BizWarehouseService();
         $params = convert_to_snake_case($request->all());
+        $params['login_user'] = $request->loginUser;
         $result = $service->selectWarehouseList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
@@ -95,17 +96,18 @@ class BizWarehouseController
     // 分配用户到仓库
     public function assignUsers(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'wms:warehouse:edit')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'wms:warehouse:assign')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $warehouseId = $request->input('warehouseId', 0);
         $userIds = $request->input('userIds', []);
+        $action = $request->input('action', 'replace');
         if (!is_array($userIds)) {
             $userIds = explode(',', $userIds);
         }
         $userIds = array_map('intval', array_filter($userIds));
         $service = new BizWarehouseService();
-        $result = $service->assignUsers($warehouseId, $userIds);
+        $result = $service->assignUsers($warehouseId, $userIds, $action);
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 

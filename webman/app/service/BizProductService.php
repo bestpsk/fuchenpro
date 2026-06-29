@@ -32,13 +32,13 @@ class BizProductService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
-        // 数据权限过滤：非管理员只能查看其可见用户创建的产品
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
-            $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
-                ->pluck('user_name')->toArray();
-            $query->whereIn('create_by', $visibleUserNames);
-        }
+        // 货品属于公共数据，不受数据权限约束
+        // if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+        //     $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
+        //         ->pluck('user_name')->toArray();
+        //     $query->whereIn('create_by', $visibleUserNames);
+        // }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('product_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -60,15 +60,15 @@ class BizProductService
         if (!$product) {
             return null;
         }
-        // 数据权限校验：非管理员只能查看其可见用户创建的产品
-        if (!empty($loginUser) && !$loginUser->isAdmin()) {
-            $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
-            $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
-                ->pluck('user_name')->toArray();
-            if (!in_array($product->create_by, $visibleUserNames)) {
-                return null;
-            }
-        }
+        // 货品属于公共数据，不受数据权限约束
+        // if (!empty($loginUser) && !$loginUser->isAdmin()) {
+        //     $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
+        //     $visibleUserNames = SysUser::whereIn('user_id', $visibleUserIds)
+        //         ->pluck('user_name')->toArray();
+        //     if (!in_array($product->create_by, $visibleUserNames)) {
+        //         return null;
+        //     }
+        // }
         return $product;
     }
 

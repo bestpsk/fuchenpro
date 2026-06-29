@@ -12,6 +12,16 @@ use support\Db;
  */
 class BizWarehouseService
 {
+    // 获取用户授权的仓库ID列表（管理员返回null表示不限制）
+    public static function getAuthorizedWarehouseIds($loginUser)
+    {
+        if (empty($loginUser) || $loginUser->isAdmin()) {
+            return null;
+        }
+        return BizWarehouseUser::where('user_id', $loginUser->userId)
+            ->pluck('warehouse_id')->toArray();
+    }
+
     // 按条件分页查询仓库列表
     public function selectWarehouseList($params = [])
     {
@@ -24,6 +34,10 @@ class BizWarehouseService
         }
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
+        }
+        $authorizedWhIds = self::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+        if ($authorizedWhIds !== null) {
+            $query->whereIn('warehouse_id', $authorizedWhIds);
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -72,7 +86,7 @@ class BizWarehouseService
         if ($loginUser->isAdmin()) {
             return BizWarehouse::where('status', '0')->orderBy('warehouse_id', 'desc')->get();
         }
-        $warehouseIds = BizWarehouseUser::where('user_id', $loginUser->user_id)
+        $warehouseIds = BizWarehouseUser::where('user_id', $loginUser->userId)
             ->pluck('warehouse_id')->toArray();
         return BizWarehouse::whereIn('warehouse_id', $warehouseIds)
             ->where('status', '0')
@@ -80,9 +94,25 @@ class BizWarehouseService
             ->get();
     }
 
-    // 分配用户到仓库（先删除旧记录再批量插入）
-    public function assignUsers($warehouseId, $userIds)
+    // 分配用户到仓库（支持 add/remove/replace 三种操作）
+    public function assignUsers($warehouseId, $userIds, $action = 'replace')
     {
+        if ($action === 'add') {
+            foreach ($userIds as $userId) {
+                BizWarehouseUser::firstOrCreate([
+                    'warehouse_id' => $warehouseId,
+                    'user_id' => $userId,
+                ]);
+            }
+            return true;
+        }
+        if ($action === 'remove') {
+            BizWarehouseUser::where('warehouse_id', $warehouseId)
+                ->whereIn('user_id', $userIds)
+                ->delete();
+            return true;
+        }
+        // 默认全量替换
         Db::transaction(function () use ($warehouseId, $userIds) {
             BizWarehouseUser::where('warehouse_id', $warehouseId)->delete();
             if (!empty($userIds)) {
