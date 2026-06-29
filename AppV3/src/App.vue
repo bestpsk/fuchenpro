@@ -2,6 +2,7 @@
   import config from './config'
   import { getToken } from '@/utils/auth'
   import { useMenuStore } from '@/store/modules/menu'
+  import { useUserStore } from '@/store/modules/user'
 
   export default {
     onLaunch() {
@@ -13,6 +14,8 @@
         if (getToken()) {
           const menuStore = useMenuStore()
           menuStore.loadMenus()
+          const userStore = useUserStore()
+          userStore.getInfoAction()
         }
         // #ifdef H5
         this.checkLogin()

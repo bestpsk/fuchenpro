@@ -95,6 +95,14 @@ export const useUserStore = defineStore('user', {
       storage.set(constant.avatar, avatar)
     },
     /**
+     * 更新头像地址（同时同步到state和本地存储）
+     * @param {string} url - 头像完整URL
+     */
+    setAvatar(url) {
+      this.avatar = url
+      storage.set(constant.avatar, url)
+    },
+    /**
      * 退出登录：调用后端退出接口，清除Token和本地存储中的所有用户数据
      * @returns {Promise<void>}
      */

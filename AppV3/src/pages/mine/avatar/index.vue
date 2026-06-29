@@ -51,7 +51,7 @@ async function uploadImage() {
     const data = { name: 'avatarfile', filePath: selectedImage.value }
     const response = await uploadAvatar(data)
     const imgUrl = response.imgUrl
-    userStore.avatar = imgUrl.startsWith('http') ? imgUrl : baseUrl + imgUrl
+    userStore.setAvatar(imgUrl.startsWith('http') ? imgUrl : baseUrl + imgUrl)
     uni.showToast({ title: '修改成功', icon: 'success' })
     setTimeout(() => {
       uni.navigateBack()
