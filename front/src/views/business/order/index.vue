@@ -50,52 +50,52 @@
     </el-row>
 
     <el-table v-loading="loading" :data="orderList">
-      <el-table-column label="订单编号" align="center" prop="orderNo" width="150" />
-      <el-table-column label="类别" align="center" width="80">
+      <el-table-column label="订单编号" align="center" prop="orderNo" min-width="150" />
+      <el-table-column label="类别" align="center" min-width="80">
         <template #default="scope">
           <el-tag :type="getSourceTypeTagType(scope.row.sourceType)" size="small">{{ getSourceTypeLabel(scope.row.sourceType) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="客户姓名" align="center" prop="customerName" width="100" />
+      <el-table-column label="客户姓名" align="center" prop="customerName" min-width="100" />
       <el-table-column label="企业名称" align="center" prop="enterpriseName" :show-overflow-tooltip="true" min-width="120" />
-      <el-table-column label="门店名称" align="center" prop="storeName" width="100" :show-overflow-tooltip="true" />
-      <el-table-column label="门店成交人" align="center" prop="storeDealer" width="100" />
-      <el-table-column label="套餐名称" align="center" prop="packageName" width="120" :show-overflow-tooltip="true" />
-      <el-table-column label="成交金额" align="right" prop="dealAmount" width="100">
+      <el-table-column label="门店名称" align="center" prop="storeName" min-width="100" :show-overflow-tooltip="true" />
+      <el-table-column label="门店成交人" align="center" prop="storeDealer" min-width="100" />
+      <el-table-column label="套餐名称" align="center" prop="packageName" min-width="120" :show-overflow-tooltip="true" />
+      <el-table-column label="成交金额" align="right" prop="dealAmount" min-width="100">
         <template #default="scope">
           <span v-if="Number(scope.row.dealAmount || 0) > 0" style="color: #409eff; font-weight: 500">{{ Number(scope.row.dealAmount).toFixed(2) }}</span>
           <span v-else style="color: #909399">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="实付金额" align="right" prop="paidAmount" width="100">
+      <el-table-column label="实付金额" align="right" prop="paidAmount" min-width="100">
         <template #default="scope">
           <span v-if="Number(scope.row.paidAmount || 0) > 0" style="color: #67c23a; font-weight: 500">{{ Number(scope.row.paidAmount).toFixed(2) }}</span>
           <span v-else style="color: #909399">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="欠款金额" align="right" prop="owedAmount" width="100">
+      <el-table-column label="欠款金额" align="right" prop="owedAmount" min-width="100">
         <template #default="scope">
           <span v-if="Number(scope.row.owedAmount || 0) > 0" style="color: #f56c6c; font-weight: 500">{{ Number(scope.row.owedAmount).toFixed(2) }}</span>
           <span v-else style="color: #909399">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单状态" align="center" width="90">
+      <el-table-column label="订单状态" align="center" min-width="90">
         <template #default="scope">
           <el-tag :type="getOrderStatusTagType(scope.row.orderStatus)" size="small">{{ getOrderStatusName(scope.row.orderStatus) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="企业审核" align="center" width="100">
+      <el-table-column label="企业审核" align="center" min-width="100">
         <template #default="scope">
           <el-switch v-model="scope.row.enterpriseAuditStatus" active-value="1" inactive-value="0" :disabled="scope.row.enterpriseAuditStatus === '1'" @change="handleEnterpriseAudit(scope.row)" v-hasPermi="['business:order:enterpriseAudit']" />
         </template>
       </el-table-column>
-      <el-table-column label="财务审核" align="center" width="100">
+      <el-table-column label="财务审核" align="center" min-width="100">
         <template #default="scope">
           <el-switch v-model="scope.row.financeAuditStatus" active-value="1" inactive-value="0" :disabled="scope.row.financeAuditStatus === '1' || scope.row.enterpriseAuditStatus !== '1'" @change="handleFinanceAudit(scope.row)" v-hasPermi="['business:order:financeAudit']" />
         </template>
       </el-table-column>
-      <el-table-column label="开单员工" align="center" prop="creatorUserName" width="90" />
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+      <el-table-column label="开单员工" align="center" prop="creatorUserName" min-width="90" />
+      <el-table-column label="创建时间" align="center" prop="createTime" min-width="160">
         <template #default="scope"><span>{{ parseTime(scope.row.createTime) }}</span></template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
@@ -140,20 +140,20 @@
         <h4 style="margin-bottom: 12px">订单明细</h4>
         <el-table :data="viewForm.items" border size="small">
           <el-table-column label="品项名称" prop="productName" />
-          <el-table-column label="次数" prop="quantity" width="70" align="center" />
-          <el-table-column label="成交金额" prop="dealAmount" width="100" align="right">
+          <el-table-column label="次数" prop="quantity" min-width="70" align="center" />
+          <el-table-column label="成交金额" prop="dealAmount" min-width="100" align="right">
             <template #default="scope">{{ Number(scope.row.dealAmount || 0).toFixed(2) }}</template>
           </el-table-column>
-          <el-table-column label="付款方式" width="90" align="center">
+          <el-table-column label="付款方式" min-width="90" align="center">
             <template #default="scope">
               <el-tag v-if="getItemPaymentMethod(scope.row)" :type="getItemPaymentTagType(scope.row)" size="small">{{ getItemPaymentMethod(scope.row) }}</el-tag>
               <span v-else style="color: #909399">-</span>
             </template>
           </el-table-column>
-          <el-table-column label="付款金额" prop="paidAmount" width="100" align="right">
+          <el-table-column label="付款金额" prop="paidAmount" min-width="100" align="right">
             <template #default="scope">{{ Number(scope.row.paidAmount || 0).toFixed(2) }}</template>
           </el-table-column>
-          <el-table-column label="欠款金额" prop="owedAmount" width="100" align="right">
+          <el-table-column label="欠款金额" prop="owedAmount" min-width="100" align="right">
             <template #default="scope">
               <span :style="{ color: Number(scope.row.owedAmount || 0) > 0 ? '#f56c6c' : '#909399' }">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</span>
             </template>

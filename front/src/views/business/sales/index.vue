@@ -104,34 +104,34 @@
                     </el-select>
                   </template>
                 </el-table-column>
-                <el-table-column label="付款方式" width="120">
+                <el-table-column label="付款方式" min-width="120">
                   <template #default="scope">
                     <el-select v-model="scope.row.paymentMethod" size="small" @change="onItemPaymentMethodChange(scope.$index)" style="width: 100%">
                       <el-option v-for="dict in biz_payment_method" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                   </template>
                 </el-table-column>
-                <el-table-column label="次数" width="100">
+                <el-table-column label="次数" min-width="100">
                   <template #default="scope">
                     <el-input-number v-model="scope.row.quantity" :min="1" :disabled="!packageQuantityEditable" controls-position="right"  style="width: 100%" />
                   </template>
                 </el-table-column>
-                <el-table-column label="成交金额" width="140">
+                <el-table-column label="成交金额" min-width="140">
                   <template #default="scope">
                     <el-input-number v-model="scope.row.dealAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="!packageDealAmountEditable || scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
-                <el-table-column label="单次价" width="100" align="center">
+                <el-table-column label="单次价" min-width="100" align="center">
                   <template #default="scope">
                     <span>{{ scope.row.quantity > 0 ? (scope.row.dealAmount / scope.row.quantity).toFixed(2) : '0.00' }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="实付金额" width="140">
+                <el-table-column label="实付金额" min-width="140">
                   <template #default="scope">
                     <el-input-number v-model="scope.row.paidAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" :disabled="!packagePaidAmountEditable || scope.row.paymentMethod === 'gift'" />
                   </template>
                 </el-table-column>
-                <el-table-column label="欠款金额" width="100" align="center">
+                <el-table-column label="欠款金额" min-width="100" align="center">
                   <template #default="scope">
                     <span>{{ (scope.row.dealAmount - scope.row.paidAmount).toFixed(2) }}</span>
                   </template>
@@ -191,15 +191,15 @@
                       <el-table ref="packageItemTableRef" :data="pkg.items || []" border size="small" @selection-change="(val) => handleOperationItemSelect(val, pkg)">
                         <el-table-column type="selection" width="45" :selectable="row => row.remainingQuantity > 0 && pkg.status !== '2'" />
                         <el-table-column label="品项" prop="productName" />
-                        <el-table-column label="成交金额" prop="dealPrice" width="90" align="center" />
-                        <el-table-column label="实付金额" prop="paidAmount" width="90" align="center" />
-                        <el-table-column label="欠款金额" width="90" align="center">
+                        <el-table-column label="成交金额" prop="dealPrice" min-width="90" align="center" />
+                        <el-table-column label="实付金额" prop="paidAmount" min-width="90" align="center" />
+                        <el-table-column label="欠款金额" min-width="90" align="center">
                           <template #default="scope">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</template>
                         </el-table-column>
-                        <el-table-column label="单次价" prop="unitPrice" width="80" align="center" />
-                        <el-table-column label="总次数" prop="totalQuantity" width="70" align="center" />
-                        <el-table-column label="已用" prop="usedQuantity" width="60" align="center" />
-                        <el-table-column label="剩余" prop="remainingQuantity" width="60" align="center" />
+                        <el-table-column label="单次价" prop="unitPrice" min-width="80" align="center" />
+                        <el-table-column label="总次数" prop="totalQuantity" min-width="70" align="center" />
+                        <el-table-column label="已用" prop="usedQuantity" min-width="60" align="center" />
+                        <el-table-column label="剩余" prop="remainingQuantity" min-width="60" align="center" />
                       </el-table>
                     </el-collapse-item>
                   </el-collapse>
@@ -209,16 +209,16 @@
 
               <el-drawer v-model="operationDrawerVisible" title="持卡操作" size="680px" :destroy-on-close="false" :append-to-body="false">
                 <el-table :data="selectedOperationItems" border size="small" style="margin-bottom: 12px">
-                  <el-table-column label="套餐" prop="packageName" width="160" show-overflow-tooltip />
+                  <el-table-column label="套餐" prop="packageName" min-width="160" show-overflow-tooltip />
                   <el-table-column label="品项" prop="productName" />
-                  <el-table-column label="单次价" prop="unitPrice" width="80" align="center" />
-                  <el-table-column label="剩余" prop="remainingQuantity" width="60" align="center" />
-                  <el-table-column label="操作次数" width="110">
+                  <el-table-column label="单次价" prop="unitPrice" min-width="80" align="center" />
+                  <el-table-column label="剩余" prop="remainingQuantity" min-width="60" align="center" />
+                  <el-table-column label="操作次数" min-width="110">
                     <template #default="scope">
                       <el-input-number v-model="scope.row.operationQuantity" :min="1" :max="scope.row.remainingQuantity" controls-position="right" size="small" style="width: 100%" @change="val => calcItemConsumeAmount(scope.$index)" />
                     </template>
                   </el-table-column>
-                  <el-table-column label="消耗金额" width="90" align="right">
+                  <el-table-column label="消耗金额" min-width="90" align="right">
                     <template #default="scope">
                       <span style="color: #409eff; font-weight: 500">{{ Number(scope.row.consumeAmount || 0).toFixed(2) }}</span>
                     </template>
@@ -342,21 +342,21 @@
                 </template>
                 <el-table :data="owedPackageList" border size="small" style="width: 100%" v-if="owedPackageList.length > 0">
                   <el-table-column label="套餐名称" prop="packageName" min-width="140" show-overflow-tooltip />
-                  <el-table-column label="套餐编号" prop="packageNo" width="140" />
-                  <el-table-column label="成交金额" width="110" align="right">
+                  <el-table-column label="套餐编号" prop="packageNo" min-width="140" />
+                  <el-table-column label="成交金额" min-width="110" align="right">
                     <template #default="scope">{{ Number(scope.row.totalAmount || 0).toFixed(2) }}</template>
                   </el-table-column>
-                  <el-table-column label="已付金额" width="110" align="right">
+                  <el-table-column label="已付金额" min-width="110" align="right">
                     <template #default="scope">
                       <span style="color: #67c23a">{{ Number(scope.row.paidAmount || 0).toFixed(2) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="欠款金额" width="110" align="right">
+                  <el-table-column label="欠款金额" min-width="110" align="right">
                     <template #default="scope">
                       <span style="color: #f56c6c; font-weight: 600">{{ Number(scope.row.owedAmount || 0).toFixed(2) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="创建时间" prop="createTime" width="160" />
+                  <el-table-column label="创建时间" prop="createTime" min-width="160" />
                   <el-table-column label="操作" width="100" align="center" fixed="right">
                     <template #default="scope">
                       <el-button type="primary" size="small" @click="openRepayDialog(scope.row)" v-hasPermi="['business:sales:repayment']">还款</el-button>
@@ -373,26 +373,26 @@
                   </div>
                 </template>
                 <el-table :data="repaymentRecordList" border size="small" style="width: 100%" v-if="repaymentRecordList.length > 0">
-                  <el-table-column label="还款编号" prop="repaymentNo" width="160" />
+                  <el-table-column label="还款编号" prop="repaymentNo" min-width="160" />
                   <el-table-column label="套餐名称" prop="packageName" min-width="140" show-overflow-tooltip />
-                  <el-table-column label="还款金额" width="110" align="right">
+                  <el-table-column label="还款金额" min-width="110" align="right">
                     <template #default="scope">
                       <span style="color: #409eff; font-weight: 500">{{ Number(scope.row.repaymentAmount || 0).toFixed(2) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="支付方式" width="100" align="center">
+                  <el-table-column label="支付方式" min-width="100" align="center">
                     <template #default="scope">
                       <el-tag size="small">{{ getPaymentMethodName(scope.row.paymentMethod) }}</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="状态" width="90" align="center">
+                  <el-table-column label="状态" min-width="90" align="center">
                     <template #default="scope">
                       <el-tag :type="scope.row.status === '1' ? 'success' : scope.row.status === '2' ? 'info' : 'warning'" size="small">{{ getRepaymentStatusName(scope.row.status) }}</el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作人" prop="creatorUserName" width="100" />
+                  <el-table-column label="操作人" prop="creatorUserName" min-width="100" />
                   <el-table-column label="备注" prop="remark" min-width="120" show-overflow-tooltip />
-                  <el-table-column label="创建时间" prop="createTime" width="160" />
+                  <el-table-column label="创建时间" prop="createTime" min-width="160" />
                   <el-table-column label="操作" width="80" align="center" fixed="right">
                     <template #default="scope">
                       <el-button v-if="scope.row.status === '0'" v-hasPermi="['business:sales:repaymentAudit']" type="success" size="small" link @click="handleAuditRepayment(scope.row.repaymentId)">审核</el-button>
@@ -512,7 +512,7 @@
                 <el-button type="primary" size="small" @click="loadOperationRecords">查询</el-button>
               </div>
               <el-table :data="operationRecordList" border size="small" style="width: 100%">
-                <el-table-column label="类型" width="80" align="center">
+                <el-table-column label="类型" min-width="80" align="center">
                   <template #default="scope"><el-tag :type="scope.row.operationType === '1' ? 'warning' : 'primary'" size="small">{{ scope.row.operationType === '1' ? '体验' : '持卡' }}</el-tag></template>
                 </el-table-column>
                 <el-table-column label="套餐名称" min-width="140" show-overflow-tooltip>
@@ -521,16 +521,16 @@
                   </template>
                 </el-table-column>
                 <el-table-column label="品项" prop="productName" min-width="100" show-overflow-tooltip />
-                <el-table-column label="次数" prop="operationQuantity" width="60" align="center" />
-                <el-table-column label="消耗/体验价" width="100" align="center">
+                <el-table-column label="次数" prop="operationQuantity" min-width="60" align="center" />
+                <el-table-column label="消耗/体验价" min-width="100" align="center">
                   <template #default="scope">{{ scope.row.operationType === '1' ? scope.row.trialPrice : scope.row.consumeAmount }}</template>
                 </el-table-column>
-                <el-table-column label="操作人" width="100" align="center">
+                <el-table-column label="操作人" min-width="100" align="center">
                   <template #default="scope">
                     {{ getOperatorRealName(scope.row) }}
                   </template>
                 </el-table-column>
-                <el-table-column label="满意度" width="120" align="center">
+                <el-table-column label="满意度" min-width="120" align="center">
                   <template #default="scope">
                     <el-rate 
                       :model-value="Number(scope.row.satisfaction || 0)" 
@@ -541,7 +541,7 @@
                     <span v-else>-</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作日期" prop="operationDate" width="110" />
+                <el-table-column label="操作日期" prop="operationDate" min-width="110" />
               </el-table>
             </el-tab-pane>
           </el-tabs>
@@ -609,7 +609,7 @@
                     <el-input v-model="scope.row.name" placeholder="品项名称" />
                   </template>
                 </el-table-column>
-                <el-table-column label="次数" width="100">
+                <el-table-column label="次数" min-width="100">
                   <template #default="scope">
                     <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right" style="width: 100%" />
                   </template>

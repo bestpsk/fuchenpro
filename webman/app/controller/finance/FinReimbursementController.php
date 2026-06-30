@@ -165,6 +165,7 @@ class FinReimbursementController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->reportByMonth($params);
         return AjaxResult::success('', $result);
     }
@@ -176,6 +177,7 @@ class FinReimbursementController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->reportByCategory($params);
         return AjaxResult::success('', $result);
     }
@@ -187,6 +189,7 @@ class FinReimbursementController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->reportByDept($params);
         return AjaxResult::success('', $result);
     }
@@ -198,6 +201,7 @@ class FinReimbursementController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->reportByUser($params);
         return AjaxResult::success('', $result);
     }
@@ -209,6 +213,7 @@ class FinReimbursementController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->get());
+        $params['login_user'] = $request->loginUser;
         $result = $this->service->reportByExpenseType($params);
         return AjaxResult::success('', $result);
     }

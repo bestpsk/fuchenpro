@@ -198,17 +198,17 @@
             <el-tag v-else type="info" size="small" style="margin-left: 10px;">慢查询日志未开启</el-tag>
           </template>
           <el-table :data="data.slowQueries?.processList || []" style="width: 100%" border size="small">
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="user" label="用户" width="100" />
-            <el-table-column prop="host" label="主机" width="180" />
-            <el-table-column prop="db" label="数据库" width="120" />
-            <el-table-column prop="command" label="命令" width="100" />
-            <el-table-column prop="time" label="时间(s)" width="90">
+            <el-table-column prop="id" label="ID" min-width="80" />
+            <el-table-column prop="user" label="用户" min-width="100" />
+            <el-table-column prop="host" label="主机" min-width="180" />
+            <el-table-column prop="db" label="数据库" min-width="120" />
+            <el-table-column prop="command" label="命令" min-width="100" />
+            <el-table-column prop="time" label="时间(s)" min-width="90">
               <template #default="scope">
                 <span :class="{'text-danger': scope.row.time > 5}">{{ scope.row.time }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="state" label="状态" width="180" show-overflow-tooltip />
+            <el-table-column prop="state" label="状态" min-width="180" show-overflow-tooltip />
             <el-table-column prop="info" label="SQL语句" show-overflow-tooltip />
           </el-table>
         </el-card>

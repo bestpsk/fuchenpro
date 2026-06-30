@@ -93,10 +93,10 @@
             <el-table-column label="员工" prop="userName" min-width="100" />
             <el-table-column label="职位" prop="postName" min-width="100" />
             <el-table-column label="企业" prop="enterpriseName" min-width="130" show-overflow-tooltip />
-            <el-table-column label="下店目的" width="90">
+            <el-table-column label="下店目的" min-width="90">
               <template #default="scope"><dict-tag :options="biz_schedule_purpose" :value="scope.row.purpose" /></template>
             </el-table-column>
-            <el-table-column label="状态" width="85">
+            <el-table-column label="状态" min-width="85">
               <template #default="scope"><dict-tag :options="biz_schedule_status" :value="scope.row.status" /></template>
             </el-table-column>
             <el-table-column label="排班日期" min-width="180">
@@ -197,10 +197,10 @@
             <el-table-column label="企业" prop="enterpriseName" min-width="130" show-overflow-tooltip />
             <el-table-column label="员工" prop="userName" min-width="100" />
             <el-table-column label="职位" prop="postName" min-width="100" />
-            <el-table-column label="下店目的" width="90">
+            <el-table-column label="下店目的" min-width="90">
               <template #default="scope"><dict-tag :options="biz_schedule_purpose" :value="scope.row.purpose" /></template>
             </el-table-column>
-            <el-table-column label="状态" width="85">
+            <el-table-column label="状态" min-width="85">
               <template #default="scope"><dict-tag :options="biz_schedule_status" :value="scope.row.status" /></template>
             </el-table-column>
             <el-table-column label="排班日期" min-width="180">
@@ -238,8 +238,8 @@
           </el-form-item>
         </el-form>
         <el-table :data="employeeConfigList" border v-loading="configLoading">
-          <el-table-column label="员工姓名" prop="userName" width="110" />
-          <el-table-column label="职位" prop="postName" width="120" />
+          <el-table-column label="员工姓名" prop="userName" min-width="110" />
+          <el-table-column label="职位" prop="postName" min-width="120" />
           <el-table-column label="部门" prop="deptName" min-width="150" show-overflow-tooltip />
           <el-table-column label="休息日" min-width="180">
             <template #default="scope">
@@ -247,7 +247,7 @@
               <span v-if="!scope.row.restDates?.length" style="color: #c0c4cc">未配置</span>
             </template>
           </el-table-column>
-          <el-table-column label="是否可排班" width="110" align="center">
+          <el-table-column label="是否可排班" min-width="110" align="center">
             <template #default="scope">
               <el-switch v-model="scope.row.isSchedulable" active-value="1" inactive-value="0" @change="handleSchedulableChange(scope.row)" v-hasPermi="['business:employeeConfig:edit']" />
             </template>

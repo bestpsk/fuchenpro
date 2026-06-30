@@ -42,12 +42,12 @@
     <el-table v-loading="loading" :data="ruleList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="规则名称" align="center" prop="ruleName" />
-      <el-table-column label="上班时间" align="center" prop="workStartTime" width="100" />
-      <el-table-column label="下班时间" align="center" prop="workEndTime" width="100" />
-      <el-table-column label="迟到容忍(分)" align="center" prop="lateThreshold" width="120" />
-      <el-table-column label="早退容忍(分)" align="center" prop="earlyLeaveThreshold" width="120" />
-      <el-table-column label="允许距离(米)" align="center" prop="allowedDistance" width="120" />
-      <el-table-column label="状态" align="center" prop="status" width="80">
+      <el-table-column label="上班时间" align="center" prop="workStartTime" min-width="100" />
+      <el-table-column label="下班时间" align="center" prop="workEndTime" min-width="100" />
+      <el-table-column label="迟到容忍(分)" align="center" prop="lateThreshold" min-width="120" />
+      <el-table-column label="早退容忍(分)" align="center" prop="earlyLeaveThreshold" min-width="120" />
+      <el-table-column label="允许距离(米)" align="center" prop="allowedDistance" min-width="120" />
+      <el-table-column label="状态" align="center" prop="status" min-width="80">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
         </template>

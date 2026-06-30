@@ -43,7 +43,7 @@
     <el-table v-loading="loading" :data="stockOutList" @selection-change="handleSelectionChange" style="width: 100%">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="出库单号" prop="stockOutNo" min-width="140" />
-      <el-table-column label="出库类型" prop="stockOutType" width="90" align="center">
+      <el-table-column label="出库类型" prop="stockOutType" min-width="90" align="center">
         <template #default="scope">
           <dict-tag :options="biz_stock_out_type" :value="scope.row.stockOutType" />
         </template>

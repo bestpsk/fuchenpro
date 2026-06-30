@@ -118,12 +118,12 @@
             </template>
          </el-table-column>
          <el-table-column label="描述" align="center" prop="msg" :show-overflow-tooltip="true" />
-         <el-table-column label="登录来源" align="center" prop="loginSource" width="100">
+         <el-table-column label="登录来源" align="center" prop="loginSource" min-width="100">
             <template #default="scope">
                <el-tag :type="scope.row.loginSource === 'app' ? 'success' : ''">{{ scope.row.loginSource === 'app' ? 'App端' : 'Web端' }}</el-tag>
             </template>
          </el-table-column>
-         <el-table-column label="访问时间" align="center" prop="loginTime" sortable="custom" :sort-orders="['descending', 'ascending']" width="180">
+         <el-table-column label="访问时间" align="center" prop="loginTime" sortable="custom" :sort-orders="['descending', 'ascending']" min-width="180">
             <template #default="scope">
                <span>{{ parseTime(scope.row.loginTime) }}</span>
             </template>

@@ -35,18 +35,18 @@
       <el-table-column label="方案编号" prop="planNo" min-width="120" show-overflow-tooltip />
       <el-table-column label="企业名称" prop="enterpriseName" min-width="120" show-overflow-tooltip />
       <el-table-column label="方案名称" prop="planName" min-width="150" show-overflow-tooltip />
-      <el-table-column label="回款比例" prop="commissionRate" align="center" width="90">
+      <el-table-column label="回款比例" prop="commissionRate" align="center" min-width="90">
         <template #default="scope">{{ scope.row.commissionRate }}%</template>
       </el-table-column>
-      <el-table-column label="方案金额" prop="planAmount" align="right" width="100" />
-      <el-table-column label="配赠金额" prop="giftAmount" align="right" width="100" />
-      <el-table-column label="剩余金额" prop="remainingAmount" align="right" width="100" />
-      <el-table-column label="审核状态" prop="auditStatus" align="center" width="90">
+      <el-table-column label="方案金额" prop="planAmount" align="right" min-width="100" />
+      <el-table-column label="配赠金额" prop="giftAmount" align="right" min-width="100" />
+      <el-table-column label="剩余金额" prop="remainingAmount" align="right" min-width="100" />
+      <el-table-column label="审核状态" prop="auditStatus" align="center" min-width="90">
         <template #default="scope">
           <el-tag :type="auditStatusType(scope.row.auditStatus)">{{ auditStatusLabel(scope.row.auditStatus) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="启用" prop="status" align="center" width="70">
+      <el-table-column label="启用" prop="status" align="center" min-width="70">
         <template #default="scope">
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="(val) => handlePlanStatusChange(scope.row, val)" v-hasPermi="['business:plan:edit']" />
         </template>
@@ -184,7 +184,7 @@
               <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right" @change="onItemQuantityChange(scope.$index)" style="width: 100%" />
             </template>
           </el-table-column>
-          <el-table-column label="规格" width="60" align="center">
+          <el-table-column label="规格" min-width="60" align="center">
             <template #default="scope">
               <span>{{ scope.row.spec || '-' }}</span>
             </template>
@@ -243,29 +243,29 @@
           <el-table :data="currentPlan.items || []" border size="small">
             <el-table-column label="货品名称" prop="productName" />
             <el-table-column label="供货商" prop="supplierName" />
-            <el-table-column label="单位类型" width="80" align="center">
+            <el-table-column label="单位类型" min-width="80" align="center">
               <template #default="scope">{{ scope.row.unitType === '1' ? '主单位整' : '副单位拆' }}</template>
             </el-table-column>
-            <el-table-column label="数量" prop="quantity" width="80" align="center" />
-            <el-table-column label="规格" prop="spec" width="60" align="center" />
-            <el-table-column label="单价" prop="salePrice" width="90" align="right" />
-            <el-table-column label="总金额" prop="amount" width="100" align="right" />
-            <el-table-column label="已出数量" prop="shippedQuantity" width="80" align="center" />
-            <el-table-column label="剩余数量" prop="remainingQuantity" width="80" align="center" />
+            <el-table-column label="数量" prop="quantity" min-width="80" align="center" />
+            <el-table-column label="规格" prop="spec" min-width="60" align="center" />
+            <el-table-column label="单价" prop="salePrice" min-width="90" align="right" />
+            <el-table-column label="总金额" prop="amount" min-width="100" align="right" />
+            <el-table-column label="已出数量" prop="shippedQuantity" min-width="80" align="center" />
+            <el-table-column label="剩余数量" prop="remainingQuantity" min-width="80" align="center" />
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="备货记录" name="stockPrepare">
           <el-table :data="stockPrepareList" border size="small" v-loading="stockPrepareLoading">
             <el-table-column label="备货编号" prop="prepareNo" min-width="120" show-overflow-tooltip />
-            <el-table-column label="备货金额" prop="prepareAmount" width="100" align="right" />
-            <el-table-column label="状态" prop="status" width="90" align="center">
+            <el-table-column label="备货金额" prop="prepareAmount" min-width="100" align="right" />
+            <el-table-column label="状态" prop="status" min-width="90" align="center">
               <template #default="scope">
                 <el-tag :type="scope.row.status === '0' ? 'warning' : scope.row.status === '1' ? 'success' : 'info'">
                   {{ scope.row.status === '0' ? '备货中' : scope.row.status === '1' ? '已出库' : '已取消' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
+            <el-table-column label="创建时间" prop="createTime" min-width="160" align="center" />
           </el-table>
         </el-tab-pane>
       </el-tabs>
@@ -277,16 +277,16 @@
       <div v-if="stockPrepareItems.length > 0">
         <el-table :data="stockPrepareItems" border size="small">
           <el-table-column label="货品名称" prop="productName" min-width="120" />
-          <el-table-column label="规格" prop="spec" width="80" align="center" />
-          <el-table-column label="单位" prop="unitLabel" width="80" align="center" />
-          <el-table-column label="出货价" prop="salePrice" width="90" align="right" />
-          <el-table-column label="方案剩余数量" prop="remainingQuantity" width="110" align="center" />
-          <el-table-column label="本次备货数量" width="140" align="center">
+          <el-table-column label="规格" prop="spec" min-width="80" align="center" />
+          <el-table-column label="单位" prop="unitLabel" min-width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" min-width="90" align="right" />
+          <el-table-column label="方案剩余数量" prop="remainingQuantity" min-width="110" align="center" />
+          <el-table-column label="本次备货数量" min-width="140" align="center">
             <template #default="scope">
               <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.remainingQuantity" controls-position="right" size="small" style="width: 120px" @change="onStockPrepareQuantityChange" />
             </template>
           </el-table-column>
-          <el-table-column label="总价" width="100" align="right">
+          <el-table-column label="总价" min-width="100" align="right">
             <template #default="scope">
               {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
             </template>
@@ -303,7 +303,7 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="单位类型" width="120">
+          <el-table-column label="单位类型" min-width="120">
             <template #default="scope">
               <el-select v-model="scope.row.unitType" @change="onStockPrepareUnitTypeChange(scope.$index)" style="width: 100%">
                 <el-option label="主单位-整" value="1" />
@@ -311,14 +311,14 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="规格" prop="spec" width="80" align="center" />
-          <el-table-column label="出货价" prop="salePrice" width="90" align="right" />
-          <el-table-column label="数量" width="120" align="center">
+          <el-table-column label="规格" prop="spec" min-width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" min-width="90" align="right" />
+          <el-table-column label="数量" min-width="120" align="center">
             <template #default="scope">
               <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right" size="small" style="width: 100px" @change="onStockPrepareManualQuantityChange(scope.$index)" />
             </template>
           </el-table-column>
-          <el-table-column label="总价" width="100" align="right">
+          <el-table-column label="总价" min-width="100" align="right">
             <template #default="scope">
               {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
             </template>

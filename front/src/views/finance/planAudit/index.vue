@@ -19,21 +19,21 @@
     </el-form>
 
     <el-table v-loading="loading" :data="planList">
-      <el-table-column label="方案编号" align="center" prop="planNo" width="150" />
+      <el-table-column label="方案编号" align="center" prop="planNo" min-width="150" />
       <el-table-column label="方案名称" align="center" prop="planName" />
       <el-table-column label="企业名称" align="center" prop="enterpriseName" />
-      <el-table-column label="方案金额" align="center" prop="planAmount" width="120">
+      <el-table-column label="方案金额" align="center" prop="planAmount" min-width="120">
         <template #default="scope">
           <span style="color: #67c23a; font-weight: bold">¥{{ formatMoney(scope.row.planAmount) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="审核状态" align="center" prop="auditStatus" width="100">
+      <el-table-column label="审核状态" align="center" prop="auditStatus" min-width="100">
         <template #default="scope">
           <dict-tag v-if="audit_status?.length" :options="audit_status" :value="scope.row.auditStatus" />
           <span v-else>{{ scope.row.auditStatus }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="提交时间" align="center" prop="submitTime" width="160" />
+      <el-table-column label="提交时间" align="center" prop="submitTime" min-width="160" />
       <el-table-column label="操作" align="center" width="250" fixed="right">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)">查看</el-button>
@@ -64,11 +64,11 @@
       <el-divider content-position="left">方案明细</el-divider>
       <el-table :data="viewForm.items" border size="small">
         <el-table-column label="产品名称" prop="productName" />
-        <el-table-column label="数量" prop="quantity" width="80" />
-        <el-table-column label="单价" prop="salePrice" width="100">
+        <el-table-column label="数量" prop="quantity" min-width="80" />
+        <el-table-column label="单价" prop="salePrice" min-width="100">
           <template #default="scope">¥{{ formatMoney(scope.row.salePrice) }}</template>
         </el-table-column>
-        <el-table-column label="金额" prop="amount" width="100">
+        <el-table-column label="金额" prop="amount" min-width="100">
           <template #default="scope">¥{{ formatMoney(scope.row.amount) }}</template>
         </el-table-column>
       </el-table>

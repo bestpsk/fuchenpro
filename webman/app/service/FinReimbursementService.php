@@ -210,6 +210,11 @@ class FinReimbursementService
             $query->whereYear('apply_date', $year);
         }
 
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
+        }
+
         return $query->groupByRaw('YEAR(apply_date), MONTH(apply_date)')->orderBy('month')->get();
     }
 
@@ -224,6 +229,11 @@ class FinReimbursementService
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
         }
 
         return $query->groupBy('category')->get();
@@ -243,6 +253,11 @@ class FinReimbursementService
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
         }
 
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
+        }
+
         return $query->groupBy('dept_id', 'dept_name')->orderByDesc('total_expense')->get();
     }
 
@@ -260,6 +275,11 @@ class FinReimbursementService
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
         }
 
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
+        }
+
         return $query->groupBy('applicant_id', 'applicant_name')->orderByDesc('total_expense')->limit(20)->get();
     }
 
@@ -274,6 +294,11 @@ class FinReimbursementService
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
+        }
+
+        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
+            $query->whereIn('applicant_id', $visibleUserIds);
         }
 
         $result = $query->groupBy('expense_type')->get();

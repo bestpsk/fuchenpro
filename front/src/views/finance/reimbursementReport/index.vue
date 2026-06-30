@@ -77,10 +77,10 @@
           <el-table :data="deptData" size="small" max-height="300">
             <el-table-column label="排名" type="index" width="60" />
             <el-table-column label="部门" prop="deptName" />
-            <el-table-column label="报销金额" prop="totalExpense" width="150">
+            <el-table-column label="报销金额" prop="totalExpense" min-width="150">
               <template #default="scope">¥{{ formatMoney(scope.row.totalExpense) }}</template>
             </el-table-column>
-            <el-table-column label="报销次数" prop="count" width="100" />
+            <el-table-column label="报销次数" prop="count" min-width="100" />
           </el-table>
         </el-card>
       </el-col>
@@ -92,10 +92,10 @@
           <el-table :data="userData" size="small" max-height="300">
             <el-table-column label="排名" type="index" width="60" />
             <el-table-column label="申请人" prop="applicantName" />
-            <el-table-column label="报销金额" prop="totalExpense" width="150">
+            <el-table-column label="报销金额" prop="totalExpense" min-width="150">
               <template #default="scope">¥{{ formatMoney(scope.row.totalExpense) }}</template>
             </el-table-column>
-            <el-table-column label="报销次数" prop="count" width="100" />
+            <el-table-column label="报销次数" prop="count" min-width="100" />
           </el-table>
         </el-card>
       </el-col>

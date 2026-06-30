@@ -41,34 +41,34 @@
 
     <el-table v-loading="loading" :data="productList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
-      <el-table-column label="货品编码" prop="productCode" width="120" />
-      <el-table-column label="品名" prop="productName" width="140" show-overflow-tooltip />
-      <el-table-column label="供货商" prop="supplierId" width="110" />
-      <el-table-column label="类别" prop="category" width="95" align="center">
+      <el-table-column label="货品编码" prop="productCode" min-width="120" />
+      <el-table-column label="品名" prop="productName" min-width="140" show-overflow-tooltip />
+      <el-table-column label="供货商" prop="supplierId" min-width="110" />
+      <el-table-column label="类别" prop="category" min-width="95" align="center">
         <template #default="scope">
           <dict-tag :options="biz_product_category" :value="scope.row.category" />
         </template>
       </el-table-column>
-      <el-table-column label="单位(整)" prop="unit" width="75" align="center">
+      <el-table-column label="单位(整)" prop="unit" min-width="75" align="center">
         <template #default="scope">
           <dict-tag :options="biz_product_unit" :value="scope.row.unit" />
         </template>
       </el-table-column>
-      <el-table-column label="规格(拆)" prop="spec" width="75" align="center">
+      <el-table-column label="规格(拆)" prop="spec" min-width="75" align="center">
         <template #default="scope">
           <dict-tag :options="biz_product_spec" :value="scope.row.spec" />
         </template>
       </el-table-column>
-      <el-table-column label="包装数量" prop="packQty" width="85" align="center">
+      <el-table-column label="包装数量" prop="packQty" min-width="85" align="center">
         <template #default="scope">
           <span>{{ scope.row.packQty || 1 }}{{ scope.row.spec ? getSpecLabel(scope.row.spec) : '' }}/{{ getUnitLabel(scope.row.unit) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="进货价" prop="purchasePrice" width="90" align="right" />
-      <el-table-column label="出货价(整)" prop="salePrice" width="100" align="right" />
-      <el-table-column label="出货价(拆)" prop="salePriceSpec" width="100" align="right" />
-      <el-table-column label="预警数量" prop="warnQty" width="75" align="center" />
-      <el-table-column label="状态" prop="status" width="70" align="center">
+      <el-table-column label="进货价" prop="purchasePrice" min-width="90" align="right" />
+      <el-table-column label="出货价(整)" prop="salePrice" min-width="100" align="right" />
+      <el-table-column label="出货价(拆)" prop="salePriceSpec" min-width="100" align="right" />
+      <el-table-column label="预警数量" prop="warnQty" min-width="75" align="center" />
+      <el-table-column label="状态" prop="status" min-width="70" align="center">
         <template #default="scope">
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
             @change="(val) => handleStatusChange(scope.row, val)" v-hasPermi="['wms:product:edit']" />

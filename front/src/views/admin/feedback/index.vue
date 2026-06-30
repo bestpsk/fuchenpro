@@ -29,20 +29,20 @@
 
       <el-table v-loading="loading" :data="feedbackList" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" />
-         <el-table-column label="反馈ID" align="center" prop="feedbackId" width="80" />
+         <el-table-column label="反馈ID" align="center" prop="feedbackId" min-width="80" />
          <el-table-column label="反馈标题" align="center" prop="title" :show-overflow-tooltip="true" />
-         <el-table-column label="反馈类型" align="center" prop="feedbackType" width="100">
+         <el-table-column label="反馈类型" align="center" prop="feedbackType" min-width="100">
             <template #default="scope">
                <dict-tag :options="biz_feedback_type" :value="scope.row.feedbackType" />
             </template>
          </el-table-column>
-         <el-table-column label="处理状态" align="center" prop="status" width="100">
+         <el-table-column label="处理状态" align="center" prop="status" min-width="100">
             <template #default="scope">
                <dict-tag :options="biz_feedback_status" :value="scope.row.status" />
             </template>
          </el-table-column>
-         <el-table-column label="创建人" align="center" prop="createBy" width="100" />
-         <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+         <el-table-column label="创建人" align="center" prop="createBy" min-width="100" />
+         <el-table-column label="创建时间" align="center" prop="createTime" min-width="160">
             <template #default="scope">
                <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>

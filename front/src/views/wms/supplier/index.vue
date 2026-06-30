@@ -37,16 +37,16 @@
     <el-table v-loading="loading" :data="supplierList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="供货商名称" prop="supplierName" min-width="140" />
-      <el-table-column label="联系人" prop="contactPerson" width="100" />
-      <el-table-column label="联系电话" prop="contactPhone" width="130" />
+      <el-table-column label="联系人" prop="contactPerson" min-width="100" />
+      <el-table-column label="联系电话" prop="contactPhone" min-width="130" />
       <el-table-column label="地址" prop="address" min-width="160" show-overflow-tooltip />
-      <el-table-column label="合作起始日期" prop="cooperationStartDate" width="120" />
-      <el-table-column label="状态" prop="status" width="80" align="center">
+      <el-table-column label="合作起始日期" prop="cooperationStartDate" min-width="120" />
+      <el-table-column label="状态" prop="status" min-width="80" align="center">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" prop="createTime" width="160" align="center" />
+      <el-table-column label="创建时间" prop="createTime" min-width="160" align="center" />
       <el-table-column label="操作" width="150" align="center">
         <template #default="scope">
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['wms:supplier:edit']">修改</el-button>

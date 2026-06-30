@@ -60,7 +60,7 @@
             </div>
           </template>
           <el-table :data="enterpriseList" stripe size="small" :max-height="360" v-loading="rankLoading">
-            <el-table-column label="排名" width="60" align="center">
+            <el-table-column label="排名" min-width="60" align="center">
               <template #default="{ $index }">
                 <span :class="['rank-num', $index < 3 ? 'rank-top' : '']">{{ $index + 1 }}</span>
               </template>
@@ -128,13 +128,13 @@
             <span class="amount-blue">{{ formatMoney(row.amount) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="80" align="center">
+        <el-table-column label="类型" min-width="80" align="center">
           <template #default="{ row }">
             <el-tag size="small" :type="sourceTypeTag(row.sourceType)">{{ sourceTypeLabel(row.sourceType) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="operatorName" label="操作人" width="90" show-overflow-tooltip />
-        <el-table-column prop="archiveDate" label="时间" width="110" />
+        <el-table-column prop="operatorName" label="操作人" min-width="90" show-overflow-tooltip />
+        <el-table-column prop="archiveDate" label="时间" min-width="110" />
       </el-table>
     </el-card>
 

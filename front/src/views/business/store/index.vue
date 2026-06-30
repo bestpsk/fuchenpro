@@ -82,21 +82,21 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="门店名称" align="center" prop="storeName" :show-overflow-tooltip="true" />
       <el-table-column label="所属企业" align="center" prop="enterpriseName" :show-overflow-tooltip="true" />
-      <el-table-column label="负责人" align="center" prop="managerName" width="100" />
-      <el-table-column label="联系电话" align="center" prop="phone" width="120" />
-      <el-table-column label="微信" align="center" prop="wechat" width="100" />
+      <el-table-column label="负责人" align="center" prop="managerName" min-width="100" />
+      <el-table-column label="联系电话" align="center" prop="phone" min-width="120" />
+      <el-table-column label="微信" align="center" prop="wechat" min-width="100" />
       <el-table-column label="地址" align="center" prop="address" :show-overflow-tooltip="true" />
-      <el-table-column label="营业时间" align="center" prop="businessHours" width="120" />
-      <el-table-column label="年业绩" align="center" prop="annualPerformance" width="100" />
-      <el-table-column label="常来顾客数" align="center" prop="regularCustomers" width="100" />
-      <el-table-column label="服务员工" align="center" prop="serverUserName" width="100" />
-      <el-table-column label="创建人" align="center" prop="creatorName" width="100" />
-      <el-table-column label="状态" align="center" prop="status" width="80">
+      <el-table-column label="营业时间" align="center" prop="businessHours" min-width="120" />
+      <el-table-column label="年业绩" align="center" prop="annualPerformance" min-width="100" />
+      <el-table-column label="常来顾客数" align="center" prop="regularCustomers" min-width="100" />
+      <el-table-column label="服务员工" align="center" prop="serverUserName" min-width="100" />
+      <el-table-column label="创建人" align="center" prop="creatorName" min-width="100" />
+      <el-table-column label="状态" align="center" prop="status" min-width="80">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" width="160">
+      <el-table-column label="创建时间" align="center" prop="createTime" min-width="160">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>

@@ -41,17 +41,17 @@
 
     <el-table v-loading="loading" :data="cardItemList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" align="center" />
-      <el-table-column label="卡项编码" prop="cardItemCode" width="120" />
-      <el-table-column label="卡项名称" prop="cardItemName" width="140" show-overflow-tooltip />
-      <el-table-column label="类别" prop="category" width="95" align="center">
+      <el-table-column label="卡项编码" prop="cardItemCode" min-width="120" />
+      <el-table-column label="卡项名称" prop="cardItemName" min-width="140" show-overflow-tooltip />
+      <el-table-column label="类别" prop="category" min-width="95" align="center">
         <template #default="scope">
           <dict-tag :options="biz_card_item_category" :value="scope.row.category" />
         </template>
       </el-table-column>
-      <el-table-column label="默认次数" prop="defaultQuantity" width="90" align="center" />
-      <el-table-column label="建议成交价" prop="suggestedPrice" width="110" align="right" />
-      <el-table-column label="默认单次价" prop="defaultUnitPrice" width="110" align="right" />
-      <el-table-column label="状态" prop="status" width="70" align="center">
+      <el-table-column label="默认次数" prop="defaultQuantity" min-width="90" align="center" />
+      <el-table-column label="建议成交价" prop="suggestedPrice" min-width="110" align="right" />
+      <el-table-column label="默认单次价" prop="defaultUnitPrice" min-width="110" align="right" />
+      <el-table-column label="状态" prop="status" min-width="70" align="center">
         <template #default="scope">
           <el-switch v-model="scope.row.status" active-value="0" inactive-value="1"
             @change="(val) => handleStatusChange(scope.row, val)" v-hasPermi="['business:cardItem:edit']" />
@@ -129,8 +129,8 @@
       <el-table :data="form.cardItemProducts" @selection-change="handleProductSelectionChange" border size="small">
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column label="货品名称" prop="productName" min-width="140" />
-        <el-table-column label="货品编码" prop="productCode" width="120" />
-        <el-table-column label="单位类型" width="130" align="center">
+        <el-table-column label="货品编码" prop="productCode" min-width="120" />
+        <el-table-column label="单位类型" min-width="130" align="center">
           <template #default="scope">
             <el-select v-model="scope.row.unitType" size="small" @change="onProductUnitTypeChange(scope.$index)">
               <el-option label="主单位-整" value="1" />
@@ -138,28 +138,28 @@
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column label="换算" width="100" align="center">
+        <el-table-column label="换算" min-width="100" align="center">
           <template #default="scope">
             <span v-if="scope.row.packQty > 1" style="color: #909399; font-size: 12px;">1{{ scope.row.unitLabel }}={{ scope.row.packQty }}{{ scope.row.specLabel }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="消耗数量" prop="quantity" width="140" align="center">
+        <el-table-column label="消耗数量" prop="quantity" min-width="140" align="center">
           <template #default="scope">
             <el-input-number v-model="scope.row.quantity" :min="1" size="small" style="width: 100%" @change="calcSuggestedPrice" />
           </template>
         </el-table-column>
-        <el-table-column label="规格" width="80" align="center">
+        <el-table-column label="规格" min-width="80" align="center">
           <template #default="scope">
             <span>{{ scope.row.unitType === '1' ? scope.row.unitLabel : scope.row.specLabel }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="单价" width="100" align="right">
+        <el-table-column label="单价" min-width="100" align="right">
           <template #default="scope">
             <span>{{ scope.row.unitType === '1' ? (scope.row.salePrice || 0) : (scope.row.salePriceSpec || 0) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="总价" width="110" align="right">
+        <el-table-column label="总价" min-width="110" align="right">
           <template #default="scope">
             <span>{{ ((scope.row.unitType === '1' ? (scope.row.salePrice || 0) : (scope.row.salePriceSpec || 0)) * (scope.row.quantity || 0)).toFixed(2) }}</span>
           </template>
@@ -180,31 +180,31 @@
       </el-form>
       <el-table :data="productSelectList" @selection-change="handleProductSelectChange" border size="small" max-height="300">
         <el-table-column type="selection" width="50" align="center" />
-        <el-table-column label="货品编码" prop="productCode" width="100" />
+        <el-table-column label="货品编码" prop="productCode" min-width="100" />
         <el-table-column label="品名" prop="productName" min-width="120" />
-        <el-table-column label="供货商" prop="supplierName" width="100" />
-        <el-table-column label="类别" prop="category" width="80" align="center">
+        <el-table-column label="供货商" prop="supplierName" min-width="100" />
+        <el-table-column label="类别" prop="category" min-width="80" align="center">
           <template #default="scope">
             <dict-tag :options="biz_product_category" :value="scope.row.category" />
           </template>
         </el-table-column>
-        <el-table-column label="单位(整)" prop="unit" width="80" align="center">
+        <el-table-column label="单位(整)" prop="unit" min-width="80" align="center">
           <template #default="scope">
             <dict-tag :options="biz_product_unit" :value="scope.row.unit" />
           </template>
         </el-table-column>
-        <el-table-column label="规格(拆)" prop="spec" width="80" align="center">
+        <el-table-column label="规格(拆)" prop="spec" min-width="80" align="center">
           <template #default="scope">
             <dict-tag :options="biz_product_spec" :value="scope.row.spec" />
           </template>
         </el-table-column>
-        <el-table-column label="包装数量" prop="packQty" width="100" align="center">
+        <el-table-column label="包装数量" prop="packQty" min-width="100" align="center">
           <template #default="scope">
             <span>{{ scope.row.packQty || 1 }}{{ scope.row.spec ? getSpecLabel(scope.row.spec) : '' }}/{{ getUnitLabel(scope.row.unit) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="出货价(整)" prop="salePrice" width="100" align="right" />
-        <el-table-column label="出货价(拆)" prop="salePriceSpec" width="100" align="right" />
+        <el-table-column label="出货价(整)" prop="salePrice" min-width="100" align="right" />
+        <el-table-column label="出货价(拆)" prop="salePriceSpec" min-width="100" align="right" />
       </el-table>
       <template #footer>
         <el-button type="primary" @click="confirmProductSelect">确 定</el-button>

@@ -33,12 +33,12 @@
 
     <el-table v-loading="loading" :data="warehouseList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="仓库编码" prop="warehouseCode" width="120" />
+      <el-table-column label="仓库编码" prop="warehouseCode" min-width="120" />
       <el-table-column label="仓库名称" prop="warehouseName" min-width="140" />
       <el-table-column label="地址" prop="address" min-width="160" show-overflow-tooltip />
-      <el-table-column label="联系人" prop="contactPerson" width="100" />
-      <el-table-column label="联系电话" prop="contactPhone" width="130" />
-      <el-table-column label="状态" prop="status" width="80" align="center">
+      <el-table-column label="联系人" prop="contactPerson" min-width="100" />
+      <el-table-column label="联系电话" prop="contactPhone" min-width="130" />
+      <el-table-column label="状态" prop="status" min-width="80" align="center">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
         </template>

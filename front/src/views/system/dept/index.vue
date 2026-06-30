@@ -64,18 +64,18 @@
          :default-expand-all="isExpandAll"
          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       >
-         <el-table-column prop="deptName" label="部门名称" width="260"></el-table-column>
-         <el-table-column prop="orderNum" label="排序" width="200">
+         <el-table-column prop="deptName" label="部门名称" min-width="260"></el-table-column>
+         <el-table-column prop="orderNum" label="排序" min-width="200">
             <template #default="scope">
                <el-input-number v-model="scope.row.orderNum" controls-position="right" :min="0" style="width: 88px" />
             </template>
          </el-table-column>
-         <el-table-column prop="status" label="状态" width="100">
+         <el-table-column prop="status" label="状态" min-width="100">
             <template #default="scope">
                <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
             </template>
          </el-table-column>
-         <el-table-column label="创建时间" align="center" prop="createTime" width="200">
+         <el-table-column label="创建时间" align="center" prop="createTime" min-width="200">
             <template #default="scope">
                <span>{{ parseTime(scope.row.createTime) }}</span>
             </template>

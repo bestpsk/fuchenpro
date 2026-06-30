@@ -70,18 +70,18 @@
 
       <el-table v-loading="loading" :data="noticeList" @selection-change="handleSelectionChange">
          <el-table-column type="selection" width="55" align="center" />
-         <el-table-column label="序号" align="center" prop="noticeId" width="100" />
+         <el-table-column label="序号" align="center" prop="noticeId" min-width="100" />
          <el-table-column label="公告标题" align="center" :show-overflow-tooltip="true">
             <template #default="scope">
                <a class="link-type" style="cursor:pointer" @click="handleViewData(scope.row)">{{ scope.row.noticeTitle }}</a>
             </template>
          </el-table-column>
-         <el-table-column label="公告类型" align="center" prop="noticeType" width="100">
+         <el-table-column label="公告类型" align="center" prop="noticeType" min-width="100">
             <template #default="scope">
                <dict-tag :options="sys_notice_type" :value="scope.row.noticeType" />
             </template>
          </el-table-column>
-         <el-table-column label="状态" align="center" prop="status" width="100">
+         <el-table-column label="状态" align="center" prop="status" min-width="100">
             <template #default="scope">
                <el-switch
                   v-model="scope.row.status"
@@ -92,8 +92,8 @@
                />
             </template>
          </el-table-column>
-         <el-table-column label="创建者" align="center" prop="createBy" width="100" />
-         <el-table-column label="创建时间" align="center" prop="createTime" width="100">
+         <el-table-column label="创建者" align="center" prop="createBy" min-width="100" />
+         <el-table-column label="创建时间" align="center" prop="createTime" min-width="100">
             <template #default="scope">
                <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
             </template>
