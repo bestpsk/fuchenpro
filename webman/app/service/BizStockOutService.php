@@ -53,7 +53,10 @@ class BizStockOutService
         // 仓库权限过滤：非管理员只能查看授权仓库的数据
         $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
         if ($authorizedWhIds !== null) {
-            $query->whereIn('warehouse_id', $authorizedWhIds);
+            // warehouse_id 为 NULL 的出库单（备货自动创建，待确认选仓库）对所有用户可见
+            $query->where(function ($q) use ($authorizedWhIds) {
+                $q->whereIn('warehouse_id', $authorizedWhIds)->orWhereNull('warehouse_id');
+            });
         }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -486,7 +489,38 @@ class BizStockOutService
             $updateData['shipment_date'] = date('Y-m-d H:i:s');
         }
 
-        BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
+        Db::transaction(function () use ($stockOutId, $stockOut, $updateData, $shipType) {
+            BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
+
+            // 发货时更新备货主表（实际出库）
+            if ($stockOut->prepare_id) {
+                $prepare = \app\model\BizStockPrepare::find($stockOut->prepare_id);
+                if ($prepare) {
+                    $shipQty = intval($stockOut->total_quantity);
+                    $shipAmount = floatval($stockOut->total_amount);
+                    $newShipped = intval($prepare->shipped_quantity) + $shipQty;
+                    $newRemaining = intval($prepare->remaining_quantity) - $shipQty;
+                    $newShippedAmount = bcadd(floatval($prepare->shipped_amount), $shipAmount, 2);
+                    $newRemainingAmount = bcsub(floatval($prepare->remaining_amount), $shipAmount, 2);
+                    $newStatus = $newRemaining <= 0 ? '2' : '1';
+
+                    \app\model\BizStockPrepare::where('prepare_id', $prepare->prepare_id)->update([
+                        'shipped_quantity' => $newShipped,
+                        'remaining_quantity' => $newRemaining,
+                        'shipped_amount' => $newShippedAmount,
+                        'remaining_amount' => $newRemainingAmount,
+                        'status' => $newStatus,
+                        'update_time' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
+
+            // ship_type=1 直接完成时，同时更新方案金额（跳过 confirmReceipt）
+            if ($shipType === 1 && $stockOut->plan_id) {
+                $this->updatePlanShippedAmount($stockOut);
+            }
+        });
+
         return ['success' => true, 'msg' => '发货成功'];
     }
 
@@ -509,26 +543,44 @@ class BizStockOutService
 
         Db::transaction(function () use ($stockOutId, $stockOut, $updateData) {
             if ($stockOut->plan_id) {
-                $items = BizStockOutItem::where('stock_out_id', $stockOutId)->get();
-                $totalShippedAmount = floatval($stockOut->total_amount);
-                $plan = \app\model\BizPlan::find($stockOut->plan_id);
-                if ($plan) {
-                    $plan->shipped_amount = bcadd(floatval($plan->shipped_amount), $totalShippedAmount, 2);
-                    $plan->save();
-                }
-                foreach ($items as $item) {
-                    if ($item->plan_item_id) {
-                        $planItem = \app\model\BizPlanItem::find($item->plan_item_id);
-                        if ($planItem) {
-                            $planItem->shipped_quantity = intval($planItem->shipped_quantity) + intval($item->quantity);
-                            $planItem->save();
-                        }
-                    }
-                }
+                $this->updatePlanShippedAmount($stockOut);
             }
-
             BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
         });
         return ['success' => true, 'msg' => '确认收货成功'];
+    }
+
+    /**
+     * 更新方案已出金额和方案明细已出数量（同时扣减剩余）
+     */
+    private function updatePlanShippedAmount($stockOut)
+    {
+        $planId = $stockOut->plan_id;
+        $totalAmount = floatval($stockOut->total_amount);
+
+        // 更新方案主表：shipped_amount++，remaining_amount--
+        $plan = \app\model\BizPlan::find($planId);
+        if ($plan) {
+            \app\model\BizPlan::where('plan_id', $planId)->increment('shipped_amount', $totalAmount);
+            \app\model\BizPlan::where('plan_id', $planId)->decrement('remaining_amount', $totalAmount);
+            $plan->refresh();
+            if (bccomp($plan->remaining_amount, 0, 2) <= 0) {
+                \app\model\BizPlan::where('plan_id', $planId)->update([
+                    'remaining_amount' => 0,
+                    'audit_status' => '3',
+                    'update_time' => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+
+        // 更新方案明细：shipped_quantity++，remaining_quantity--
+        $items = BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->get();
+        foreach ($items as $item) {
+            if ($item->plan_item_id) {
+                $qty = intval($item->quantity);
+                \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->increment('shipped_quantity', $qty);
+                \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->decrement('remaining_quantity', $qty);
+            }
+        }
     }
 }

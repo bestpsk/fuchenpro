@@ -144,8 +144,7 @@ const remainingAvailable = computed(() => {
   const giftAmount = parseFloat(planInfo.value.giftAmount) || 0
   const prepared = parseFloat(activePreparedAmount.value) || 0
   const shipped = parseFloat(planInfo.value.shippedAmount) || 0
-  const total = parseFloat(totalAmount.value) || 0
-  return (giftAmount - prepared - shipped - total).toFixed(2)
+  return (giftAmount - prepared - shipped).toFixed(2)
 })
 
 const planItems = computed(() => planInfo.value.items || [])

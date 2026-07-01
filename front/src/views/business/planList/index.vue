@@ -260,8 +260,8 @@
             <el-table-column label="备货金额" prop="prepareAmount" min-width="100" align="right" />
             <el-table-column label="状态" prop="status" min-width="90" align="center">
               <template #default="scope">
-                <el-tag :type="scope.row.status === '0' ? 'warning' : scope.row.status === '1' ? 'success' : 'info'">
-                  {{ scope.row.status === '0' ? '备货中' : scope.row.status === '1' ? '已出库' : '已取消' }}
+                <el-tag :type="scope.row.status === '0' ? 'warning' : scope.row.status === '1' ? 'primary' : scope.row.status === '2' ? 'success' : 'info'">
+                  {{ scope.row.status === '0' ? '备货中' : scope.row.status === '1' ? '部分出库' : scope.row.status === '2' ? '已出完' : '已取消' }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -406,7 +406,7 @@ const stockPrepareTotalAmount = computed(() => {
 
 const stockPrepareRemainingAmount = computed(() => {
   const giftAmount = parseFloat(stockPreparePlan.value?.giftAmount) || 0
-  return giftAmount - stockPrepareActiveAmount.value - stockPrepareShippedAmount.value - stockPrepareTotalAmount.value
+  return giftAmount - stockPrepareActiveAmount.value - stockPrepareShippedAmount.value
 })
 
 const data = reactive({
@@ -716,13 +716,13 @@ function onStockPrepareUnitTypeChange(index) {
 }
 
 function onStockPrepareManualQuantityChange(index) {
-  if (stockPrepareRemainingAmount.value < 0) {
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
     proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
   }
 }
 
 function onStockPrepareQuantityChange() {
-  if (stockPrepareRemainingAmount.value < 0) {
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
     proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
   }
 }

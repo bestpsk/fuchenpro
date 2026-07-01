@@ -2,6 +2,7 @@
   <div class="warehouse-selector" v-if="warehouseList.length > 1">
     <span class="warehouse-label">当前仓库：</span>
     <el-select v-model="currentWarehouseId" @change="handleChange" style="width: 180px">
+      <el-option label="全部仓库" :value="null" />
       <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
     </el-select>
   </div>

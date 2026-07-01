@@ -13,11 +13,12 @@ export function useWarehouse() {
       warehouseList.value = res.data || []
       // 从 localStorage 恢复选择
       const saved = localStorage.getItem('currentWarehouseId')
-      if (saved && warehouseList.value.some(w => w.warehouseId == saved)) {
+      if (saved && saved !== 'null' && warehouseList.value.some(w => w.warehouseId == saved)) {
         currentWarehouseId.value = parseInt(saved)
-      } else if (warehouseList.value.length > 0) {
-        currentWarehouseId.value = warehouseList.value[0].warehouseId
-        localStorage.setItem('currentWarehouseId', String(currentWarehouseId.value))
+      } else {
+        // 默认选中"全部仓库"
+        currentWarehouseId.value = null
+        localStorage.setItem('currentWarehouseId', 'null')
       }
       loaded.value = true
     } catch (e) {

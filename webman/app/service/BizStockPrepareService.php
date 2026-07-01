@@ -445,20 +445,7 @@ class BizStockPrepareService
                 BizStockPrepareItem::where('item_id', $itemId)->decrement('remaining_amount', $itemShippedAmount);
             }
 
-            $newTotalShipped = intval($prepare->shipped_quantity) + $totalShipQuantity;
-            $newTotalRemaining = intval($prepare->remaining_quantity) - $totalShipQuantity;
-            $newTotalShippedAmount = bcadd(floatval($prepare->shipped_amount), $totalShippedAmount, 2);
-            $newTotalRemainingAmount = bcsub(floatval($prepare->remaining_amount), $totalShippedAmount, 2);
-            $newStatus = $newTotalRemaining <= 0 ? '2' : '1';
-
-            BizStockPrepare::where('prepare_id', $prepareId)->update([
-                'shipped_quantity' => $newTotalShipped,
-                'remaining_quantity' => $newTotalRemaining,
-                'shipped_amount' => $newTotalShippedAmount,
-                'remaining_amount' => $newTotalRemainingAmount,
-                'status' => $newStatus,
-                'update_time' => date('Y-m-d H:i:s'),
-            ]);
+            // 备货主表的 shipped/remaining/status 在出库单发货时更新，不在创建出库单时更新
 
             return ['success' => true, 'msg' => '出库单创建成功', 'data' => $stockOut];
         });
@@ -516,15 +503,18 @@ class BizStockPrepareService
 
             $unitType = $item['unitType'] ?? '1';
             $packQty = $product->pack_qty ?? 1;
-            $salePrice = $unitType === '1' ? $product->sale_price : $product->sale_price_spec;
 
-            // 数量统一转为最小单位
+            // 数量统一转为副单位（最小单位），与进销存一致
             $quantity = $item['quantity'];
             if ($unitType === '1') {
                 $quantity = $item['quantity'] * $packQty;
             }
 
-            $amount = $quantity * $salePrice; // 金额按对应单价计算
+            // sale_price 统一用副单位价（与进销存一致）
+            $salePrice = $product->sale_price_spec;
+
+            // 金额 = 副单位数量 × 副单位价
+            $amount = $quantity * $salePrice;
 
             // 3.5 如果方案有配赠明细，校验 plan_item_id 和数量
             $planItemId = $item['planItemId'] ?? null;
@@ -533,7 +523,14 @@ class BizStockPrepareService
                 if (!$planItem || $planItem->plan_id != $planId) {
                     throw new \Exception('方案明细不存在或不属于该方案');
                 }
-                if ($quantity > $planItem->remaining_quantity) {
+                // 方案明细 remaining_quantity 换算成副单位（最小单位）比较
+                $planItemPackQty = intval($planItem->pack_qty ?? 1);
+                $planItemUnitType = $planItem->unit_type ?? '1';
+                $planItemRemaining = intval($planItem->remaining_quantity);
+                if ($planItemUnitType === '1' && $planItemPackQty > 1) {
+                    $planItemRemaining = $planItemRemaining * $planItemPackQty;
+                }
+                if ($quantity > $planItemRemaining) {
                     throw new \Exception('备货数量超过方案明细剩余数量：' . $product->product_name);
                 }
             }
@@ -563,48 +560,53 @@ class BizStockPrepareService
             throw new \Exception('备货总金额超过方案配赠金额剩余额度');
         }
 
-        // 3.3 创建备货主表
+        // 3.3 创建备货主表 + 明细 + 自动创建出库单（事务保证原子性）
         $prepareNo = $this->generatePrepareNo();
-        $prepare = BizStockPrepare::create([
-            'prepare_no' => $prepareNo,
-            'plan_id' => $planId,
-            'plan_no' => $plan->plan_no,
-            'enterprise_id' => $plan->enterprise_id,
-            'enterprise_name' => $plan->enterprise->enterprise_name ?? '',
-            'warehouse_id' => null,
-            'total_quantity' => $totalQuantity,
-            'total_amount' => $totalAmount,
-            'remaining_quantity' => $totalQuantity,
-            'remaining_amount' => $totalAmount,
-            'shipped_quantity' => 0,
-            'shipped_amount' => 0,
-            'status' => '0',
-            'create_by' => $loginUser ? ($loginUser->user->user_name ?? '') : ($plan->create_by ?? ''),
-            'creator_user_id' => $loginUser ? ($loginUser->user->user_id ?? null) : null,
-            'create_time' => date('Y-m-d H:i:s'),
-        ]);
+        return Db::transaction(function () use ($prepareNo, $planId, $plan, $totalQuantity, $totalAmount, $prepareItems, $loginUser) {
+            $prepare = BizStockPrepare::create([
+                'prepare_no' => $prepareNo,
+                'plan_id' => $planId,
+                'plan_no' => $plan->plan_no,
+                'enterprise_id' => $plan->enterprise_id,
+                'enterprise_name' => $plan->enterprise->enterprise_name ?? '',
+                'warehouse_id' => null,
+                'total_quantity' => $totalQuantity,
+                'total_amount' => $totalAmount,
+                'remaining_quantity' => $totalQuantity,
+                'remaining_amount' => $totalAmount,
+                'shipped_quantity' => 0,
+                'shipped_amount' => 0,
+                'status' => '0',
+                'create_by' => $loginUser ? ($loginUser->user->user_name ?? '') : ($plan->create_by ?? ''),
+                'creator_user_id' => $loginUser ? ($loginUser->user->user_id ?? null) : null,
+                'create_time' => date('Y-m-d H:i:s'),
+            ]);
 
-        // 3.4 创建备货明细
-        $createdItems = [];
-        foreach ($prepareItems as $item) {
-            $item['prepare_id'] = $prepare->prepare_id;
-            $createdItem = BizStockPrepareItem::create($item);
-            $createdItems[] = $createdItem;
-        }
+            // 创建备货明细
+            $createdItems = [];
+            foreach ($prepareItems as $item) {
+                $item['prepare_id'] = $prepare->prepare_id;
+                $createdItem = BizStockPrepareItem::create($item);
+                $createdItems[] = $createdItem;
+            }
 
-        // 3.5 自动创建出库单（不选仓库，仓库在出库管理确认时选择）
-        $stockOutItems = [];
-        foreach ($createdItems as $createdItem) {
-            $stockOutItems[] = [
-                'item_id' => $createdItem->item_id,
-                'unit_type' => $createdItem->unit_type ?? '1',
-                'original_quantity' => $createdItem->unit_type === '1' && intval($createdItem->pack_qty) > 1
-                    ? intval($createdItem->quantity) / intval($createdItem->pack_qty)
-                    : intval($createdItem->quantity),
-            ];
-        }
-        $this->createStockOutFromPrepare($prepare->prepare_id, $stockOutItems, null, $loginUser);
+            // 自动创建出库单（不选仓库，仓库在出库管理确认时选择）
+            $stockOutItems = [];
+            foreach ($createdItems as $createdItem) {
+                $stockOutItems[] = [
+                    'item_id' => $createdItem->item_id,
+                    'unit_type' => $createdItem->unit_type ?? '1',
+                    'original_quantity' => $createdItem->unit_type === '1' && intval($createdItem->pack_qty) > 1
+                        ? intval($createdItem->quantity) / intval($createdItem->pack_qty)
+                        : intval($createdItem->quantity),
+                ];
+            }
+            $result = $this->createStockOutFromPrepare($prepare->prepare_id, $stockOutItems, null, $loginUser);
+            if (!$result['success']) {
+                throw new \Exception($result['msg']);
+            }
 
-        return true;
+            return true;
+        });
     }
 }
