@@ -39,7 +39,12 @@ class SysRoleService
         $orderBy = $params['orderByColumn'] ?? 'role_sort';
         $isAsc = $params['isAsc'] ?? 'asc';
         $direction = strtolower($isAsc) === 'asc' ? 'asc' : 'desc';
-        $query->orderBy($orderBy, $direction);
+        $allowedColumns = ['role_id', 'role_name', 'role_key', 'role_sort', 'status', 'create_time'];
+        if (in_array($orderBy, $allowedColumns, true)) {
+            $query->orderBy($orderBy, $direction);
+        } else {
+            $query->orderBy('role_sort', 'asc');
+        }
 
         return $query->paginate($pageSize, ['*'], 'page', $pageNum);
     }

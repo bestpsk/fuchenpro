@@ -97,12 +97,22 @@ class BizSalesOrderService
             $dealAmountEditable = SysConfigService::getConfigValue('biz.sales.packageDealAmountEditable', 'true') !== 'false';
             $paidAmountEditable = SysConfigService::getConfigValue('biz.sales.packagePaidAmountEditable', 'true') !== 'false';
 
+            // 预加载关联的卡项，避免循环内逐条查询（N+1）
+            $cardItemIds = [];
+            foreach ($items as $item) {
+                $cid = $item['card_item_id'] ?? $item['cardItemId'] ?? null;
+                if (!empty($cid)) {
+                    $cardItemIds[] = $cid;
+                }
+            }
+            $cardItemMap = BizCardItem::whereIn('card_item_id', $cardItemIds ?: [0])->get()->keyBy('card_item_id');
+
             $convertedItems = [];
             foreach ($items as $item) {
                 // 配置校验：如果品项关联了卡项，检查是否允许修改次数/金额
                 $cardItemId = $item['card_item_id'] ?? $item['cardItemId'] ?? null;
                 if (!empty($cardItemId)) {
-                    $cardItem = BizCardItem::find($cardItemId);
+                    $cardItem = $cardItemMap->get($cardItemId);
                     if ($cardItem) {
                         $itemQuantity = intval($item['count'] ?? $item['quantity'] ?? 1);
                         $itemDealAmount = floatval($item['price'] ?? $item['deal_amount'] ?? $item['dealPrice'] ?? 0);

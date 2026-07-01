@@ -24,7 +24,7 @@ class CommonController
         $ext = $file->getUploadExtension() ?: 'bin';
         // 安全防护：扩展名白名单，禁止上传可执行文件
         $extLower = strtolower(ltrim($ext, '.'));
-        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'mp4', 'mp3'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'mp4', 'mp3'];
         if (!in_array($extLower, $allowedExts)) {
             return AjaxResult::error('不支持的文件类型: ' . $extLower);
         }

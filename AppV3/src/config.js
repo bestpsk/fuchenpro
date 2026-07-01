@@ -18,8 +18,8 @@ export default {
       { title: "隐私政策", url: "/pages/agreement/privacy" }
     ]
   },
-  /** 高德地图Web服务Key，用于考勤定位、门店地图等功能 */
+  /** 高德地图Web服务Key，从后端配置获取，此处不再硬编码 */
   amap: {
-    webServiceKey: 'd184e115457658cbcf3f92ed8e3a1772'
+    webServiceKey: ''
   }
 }

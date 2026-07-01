@@ -142,6 +142,15 @@ onMounted(() => {
   }
 })
 
+onBeforeUnmount(() => {
+  if (props.type == 'url') {
+    const quill = quillEditorRef.value?.getQuill()
+    if (quill) {
+      quill.root.removeEventListener('paste', handlePasteCapture, true)
+    }
+  }
+})
+
 // 上传前校检格式和大小
 function handleBeforeUpload(file) {
   const type = ["image/jpeg", "image/jpg", "image/png", "image/svg"]

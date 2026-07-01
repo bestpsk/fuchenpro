@@ -4,6 +4,7 @@ namespace app\controller\tool;
 
 use support\Request;
 use app\service\GenTableService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -18,6 +19,9 @@ class GenController
     // 分页查询已导入的代码生成表列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new GenTableService();
         $result = $service->selectGenTableList($request->all());
         return TableDataInfo::result($result->items(), $result->total());
@@ -37,6 +41,9 @@ class GenController
     // 分页查询数据库中未导入的表列表
     public function dbList(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new GenTableService();
         $result = $service->selectDbTableList($request->all());
         return TableDataInfo::result($result['rows'], $result['total']);
@@ -45,6 +52,9 @@ class GenController
     // 从数据库导入指定表到代码生成器（支持批量导入）
     public function importTable(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $tableNames = $request->post('tables', '');
         if (is_string($tableNames)) {
             $tableNames = explode(',', $tableNames);
@@ -57,6 +67,9 @@ class GenController
     // 修改代码生成表配置（含表信息和列信息）
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = $request->post();
         $service = new GenTableService();
         $service->updateGenTable($data);
@@ -66,6 +79,9 @@ class GenController
     // 批量删除代码生成表配置
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $tableIds = explode(',', $request->input('tableIds', ''));
         $tableIds = array_map('intval', array_filter($tableIds));
         $service = new GenTableService();
@@ -85,6 +101,9 @@ class GenController
     // 同步数据库表结构到代码生成配置（更新列信息）
     public function synchDb(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:code')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $tableName = end($parts);
         $service = new GenTableService();
@@ -95,6 +114,9 @@ class GenController
     // 下载指定表的生成代码ZIP包
     public function download(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:code')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $tableName = end($parts);
         $service = new GenTableService();
@@ -105,6 +127,9 @@ class GenController
     // 批量生成代码并下载ZIP包
     public function batchGenCode(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:code')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $tableNames = $request->input('tables', '');
         if (is_string($tableNames)) {
             $tableNames = explode(',', $tableNames);

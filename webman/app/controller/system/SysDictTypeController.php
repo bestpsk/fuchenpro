@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysDictTypeService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -17,6 +18,9 @@ class SysDictTypeController
     // 分页查询字典类型列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysDictTypeService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectDictTypeList($params);
@@ -26,6 +30,9 @@ class SysDictTypeController
     // 根据ID获取字典类型详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $dictId = intval(end($parts));
         $service = new SysDictTypeService();
@@ -37,6 +44,9 @@ class SysDictTypeController
     // 新增字典类型
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDictTypeService();
@@ -47,6 +57,9 @@ class SysDictTypeController
     // 修改字典类型
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDictTypeService();
@@ -57,6 +70,9 @@ class SysDictTypeController
     // 批量删除字典类型
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $dictIds = explode(',', $request->input('dictIds', ''));
         $dictIds = array_map('intval', array_filter($dictIds));
         $service = new SysDictTypeService();
@@ -67,6 +83,9 @@ class SysDictTypeController
     // 刷新字典缓存（清空Redis中的字典缓存并重新加载）
     public function refreshCache(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysDictTypeService();
         $service->resetDictCache();
         return AjaxResult::success();

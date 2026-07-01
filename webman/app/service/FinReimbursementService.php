@@ -215,7 +215,7 @@ class FinReimbursementService
             $query->whereIn('applicant_id', $visibleUserIds);
         }
 
-        return $query->groupByRaw('YEAR(apply_date), MONTH(apply_date)')->orderBy('month')->get();
+        return $query->groupByRaw('DATE_FORMAT(apply_date, "%Y-%m")')->orderBy('year')->orderBy('month')->get();
     }
 
     // 按分类统计

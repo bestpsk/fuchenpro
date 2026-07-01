@@ -110,6 +110,10 @@ class BizCustomerController
         }
 
         $ext = $file->getUploadExtension() ?: 'png';
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        if (!in_array(strtolower($ext), $allowedExts, true)) {
+            return AjaxResult::error('不支持的图片格式');
+        }
         $filename = md5(uniqid()) . '.' . $ext;
 
         $cosService = new CosService();

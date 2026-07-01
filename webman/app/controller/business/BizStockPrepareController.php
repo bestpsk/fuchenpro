@@ -89,7 +89,7 @@ class BizStockPrepareController
             $result = $service->createFromPlan($planId, $items, $request->loginUser);
             return AjaxResult::toAjax($result ? 1 : 0);
         } catch (\Exception $e) {
-            return AjaxResult::error($e->getMessage());
+            return AjaxResult::error('操作失败，请稍后重试');
         }
     }
 

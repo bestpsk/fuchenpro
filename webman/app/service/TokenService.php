@@ -19,7 +19,7 @@ class TokenService
 
     public function __construct()
     {
-        $this->secret = getenv('JWT_SECRET') ?: Constants::JWT_SECRET ?: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';
+        $this->secret = getenv('JWT_SECRET') ?: '';
         $this->expire = intval(SysConfigService::getConfigValue('sys.login.expireTime'));
     }
 

@@ -4,6 +4,7 @@ namespace app\controller\monitor;
 
 use support\Request;
 use app\service\SysJobService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -17,6 +18,9 @@ class SysJobController
     // 分页查询定时任务列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysJobService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectJobList($params);
@@ -37,6 +41,9 @@ class SysJobController
     // 新增定时任务
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysJobService();
@@ -46,6 +53,9 @@ class SysJobController
     // 修改定时任务
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysJobService();
@@ -55,6 +65,9 @@ class SysJobController
     // 批量删除定时任务
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $jobIds = explode(',', $request->input('jobIds', ''));
         $jobIds = array_map('intval', array_filter($jobIds));
         $service = new SysJobService();
@@ -64,6 +77,9 @@ class SysJobController
     // 变更定时任务状态（启动/暂停）
     public function changeStatus(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:changeStatus')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $jobId = $request->post('jobId');
         $status = $request->post('status');
         $service = new SysJobService();
@@ -73,6 +89,9 @@ class SysJobController
     // 立即执行一次定时任务
     public function run(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:run')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $jobId = $request->post('jobId');
         $service = new SysJobService();
         $job = $service->selectJobById($jobId);

@@ -81,7 +81,7 @@ class BizRepaymentController
             $result = $service->insertRepayment($data, $autoAudit);
             return AjaxResult::success($result);
         } catch (\Exception $e) {
-            return AjaxResult::error('添加还款记录失败：' . $e->getMessage());
+            return AjaxResult::error('添加还款记录失败，请稍后重试');
         }
     }
 
@@ -105,7 +105,7 @@ class BizRepaymentController
                 return AjaxResult::error('审核失败，该记录可能已被审核或不存在');
             }
         } catch (\Exception $e) {
-            return AjaxResult::error('审核失败：' . $e->getMessage());
+            return AjaxResult::error('审核失败，请稍后重试');
         }
     }
 

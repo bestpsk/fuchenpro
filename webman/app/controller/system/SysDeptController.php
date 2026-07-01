@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysDeptService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 /**
@@ -17,6 +18,9 @@ class SysDeptController
     // 查询部门列表（树形结构）
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysDeptService();
         $params = convert_to_snake_case($request->all());
         $depts = $service->selectDeptList($params);
@@ -35,6 +39,9 @@ class SysDeptController
     // 根据ID获取部门详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $deptId = intval(end($parts));
         $service = new SysDeptService();
@@ -48,6 +55,9 @@ class SysDeptController
     // 新增部门
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDeptService();
@@ -58,6 +68,9 @@ class SysDeptController
     // 修改部门信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDeptService();
@@ -83,6 +96,9 @@ class SysDeptController
     // 删除部门，存在下级部门或关联用户时不允许删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $deptId = intval($request->input('deptId', 0));
         $service = new SysDeptService();
         $result = $service->deleteDeptById($deptId);

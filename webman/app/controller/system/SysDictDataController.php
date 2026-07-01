@@ -5,6 +5,7 @@ namespace app\controller\system;
 use support\Request;
 use app\service\SysDictDataService;
 use app\service\SysDictTypeService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -18,6 +19,9 @@ class SysDictDataController
     // 分页查询字典数据列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysDictDataService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectDictDataList($params);
@@ -27,6 +31,9 @@ class SysDictDataController
     // 根据字典编码获取字典数据详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $dictCode = intval(end($parts));
         $service = new SysDictDataService();
@@ -51,6 +58,9 @@ class SysDictDataController
     // 新增字典数据
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDictDataService();
@@ -61,6 +71,9 @@ class SysDictDataController
     // 修改字典数据
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysDictDataService();
@@ -71,6 +84,9 @@ class SysDictDataController
     // 批量删除字典数据
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dict:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $dictCodes = $request->input('dictCodes', $request->input('dictCode', ''));
         if (!is_array($dictCodes)) {
             $dictCodes = explode(',', $dictCodes);

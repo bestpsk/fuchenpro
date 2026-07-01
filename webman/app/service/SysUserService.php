@@ -53,7 +53,8 @@ class SysUserService
         $orderBy = $params['orderByColumn'] ?? '';
         $isAsc = $params['isAsc'] ?? 'asc';
 
-        if ($orderBy) {
+        $allowedColumns = ['user_id', 'user_name', 'phone_number', 'status', 'create_time', 'login_date'];
+        if ($orderBy && in_array($orderBy, $allowedColumns, true)) {
             $direction = strtolower($isAsc) === 'asc' ? 'asc' : 'desc';
             $query->orderBy($orderBy, $direction);
         } else {

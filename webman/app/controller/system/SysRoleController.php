@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysRoleService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -18,6 +19,9 @@ class SysRoleController
     // 分页查询角色列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysRoleService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectRoleList($params);
@@ -27,6 +31,9 @@ class SysRoleController
     // 根据ID获取角色详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $roleId = intval(end($parts));
         $service = new SysRoleService();
@@ -40,6 +47,9 @@ class SysRoleController
     // 新增角色，校验角色名称和权限字符唯一性
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $service = new SysRoleService();
         if ($service->checkRoleNameUnique($data['role_name'] ?? '')) {
@@ -56,6 +66,9 @@ class SysRoleController
     // 修改角色信息，校验唯一性并刷新在线用户权限缓存
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $service = new SysRoleService();
         if ($service->checkRoleNameUnique($data['role_name'] ?? '', $data['role_id'] ?? null)) {
@@ -76,6 +89,9 @@ class SysRoleController
     // 批量删除角色，不允许删除超级管理员角色(ID=1)
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $roleIds = explode(',', $request->input('roleIds', ''));
         $roleIds = array_map('intval', array_filter($roleIds));
         if (in_array(1, $roleIds)) {
@@ -89,6 +105,9 @@ class SysRoleController
     // 设置角色数据权限范围（全部/自定义/本部门/本部门及以下/仅本人）
     public function dataScope(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $service = new SysRoleService();
         $result = $service->authDataScope(
@@ -107,6 +126,9 @@ class SysRoleController
     // 变更角色状态（启用/停用）
     public function changeStatus(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $roleId = $request->post('roleId');
         $status = $request->post('status');
         $service = new SysRoleService();
@@ -124,6 +146,9 @@ class SysRoleController
     // 分页查询已分配该角色的用户列表
     public function allocatedList(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $roleId = intval($params['role_id'] ?? 0);
         $service = new SysRoleService();
@@ -144,6 +169,9 @@ class SysRoleController
     // 取消单个用户的角色授权
     public function cancelAuthUser(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userId = $request->post('userId');
         $roleId = $request->post('roleId');
         $service = new SysRoleService();
@@ -154,6 +182,9 @@ class SysRoleController
     // 批量取消用户的角色授权
     public function cancelAuthUserAll(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $roleId = $request->post('roleId');
         $userIds = $request->post('userIds', []);
         if (is_string($userIds)) {
@@ -167,6 +198,9 @@ class SysRoleController
     // 批量给用户授权指定角色
     public function selectAuthUserAll(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:role:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $roleId = $request->post('roleId');
         $userIds = $request->post('userIds', []);
         if (is_string($userIds)) {

@@ -55,15 +55,22 @@ class BizScheduleService
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('schedule_date', 'desc')->orderBy('schedule_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
+        // 批量查询用户和岗位信息，避免N+1查询
+        $userIds = $result->getCollection()->pluck('user_id')->unique()->filter()->values()->all();
+        $users = SysUser::whereIn('user_id', $userIds)->where('del_flag', '0')->get()->keyBy('user_id');
+        $postInfos = Db::table('sys_user_post as up')
+            ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
+            ->whereIn('up.user_id', $userIds)
+            ->select('up.user_id', 'p.post_name')
+            ->get()
+            ->groupBy('user_id');
+
         foreach ($result->items() as $item) {
-            $user = SysUser::where('user_id', $item->user_id)->where('del_flag', '0')->first();
+            $user = $users->get($item->user_id);
             if ($user) {
                 $item->user_name = $user->nick_name ?? $user->user_name;
-                $postInfo = Db::table('sys_user_post as up')
-                    ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
-                    ->where('up.user_id', $user->user_id)
-                    ->first();
-                $item->post_name = $postInfo->post_name ?? '';
+                $postInfo = $postInfos->get($item->user_id);
+                $item->post_name = $postInfo ? $postInfo->first()->post_name : '';
             }
         }
 
@@ -193,12 +200,7 @@ class BizScheduleService
         if (!empty($params['user_name'])) {
             $userQuery->where('user_name', 'like', '%' . $params['user_name'] . '%');
         }
-        if (!empty($params['status'])) {
-            $userQuery->where('status', $params['status']);
-        } else {
-            $userQuery->where('status', '0');
-        }
-        $userQuery->where('del_flag', '0');
+        $userQuery->where('status', '0')->where('del_flag', '0');
         DataScopeService::applyUserScope($userQuery, $params['login_user'], 'user_id');
         
         $users = $userQuery->get();
@@ -211,8 +213,11 @@ class BizScheduleService
         if (!empty($params['purpose'])) {
             $scheduleQuery->where('purpose', $params['purpose']);
         }
+        if (!empty($params['status'])) {
+            $scheduleQuery->where('status', $params['status']);
+        }
         DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
-        
+
         $schedules = $scheduleQuery->get();
         
         $result = [];
@@ -292,11 +297,7 @@ class BizScheduleService
         if (!empty($params['enterprise_name'])) {
             $enterpriseQuery->where('enterprise_name', 'like', '%' . $params['enterprise_name'] . '%');
         }
-        if (!empty($params['status'])) {
-            $enterpriseQuery->where('status', $params['status']);
-        } else {
-            $enterpriseQuery->where('status', '0');
-        }
+        $enterpriseQuery->where('status', '0');
 
         $enterprises = $enterpriseQuery->get();
 
@@ -313,6 +314,9 @@ class BizScheduleService
         }
         if (!empty($params['purpose'])) {
             $scheduleQuery->where('purpose', $params['purpose']);
+        }
+        if (!empty($params['status'])) {
+            $scheduleQuery->where('status', $params['status']);
         }
         DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
 

@@ -37,9 +37,15 @@ class DatabaseBackupService
         // 读取mysqldump路径配置
         $mysqldumpPath = SysConfigService::getConfigValue('sys.backup.mysqldumpPath', 'mysqldump');
 
-        // 构建 mysqldump 命令
-        $passwordArg = $password ? "-p\"{$password}\"" : '';
-        $command = "\"{$mysqldumpPath}\" -h{$host} -P{$port} -u{$username} {$passwordArg} --single-transaction --routines --triggers \"{$database}\" > \"{$tmpFile}\" 2>&1";
+        // 构建 mysqldump 命令（使用 escapeshellarg 防止命令注入）
+        $escMysqldumpPath = escapeshellarg($mysqldumpPath);
+        $escHost = escapeshellarg($host);
+        $escPort = escapeshellarg($port);
+        $escUsername = escapeshellarg($username);
+        $escDatabase = escapeshellarg($database);
+        $escTmpFile = escapeshellarg($tmpFile);
+        $passwordArg = $password ? '-p' . escapeshellarg($password) : '';
+        $command = $escMysqldumpPath . " -h{$escHost} -P{$escPort} -u{$escUsername} {$passwordArg} --single-transaction --routines --triggers {$escDatabase} > {$escTmpFile} 2>&1";
 
         exec($command, $output, $returnCode);
 

@@ -36,6 +36,7 @@ class CorsMiddleware implements MiddlewareInterface
                 $headers['Access-Control-Allow-Origin'] = $origin;
             }
         } elseif ($origin !== '') {
+            // 调试阶段暂时允许所有 Origin，域名申请后移除此分支
             $headers['Access-Control-Allow-Origin'] = $origin;
         }
 

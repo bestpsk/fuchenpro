@@ -40,6 +40,9 @@ export default defineConfig(({ mode, command }) => {
         }
       }
     },
+    esbuild: {
+      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+    },
     // vite 相关配置
     server: {
       port: 8088,

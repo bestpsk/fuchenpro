@@ -22,7 +22,8 @@ export function getToken() {
  * @returns {string|undefined} Cookie.set的返回值
  */
 export function setToken(token) {
-  return Cookies.set(TokenKey, token)
+  const isHttps = window.location.protocol === 'https:'
+  return Cookies.set(TokenKey, token, { secure: isHttps, sameSite: 'Lax' })
 }
 
 /**

@@ -21,3 +21,10 @@ selenium-debug.log
 
 package-lock.json
 yarn.lock
+
+# 环境变量文件（含敏感密钥，不应提交到仓库）
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging

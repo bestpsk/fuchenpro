@@ -85,8 +85,17 @@ class BizStockPrepareService
         // 补全items字段
         if ($prepare->items) {
             // 批量获取字典值
-            $unitDicts = \app\model\SysDictData::where('dict_type', 'biz_product_unit')->pluck('dict_label', 'dict_value');
-            $specDicts = \app\model\SysDictData::where('dict_type', 'biz_product_spec')->pluck('dict_label', 'dict_value');
+            // 使用字典缓存接口，避免直接查表
+            $unitDictList = SysDictTypeService::selectDictDataByType('biz_product_unit');
+            $unitDicts = [];
+            foreach ($unitDictList as $d) {
+                $unitDicts[$d['dict_value']] = $d['dict_label'];
+            }
+            $specDictList = SysDictTypeService::selectDictDataByType('biz_product_spec');
+            $specDicts = [];
+            foreach ($specDictList as $d) {
+                $specDicts[$d['dict_value']] = $d['dict_label'];
+            }
 
             foreach ($prepare->items as $item) {
                 $product = $item->product;
@@ -146,13 +155,15 @@ class BizStockPrepareService
             if (empty($cardItemIds)) return null;
 
             $cardItemProducts = BizCardItemProduct::whereIn('card_item_id', $cardItemIds)->get();
+            // 批量预加载卡项，避免循环内逐条查询（N+1）
+            $cardItemMap = BizCardItem::whereIn('card_item_id', $cardItemIds)->get()->keyBy('card_item_id');
 
             $productQuantities = [];
             foreach ($cardItemProducts as $cip) {
                 $orderItemQty = $orderItemMap[$cip->card_item_id] ?? 0;
                 if ($orderItemQty <= 0) continue;
 
-                $cardItem = BizCardItem::find($cip->card_item_id);
+                $cardItem = $cardItemMap->get($cip->card_item_id);
                 $defaultQty = $cardItem ? intval($cardItem->default_quantity) : 1;
                 $perTimeQty = $defaultQty > 0 ? intval($cip->quantity) / $defaultQty : intval($cip->quantity);
                 $quantity = $perTimeQty * $orderItemQty;

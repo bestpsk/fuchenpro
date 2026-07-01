@@ -18,7 +18,15 @@ const url = ref('')
 /** 页面加载时从路由参数获取URL并解码 */
 onLoad((options) => {
   if (options.url) {
-    url.value = decodeURIComponent(options.url)
+    // URL 白名单校验
+    const allowedProtocols = ['http://', 'https://']
+    const decodedUrl = decodeURIComponent(options.url)
+    if (!allowedProtocols.some(p => decodedUrl.startsWith(p))) {
+      uni.showToast({ title: '不支持链接', icon: 'none' })
+      setTimeout(() => uni.navigateBack(), 1500)
+      return
+    }
+    url.value = decodedUrl
   }
 })
 </script>

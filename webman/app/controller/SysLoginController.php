@@ -64,8 +64,8 @@ class SysLoginController
         $user = $userService->selectUserByUserName($username);
 
         if (!$user) {
-            $this->recordLogininfor($username, false, '用户不存在', $loginSource);
-            return AjaxResult::error('用户不存在');
+            $this->recordLogininfor($username, false, '用户名或密码错误', $loginSource);
+            return AjaxResult::error('用户名或密码错误');
         }
 
         if ($user->status === '1') {
@@ -75,8 +75,8 @@ class SysLoginController
 
         $pwdResult = PasswordService::validate($user, $password);
         if ($pwdResult !== true) {
-            $this->recordLogininfor($username, false, $pwdResult, $loginSource);
-            return AjaxResult::error($pwdResult);
+            $this->recordLogininfor($username, false, '用户名或密码错误', $loginSource);
+            return AjaxResult::error('用户名或密码错误');
         }
 
         $loginUser = new LoginUser();

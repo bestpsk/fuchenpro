@@ -3,6 +3,7 @@
 namespace app\controller\monitor;
 
 use support\Request;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 /**
@@ -23,6 +24,9 @@ class ServerController
 
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:server:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         return AjaxResult::success('', [
             'data' => [
                 'cpu' => $this->getCpuInfo(),

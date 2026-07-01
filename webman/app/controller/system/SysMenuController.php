@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysMenuService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 /**
@@ -17,6 +18,9 @@ class SysMenuController
     // 查询菜单列表，管理员返回全部菜单，普通用户返回有权限的菜单
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:menu:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysMenuService();
         $userId = $request->loginUser ? $request->loginUser->userId : null;
         $params = convert_to_snake_case($request->all());
@@ -27,6 +31,9 @@ class SysMenuController
     // 根据ID获取菜单详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:menu:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $menuId = intval(end($parts));
         $service = new SysMenuService();
@@ -56,6 +63,9 @@ class SysMenuController
     // 新增菜单
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:menu:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysMenuService();
@@ -66,6 +76,9 @@ class SysMenuController
     // 修改菜单信息
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:menu:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysMenuService();
@@ -100,6 +113,9 @@ class SysMenuController
     // 删除菜单，存在子菜单时不允许删除
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:menu:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $menuId = intval($request->input('menuId', 0));
         $service = new SysMenuService();
         $result = $service->deleteMenuById($menuId);

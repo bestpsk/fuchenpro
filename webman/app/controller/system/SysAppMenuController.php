@@ -4,12 +4,16 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysAppMenuService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 class SysAppMenuController
 {
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:appMenu:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysAppMenuService();
         $params = convert_to_snake_case($request->all());
         $list = $service->selectAppMenuList($params);
@@ -35,6 +39,9 @@ class SysAppMenuController
 
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:appMenu:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysAppMenuService();
@@ -44,6 +51,9 @@ class SysAppMenuController
 
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:appMenu:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysAppMenuService();
@@ -53,6 +63,9 @@ class SysAppMenuController
 
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:appMenu:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $appMenuId = intval($request->input('appMenuId', 0));
         $service = new SysAppMenuService();
         $result = $service->removeAppMenu($appMenuId);

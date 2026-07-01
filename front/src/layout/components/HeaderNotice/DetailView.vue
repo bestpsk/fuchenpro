@@ -42,7 +42,7 @@
         </div>
 
         <div class="notice-body">
-          <div v-if="hasContent" class="notice-content" v-html="detail.noticeContent" />
+          <div v-if="hasContent" class="notice-content" v-html="sanitize(detail.noticeContent)" />
           <div v-else class="notice-empty notice-empty--inner">
             <el-icon><Document /></el-icon> 暂无内容
           </div>
@@ -58,6 +58,9 @@
  * @description 弹窗展示通知公告的完整内容，支持标记已读
  */
 import { getNotice } from '@/api/system/notice'
+import DOMPurify from 'dompurify'
+
+const sanitize = (html) => DOMPurify.sanitize(html)
 
 const visible = ref(false)
 const loading = ref(false)

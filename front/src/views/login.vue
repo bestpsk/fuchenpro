@@ -87,8 +87,8 @@ const { proxy } = getCurrentInstance()
 
 /** 登录表单数据（账号/密码/记住我/验证码/UUID） */
 const loginForm = ref({
-  username: "admin",
-  password: "admin123",
+  username: "",
+  password: "",
   rememberMe: false,
   code: "",
   uuid: ""

@@ -22,6 +22,9 @@ class SysUserController
     // 分页查询用户列表，支持按部门、用户名、手机号、状态等条件筛选
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $service = new SysUserService();
@@ -32,6 +35,9 @@ class SysUserController
     // 导出用户数据为Excel文件
     public function export(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = $request->all();
         $params['login_user'] = $request->loginUser;
         $params['pageSize'] = 10000;
@@ -63,7 +69,7 @@ class SysUserController
             $message = $service->importUser($userList, $updateSupport, $operName);
             return AjaxResult::success($message);
         } catch (\Exception $e) {
-            return AjaxResult::error($e->getMessage());
+            return AjaxResult::error('操作失败，请稍后重试');
         }
     }
 
@@ -77,6 +83,9 @@ class SysUserController
     // 获取用户详情，含角色列表和岗位列表；无ID时返回新增用户所需的角色岗位选项
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userId = $request->input('user_id', 0);
         if (!$userId) {
             $parts = explode('/', $request->path());
@@ -119,6 +128,9 @@ class SysUserController
     // 新增用户，校验用户名、手机号、邮箱唯一性
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $service = new SysUserService();
 
@@ -140,6 +152,9 @@ class SysUserController
     // 修改用户信息，校验用户名、手机号、邮箱唯一性
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $service = new SysUserService();
 
@@ -161,6 +176,9 @@ class SysUserController
     // 批量删除用户，不允许删除超级管理员(ID=1)
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userIds = $request->input('userId', '');
         if (!is_array($userIds)) {
             $userIds = explode(',', $userIds);
@@ -177,6 +195,9 @@ class SysUserController
     // 重置指定用户密码
     public function resetPwd(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:resetPwd')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userId = $request->post('userId');
         $password = $request->post('password');
         if (empty($userId) || empty($password)) {
@@ -190,6 +211,9 @@ class SysUserController
     // 变更用户状态（启用/停用）
     public function changeStatus(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userId = $request->post('userId');
         $status = $request->post('status');
         $service = new SysUserService();
@@ -259,6 +283,9 @@ class SysUserController
     // 上传当前登录用户头像，支持COS云存储和本地存储
     public function avatar(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $loginUser = $request->loginUser;
         $file = $request->file('avatarfile');
         if (!$file || !$file->isValid()) {
@@ -266,6 +293,10 @@ class SysUserController
         }
 
         $ext = $file->getUploadExtension() ?: 'png';
+        $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+        if (!in_array(strtolower($ext), $allowedExts, true)) {
+            return AjaxResult::error('不支持的图片格式');
+        }
         $filename = md5(uniqid()) . '.' . $ext;
 
         $cosService = new CosService();
@@ -328,6 +359,9 @@ class SysUserController
     // 保存用户角色授权关系
     public function insertAuthRole(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $userId = $request->input('userId');
         $roleIds = $request->input('roleIds', []);
         if (is_string($roleIds)) {

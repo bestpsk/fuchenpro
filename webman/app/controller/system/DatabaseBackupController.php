@@ -39,11 +39,11 @@ class DatabaseBackupController
         return AjaxResult::success($backup);
     }
 
-    // 手动执行备份（仅超管）
+    // 手动执行备份
     public function execute(Request $request)
     {
-        if (!$request->loginUser->isAdmin()) {
-            return json(['code' => 403, 'msg' => '仅超级管理员可执行数据库备份']);
+        if (PermissionService::lacksPermi($request->loginUser, 'system:backup:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $result = DatabaseBackupService::executeBackup('manual');
         if ($result['success']) {
@@ -52,11 +52,11 @@ class DatabaseBackupController
         return AjaxResult::error($result['message']);
     }
 
-    // 删除备份记录（仅超管）
+    // 删除备份记录
     public function remove(Request $request)
     {
-        if (!$request->loginUser->isAdmin()) {
-            return json(['code' => 403, 'msg' => '仅超级管理员可删除备份记录']);
+        if (PermissionService::lacksPermi($request->loginUser, 'system:backup:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $backupIds = explode(',', $request->input('backupIds', ''));
         $backupIds = array_map('intval', array_filter($backupIds));
@@ -66,11 +66,11 @@ class DatabaseBackupController
         return AjaxResult::toAjax(DatabaseBackupService::deleteBackup($backupIds) ? 1 : 0);
     }
 
-    // 下载备份文件（仅超管）
+    // 下载备份文件
     public function download(Request $request)
     {
-        if (!$request->loginUser->isAdmin()) {
-            return json(['code' => 403, 'msg' => '仅超级管理员可下载备份文件']);
+        if (PermissionService::lacksPermi($request->loginUser, 'system:backup:download')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $backupId = $request->post('backupId');
         if (!$backupId) {

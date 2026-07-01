@@ -19,6 +19,8 @@ class SysUser extends Model
         'create_by', 'create_time', 'update_by', 'update_time', 'remark'
     ];
 
+    protected $hidden = ['password'];
+
     // 定义用户数据的Excel导入导出字段映射配置
     public static function getExcelFields(): array
     {

@@ -81,8 +81,8 @@ const codeUrl = ref('')
 const captchaEnabled = ref(true)
 const register = ref(true)
 const loginForm = ref({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
   code: '',
   uuid: ''
 })

@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysConfigService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -17,6 +18,9 @@ class SysConfigController
     // 分页查询系统参数配置列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysConfigService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectConfigList($params);
@@ -37,6 +41,9 @@ class SysConfigController
     // 根据参数键名查询参数值
     public function getConfigKey(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $configKey = end($parts);
         $service = new SysConfigService();
@@ -46,6 +53,9 @@ class SysConfigController
     // 新增参数配置
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysConfigService();
@@ -55,6 +65,9 @@ class SysConfigController
     // 修改参数配置
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysConfigService();
@@ -64,6 +77,9 @@ class SysConfigController
     // 批量删除参数配置
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $configIds = explode(',', $request->input('configIds', ''));
         $configIds = array_map('intval', array_filter($configIds));
         $service = new SysConfigService();
@@ -73,6 +89,9 @@ class SysConfigController
     // 刷新参数缓存（清空Redis中的配置缓存并重新加载）
     public function refreshCache(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysConfigService();
         $service->resetConfigCache();
         return AjaxResult::success();

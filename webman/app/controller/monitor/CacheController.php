@@ -5,6 +5,7 @@ namespace app\controller\monitor;
 use support\Request;
 use support\Redis;
 use app\service\RedisService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 /**
@@ -18,6 +19,9 @@ class CacheController
     // 获取Redis服务器信息，包括内存使用、连接数、命令执行统计等
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $redis = Redis::connection();
         $rawInfo = $redis->info();
         $info = $this->flattenInfo($rawInfo);
@@ -139,6 +143,9 @@ class CacheController
     // 根据缓存命名空间和键名获取缓存值
     public function getValue(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $pathParts = explode('/', $request->path());
         $cacheName = $pathParts[count($pathParts) - 2] ?? '';
         $cacheKey = end($pathParts);
@@ -160,6 +167,9 @@ class CacheController
     // 清除指定命名空间下的所有缓存键
     public function clearCacheName(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $cacheName = $request->input('cacheName', '');
         $redis = Redis::connection();
         $keys = $redis->keys($cacheName . '*');
@@ -172,6 +182,9 @@ class CacheController
     // 清除指定缓存键
     public function clearCacheKey(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $cacheKey = $request->input('cacheKey', '');
         $redis = Redis::connection();
         $redis->del($cacheKey);
@@ -181,6 +194,9 @@ class CacheController
     // 清空当前Redis数据库的所有缓存
     public function clearCacheAll(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $redis = Redis::connection();
         $redis->flushdb();
         return AjaxResult::success();

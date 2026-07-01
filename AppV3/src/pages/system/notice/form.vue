@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { getNotice, addNotice, updateNotice } from '@/api/system/notice'
 import { getDicts } from '@/api/system/dictData'
 import upload from '@/utils/upload'
@@ -146,6 +146,8 @@ const mode = ref('add')
 const noticeId = ref('')
 const editorCtx = ref(null)
 const contentLength = ref(0)
+// H5 编辑器事件清理所需引用
+const editorCleanup = ref(null)
 
 const form = reactive({
   noticeTitle: '',
@@ -253,6 +255,9 @@ function createH5EditorCtx() {
   root.addEventListener('mouseup', saveSelection)
   root.addEventListener('input', saveSelection)
   document.addEventListener('selectionchange', saveSelection)
+
+  // 保存清理所需引用，供 onUnmounted 移除监听
+  editorCleanup.value = { root, sync, saveSelection }
 
   return {
     format(name, value) {
@@ -539,6 +544,26 @@ onMounted(() => {
   if (options.id) {
     noticeId.value = options.id
     loadDetail(options.id)
+  }
+})
+
+onUnmounted(() => {
+  // 移除 H5 编辑器注册的原生事件监听，避免内存泄漏
+  if (editorCleanup.value) {
+    const { root, sync, saveSelection } = editorCleanup.value
+    if (root && sync) {
+      root.removeEventListener('input', sync)
+      root.removeEventListener('blur', sync)
+    }
+    if (root && saveSelection) {
+      root.removeEventListener('keyup', saveSelection)
+      root.removeEventListener('mouseup', saveSelection)
+      root.removeEventListener('input', saveSelection)
+    }
+    if (saveSelection) {
+      document.removeEventListener('selectionchange', saveSelection)
+    }
+    editorCleanup.value = null
   }
 })
 </script>

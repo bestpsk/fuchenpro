@@ -75,9 +75,9 @@ let map = null
 let marker = null
 let AMap = null
 
-// JS API 配置（用于地图渲染）
-const AMAP_KEY = ref('fa588d6bc9fbc9dce1f0c379e40f9faa')
-const AMAP_SECURITY_CODE = ref('19ef226bdd6e4a6276d45ed1e5cb9a475')
+// JS API 配置（用于地图渲染，从后端配置获取）
+const AMAP_KEY = ref('')
+const AMAP_SECURITY_CODE = ref('')
 // REST API 配置（用于搜索和逆地理编码，无需域名白名单）
 const AMAP_WEB_SERVICE_KEY = ref(config.amap.webServiceKey)
 

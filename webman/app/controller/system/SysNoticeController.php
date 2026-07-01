@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysNoticeService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -18,6 +19,9 @@ class SysNoticeController
     // 分页查询通知公告列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:notice:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new SysNoticeService();
         $params = convert_to_snake_case($request->all());
         $result = $service->selectNoticeList($params, $request->loginUser->userId);
@@ -27,6 +31,9 @@ class SysNoticeController
     // 根据ID获取通知公告详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:notice:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $noticeId = intval(end($parts));
         $service = new SysNoticeService();
@@ -38,6 +45,9 @@ class SysNoticeController
     // 新增通知公告
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:notice:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysNoticeService();
@@ -47,6 +57,9 @@ class SysNoticeController
     // 修改通知公告
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:notice:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         if (empty($data['notice_id'])) {
             return AjaxResult::error('公告ID不能为空');
@@ -59,6 +72,9 @@ class SysNoticeController
     // 批量删除通知公告
     public function remove(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:notice:remove')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $noticeIds = explode(',', $request->input('noticeIds', ''));
         $noticeIds = array_map('intval', array_filter($noticeIds));
         $service = new SysNoticeService();

@@ -64,7 +64,7 @@ class BizSalesOrderController
                 'trace' => $e->getTraceAsString(),
                 'post_data' => $request->post()
             ]);
-            return AjaxResult::error('开单失败: ' . $e->getMessage(), 500);
+            return AjaxResult::error('开单失败，请稍后重试', 500);
         }
     }
 
@@ -83,7 +83,7 @@ class BizSalesOrderController
             $result = $service->updateOrder($data, $items);
             return AjaxResult::toAjax($result ? 1 : 0);
         } catch (\Exception $e) {
-            return AjaxResult::error($e->getMessage());
+            return AjaxResult::error('操作失败，请稍后重试');
         }
     }
 
@@ -116,7 +116,7 @@ class BizSalesOrderController
             $result = $service->enterpriseAudit($orderId, $auditBy);
             return AjaxResult::toAjax($result ? 1 : 0);
         } catch (\Exception $e) {
-            return AjaxResult::error($e->getMessage());
+            return AjaxResult::error('操作失败，请稍后重试');
         }
     }
 

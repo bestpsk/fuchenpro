@@ -56,7 +56,10 @@ class LogMiddleware implements MiddlewareInterface
             $operLog->oper_location = \app\service\IpService::getLocation($request->getRealIp());
 
             $params = $request->all();
-            unset($params['password'], $params['oldPassword'], $params['newPassword']);
+            $sensitiveFields = ['password', 'oldPassword', 'newPassword', 'token', 'secret', 'apiKey', 'api_key', 'secretKey', 'privateKey', 'private_key'];
+            foreach ($sensitiveFields as $field) {
+                unset($params[$field]);
+            }
             $operLog->oper_param = mb_substr(json_encode($params, JSON_UNESCAPED_UNICODE), 0, 2000);
 
             $responseData = json_decode($response->rawBody(), true);

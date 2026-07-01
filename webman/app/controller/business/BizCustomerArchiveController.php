@@ -43,7 +43,7 @@ class BizCustomerArchiveController
             $result = $service->insertArchive($data);
             return AjaxResult::success($result);
         } catch (\Exception $e) {
-            return AjaxResult::error('新增档案失败：' . $e->getMessage());
+            return AjaxResult::error('新增档案失败，请稍后重试');
         }
     }
 
