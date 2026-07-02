@@ -40,6 +40,13 @@ class BizStockPrepareService
         if (!empty($params['warehouse_id'])) {
             $query->where('warehouse_id', $params['warehouse_id']);
         }
+        // 来源筛选：order=订单备货, plan=方案备货
+        $prepareType = $params['prepare_type'] ?? '';
+        if ($prepareType === 'order') {
+            $query->whereNotNull('order_id');
+        } else if ($prepareType === 'plan') {
+            $query->whereNotNull('plan_id');
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->with('items.product', 'orders')->orderBy('prepare_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -590,21 +597,7 @@ class BizStockPrepareService
                 $createdItems[] = $createdItem;
             }
 
-            // 自动创建出库单（不选仓库，仓库在出库管理确认时选择）
-            $stockOutItems = [];
-            foreach ($createdItems as $createdItem) {
-                $stockOutItems[] = [
-                    'item_id' => $createdItem->item_id,
-                    'unit_type' => $createdItem->unit_type ?? '1',
-                    'original_quantity' => $createdItem->unit_type === '1' && intval($createdItem->pack_qty) > 1
-                        ? intval($createdItem->quantity) / intval($createdItem->pack_qty)
-                        : intval($createdItem->quantity),
-                ];
-            }
-            $result = $this->createStockOutFromPrepare($prepare->prepare_id, $stockOutItems, null, $loginUser);
-            if (!$result['success']) {
-                throw new \Exception($result['msg']);
-            }
+            // 方案备货不自动创建出库单，用户在企业备货页面手动出库（与订单备货流程一致）
 
             return true;
         });

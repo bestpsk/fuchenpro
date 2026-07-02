@@ -1,5 +1,10 @@
 <template>
   <div class="app-container">
+    <el-tabs v-model="queryParams.prepareType" @tab-change="handleQuery" style="margin-bottom: 12px">
+      <el-tab-pane label="全部" name="" />
+      <el-tab-pane label="订单备货" name="order" />
+      <el-tab-pane label="方案备货" name="plan" />
+    </el-tabs>
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="企业名称" prop="enterpriseId">
         <el-select v-model="queryParams.enterpriseId" filterable remote :remote-method="searchEnterpriseList" :loading="enterpriseLoading" placeholder="请选择企业" clearable style="width: 200px" @change="handleEnterpriseChange">
@@ -26,6 +31,9 @@
     </el-form>
 
     <el-row :gutter="10" class="mb8">
+      <el-col :span="1.5">
+        <el-button type="primary" plain icon="Box" @click="handleOpenStockPrepare" v-hasPermi="['business:plan:edit']">方案备货</el-button>
+      </el-col>
       <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:stockPrepare:export']">导出</el-button>
       </el-col>
@@ -222,13 +230,92 @@
         <el-button @click="stockOutOpen = false">取 消</el-button>
       </template>
     </el-dialog>
+
+    <!-- 方案备货对话框 -->
+    <el-dialog title="方案备货" v-model="stockPrepareOpen" width="800px" append-to-body>
+      <el-form :inline="true" style="margin-bottom: 12px">
+        <el-form-item label="选择方案">
+          <el-select v-model="stockPreparePlanId" filterable remote :remote-method="searchPlanList" :loading="planLoading" placeholder="请选择已审核方案" style="width: 360px" @change="onPlanSelect">
+            <el-option v-for="p in planOptions" :key="p.planId" :label="p.planName + '（' + p.enterpriseName + '）'" :value="p.planId" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div v-if="stockPrepareItems.length > 0">
+        <el-table :data="stockPrepareItems" border size="small">
+          <el-table-column label="货品名称" prop="productName" min-width="120" />
+          <el-table-column label="规格" prop="spec" min-width="80" align="center" />
+          <el-table-column label="单位" prop="unitLabel" min-width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" min-width="90" align="right" />
+          <el-table-column label="方案剩余数量" prop="remainingQuantity" min-width="110" align="center" />
+          <el-table-column label="本次备货数量" min-width="140" align="center">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.remainingQuantity" controls-position="right" size="small" style="width: 120px" @change="onStockPrepareQuantityChange" />
+            </template>
+          </el-table-column>
+          <el-table-column label="总价" min-width="100" align="right">
+            <template #default="scope">
+              {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div v-else-if="stockPreparePlanId">
+        <el-button type="primary" icon="Plus" @click="addStockPrepareManualItem">添加货品</el-button>
+        <el-table :data="stockPrepareManualItems" border size="small" style="margin-top: 10px" v-if="stockPrepareManualItems.length > 0">
+          <el-table-column label="货品名称" min-width="130">
+            <template #default="scope">
+              <el-select v-model="scope.row.productId" placeholder="选择货品" filterable remote :remote-method="searchProduct" @focus="() => searchProduct('')" @change="(val) => onStockPrepareProductSelect(scope.$index, val)" style="width: 100%">
+                <el-option v-for="p in productOptions" :key="p.productId" :label="p.productName" :value="p.productId" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="单位类型" min-width="120">
+            <template #default="scope">
+              <el-select v-model="scope.row.unitType" @change="onStockPrepareUnitTypeChange(scope.$index)" style="width: 100%">
+                <el-option label="主单位-整" value="1" />
+                <el-option label="副单位-拆" value="2" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="规格" prop="spec" min-width="80" align="center" />
+          <el-table-column label="出货价" prop="salePrice" min-width="90" align="right" />
+          <el-table-column label="数量" min-width="120" align="center">
+            <template #default="scope">
+              <el-input-number v-model="scope.row.quantity" :min="1" controls-position="right" size="small" style="width: 100px" @change="onStockPrepareManualQuantityChange(scope.$index)" />
+            </template>
+          </el-table-column>
+          <el-table-column label="总价" min-width="100" align="right">
+            <template #default="scope">
+              {{ ((scope.row.salePrice || 0) * (scope.row.quantity || 0)).toFixed(2) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="60" align="center">
+            <template #default="scope">
+              <el-button link type="danger" icon="Delete" @click="stockPrepareManualItems.splice(scope.$index, 1)" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <el-descriptions :column="2" border size="small" v-if="stockPreparePlan">
+        <el-descriptions-item label="方案配赠金额">{{ stockPreparePlan?.giftAmount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="剩余出货金额">
+          <span :style="{ color: stockPrepareRemainingAmount < 0 ? 'red' : '' }">{{ stockPrepareRemainingAmount.toFixed(2) }}</span>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button type="primary" @click="submitStockPrepare" :loading="stockPrepareSubmitting">确认备货</el-button>
+        <el-button @click="stockPrepareOpen = false">取 消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="BusinessStockPrepare">
-import { listStockPrepare, getStockPrepare, createStockOutFromPrepare } from "@/api/business/stockPrepare"
+import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount } from "@/api/business/stockPrepare"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchStore } from "@/api/business/store"
+import { listPlan, getPlan } from "@/api/business/plan"
+import { listProduct } from "@/api/wms/product"
 import { useWarehouse } from '@/composables/useWarehouse'
 
 const { proxy } = getCurrentInstance()
@@ -253,8 +340,33 @@ const enterpriseLoading = ref(false)
 const storeOptions = ref([])
 const storeLoading = ref(false)
 
+// 方案备货相关
+const stockPrepareOpen = ref(false)
+const stockPreparePlanId = ref(undefined)
+const stockPreparePlan = ref(null)
+const stockPrepareItems = ref([])
+const stockPrepareManualItems = ref([])
+const stockPrepareActiveAmount = ref(0)
+const stockPrepareShippedAmount = ref(0)
+const stockPrepareSubmitting = ref(false)
+const planOptions = ref([])
+const planLoading = ref(false)
+const productOptions = ref([])
+
+const stockPrepareTotalAmount = computed(() => {
+  if (stockPrepareItems.value.length > 0) {
+    return stockPrepareItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
+  }
+  return stockPrepareManualItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
+})
+
+const stockPrepareRemainingAmount = computed(() => {
+  const giftAmount = parseFloat(stockPreparePlan.value?.giftAmount) || 0
+  return giftAmount - stockPrepareActiveAmount.value - stockPrepareShippedAmount.value
+})
+
 const data = reactive({
-  queryParams: { pageNum: 1, pageSize: 10, enterpriseId: undefined, storeId: undefined, prepareNo: undefined, status: undefined }
+  queryParams: { pageNum: 1, pageSize: 10, enterpriseId: undefined, storeId: undefined, prepareNo: undefined, status: undefined, prepareType: '' }
 })
 const { queryParams } = toRefs(data)
 
@@ -435,6 +547,170 @@ function submitStockOut() {
   })
 }
 
+// ============ 方案备货相关方法 ============
+function searchPlanList(query) {
+  planLoading.value = true
+  return listPlan({ planName: query || '', auditStatus: '2', pageNum: 1, pageSize: 20 }).then(res => {
+    planOptions.value = res.rows || []
+  }).finally(() => {
+    planLoading.value = false
+  })
+}
+
+function handleOpenStockPrepare() {
+  stockPreparePlanId.value = undefined
+  stockPreparePlan.value = null
+  stockPrepareItems.value = []
+  stockPrepareManualItems.value = []
+  stockPrepareActiveAmount.value = 0
+  stockPrepareShippedAmount.value = 0
+  stockPrepareOpen.value = true
+  searchPlanList('')
+}
+
+function onPlanSelect(planId) {
+  if (!planId) {
+    stockPreparePlan.value = null
+    stockPrepareItems.value = []
+    stockPrepareManualItems.value = []
+    stockPrepareActiveAmount.value = 0
+    stockPrepareShippedAmount.value = 0
+    return
+  }
+  getPlan(planId).then(res => {
+    const plan = res.data
+    stockPreparePlan.value = plan
+    const items = plan.items || []
+    if (items.length > 0) {
+      stockPrepareItems.value = items
+        .filter(item => (item.remainingQuantity || 0) > 0)
+        .map(item => ({
+          planItemId: item.planItemId,
+          productId: item.productId,
+          productName: item.productName,
+          spec: item.spec,
+          unitLabel: item.unitType === '1' ? '主单位整' : '副单位拆',
+          salePrice: item.salePrice,
+          remainingQuantity: item.remainingQuantity,
+          quantity: 0
+        }))
+      stockPrepareManualItems.value = []
+    } else {
+      stockPrepareItems.value = []
+      stockPrepareManualItems.value = []
+    }
+    getActivePreparedAmount(plan.planId).then(res2 => {
+      stockPrepareActiveAmount.value = res2.data?.activePreparedAmount || 0
+      stockPrepareShippedAmount.value = plan.shippedAmount || 0
+    }).catch(() => {
+      stockPrepareActiveAmount.value = 0
+      stockPrepareShippedAmount.value = 0
+    })
+  })
+}
+
+function searchProduct(query) {
+  listProduct({ productName: query || '', status: '0', pageNum: 1, pageSize: 20 }).then(res => {
+    productOptions.value = res.rows || []
+  })
+}
+
+function onStockPrepareProductSelect(index, productId) {
+  const product = productOptions.value.find(p => p.productId === productId)
+  if (product) {
+    const item = stockPrepareManualItems.value[index]
+    item.productId = product.productId
+    item.productName = product.productName
+    item.packQty = product.packQty || 1
+    item.unitType = '1'
+    item._mainPrice = product.salePrice || 0
+    item.salePrice = product.salePrice || 0
+    item.unitLabel = getUnitLabel(product.unit)
+    item.specLabel = getSpecLabel(product.spec)
+    onStockPrepareUnitTypeChange(index)
+  }
+}
+
+function onStockPrepareUnitTypeChange(index) {
+  const item = stockPrepareManualItems.value[index]
+  const packQty = item.packQty || 1
+  if (item.unitType === '1') {
+    if (item._mainPrice) { item.salePrice = item._mainPrice }
+    item.spec = item.unitLabel || ''
+  } else {
+    if (!item._mainPrice && item.salePrice) { item._mainPrice = item.salePrice }
+    if (item._mainPrice && packQty > 0) { item.salePrice = Math.round((item._mainPrice / packQty) * 100) / 100 }
+    item.spec = item.specLabel || ''
+  }
+  onStockPrepareManualQuantityChange(index)
+}
+
+function onStockPrepareManualQuantityChange(index) {
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
+    proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
+  }
+}
+
+function onStockPrepareQuantityChange() {
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
+    proxy.$modal.msgWarning('剩余出货金额不足，请减少备货数量')
+  }
+}
+
+function addStockPrepareManualItem() {
+  stockPrepareManualItems.value.push({
+    productId: '',
+    unitType: '1',
+    spec: '',
+    salePrice: 0,
+    packQty: 1,
+    quantity: 0,
+  })
+}
+
+function submitStockPrepare() {
+  const items = stockPrepareItems.value.length > 0 ? stockPrepareItems.value : stockPrepareManualItems.value
+  const validItems = items.filter(item => item.quantity > 0)
+  if (validItems.length === 0) {
+    proxy.$modal.msgWarning('请至少选择一个货品且数量大于0')
+    return
+  }
+  if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
+    proxy.$modal.msgWarning('本次备货总金额不能超过剩余可用金额')
+    return
+  }
+  stockPrepareSubmitting.value = true
+  const submitItems = validItems.map(item => ({
+    planItemId: item.planItemId,
+    productId: item.productId,
+    productName: item.productName,
+    spec: item.spec,
+    unitType: item.unitType,
+    salePrice: item.salePrice,
+    quantity: item.quantity
+  }))
+  createFromPlan(stockPreparePlan.value.planId, submitItems).then(() => {
+    proxy.$modal.msgSuccess('备货成功')
+    stockPrepareOpen.value = false
+    queryParams.value.prepareType = 'plan'
+    getList()
+  }).catch(() => {}).finally(() => { stockPrepareSubmitting.value = false })
+}
+
 searchEnterpriseList('')
 getList()
+
+// 从方案管理页面跳转过来时，自动打开方案备货对话框并预选方案
+const route = proxy.$route
+if (route.query.prepareType === 'plan' && route.query.planId) {
+  queryParams.value.prepareType = 'plan'
+  getList()
+  stockPreparePlanId.value = Number(route.query.planId)
+  nextTick(() => {
+    searchPlanList('').then(() => {
+      onPlanSelect(stockPreparePlanId.value)
+      stockPrepareOpen.value = true
+    })
+  })
+}
 </script>

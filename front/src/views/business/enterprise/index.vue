@@ -70,7 +70,6 @@
       <el-table-column label="操作" align="center" width="280" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click.stop="handleViewPlans(scope.row)">方案</el-button>
-          <el-button link type="primary" icon="Plus" @click.stop="handleAddPlan(scope.row)" v-hasPermi="['business:plan:add']">开方案</el-button>
           <el-button link type="primary" icon="Edit" @click.stop="handleUpdate(scope.row)" v-hasPermi="['business:enterprise:edit']">修改</el-button>
           <el-button link type="primary" icon="Delete" @click.stop="handleDelete(scope.row)" v-hasPermi="['business:enterprise:remove']">删除</el-button>
         </template>
@@ -400,11 +399,11 @@
 <script setup name="Enterprise">
 /**
  * @description 企业管理页面 - 企业CRUD/方案管理
- * @description 提供企业增删改查、状态切换、方案开立/编辑/审核等功能，
+ * @description 提供企业增删改查、状态切换、方案查看/编辑/审核等功能，
  * 支持按企业名称/老板/电话/类型/级别/状态筛选
  */
 import { listEnterprise, getEnterprise, delEnterprise, addEnterprise, updateEnterprise, changeEnterpriseStatus } from "@/api/business/enterprise"
-import { listPlan, getPlan, addPlan, updatePlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
+import { listPlan, getPlan, updatePlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
 import { listProduct } from "@/api/wms/product"
 import { listUser } from "@/api/system/user"
 
@@ -617,30 +616,12 @@ function handleRowClick(row) {
   handleViewDetail(row)
 }
 
-function handleAddPlan(row) {
-  resetPlanForm()
-  currentEnterprise.value = row
-  planForm.value.enterpriseId = row.enterpriseId
-  planForm.value.planName = row.enterpriseName + ' ' + '0%方案'
-  planOpen.value = true
-  planTitle.value = "开方案 - " + row.enterpriseName
-}
-
 function handleEditPlan(row) {
   getPlan(row.planId).then(res => {
     planForm.value = { ...res.data, items: (res.data.items || []).map(item => ({ ...item })) }
     planOpen.value = true
     planTitle.value = "修改方案"
   })
-}
-
-function resetPlanForm() {
-  planForm.value = {
-    planId: undefined, enterpriseId: undefined, planName: undefined,
-    commissionRate: 0, planAmount: 0, giftAmount: 0, remainingAmount: 0,
-    effectiveDate: undefined, expiryDate: undefined, remark: undefined, items: []
-  }
-  proxy.resetForm("planRef")
 }
 
 function onGiftAmountChange() {
@@ -703,11 +684,7 @@ function onItemQuantityChange(index) {
 function submitPlanForm() {
   proxy.$refs["planRef"].validate(valid => {
     if (valid) {
-      if (planForm.value.planId != undefined) {
-        updatePlan(planForm.value).then(() => { proxy.$modal.msgSuccess("修改成功"); planOpen.value = false; handleViewPlans(currentEnterprise.value); getList() })
-      } else {
-        addPlan(planForm.value).then(() => { proxy.$modal.msgSuccess("新增成功"); planOpen.value = false; handleViewPlans(currentEnterprise.value); getList() })
-      }
+      updatePlan(planForm.value).then(() => { proxy.$modal.msgSuccess("修改成功"); planOpen.value = false; handleViewPlans(currentEnterprise.value); getList() })
     }
   })
 }
