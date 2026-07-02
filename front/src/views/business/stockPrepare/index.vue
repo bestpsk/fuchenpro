@@ -35,6 +35,9 @@
         <el-button type="primary" plain icon="Box" @click="handleOpenStockPrepare" v-hasPermi="['business:plan:edit']">方案备货</el-button>
       </el-col>
       <el-col :span="1.5">
+        <el-button type="success" plain icon="ShoppingCart" @click="handleOpenOrderPrepare">订单备货</el-button>
+      </el-col>
+      <el-col :span="1.5">
         <el-button type="warning" plain icon="Download" @click="handleExport" v-hasPermi="['business:stockPrepare:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList" />
@@ -45,11 +48,15 @@
       <el-table-column label="来源" min-width="140" align="center">
         <template #default="scope">
           <span v-if="scope.row.planId" class="link-type" @click="viewPlan(scope.row)">{{ scope.row.planNo }}</span>
-          <span v-else-if="scope.row.orderId">订单备货</span>
-          <span v-else>-</span>
+          <span v-else>订单备货</span>
         </template>
       </el-table-column>
       <el-table-column label="门店名称" prop="storeName" min-width="120" show-overflow-tooltip />
+      <el-table-column label="备货进度" min-width="100" align="center">
+        <template #default="scope">
+          {{ scope.row.prepareProgress || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column label="货品种类数" min-width="100" align="center">
         <template #default="scope">
           {{ scope.row.productCount || 0 }}
@@ -175,10 +182,11 @@
 
     <el-dialog title="统一出货" v-model="stockOutOpen" width="1200px" append-to-body>
       <el-form label-width="100px" style="margin-bottom: 12px">
-        <el-form-item label="出库仓库" v-if="warehouseList.length > 0">
-          <el-select v-model="stockOutWarehouseId" placeholder="请选择仓库" style="width: 240px">
+        <el-form-item label="出库仓库">
+          <el-select v-model="stockOutWarehouseId" placeholder="请选择仓库" style="width: 240px" :disabled="warehouseList.length === 0">
             <el-option v-for="w in warehouseList" :key="w.warehouseId" :label="w.warehouseName" :value="w.warehouseId" />
           </el-select>
+          <span v-if="warehouseList.length === 0" style="margin-left: 12px; color: #f56c6c; font-size: 12px;">您没有仓库权限，请联系管理员分配仓库后再出库</span>
         </el-form-item>
       </el-form>
       <el-table ref="stockOutTableRef" :data="stockOutDetails" border size="small">
@@ -307,11 +315,57 @@
         <el-button @click="stockPrepareOpen = false">取 消</el-button>
       </template>
     </el-dialog>
+
+    <!-- 订单备货对话框 -->
+    <el-dialog title="选择订单备货" v-model="orderPrepareOpen" width="900px" append-to-body>
+      <el-form :inline="true" :model="orderQueryParams" style="margin-bottom: 12px">
+        <el-form-item label="订单编号">
+          <el-input v-model="orderQueryParams.orderNo" placeholder="请输入" clearable style="width: 160px" @keyup.enter="handleOrderQuery" />
+        </el-form-item>
+        <el-form-item label="客户名称">
+          <el-input v-model="orderQueryParams.customerName" placeholder="请输入" clearable style="width: 160px" @keyup.enter="handleOrderQuery" />
+        </el-form-item>
+        <el-form-item label="备货状态">
+          <el-radio-group v-model="orderQueryParams.prepareStatus" @change="handleOrderQuery">
+            <el-radio-button label="">全部</el-radio-button>
+            <el-radio-button label="unprepared">未备货</el-radio-button>
+            <el-radio-button label="prepared">已备货</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handleOrderQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetOrderQuery">重置</el-button>
+        </el-form-item>
+      </el-form>
+      <el-table v-loading="orderLoading" :data="orderList" size="small" @selection-change="handleOrderSelectionChange" ref="orderTableRef">
+        <el-table-column type="selection" width="45" :selectable="canSelectOrder" />
+        <el-table-column label="订单编号" prop="orderNo" min-width="140" />
+        <el-table-column label="客户" prop="customerName" min-width="100" show-overflow-tooltip />
+        <el-table-column label="企业" prop="enterpriseName" min-width="120" show-overflow-tooltip />
+        <el-table-column label="门店" prop="storeName" min-width="120" show-overflow-tooltip />
+        <el-table-column label="成交金额" prop="dealAmount" min-width="100" align="right" />
+        <el-table-column label="备货状态" min-width="80" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.prepareStatus === '1'" type="info" size="small">已备货</el-tag>
+            <el-tag v-else type="success" size="small">未备货</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="创建时间" prop="createTime" min-width="160" />
+      </el-table>
+      <pagination v-show="orderTotal > 0" :total="orderTotal" v-model:page="orderQueryParams.pageNum" v-model:limit="orderQueryParams.pageSize" @pagination="getOrderList" />
+      <template #footer>
+        <div style="text-align: right">
+          <span style="float: left; line-height: 32px; color: #909399;">已选 {{ selectedOrderIds.length }} 单</span>
+          <el-button @click="orderPrepareOpen = false">取 消</el-button>
+          <el-button type="primary" :disabled="selectedOrderIds.length === 0" :loading="batchPrepareLoading" @click="handleBatchPrepare">批量备货</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="BusinessStockPrepare">
-import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount } from "@/api/business/stockPrepare"
+import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount, orderListForPrepare, createFromOrder, batchCreateFromOrder } from "@/api/business/stockPrepare"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchStore } from "@/api/business/store"
 import { listPlan, getPlan } from "@/api/business/plan"
@@ -468,6 +522,88 @@ function handleExport() {
   }, `stockPrepare_${new Date().getTime()}.xlsx`)
 }
 
+// ===== 订单备货相关 =====
+const orderPrepareOpen = ref(false)
+const orderLoading = ref(false)
+const orderList = ref([])
+const orderTotal = ref(0)
+const orderQueryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  orderNo: '',
+  customerName: '',
+  prepareStatus: ''
+})
+const selectedOrderIds = ref([])
+const batchPrepareLoading = ref(false)
+const orderTableRef = ref(null)
+
+function handleOpenOrderPrepare() {
+  resetOrderQuery()
+  selectedOrderIds.value = []
+  orderPrepareOpen.value = true
+  getOrderList()
+}
+
+function handleOrderQuery() {
+  orderQueryParams.pageNum = 1
+  getOrderList()
+}
+
+function resetOrderQuery() {
+  orderQueryParams.pageNum = 1
+  orderQueryParams.orderNo = ''
+  orderQueryParams.customerName = ''
+  orderQueryParams.prepareStatus = ''
+}
+
+function getOrderList() {
+  orderLoading.value = true
+  orderListForPrepare(orderQueryParams).then(response => {
+    orderList.value = response.rows
+    orderTotal.value = response.total
+  }).finally(() => {
+    orderLoading.value = false
+  })
+}
+
+// 已备货的行不可勾选
+function canSelectOrder(row) {
+  return row.prepareStatus !== '1'
+}
+
+function handleOrderSelectionChange(selection) {
+  selectedOrderIds.value = selection.map(item => item.orderId)
+}
+
+function handleBatchPrepare() {
+  if (selectedOrderIds.value.length === 0) return
+  proxy.$modal.confirm('确认为选中的 ' + selectedOrderIds.value.length + ' 个订单创建备货吗？').then(() => {
+    batchPrepareLoading.value = true
+    return batchCreateFromOrder(selectedOrderIds.value)
+  }).then(response => {
+    // 后端 AjaxResult::success 将关联数组 merge 到响应顶层且转驼峰
+    const successCount = response.successCount || 0
+    const skippedCount = response.skippedCount || 0
+    const failedCount = response.failedCount || 0
+    let msg = '成功 ' + successCount + ' 个'
+    if (skippedCount > 0) msg += '，跳过 ' + skippedCount + ' 个'
+    if (failedCount > 0) msg += '，失败 ' + failedCount + ' 个'
+    proxy.$modal.msgSuccess(msg)
+    // 先清空选中、关闭弹窗，再刷新列表，防止刷新过程中用户重复操作
+    selectedOrderIds.value = []
+    orderPrepareOpen.value = false
+    getList()
+  }).catch((err) => {
+    // 只吞掉用户取消确认的异常，其他异常显示错误提示
+    if (err !== 'cancel' && err !== 'close') {
+      proxy.$modal.msgError(err.message || '批量备货失败')
+    }
+  }).finally(() => {
+    batchPrepareLoading.value = false
+  })
+}
+
 function handleQuery() { queryParams.value.pageNum = 1; getList() }
 function resetQuery() { proxy.resetForm("queryRef"); handleQuery() }
 
@@ -536,7 +672,11 @@ function submitStockOut() {
     proxy.$modal.msgWarning("请至少填写一项出库数量")
     return
   }
-  if (warehouseList.value.length > 0 && !stockOutWarehouseId.value) {
+  if (warehouseList.value.length === 0) {
+    proxy.$modal.msgWarning("您没有仓库权限，无法出库，请联系管理员分配仓库")
+    return
+  }
+  if (!stockOutWarehouseId.value) {
     proxy.$modal.msgWarning("请选择出库仓库")
     return
   }

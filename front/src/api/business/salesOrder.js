@@ -33,9 +33,9 @@ export function delSalesOrder(orderIds) {
   })
 }
 
-/** 企业审核通过 */
-export function enterpriseAudit(orderId) {
-  return request({ url: '/business/sales/enterpriseAudit', method: 'post', data: { orderId } })
+/** 企业审核（支持开启和关闭） */
+export function enterpriseAudit(orderId, action = 'open') {
+  return request({ url: '/business/sales/enterpriseAudit', method: 'post', data: { orderId, action } })
 }
 
 /** 财务审核通过 */

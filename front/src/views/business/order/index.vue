@@ -86,7 +86,7 @@
       </el-table-column>
       <el-table-column label="企业审核" align="center" min-width="100">
         <template #default="scope">
-          <el-switch v-model="scope.row.enterpriseAuditStatus" active-value="1" inactive-value="0" :disabled="scope.row.enterpriseAuditStatus === '1'" @change="handleEnterpriseAudit(scope.row)" v-hasPermi="['business:order:enterpriseAudit']" />
+          <el-switch v-model="scope.row.enterpriseAuditStatus" active-value="1" inactive-value="0" :disabled="scope.row.financeAuditStatus === '1'" @change="handleEnterpriseAudit(scope.row)" v-hasPermi="['business:order:enterpriseAudit']" />
         </template>
       </el-table-column>
       <el-table-column label="财务审核" align="center" min-width="100">
@@ -101,7 +101,7 @@
       <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['business:order:query']">详情</el-button>
-          <el-button link type="danger" icon="Close" @click="handleCancel(scope.row)" v-if="scope.row.orderStatus === '0'" v-hasPermi="['business:order:cancel']">取消</el-button>
+          <el-button link type="danger" icon="Close" @click="handleCancel(scope.row)" v-if="scope.row.enterpriseAuditStatus === '0' && scope.row.orderStatus !== '4'" v-hasPermi="['business:order:cancel']">取消</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -284,14 +284,17 @@ function handleView(row) {
 }
 
 function handleEnterpriseAudit(row) {
-  if (row.enterpriseAuditStatus === '1') {
-    enterpriseAudit(row.orderId).then(() => {
-      proxy.$modal.msgSuccess("企业审核成功")
-      getList()
-    }).catch(() => {
-      row.enterpriseAuditStatus = '0'
-    })
-  }
+  const action = row.enterpriseAuditStatus === '1' ? 'open' : 'close'
+  const msg = action === 'open' ? '确认企业审核通过吗？' : '确认取消企业审核吗？取消后订单可修改。'
+  proxy.$modal.confirm(msg).then(() => {
+    return enterpriseAudit(row.orderId, action)
+  }).then(() => {
+    proxy.$modal.msgSuccess(action === 'open' ? '企业审核成功' : '已取消企业审核')
+    getList()
+  }).catch(() => {
+    // 取消或失败时回滚开关状态
+    row.enterpriseAuditStatus = action === 'open' ? '0' : '1'
+  })
 }
 
 function handleFinanceAudit(row) {

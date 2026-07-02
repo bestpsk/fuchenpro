@@ -210,8 +210,8 @@ class BizSalesOrderService
             if (!$order) {
                 throw new \Exception('订单不存在');
             }
-            if (in_array($order->enterprise_audit_status, ['1', '2']) || in_array($order->finance_audit_status, ['1', '2'])) {
-                throw new \Exception('订单已审核，不可修改');
+            if (in_array($order->finance_audit_status, ['1', '2'])) {
+                throw new \Exception('订单财务已审核，不可修改');
             }
 
             $data['update_time'] = date('Y-m-d H:i:s');
@@ -270,22 +270,38 @@ class BizSalesOrderService
 
     // 企业审核订单
 
-    public function enterpriseAudit($orderId, $auditBy)
+    public function enterpriseAudit($orderId, $auditBy, $action = 'open')
     {
         $order = BizSalesOrder::find($orderId);
         if (!$order) {
             throw new \Exception('订单不存在');
         }
-        if ($order->enterprise_audit_status !== '0') {
-            throw new \Exception('订单已审核，不可重复审核');
-        }
 
-        return BizSalesOrder::where('order_id', $orderId)->update([
-            'enterprise_audit_status' => '1',
-            'enterprise_audit_by' => $auditBy,
-            'enterprise_audit_time' => date('Y-m-d H:i:s'),
-            'order_status' => '1'
-        ]);
+        if ($action === 'open') {
+            if ($order->enterprise_audit_status === '1') {
+                throw new \Exception('订单已审核，不可重复审核');
+            }
+            return BizSalesOrder::where('order_id', $orderId)->update([
+                'enterprise_audit_status' => '1',
+                'enterprise_audit_by' => $auditBy,
+                'enterprise_audit_time' => date('Y-m-d H:i:s'),
+                'order_status' => '1'
+            ]);
+        } else {
+            // 关闭企业审核
+            if ($order->enterprise_audit_status !== '1') {
+                throw new \Exception('订单未审核，无法取消');
+            }
+            if ($order->finance_audit_status === '1') {
+                throw new \Exception('财务已审核，不能取消企业审核');
+            }
+            return BizSalesOrder::where('order_id', $orderId)->update([
+                'enterprise_audit_status' => '0',
+                'enterprise_audit_by' => null,
+                'enterprise_audit_time' => null,
+                'order_status' => '0'
+            ]);
+        }
     }
 
     // 财务审核订单
@@ -302,27 +318,7 @@ class BizSalesOrderService
                 'finance_audit_time' => date('Y-m-d H:i:s'),
                 'order_status' => '2'
             ]);
-            if ($result) {
-                try {
-                    $order = BizSalesOrder::with('items')->find($orderId);
-                    if ($order) {
-                        \support\Log::info('财务审核-开始生成企业库存', [
-                            'order_id' => $orderId,
-                            'order_no' => $order->order_no,
-                            'items_count' => $order->items->count(),
-                            'items_card_item_ids' => $order->items->pluck('card_item_id')->toArray(),
-                        ]);
-                        $prepareService = new BizStockPrepareService();
-                        $prepareResult = $prepareService->addToEnterprisePrepare($order);
-                        \support\Log::info('财务审核-企业库存生成结果', [
-                            'order_id' => $orderId,
-                            'prepare_result' => $prepareResult ? 'success: prepare_id=' . ($prepareResult->prepare_id ?? 'merged') : 'null',
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    \support\Log::error('生成企业库存失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-                }
-            }
+            // 备货改为手动触发：用户在企业备货页选择订单创建备货
             return $result;
         });
     }
@@ -331,7 +327,10 @@ class BizSalesOrderService
     {
         $order = BizSalesOrder::find($orderId);
         if (!$order) return false;
-        if ($order->order_status !== '0') return false;
+        // 财务已审核不可取消
+        if ($order->finance_audit_status === '1') return false;
+        // 已取消的订单不可重复取消
+        if ($order->order_status === '4') return false;
         return BizSalesOrder::where('order_id', $orderId)->update([
             'order_status' => '4',
             'update_time' => date('Y-m-d H:i:s')

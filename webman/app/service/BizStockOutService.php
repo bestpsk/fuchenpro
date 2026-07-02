@@ -329,6 +329,11 @@ class BizStockOutService
             if (empty($warehouseId)) {
                 throw new \Exception('出库单未指定仓库，请先选择出库仓库');
             }
+            // 仓库权限校验：非管理员只能确认授权仓库的出库单，防止跨公司误操作
+            $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($params['login_user'] ?? null);
+            if ($authorizedWhIds !== null && !in_array($warehouseId, $authorizedWhIds)) {
+                throw new \Exception('您没有该仓库的操作权限，无法确认出库');
+            }
                 foreach ($items as $item) {
                     $itemQuantity = intval($item->quantity);
                     $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();

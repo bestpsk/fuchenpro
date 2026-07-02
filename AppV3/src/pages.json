@@ -52,6 +52,7 @@
     { "path": "pages/business/cardItem/form", "style": { "navigationBarTitleText": "卡项信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/stockPrepare/index", "style": { "navigationBarTitleText": "备货管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/business/stockPrepare/detail", "style": { "navigationBarTitleText": "备货详情", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/business/stockPrepare/selectOrder", "style": { "navigationBarTitleText": "选择订单备货", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/finance/planAudit/index", "style": { "navigationBarTitleText": "方案审核", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/finance/reimbursement/index", "style": { "navigationBarTitleText": "报销管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/finance/reimbursement/form", "style": { "navigationBarTitleText": "报销信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },

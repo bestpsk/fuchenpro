@@ -60,6 +60,50 @@ class BizStockPrepareController
     }
 
     /**
+     * 查询可备货订单列表（已财务审核且未备货）
+     */
+    public function orderListForPrepare(Request $request)
+    {
+        $params = convert_to_snake_case($request->all());
+        $loginUser = $request->loginUser;
+        $service = new BizStockPrepareService();
+        $result = $service->selectOrderListForPrepare($params, $loginUser);
+        return TableDataInfo::result($result->items(), $result->total());
+    }
+
+    /**
+     * 根据订单创建备货
+     */
+    public function createFromOrder(Request $request)
+    {
+        $orderId = $request->post('orderId');
+        if (empty($orderId)) {
+            return AjaxResult::error('订单ID不能为空');
+        }
+        $service = new BizStockPrepareService();
+        try {
+            $result = $service->createFromOrder($orderId, $request->loginUser);
+            return AjaxResult::success($result);
+        } catch (\Exception $e) {
+            return AjaxResult::error($e->getMessage());
+        }
+    }
+
+    /**
+     * 批量根据订单创建备货
+     */
+    public function batchCreateFromOrder(Request $request)
+    {
+        $orderIds = $request->post('orderIds');
+        if (empty($orderIds) || !is_array($orderIds)) {
+            return AjaxResult::error('请选择订单');
+        }
+        $service = new BizStockPrepareService();
+        $result = $service->batchCreateFromOrder($orderIds, $request->loginUser);
+        return AjaxResult::success($result);
+    }
+
+    /**
      * 从方案创建备货记录
      */
     public function createFromPlan(Request $request)

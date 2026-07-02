@@ -378,16 +378,6 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
 
 -- 正在导出表  fuchenpro.biz_customer_archive 的数据：~7 rows (大约)
 DELETE FROM `biz_customer_archive`;
-/*!40000 ALTER TABLE `biz_customer_archive` DISABLE KEYS */;
-INSERT INTO `biz_customer_archive` (`archive_id`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `archive_date`, `archive_type`, `source_type`, `source_id`, `plan_items`, `amount`, `satisfaction`, `photos`, `customer_feedback`, `operator_user_id`, `operator_user_name`, `remark`, `create_by`, `create_time`) VALUES
-	(1, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '0', 1, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '11', 1, '若依', '套餐: 套餐1', 'admin', '2026-06-20 19:13:56'),
-	(2, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["\\/profile\\/upload\\/20260620\\/0996e45411a292d11f0d65c75d4b9ac7.jpg"]', '防守打法水电费第三方', 1, '若依', '放大发的', 'admin', '2026-06-20 19:16:59'),
-	(3, 2, '111', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '0', 3, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-26 22:08:49'),
-	(4, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '1', 2, '[{"name":"卡项1","quantity":1}]', 938.00, 5, NULL, '', 1, '若依', '', 'admin', '2026-06-27 06:13:24'),
-	(5, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 5, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 103, '鹏鹏', '套餐: 发发发', 'pengpeng', '2026-06-28 22:57:02'),
-	(6, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 6, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '超级管理员', '套餐: 111', 'admin', '2026-06-28 23:14:18'),
-	(7, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 7, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 105, '测试', '套餐: 22', 'ceshi', '2026-06-28 23:16:10');
-/*!40000 ALTER TABLE `biz_customer_archive` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_package 结构
 DROP TABLE IF EXISTS `biz_customer_package`;
@@ -422,14 +412,6 @@ CREATE TABLE IF NOT EXISTS `biz_customer_package` (
 
 -- 正在导出表  fuchenpro.biz_customer_package 的数据：~5 rows (大约)
 DELETE FROM `biz_customer_package`;
-/*!40000 ALTER TABLE `biz_customer_package` DISABLE KEYS */;
-INSERT INTO `biz_customer_package` (`package_id`, `package_no`, `customer_id`, `customer_name`, `order_id`, `order_no`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `package_name`, `total_amount`, `paid_amount`, `owed_amount`, `status`, `expire_date`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'PK202606200001', 1, '客户1', 1, 'SO202606200001', 7, '终测1', 8, '终测门店2', '套餐1', 9380.00, 9380.00, 0.00, '1', NULL, '11', 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:13:56'),
-	(2, 'PK202606260003', 2, '111', 3, 'SO202606260003', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:08:49'),
-	(3, 'PK202606280001', 4, 'LIly', 5, 'SO202606280001', 4, '企业1', 5, '哈哈', '发发发', 9380.00, 9380.00, 0.00, '1', NULL, '', 'pengpeng', '2026-06-28 22:57:02', '', '2026-06-28 22:57:02'),
-	(4, 'PK202606280002', 4, 'LIly', 6, 'SO202606280002', 4, '企业1', 5, '哈哈', '111', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-28 23:14:18', '', '2026-06-28 23:14:18'),
-	(5, 'PK202606280003', 4, 'LIly', 7, 'SO202606280003', 4, '企业1', 5, '哈哈', '22', 9380.00, 9380.00, 0.00, '1', NULL, '', 'ceshi', '2026-06-28 23:16:10', '', '2026-06-28 23:16:10');
-/*!40000 ALTER TABLE `biz_customer_package` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_employee_config 结构
 DROP TABLE IF EXISTS `biz_employee_config`;
@@ -571,15 +553,6 @@ CREATE TABLE IF NOT EXISTS `biz_inventory` (
 
 -- 正在导出表  fuchenpro.biz_inventory 的数据：~4 rows (大约)
 DELETE FROM `biz_inventory`;
-/*!40000 ALTER TABLE `biz_inventory` DISABLE KEYS */;
-INSERT INTO `biz_inventory` (`inventory_id`, `warehouse_id`, `product_id`, `quantity`, `earliest_expiry`, `warn_qty`, `last_stock_in_time`, `last_stock_out_time`, `create_time`, `update_time`) VALUES
-	(1, 1, 2, 89, '2027-06-01', 20, '2026-06-20 22:34:30', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-30 18:23:00'),
-	(2, 1, 1, 95, '2027-06-01', 50, '2026-06-20 23:18:57', '2026-06-21 00:35:35', '2026-06-20 20:06:40', '2026-06-26 02:26:54'),
-	(3, 2, 2, 3, NULL, 20, '2026-06-30 18:23:00', '2026-06-30 00:17:13', '2026-06-20 21:22:53', '2026-06-30 18:23:00'),
-	(4, 2, 1, 2, NULL, 50, '2026-06-30 00:16:39', '2026-06-30 00:17:13', '2026-06-20 21:22:53', '2026-06-30 00:58:57'),
-	(5, 1, 3, 0, NULL, 0, '2026-07-01 19:00:11', '2026-07-01 19:00:25', '2026-06-30 00:01:09', '2026-07-01 19:00:25'),
-	(6, 2, 3, 0, NULL, 0, '2026-06-30 00:16:40', '2026-07-01 18:58:57', '2026-06-30 00:16:40', '2026-07-01 18:58:57');
-/*!40000 ALTER TABLE `biz_inventory` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_operation_record 结构
 DROP TABLE IF EXISTS `biz_operation_record`;
@@ -620,11 +593,6 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
 
 -- 正在导出表  fuchenpro.biz_operation_record 的数据：~2 rows (大约)
 DELETE FROM `biz_operation_record`;
-/*!40000 ALTER TABLE `biz_operation_record` DISABLE KEYS */;
-INSERT INTO `biz_operation_record` (`record_id`, `operation_type`, `customer_id`, `customer_name`, `package_id`, `package_no`, `operation_batch_id`, `package_item_id`, `product_name`, `operation_quantity`, `consume_amount`, `trial_price`, `customer_feedback`, `satisfaction`, `before_photo`, `after_photo`, `operator_user_id`, `operator_user_name`, `operation_date`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `remark`, `create_by`, `create_time`) VALUES
-	(1, '0', 1, '客户1', 1, NULL, 'OB202606201916597727', 1, '卡项1', 1, 938.00, NULL, '防守打法水电费第三方', 4, '/profile/upload/20260620/0996e45411a292d11f0d65c75d4b9ac7.jpg', '', 1, '若依', '2026-06-20', 7, NULL, 8, NULL, '放大发的', 'admin', '2026-06-20 19:16:59'),
-	(2, '0', 1, '客户1', 1, NULL, 'OB202606270613247312', 1, '卡项1', 1, 938.00, NULL, '', 5, '', '', 1, '若依', '2026-06-26', 7, NULL, 8, NULL, '', 'admin', '2026-06-27 06:13:24');
-/*!40000 ALTER TABLE `biz_operation_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_order_item 结构
 DROP TABLE IF EXISTS `biz_order_item`;
@@ -652,16 +620,6 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
 
 -- 正在导出表  fuchenpro.biz_order_item 的数据：~7 rows (大约)
 DELETE FROM `biz_order_item`;
-/*!40000 ALTER TABLE `biz_order_item` DISABLE KEYS */;
-INSERT INTO `biz_order_item` (`item_id`, `order_id`, `card_item_id`, `product_name`, `quantity`, `deal_amount`, `paid_amount`, `unit_price`, `owed_amount`, `payment_method`, `is_our_operation`, `customer_feedback`, `before_photo`, `after_photo`, `remark`, `create_time`) VALUES
-	(1, 1, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:13:56'),
-	(2, 2, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-20 19:16:59'),
-	(3, 3, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-26 22:08:49'),
-	(4, 4, NULL, '卡项1', 1, 938.00, 0.00, 938.00, 938.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-27 06:13:24'),
-	(5, 5, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-28 22:57:02'),
-	(6, 6, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-28 23:14:18'),
-	(7, 7, 1, '卡项1', 10, 9380.00, 9380.00, 938.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-06-28 23:16:10');
-/*!40000 ALTER TABLE `biz_order_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_package_item 结构
 DROP TABLE IF EXISTS `biz_package_item`;
@@ -686,14 +644,6 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
 
 -- 正在导出表  fuchenpro.biz_package_item 的数据：~5 rows (大约)
 DELETE FROM `biz_package_item`;
-/*!40000 ALTER TABLE `biz_package_item` DISABLE KEYS */;
-INSERT INTO `biz_package_item` (`package_item_id`, `package_id`, `card_item_id`, `product_name`, `unit_price`, `plan_price`, `deal_price`, `paid_amount`, `owed_amount`, `total_quantity`, `used_quantity`, `remaining_quantity`, `remark`) VALUES
-	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 2, 8, NULL),
-	(2, 2, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
-	(3, 3, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
-	(4, 4, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
-	(5, 5, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL);
-/*!40000 ALTER TABLE `biz_package_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan 结构
 DROP TABLE IF EXISTS `biz_plan`;
@@ -730,11 +680,6 @@ CREATE TABLE IF NOT EXISTS `biz_plan` (
 
 -- 正在导出表  fuchenpro.biz_plan 的数据：~0 rows (大约)
 DELETE FROM `biz_plan`;
-/*!40000 ALTER TABLE `biz_plan` DISABLE KEYS */;
-INSERT INTO `biz_plan` (`plan_id`, `plan_no`, `enterprise_id`, `plan_name`, `commission_rate`, `plan_amount`, `gift_amount`, `shipped_amount`, `remaining_amount`, `effective_date`, `expiry_date`, `audit_status`, `audit_by`, `audit_time`, `audit_remark`, `submit_by`, `submit_time`, `status_change_by`, `status_change_time`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'PL20260621001', 7, '终测1 方案', 30.00, 30000.00, 100000.00, 0.00, 100000.00, '2026-06-21', '2027-06-21', '2', 'admin', '2026-06-21 08:46:42', '', 'admin', '2026-06-21 08:22:12', NULL, NULL, '0', '去去去', 'admin', '2026-06-21 08:22:11', NULL, '2026-06-21 08:46:42'),
-	(2, 'PL20260701001', 4, '企业1-30%', 30.00, 10000.00, 33333.33, 17400.00, 21733.33, '2026-07-01', '2026-07-31', '2', 'admin', '2026-07-01 17:59:24', '', 'admin', '2026-07-01 17:59:22', NULL, NULL, '0', NULL, 'admin', '2026-07-01 17:59:14', NULL, '2026-07-01 17:59:24');
-/*!40000 ALTER TABLE `biz_plan` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan_item 结构
 DROP TABLE IF EXISTS `biz_plan_item`;
@@ -761,8 +706,6 @@ CREATE TABLE IF NOT EXISTS `biz_plan_item` (
 
 -- 正在导出表  fuchenpro.biz_plan_item 的数据：~0 rows (大约)
 DELETE FROM `biz_plan_item`;
-/*!40000 ALTER TABLE `biz_plan_item` DISABLE KEYS */;
-/*!40000 ALTER TABLE `biz_plan_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_product 结构
 DROP TABLE IF EXISTS `biz_product`;
@@ -843,8 +786,6 @@ CREATE TABLE IF NOT EXISTS `biz_repayment_record` (
 
 -- 正在导出表  fuchenpro.biz_repayment_record 的数据：~0 rows (大约)
 DELETE FROM `biz_repayment_record`;
-/*!40000 ALTER TABLE `biz_repayment_record` DISABLE KEYS */;
-/*!40000 ALTER TABLE `biz_repayment_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_sales_order 结构
 DROP TABLE IF EXISTS `biz_sales_order`;
@@ -892,16 +833,6 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
 
 -- 正在导出表  fuchenpro.biz_sales_order 的数据：~7 rows (大约)
 DELETE FROM `biz_sales_order`;
-/*!40000 ALTER TABLE `biz_sales_order` DISABLE KEYS */;
-INSERT INTO `biz_sales_order` (`order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `store_dealer`, `deal_amount`, `paid_amount`, `owed_amount`, `payment_method`, `order_status`, `source_type`, `operation_batch_id`, `package_name`, `enterprise_audit_status`, `finance_audit_status`, `enterprise_audit_by`, `enterprise_audit_time`, `finance_audit_by`, `finance_audit_time`, `creator_user_id`, `creator_user_name`, `remark`, `customer_feedback`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'SO202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '套餐1', '1', '1', '若依', '2026-06-20 19:14:28', '若依', '2026-06-20 19:20:18', 1, '若依', '11', NULL, 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:20:18'),
-	(2, 'OP202606200001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606201916597727', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-20 19:16:59', '', '2026-06-20 19:16:59'),
-	(3, 'SO202606260003', 2, '111', 7, '终测1', 8, '终测门店2', '', 9380.00, 9380.00, 0.00, 'cash', '2', '0', NULL, '11', '1', '1', '若依', '2026-06-26 22:08:58', '若依', '2026-06-26 22:09:27', 1, '若依', '', NULL, 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:09:27'),
-	(4, 'OP202606270001', 1, '客户1', 7, '终测1', 8, '终测门店2', NULL, 938.00, 0.00, 938.00, 'cash', '1', '1', 'OB202606270613247312', '卡项1', '1', '1', NULL, NULL, NULL, NULL, 1, '若依', '[操作订单] 持卡操作', NULL, '若依', '2026-06-27 06:13:24', '', '2026-06-27 06:13:24'),
-	(5, 'SO202606280001', 4, 'LIly', 4, '企业1', 5, '哈哈', '飞飞', 9380.00, 9380.00, 0.00, 'cash', '1', '0', NULL, '发发发', '1', '0', '鹏鹏', '2026-06-28 22:57:08', NULL, NULL, 103, '鹏鹏', '', '111', 'pengpeng', '2026-06-28 22:57:02', '', '2026-06-28 22:57:08'),
-	(6, 'SO202606280002', 4, 'LIly', 4, '企业1', 5, '哈哈', '', 9380.00, 9380.00, 0.00, 'cash', '1', '0', NULL, '111', '1', '0', '超级管理员', '2026-06-28 23:14:25', NULL, NULL, 1, '超级管理员', '', '', 'admin', '2026-06-28 23:14:18', '', '2026-06-28 23:14:25'),
-	(7, 'SO202606280003', 4, 'LIly', 4, '企业1', 5, '哈哈', '11', 9380.00, 9380.00, 0.00, 'cash', '1', '0', NULL, '22', '1', '0', '测试', '2026-06-28 23:16:22', NULL, NULL, 105, '测试', '', '11', 'ceshi', '2026-06-28 23:16:10', '', '2026-06-28 23:16:22');
-/*!40000 ALTER TABLE `biz_sales_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_schedule 结构
 DROP TABLE IF EXISTS `biz_schedule`;
@@ -969,13 +900,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check` (
 
 -- 正在导出表  fuchenpro.biz_stock_check 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_check`;
-/*!40000 ALTER TABLE `biz_stock_check` DISABLE KEYS */;
-INSERT INTO `biz_stock_check` (`stock_check_id`, `stock_check_no`, `warehouse_id`, `check_date`, `total_quantity`, `total_diff_quantity`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'PD20260630001', 2, '2026-06-29', 12, 2, 103, '鹏鹏', '1', NULL, 'pengpeng', '2026-06-30 00:18:26', '', '2026-06-30 00:18:50'),
-	(2, 'PD20260630002', 2, '2026-06-29', 12, 0, 1, '超级管理员', '1', NULL, 'admin', '2026-06-30 00:38:16', '', '2026-06-30 00:38:23'),
-	(3, 'PD20260630003', 2, '2026-06-29', 12, 0, 103, '鹏鹏', '1', NULL, 'pengpeng', '2026-06-30 00:57:35', '', '2026-06-30 00:57:38'),
-	(4, 'PD20260630004', 2, '2026-06-29', 14, 2, 103, '鹏鹏', '1', NULL, 'pengpeng', '2026-06-30 00:58:46', '', '2026-06-30 00:58:57');
-/*!40000 ALTER TABLE `biz_stock_check` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_check_item 结构
 DROP TABLE IF EXISTS `biz_stock_check_item`;
@@ -1002,21 +926,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check_item` (
 
 -- 正在导出表  fuchenpro.biz_stock_check_item 的数据：~12 rows (大约)
 DELETE FROM `biz_stock_check_item`;
-/*!40000 ALTER TABLE `biz_stock_check_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_check_item` (`item_id`, `stock_check_id`, `product_id`, `product_name`, `spec`, `unit`, `unit_type`, `pack_qty`, `original_quantity`, `system_quantity`, `actual_quantity`, `diff_quantity`, `remark`, `production_date`, `expiry_date`) VALUES
-	(1, 1, 1, 'GCS-p7', '1', '5', '2', 10, 1, 0, 1, 1, NULL, NULL, NULL),
-	(2, 1, 2, '测试1', '1', '5', '2', 10, 1, 0, 1, 1, NULL, NULL, NULL),
-	(3, 1, 3, '身体套盒', '1', '5', '2', 10, 10, 10, 10, 0, NULL, NULL, NULL),
-	(4, 2, 1, 'GCS-p7', '1', '5', '2', 10, 1, 1, 1, 0, NULL, '2026-06-01', '2026-07-01'),
-	(5, 2, 2, '测试1', '1', '5', '2', 10, 1, 1, 1, 0, NULL, '2026-06-01', '2026-07-01'),
-	(6, 2, 3, '身体套盒', '1', '5', '2', 10, 10, 10, 10, 0, NULL, NULL, NULL),
-	(7, 3, 1, 'GCS-p7', '1', '5', '2', 10, 1, 1, 1, 0, NULL, '2026-06-01', '2026-07-01'),
-	(8, 3, 2, '测试1', '1', '5', '2', 10, 1, 1, 1, 0, NULL, '2026-06-01', '2026-07-01'),
-	(9, 3, 3, '身体套盒', '1', '5', '2', 10, 10, 10, 10, 0, NULL, '2026-06-01', '2026-07-01'),
-	(10, 4, 1, 'GCS-p7', '1', '5', '2', 10, 2, 1, 2, 1, NULL, NULL, '2026-07-01'),
-	(11, 4, 2, '测试1', '1', '5', '2', 10, 2, 1, 2, 1, NULL, NULL, NULL),
-	(12, 4, 3, '身体套盒', '1', '5', '2', 10, 10, 10, 10, 0, NULL, NULL, NULL);
-/*!40000 ALTER TABLE `biz_stock_check_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_in 结构
 DROP TABLE IF EXISTS `biz_stock_in`;
@@ -1045,14 +954,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in` (
 
 -- 正在导出表  fuchenpro.biz_stock_in 的数据：~5 rows (大约)
 DELETE FROM `biz_stock_in`;
-/*!40000 ALTER TABLE `biz_stock_in` DISABLE KEYS */;
-INSERT INTO `biz_stock_in` (`stock_in_id`, `stock_in_no`, `stock_in_type`, `warehouse_id`, `total_quantity`, `total_amount`, `stock_in_date`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'RK20260620001', '1', 1, 200, 93800.00, '2026-06-20', 1, '若依', '1', NULL, '若依', '2026-06-20 20:06:29', '', '2026-06-20 20:06:40'),
-	(2, 'RK20260630001', '1', 2, 10, 5800.00, '2026-06-29', 103, '鹏鹏', '1', NULL, '鹏鹏', '2026-06-30 00:03:18', '', '2026-06-30 00:16:40'),
-	(3, 'RK20260630002', '1', 2, 2, 938.00, '2026-06-29', 103, '鹏鹏', '1', NULL, '鹏鹏', '2026-06-30 00:16:25', '', '2026-06-30 00:16:39'),
-	(4, 'RK20260701001', '1', 1, 10, 5800.00, '2026-07-01', 1, '超级管理员', '1', NULL, '超级管理员', '2026-07-01 18:24:10', '', '2026-07-01 18:24:15'),
-	(5, 'RK20260701002', '1', 1, 10, 5800.00, '2026-07-01', 1, '超级管理员', '1', NULL, '超级管理员', '2026-07-01 19:00:08', '', '2026-07-01 19:00:11');
-/*!40000 ALTER TABLE `biz_stock_in` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_in_item 结构
 DROP TABLE IF EXISTS `biz_stock_in_item`;
@@ -1084,16 +985,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in_item` (
 
 -- 正在导出表  fuchenpro.biz_stock_in_item 的数据：~5 rows (大约)
 DELETE FROM `biz_stock_in_item`;
-/*!40000 ALTER TABLE `biz_stock_in_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_in_item` (`item_id`, `stock_in_id`, `warehouse_id`, `product_id`, `product_name`, `supplier_id`, `supplier_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `purchase_price`, `amount`, `remark`, `production_date`, `expiry_date`, `shipped_quantity`) VALUES
-	(1, 1, 1, 2, '测试1', 1, '未知供货商', '1', '5', 10, '1', 10, 100, 680.00, 68000.00, NULL, '2026-06-01', '2027-06-01', 10.00),
-	(2, 1, 1, 1, 'GCS-p7', 1, '未知供货商', '1', '5', 10, '1', 10, 100, 258.00, 25800.00, NULL, '2026-06-01', '2027-06-01', 5.00),
-	(3, 2, 2, 3, '身体套盒', 1, '供货商1', '1', '5', 10, '1', 1, 10, 580.00, 5800.00, NULL, '2026-06-01', '2027-06-01', 10.00),
-	(4, 3, 2, 1, 'GCS-p7', 1, '供货商1', '1', '5', 10, '2', 1, 1, 258.00, 258.00, NULL, '2026-06-01', '2026-07-01', 1.00),
-	(5, 3, 2, 2, '测试1', 1, '供货商1', '1', '5', 10, '2', 1, 1, 680.00, 680.00, NULL, '2026-06-01', '2026-07-01', 1.00),
-	(6, 4, 1, 3, '身体套盒', 1, '供货商1', '1', '5', 10, '1', 1, 10, 580.00, 5800.00, NULL, NULL, '2026-07-02', 10.00),
-	(7, 5, 1, 3, '身体套盒', 1, '供货商1', '1', '5', 10, '1', 1, 10, 580.00, 5800.00, NULL, NULL, '2026-07-02', 10.00);
-/*!40000 ALTER TABLE `biz_stock_in_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out 结构
 DROP TABLE IF EXISTS `biz_stock_out`;
@@ -1143,16 +1034,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
 
 -- 正在导出表  fuchenpro.biz_stock_out 的数据：~7 rows (大约)
 DELETE FROM `biz_stock_out`;
-/*!40000 ALTER TABLE `biz_stock_out` DISABLE KEYS */;
-INSERT INTO `biz_stock_out` (`stock_out_id`, `stock_out_no`, `stock_out_type`, `warehouse_id`, `out_target_type`, `prepare_id`, `plan_id`, `enterprise_id`, `enterprise_name`, `contact_person`, `contact_phone`, `shipping_address`, `logistics_company`, `logistics_no`, `shipment_date`, `receipt_date`, `shipment_images`, `audit_by`, `audit_time`, `contact_employee_id`, `contact_employee_name`, `responsible_id`, `responsible_name`, `total_quantity`, `total_amount`, `stock_out_date`, `status`, `ship_type`, `ship_status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'CK20260620001', '1', 1, '1', 1, NULL, 7, '终测1', NULL, NULL, NULL, '百世快递', '455555555555555555', '2026-06-21 00:57:28', '2026-06-21 00:57:31', '["/profile/upload/20260621/c16d0a68aefc939f11743f66ce8e4bcf.jpg"]', NULL, NULL, NULL, NULL, 1, '若依', 15, 8090.00, '2026-06-20', '3', 2, 2, '的撒的', 'admin', '2026-06-20 19:21:03', '', '2026-06-21 00:57:31'),
-	(2, 'CK20260629001', '1', 2, '1', 1, NULL, 7, '终测1', NULL, NULL, NULL, 'shunfeng', '1111111', '2026-06-30 00:17:39', '2026-06-30 00:17:42', NULL, NULL, NULL, NULL, NULL, 1, '超级管理员', 2, 938.00, '2026-06-29', '3', 2, 2, NULL, 'admin', '2026-06-29 23:36:03', '', '2026-06-30 00:17:42'),
-	(11, 'CK20260701009', '1', 1, '1', 10, 2, 4, '企业1', NULL, NULL, NULL, 'shunfeng', '1111', '2026-07-01 18:24:39', '2026-07-01 18:24:42', '["/profile/upload/20260701/427b7d11dc75fe074b29ef9f5b8487e0.jpg"]', NULL, NULL, NULL, NULL, 1, '超级管理员', 10, 5800.00, '2026-07-01', '3', 2, 2, NULL, 'admin', '2026-07-01 18:23:25', '', '2026-07-01 18:24:42'),
-	(12, 'CK20260701010', '1', 1, '1', 11, 2, 4, '企业1', NULL, NULL, NULL, 'shunfeng', '11111', '2026-07-01 19:00:31', '2026-07-01 19:00:33', NULL, NULL, NULL, NULL, '-', 1, '超级管理员', 10, 5800.00, '2026-07-01', '3', 2, 2, '11', 'admin', '2026-07-01 18:56:19', 'admin', '2026-07-01 19:00:33'),
-	(13, 'CK20260701011', '1', 2, '1', 12, 2, 4, '企业1', NULL, NULL, NULL, 'shunfeng', '····', '2026-07-01 18:59:04', '2026-07-01 18:59:11', NULL, NULL, NULL, NULL, '-', 1, '超级管理员', 10, 5800.00, '2026-07-01', '3', 2, 2, NULL, 'admin', '2026-07-01 18:57:34', 'admin', '2026-07-01 18:59:11'),
-	(14, 'CK20260701012', '1', NULL, '1', 13, 2, 4, '企业1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '超级管理员', 20, 11600.00, '2026-07-01', '0', 2, 0, NULL, 'admin', '2026-07-01 19:01:22', '', '2026-07-01 19:01:22'),
-	(15, 'CK20260702001', '1', 2, '1', 15, 1, 7, '终测1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '超级管理员', 10, 5800.00, '2026-07-02', '0', 2, 0, NULL, 'admin', '2026-07-02 00:45:51', '', '2026-07-02 00:45:51');
-/*!40000 ALTER TABLE `biz_stock_out` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out_item 结构
 DROP TABLE IF EXISTS `biz_stock_out_item`;
@@ -1181,18 +1062,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out_item` (
 
 -- 正在导出表  fuchenpro.biz_stock_out_item 的数据：~9 rows (大约)
 DELETE FROM `biz_stock_out_item`;
-/*!40000 ALTER TABLE `biz_stock_out_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_out_item` (`item_id`, `stock_out_id`, `product_id`, `plan_item_id`, `supplier_id`, `supplier_name`, `product_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `sale_price`, `discount_price`, `amount`, `remark`) VALUES
-	(1, 1, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '2', 5, 5, 258.00, NULL, 1290.00, NULL),
-	(2, 1, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
-	(3, 2, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '2', 1, 1, 258.00, NULL, 258.00, NULL),
-	(4, 2, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '2', 1, 1, 680.00, NULL, 680.00, NULL),
-	(13, 11, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL),
-	(16, 13, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL),
-	(17, 12, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL),
-	(18, 14, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 2, 20, 580.00, NULL, 11600.00, NULL),
-	(19, 15, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL);
-/*!40000 ALTER TABLE `biz_stock_out_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare 结构
 DROP TABLE IF EXISTS `biz_stock_prepare`;
@@ -1234,24 +1103,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
 
 -- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~15 rows (大约)
 DELETE FROM `biz_stock_prepare`;
-/*!40000 ALTER TABLE `biz_stock_prepare` DISABLE KEYS */;
-INSERT INTO `biz_stock_prepare` (`prepare_id`, `prepare_no`, `plan_id`, `plan_no`, `order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `warehouse_id`, `store_id`, `store_name`, `total_quantity`, `total_amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `status`, `remark`, `create_by`, `creator_user_id`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'SP202606200001', NULL, NULL, 1, 'SO202606200001', 1, '客户1', 7, '终测1', NULL, 8, '终测门店2', 40, 18760.00, 17, 9028.00, 23, 9732.00, '1', NULL, 'admin', NULL, '2026-06-20 19:20:18', '', '2026-06-29 23:36:03'),
-	(2, 'SP202607010001', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 16:57:38', '', '2026-07-01 16:57:38'),
-	(3, 'SP202607010002', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 16:58:11', '', '2026-07-01 16:58:11'),
-	(4, 'SP202607010003', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 17:04:09', '', '2026-07-01 17:04:09'),
-	(5, 'SP202607010004', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 17:04:33', '', '2026-07-01 17:04:33'),
-	(6, 'SP202607010005', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 17:04:51', '', '2026-07-01 17:04:51'),
-	(7, 'SP202607010006', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 58000.00, 10, 5800.00, 0, 52200.00, '2', NULL, 'admin', 1, '2026-07-01 17:06:02', '', '2026-07-01 17:06:02'),
-	(8, 'SP202607010007', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 5800.00, 10, 5800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-07-01 17:56:25', '', '2026-07-01 17:56:26'),
-	(9, 'SP202607010008', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 10, 5800.00, 10, 5800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-07-01 17:59:40', '', '2026-07-01 17:59:40'),
-	(10, 'SP202607010009', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 10, 5800.00, 10, 5800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-07-01 18:23:25', '', '2026-07-01 18:23:25'),
-	(11, 'SP202607010010', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 10, 5800.00, 10, 5800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-07-01 18:56:19', '', '2026-07-01 19:00:31'),
-	(12, 'SP202607010011', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 10, 5800.00, 10, 5800.00, 0, 0.00, '2', NULL, 'admin', 1, '2026-07-01 18:57:34', '', '2026-07-01 18:59:04'),
-	(13, 'SP202607010012', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 20, 11600.00, 0, 0.00, 20, 11600.00, '0', NULL, 'admin', 1, '2026-07-01 19:01:22', '', '2026-07-01 19:01:22'),
-	(14, 'SP202607020001', 2, 'PL20260701001', NULL, NULL, NULL, NULL, 4, '企业1', NULL, NULL, NULL, 1, 580.00, 0, 0.00, 1, 580.00, '0', NULL, 'admin', 1, '2026-07-02 00:43:05', '', '2026-07-02 00:43:05'),
-	(15, 'SP202607020002', 1, 'PL20260621001', NULL, NULL, NULL, NULL, 7, '终测1', NULL, NULL, NULL, 10, 5800.00, 0, 0.00, 10, 5800.00, '0', NULL, 'admin', 1, '2026-07-02 00:43:43', '', '2026-07-02 00:43:43');
-/*!40000 ALTER TABLE `biz_stock_prepare` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_item 结构
 DROP TABLE IF EXISTS `biz_stock_prepare_item`;
@@ -1282,25 +1133,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_item` (
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_item 的数据：~14 rows (大约)
 DELETE FROM `biz_stock_prepare_item`;
-/*!40000 ALTER TABLE `biz_stock_prepare_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_prepare_item` (`item_id`, `prepare_id`, `plan_item_id`, `card_item_id`, `product_id`, `product_name`, `unit`, `spec`, `unit_type`, `pack_qty`, `sale_price`, `quantity`, `amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `remark`) VALUES
-	(1, 1, NULL, NULL, 1, 'GCS-p7', '5', '1', '2', 10, 258.00, 20, 5160.00, 6, 1548.00, 14, 3612.00, NULL),
-	(2, 1, NULL, NULL, 2, '测试1', '5', '1', '2', 10, 680.00, 20, 13600.00, 11, 7480.00, 9, 6120.00, NULL),
-	(3, 2, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(4, 3, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(5, 4, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(6, 5, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(7, 6, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(8, 7, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 58000.00, 10, 5800.00, 0, 52200.00, NULL),
-	(9, 8, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
-	(10, 9, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
-	(11, 10, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
-	(12, 11, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
-	(13, 12, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
-	(14, 13, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 20, 11600.00, 20, 11600.00, 0, 0.00, NULL),
-	(15, 14, NULL, NULL, 3, '身体套盒', '5', '1', '2', 10, 580.00, 1, 580.00, 0, 0.00, 1, 580.00, NULL),
-	(16, 15, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL);
-/*!40000 ALTER TABLE `biz_stock_prepare_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_order 结构
 DROP TABLE IF EXISTS `biz_stock_prepare_order`;
@@ -1320,11 +1152,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_order` (
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_order 的数据：~2 rows (大约)
 DELETE FROM `biz_stock_prepare_order`;
-/*!40000 ALTER TABLE `biz_stock_prepare_order` DISABLE KEYS */;
-INSERT INTO `biz_stock_prepare_order` (`id`, `prepare_id`, `order_id`, `order_no`, `customer_id`, `customer_name`, `store_id`, `store_name`) VALUES
-	(1, 1, 1, 'SO202606200001', 1, '客户1', 8, '终测门店2'),
-	(2, 1, 3, 'SO202606260003', 2, '111', 8, '终测门店2');
-/*!40000 ALTER TABLE `biz_stock_prepare_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_transfer 结构
 DROP TABLE IF EXISTS `biz_stock_transfer`;
@@ -1349,13 +1176,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_transfer` (
 
 -- 正在导出表  fuchenpro.biz_stock_transfer 的数据：~3 rows (大约)
 DELETE FROM `biz_stock_transfer`;
-/*!40000 ALTER TABLE `biz_stock_transfer` DISABLE KEYS */;
-INSERT INTO `biz_stock_transfer` (`transfer_id`, `transfer_no`, `from_warehouse_id`, `from_warehouse_name`, `to_warehouse_id`, `to_warehouse_name`, `total_quantity`, `transfer_date`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, 'DB20260620001', 1, NULL, 2, NULL, 20, '2026-06-20', '1', NULL, '若依', '2026-06-20 20:08:35', '', '2026-06-20 21:22:53'),
-	(3, 'DB20260620003', 2, '深圳仓库', 1, '上海仓库', 10, '2026-06-20', '1', NULL, '若依', '2026-06-20 22:34:21', '', '2026-06-20 22:34:30'),
-	(6, 'DB20260620004', 2, '深圳仓库', 1, '上海仓库', 10, '2026-06-20', '1', NULL, '若依', '2026-06-20 23:18:50', '', '2026-06-20 23:18:57'),
-	(7, 'DB20260630001', 1, '上海仓库', 2, '深圳仓库', 1, '2026-06-30', '1', NULL, '超级管理员', '2026-06-30 18:22:52', '', '2026-06-30 18:23:00');
-/*!40000 ALTER TABLE `biz_stock_transfer` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_transfer_item 结构
 DROP TABLE IF EXISTS `biz_stock_transfer_item`;
@@ -1376,14 +1196,6 @@ CREATE TABLE IF NOT EXISTS `biz_stock_transfer_item` (
 
 -- 正在导出表  fuchenpro.biz_stock_transfer_item 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_transfer_item`;
-/*!40000 ALTER TABLE `biz_stock_transfer_item` DISABLE KEYS */;
-INSERT INTO `biz_stock_transfer_item` (`item_id`, `transfer_id`, `product_id`, `product_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `remark`) VALUES
-	(1, 1, 2, '测试1', '1', '5', 10, '1', 1, 10, NULL),
-	(2, 1, 1, 'GCS-p7', '1', '5', 10, '1', 1, 10, NULL),
-	(5, 3, 2, '测试1', '1', '5', 10, '1', 1, 10, NULL),
-	(8, 6, 1, 'GCS-p7', '1', '5', 10, '1', 1, 10, NULL),
-	(9, 7, 2, '测试1', '1', '5', 10, '2', 1, 1, NULL);
-/*!40000 ALTER TABLE `biz_stock_transfer_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_store 结构
 DROP TABLE IF EXISTS `biz_store`;
@@ -2271,9 +2083,8 @@ INSERT INTO `sys_dict_data` (`dict_code`, `dict_sort`, `dict_label`, `dict_value
 	(213, 3, '财务已审', '2', 'biz_order_status', NULL, NULL, 'N', '0', 'admin', '2026-05-22 14:22:22', '', NULL, NULL),
 	(214, 5, '已取消', '4', 'biz_order_status', NULL, NULL, 'N', '0', 'admin', '2026-05-22 14:22:22', '', NULL, NULL),
 	(215, 1, '现金', 'cash', 'biz_payment_method', '', 'primary', 'Y', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '现金支付'),
-	(216, 2, '划卡', 'card', 'biz_payment_method', '', 'success', 'N', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '刷卡支付'),
-	(217, 3, '置换', 'exchange', 'biz_payment_method', '', 'warning', 'N', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '置换支付'),
-	(218, 4, '赠送', 'gift', 'biz_payment_method', '', 'danger', 'N', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '赠送（成交0实付0）'),
+	(216, 2, '耗卡', 'card', 'biz_payment_method', '', 'success', 'N', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '耗卡支付'),
+	(218, 3, '赠送', 'gift', 'biz_payment_method', '', 'danger', 'N', '0', 'admin', '2026-05-26 18:51:09', '', NULL, '赠送（成交0实付0）'),
 	(219, 1, '工作问题', '0', 'biz_feedback_type', '', 'danger', 'Y', '0', 'admin', '2026-05-30 13:09:54', '', NULL, NULL),
 	(220, 2, '优化建议', '1', 'biz_feedback_type', '', 'warning', 'N', '0', 'admin', '2026-05-30 13:09:54', '', NULL, NULL),
 	(221, 3, '其他', '2', 'biz_feedback_type', '', 'info', 'N', '0', 'admin', '2026-05-30 13:09:54', '', NULL, NULL),

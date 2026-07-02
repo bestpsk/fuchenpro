@@ -21,3 +21,18 @@ export function createFromPlan(planId, items) {
 export function getActivePreparedAmount(planId) {
   return request({ url: '/business/stockPrepare/getActivePreparedAmount', method: 'get', params: { planId } })
 }
+
+// 查询可备货订单列表（已财务审核且未备货）
+export function orderListForPrepare(query) {
+  return request({ url: '/business/stockPrepare/orderListForPrepare', method: 'get', params: query })
+}
+
+// 根据订单创建备货
+export function createFromOrder(orderId) {
+  return request({ url: '/business/stockPrepare/createFromOrder', method: 'post', data: { orderId } })
+}
+
+// 批量根据订单创建备货
+export function batchCreateFromOrder(orderIds) {
+  return request({ url: '/business/stockPrepare/batchCreateFromOrder', method: 'post', data: { orderIds } })
+}

@@ -111,12 +111,13 @@ class BizSalesOrderController
         try {
             if (PermissionService::lacksPermi($request->loginUser, 'business:sales:enterpriseAudit')) { return json(['code' => 403, 'msg' => '没有操作权限']); }
             $orderId = $request->post('orderId');
+            $action = $request->post('action', 'open');
             $auditBy = $request->loginUser->user->nick_name ?? $request->loginUser->user->user_name ?? '';
             $service = new BizSalesOrderService();
-            $result = $service->enterpriseAudit($orderId, $auditBy);
+            $result = $service->enterpriseAudit($orderId, $auditBy, $action);
             return AjaxResult::toAjax($result ? 1 : 0);
         } catch (\Exception $e) {
-            return AjaxResult::error('操作失败，请稍后重试');
+            return AjaxResult::error($e->getMessage());
         }
     }
 

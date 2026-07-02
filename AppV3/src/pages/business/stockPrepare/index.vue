@@ -21,6 +21,10 @@
           <u-icon name="arrow-down" size="12" :class="{ 'icon-rotate': showFilter }"></u-icon>
         </view>
       </view>
+      <view class="order-prepare-btn" @click="goSelectOrder">
+        <u-icon name="plus-circle" size="14" color="#fff"></u-icon>
+        <text>订单备货</text>
+      </view>
     </view>
 
     <view v-if="hasActiveFilters" class="active-filters">
@@ -414,6 +418,11 @@ function handleSearch() {
   getList(true)
 }
 
+/** 跳转到订单选择页创建备货 */
+function goSelectOrder() {
+  uni.navigateTo({ url: '/pages/business/stockPrepare/selectOrder' })
+}
+
 /** 搜索输入防抖处理，500ms后触发搜索 */
 function onSearchInput() {
   if (searchTimer) clearTimeout(searchTimer)
@@ -494,6 +503,19 @@ page {
   margin-left: -24rpx;
   margin-right: -24rpx;
   background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%);
+}
+
+.order-prepare-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+  height: 64rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 32rpx;
+  color: #fff;
+  font-size: 26rpx;
 }
 
 .search-box {

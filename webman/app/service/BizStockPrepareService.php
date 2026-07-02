@@ -43,7 +43,12 @@ class BizStockPrepareService
         // 来源筛选：order=订单备货, plan=方案备货
         $prepareType = $params['prepare_type'] ?? '';
         if ($prepareType === 'order') {
-            $query->whereNotNull('order_id');
+            // 多订单合并后 order_id 为 null，通过关联表 biz_stock_prepare_order 判断
+            $query->whereExists(function ($q) {
+                $q->select(Db::raw(1))
+                  ->from('biz_stock_prepare_order')
+                  ->whereColumn('biz_stock_prepare_order.prepare_id', 'biz_stock_prepare.prepare_id');
+            });
         } else if ($prepareType === 'plan') {
             $query->whereNotNull('plan_id');
         }
@@ -56,6 +61,37 @@ class BizStockPrepareService
         $planIds = $result->pluck('plan_id')->filter()->unique()->toArray();
         $plans = BizPlan::whereIn('plan_id', $planIds)->get()->keyBy('plan_id');
 
+        // 批量查询企业维度的备货进度（仅对订单备货类型的备货单有意义）
+        $enterpriseIds = [];
+        foreach ($result as $item) {
+            if ($item->orders && $item->orders->count() > 0) {
+                $enterpriseIds[] = $item->enterprise_id;
+            }
+        }
+        $enterpriseIds = array_unique($enterpriseIds);
+
+        $totalOrdersMap = [];
+        $preparedOrdersMap = [];
+        if (!empty($enterpriseIds)) {
+            // 查询每个企业的可备货总订单数（已财务审核且订单状态为已完成）
+            $totalOrdersMap = BizSalesOrder::whereIn('enterprise_id', $enterpriseIds)
+                ->where('finance_audit_status', '1')
+                ->where('order_status', '2')
+                ->selectRaw('enterprise_id, COUNT(*) as cnt')
+                ->groupBy('enterprise_id')
+                ->pluck('cnt', 'enterprise_id')
+                ->toArray();
+
+            // 查询每个企业的已备货订单数（通过关联表 join 备货主表按企业统计）
+            $preparedOrdersMap = Db::table('biz_stock_prepare_order')
+                ->join('biz_stock_prepare', 'biz_stock_prepare_order.prepare_id', '=', 'biz_stock_prepare.prepare_id')
+                ->whereIn('biz_stock_prepare.enterprise_id', $enterpriseIds)
+                ->selectRaw('biz_stock_prepare.enterprise_id, COUNT(DISTINCT biz_stock_prepare_order.order_id) as cnt')
+                ->groupBy('biz_stock_prepare.enterprise_id')
+                ->pluck('cnt', 'enterprise_id')
+                ->toArray();
+        }
+
         foreach ($result as $item) {
             $item->product_count = $item->items ? $item->items->count() : 0;
             $item->pending_quantity = $item->remaining_quantity;
@@ -66,6 +102,14 @@ class BizStockPrepareService
             if ($item->plan_id) {
                 $plan = $plans->get($item->plan_id);
                 $item->planName = $plan ? $plan->plan_name : '';
+            }
+            // 备货进度：已备货订单数/企业总订单数（方案备货无订单显示 -）
+            if ($item->orders && $item->orders->count() > 0) {
+                $total = $totalOrdersMap[$item->enterprise_id] ?? 0;
+                $prepared = $preparedOrdersMap[$item->enterprise_id] ?? 0;
+                $item->prepare_progress = $prepared . '/' . $total;
+            } else {
+                $item->prepare_progress = '-';
             }
         }
 
@@ -224,62 +268,7 @@ class BizStockPrepareService
                 ];
             }
 
-            $existingPrepare = BizStockPrepare::where('enterprise_id', $order->enterprise_id)
-                ->where('store_id', $order->store_id)
-                ->whereIn('status', ['0', '1'])
-                ->first();
-
-            if ($existingPrepare) {
-                $existingItems = BizStockPrepareItem::where('prepare_id', $existingPrepare->prepare_id)->get()->keyBy('product_id');
-
-                foreach ($newItemRecords as $newItem) {
-                    $productId = $newItem['product_id'];
-                    if ($existingItems->has($productId)) {
-                        $existingItem = $existingItems[$productId];
-                        $newQuantity = intval($existingItem->quantity) + $newItem['quantity'];
-                        $newAmount = bcadd(floatval($existingItem->amount), $newItem['amount'], 2);
-                        $newRemainingQuantity = intval($existingItem->remaining_quantity) + $newItem['remaining_quantity'];
-                        $newRemainingAmount = bcadd(floatval($existingItem->remaining_amount), $newItem['remaining_amount'], 2);
-
-                        BizStockPrepareItem::where('item_id', $existingItem->item_id)->update([
-                            'quantity' => $newQuantity,
-                            'amount' => $newAmount,
-                            'remaining_quantity' => $newRemainingQuantity,
-                            'remaining_amount' => $newRemainingAmount,
-                        ]);
-                    } else {
-                        $newItem['prepare_id'] = $existingPrepare->prepare_id;
-                        $newItem['shipped_quantity'] = 0;
-                        $newItem['shipped_amount'] = 0;
-                        BizStockPrepareItem::create($newItem);
-                    }
-                }
-
-                $newTotalQuantity = intval($existingPrepare->total_quantity) + $totalQuantity;
-                $newTotalAmount = bcadd(floatval($existingPrepare->total_amount), $totalAmount, 2);
-                $newRemainingQuantity = intval($existingPrepare->remaining_quantity) + $totalQuantity;
-                $newRemainingAmount = bcadd(floatval($existingPrepare->remaining_amount), $totalAmount, 2);
-
-                BizStockPrepare::where('prepare_id', $existingPrepare->prepare_id)->update([
-                    'total_quantity' => $newTotalQuantity,
-                    'total_amount' => $newTotalAmount,
-                    'remaining_quantity' => $newRemainingQuantity,
-                    'remaining_amount' => $newRemainingAmount,
-                    'update_time' => date('Y-m-d H:i:s'),
-                ]);
-
-                BizStockPrepareOrder::create([
-                    'prepare_id' => $existingPrepare->prepare_id,
-                    'order_id' => $order->order_id,
-                    'order_no' => $order->order_no,
-                    'customer_id' => $order->customer_id,
-                    'customer_name' => $order->customer_name,
-                    'store_id' => $order->store_id,
-                    'store_name' => $order->store_name,
-                ]);
-
-                return $existingPrepare;
-            }
+            // 取消合并机制：一订单一备货单，每次都创建独立备货单
 
             $prepareNo = $this->generatePrepareNo();
 
@@ -326,8 +315,333 @@ class BizStockPrepareService
         });
     }
 
+    /**
+     * 查询可备货订单列表（已财务审核且未备货）
+     */
+    public function selectOrderListForPrepare($params, $loginUser)
+    {
+        $preparedOrderIds = BizStockPrepareOrder::pluck('order_id')->toArray();
+
+        $query = BizSalesOrder::where('finance_audit_status', '1')
+            ->where('order_status', '2');
+
+        // 备货状态筛选：unprepared=未备货, prepared=已备货, 空=全部
+        $prepareStatus = $params['prepare_status'] ?? '';
+        if ($prepareStatus === 'unprepared') {
+            $query->whereNotIn('order_id', $preparedOrderIds);
+        } elseif ($prepareStatus === 'prepared') {
+            $query->whereIn('order_id', $preparedOrderIds);
+        }
+
+        if (!empty($params['order_no'])) {
+            $query->where('order_no', 'like', '%' . $params['order_no'] . '%');
+        }
+        if (!empty($params['customer_name'])) {
+            $query->where('customer_name', 'like', '%' . $params['customer_name'] . '%');
+        }
+        if (!empty($params['enterprise_id'])) {
+            $query->where('enterprise_id', $params['enterprise_id']);
+        }
+
+        // 数据权限过滤
+        if ($loginUser && !$loginUser->isAdmin()) {
+            $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);
+            $query->whereIn('creator_user_id', $visibleUserIds);
+        }
+
+        $query->orderByDesc('create_time');
+        $pageSize = intval($params['page_size'] ?? 10);
+        $pageNum = intval($params['page_num'] ?? 1);
+        $result = $query->paginate($pageSize, ['*'], 'page', $pageNum);
+
+        // 为每条订单添加备货状态标记
+        $collection = $result->getCollection();
+        foreach ($collection as $item) {
+            $item->prepare_status = in_array($item->order_id, $preparedOrderIds) ? '1' : '0';
+        }
+
+        return $result;
+    }
+
+    /**
+     * 根据订单ID手动创建备货
+     */
+    public function createFromOrder($orderId, $loginUser = null)
+    {
+        $order = BizSalesOrder::with('items')->find($orderId);
+        if (!$order) {
+            throw new \Exception('订单不存在');
+        }
+
+        if ($order->finance_audit_status !== '1') {
+            throw new \Exception('订单未通过财务审核，无法备货');
+        }
+
+        // 幂等校验：同一订单不能重复备货
+        $exists = BizStockPrepareOrder::where('order_id', $orderId)->exists();
+        if ($exists) {
+            throw new \Exception('该订单已备货，请勿重复操作');
+        }
+
+        $result = $this->addToEnterprisePrepare($order);
+
+        if (!$result) {
+            throw new \Exception('订单明细中无卡项，无法生成备货单');
+        }
+
+        return $result;
+    }
+
+    /**
+     * 批量根据订单创建备货（按企业合并：同一次批量操作中同一企业的多个订单合并为一个备货单）
+     */
+    public function batchCreateFromOrder($orderIds, $loginUser = null)
+    {
+        $successCount = 0;
+        $failedCount = 0;
+        $skippedCount = 0;
+        $details = [];
+
+        // 1. 批量查询所有订单（含明细），避免循环内 N+1
+        $orders = BizSalesOrder::with('items')->whereIn('order_id', $orderIds)->get()->keyBy('order_id');
+
+        // 2. 校验 + 按企业分组
+        $ordersByEnterprise = [];
+        foreach ($orderIds as $orderId) {
+            $order = $orders->get($orderId);
+            if (!$order) {
+                $failedCount++;
+                $details[] = ['order_id' => $orderId, 'status' => 'failed', 'msg' => '订单不存在'];
+                continue;
+            }
+
+            if ($order->finance_audit_status !== '1') {
+                $skippedCount++;
+                $details[] = ['order_id' => $orderId, 'order_no' => $order->order_no, 'status' => 'skipped', 'msg' => '未通过财务审核'];
+                continue;
+            }
+
+            // 幂等校验：已备货的订单跳过
+            $exists = BizStockPrepareOrder::where('order_id', $orderId)->exists();
+            if ($exists) {
+                $skippedCount++;
+                $details[] = ['order_id' => $orderId, 'order_no' => $order->order_no, 'status' => 'skipped', 'msg' => '已备货'];
+                continue;
+            }
+
+            $enterpriseId = $order->enterprise_id;
+            if (!isset($ordersByEnterprise[$enterpriseId])) {
+                $ordersByEnterprise[$enterpriseId] = [
+                    'enterprise_id' => $enterpriseId,
+                    'enterprise_name' => $order->enterprise_name,
+                    'orders' => [],
+                ];
+            }
+            $ordersByEnterprise[$enterpriseId]['orders'][] = $order;
+        }
+
+        // 3. 按企业合并创建备货单
+        foreach ($ordersByEnterprise as $group) {
+            $groupOrders = $group['orders'];
+            try {
+                $result = $this->createEnterprisePrepareFromOrders($groupOrders, $group['enterprise_id'], $group['enterprise_name'], $loginUser);
+                if ($result) {
+                    $successCount += count($groupOrders);
+                    foreach ($groupOrders as $order) {
+                        $details[] = ['order_id' => $order->order_id, 'order_no' => $order->order_no, 'status' => 'success', 'prepare_no' => $result->prepare_no];
+                    }
+                } else {
+                    // 无卡项，整组跳过
+                    $skippedCount += count($groupOrders);
+                    foreach ($groupOrders as $order) {
+                        $details[] = ['order_id' => $order->order_id, 'order_no' => $order->order_no, 'status' => 'skipped', 'msg' => '无卡项'];
+                    }
+                }
+            } catch (\Exception $e) {
+                $failedCount += count($groupOrders);
+                foreach ($groupOrders as $order) {
+                    $details[] = ['order_id' => $order->order_id, 'status' => 'failed', 'msg' => $e->getMessage()];
+                }
+            }
+        }
+
+        return [
+            'success_count' => $successCount,
+            'failed_count' => $failedCount,
+            'skipped_count' => $skippedCount,
+            'details' => $details,
+        ];
+    }
+
+    /**
+     * 按企业合并多个订单创建一个备货单（企业维度，store_id/customer_id 置空）
+     * 事务内双重幂等校验，汇总所有订单的卡项数量，反查货品并按 product_id 汇总。
+     */
+    public function createEnterprisePrepareFromOrders($orders, $enterpriseId, $enterpriseName, $loginUser = null)
+    {
+        return Db::transaction(function () use ($orders, $enterpriseId, $enterpriseName, $loginUser) {
+            // 1. 事务内双重幂等校验，过滤掉事务开始前已被其他请求备货的订单
+            $orderIds = [];
+            foreach ($orders as $order) {
+                $orderIds[] = $order->order_id;
+            }
+            $existingOrderIds = BizStockPrepareOrder::whereIn('order_id', $orderIds)->pluck('order_id')->toArray();
+            if (!empty($existingOrderIds)) {
+                $orders = array_values(array_filter($orders, function ($order) use ($existingOrderIds) {
+                    return !in_array($order->order_id, $existingOrderIds);
+                }));
+                if (empty($orders)) return null;
+                $orderIds = array_map(function ($order) {
+                    return $order->order_id;
+                }, $orders);
+            }
+
+            // 2. 汇总所有订单的卡项数量（跨订单累加）
+            $cardItemIds = [];
+            $orderItemMap = [];
+            foreach ($orders as $order) {
+                foreach ($order->items as $orderItem) {
+                    $cardItemId = $orderItem->card_item_id ?? null;
+                    if ($cardItemId) {
+                        $cardItemIds[] = $cardItemId;
+                        if (!isset($orderItemMap[$cardItemId])) {
+                            $orderItemMap[$cardItemId] = 0;
+                        }
+                        $orderItemMap[$cardItemId] += intval($orderItem->quantity ?? 1);
+                    }
+                }
+            }
+
+            if (empty($cardItemIds)) return null;
+
+            // 3. 反查货品并按 product_id 汇总（逻辑同 addToEnterprisePrepare）
+            $cardItemProducts = BizCardItemProduct::whereIn('card_item_id', $cardItemIds)->get();
+            $cardItemMap = BizCardItem::whereIn('card_item_id', $cardItemIds)->get()->keyBy('card_item_id');
+
+            $productQuantities = [];
+            foreach ($cardItemProducts as $cip) {
+                $orderItemQty = $orderItemMap[$cip->card_item_id] ?? 0;
+                if ($orderItemQty <= 0) continue;
+
+                $cardItem = $cardItemMap->get($cip->card_item_id);
+                $defaultQty = $cardItem ? intval($cardItem->default_quantity) : 1;
+                $perTimeQty = $defaultQty > 0 ? intval($cip->quantity) / $defaultQty : intval($cip->quantity);
+                $quantity = $perTimeQty * $orderItemQty;
+
+                $productId = $cip->product_id;
+                if (!isset($productQuantities[$productId])) {
+                    $productQuantities[$productId] = [
+                        'product_id' => $productId,
+                        'card_item_id' => $cip->card_item_id,
+                        'unit_type' => $cip->unit_type,
+                        'pack_qty' => $cip->pack_qty,
+                        'quantity' => 0,
+                    ];
+                }
+                $productQuantities[$productId]['quantity'] += $quantity;
+            }
+
+            if (empty($productQuantities)) return null;
+
+            // 4. 创建备货明细记录（统一存储为最小单位/副单位）
+            $newItemRecords = [];
+            $totalQuantity = 0;
+            $totalAmount = 0;
+
+            foreach ($productQuantities as $pq) {
+                $product = BizProduct::find($pq['product_id']);
+                $packQty = intval($pq['pack_qty']) > 0 ? intval($pq['pack_qty']) : 1;
+
+                // 统一存储为最小单位（副单位）：unit_type='1'时需要乘以 pack_qty 转换
+                if ($pq['unit_type'] === '1' && $packQty > 1) {
+                    $pq['quantity'] = $pq['quantity'] * $packQty;
+                }
+
+                // sale_price 统一用副单位出货价（最小单位单价），与最小单位数量对应
+                $salePrice = $product ? floatval($product->sale_price_spec) : 0;
+                $amount = bcmul($pq['quantity'], $salePrice, 2);
+                $totalQuantity += $pq['quantity'];
+                $totalAmount = bcadd($totalAmount, $amount, 2);
+
+                $newItemRecords[] = [
+                    'product_id' => $pq['product_id'],
+                    'product_name' => $product ? $product->product_name : '',
+                    'unit' => $product ? $product->unit : null,
+                    'spec' => $product ? $product->spec : null,
+                    'unit_type' => $pq['unit_type'],
+                    'pack_qty' => $pq['pack_qty'],
+                    'sale_price' => $salePrice,
+                    'quantity' => $pq['quantity'],
+                    'amount' => $amount,
+                    'remaining_quantity' => $pq['quantity'],
+                    'remaining_amount' => $amount,
+                ];
+            }
+
+            // 5. 创建备货主表（以企业为单位，order_id/customer_id/store_id 留空）
+            $prepareNo = $this->generatePrepareNo();
+            $firstOrder = $orders[0];
+
+            $prepare = BizStockPrepare::create([
+                'prepare_no' => $prepareNo,
+                'order_id' => null,
+                'order_no' => null,
+                'customer_id' => null,
+                'customer_name' => null,
+                'enterprise_id' => $enterpriseId,
+                'enterprise_name' => $enterpriseName,
+                'store_id' => null,
+                'store_name' => null,
+                'total_quantity' => $totalQuantity,
+                'total_amount' => $totalAmount,
+                'shipped_quantity' => 0,
+                'shipped_amount' => 0,
+                'remaining_quantity' => $totalQuantity,
+                'remaining_amount' => $totalAmount,
+                'status' => '0',
+                'remark' => null,
+                'create_by' => $loginUser ? ($loginUser->user->user_name ?? '') : ($firstOrder->create_by ?? ''),
+                'creator_user_id' => $loginUser ? ($loginUser->user->user_id ?? null) : null,
+                'create_time' => date('Y-m-d H:i:s'),
+            ]);
+
+            // 6. 创建备货明细
+            foreach ($newItemRecords as $itemData) {
+                $itemData['prepare_id'] = $prepare->prepare_id;
+                $itemData['shipped_quantity'] = 0;
+                $itemData['shipped_amount'] = 0;
+                BizStockPrepareItem::create($itemData);
+            }
+
+            // 7. 创建关联订单记录（每个订单一条，保留各自 store_id/customer_id 用于展示）
+            foreach ($orders as $order) {
+                BizStockPrepareOrder::create([
+                    'prepare_id' => $prepare->prepare_id,
+                    'order_id' => $order->order_id,
+                    'order_no' => $order->order_no,
+                    'customer_id' => $order->customer_id,
+                    'customer_name' => $order->customer_name,
+                    'store_id' => $order->store_id,
+                    'store_name' => $order->store_name,
+                ]);
+            }
+
+            return $prepare;
+        });
+    }
+
     public function createStockOutFromPrepare($prepareId, $items, $warehouseId = null, $loginUser = null)
     {
+        // 仓库必填校验：防止创建 warehouse_id 为空的出库单导致跨公司可见
+        if (empty($warehouseId)) {
+            return ['success' => false, 'msg' => '请选择出库仓库'];
+        }
+        // 仓库权限校验：非管理员只能操作授权仓库
+        $authorizedWhIds = BizWarehouseService::getAuthorizedWarehouseIds($loginUser);
+        if ($authorizedWhIds !== null && !in_array($warehouseId, $authorizedWhIds)) {
+            return ['success' => false, 'msg' => '您没有该仓库的操作权限，请选择您授权的仓库'];
+        }
+
         return Db::transaction(function () use ($prepareId, $items, $warehouseId, $loginUser) {
             $prepare = BizStockPrepare::find($prepareId);
             if (!$prepare) {

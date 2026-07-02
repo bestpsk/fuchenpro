@@ -230,6 +230,9 @@ Route::post('/business/cardItem/export', [app\controller\business\BizCardItemCon
 
 Route::get('/business/stockPrepare/list', [app\controller\business\BizStockPrepareController::class, 'list']);
 Route::get('/business/stockPrepare/getActivePreparedAmount', [app\controller\business\BizStockPrepareController::class, 'getActivePreparedAmount']);
+Route::get('/business/stockPrepare/orderListForPrepare', [app\controller\business\BizStockPrepareController::class, 'orderListForPrepare']);
+Route::post('/business/stockPrepare/createFromOrder', [app\controller\business\BizStockPrepareController::class, 'createFromOrder']);
+Route::post('/business/stockPrepare/batchCreateFromOrder', [app\controller\business\BizStockPrepareController::class, 'batchCreateFromOrder']);
 Route::get('/business/stockPrepare/{prepareId}', [app\controller\business\BizStockPrepareController::class, 'getInfo']);
 Route::post('/business/stockPrepare/createStockOut', [app\controller\business\BizStockPrepareController::class, 'createStockOut']);
 Route::post('/business/stockPrepare/createFromPlan', [app\controller\business\BizStockPrepareController::class, 'createFromPlan']);
