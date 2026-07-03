@@ -148,9 +148,10 @@
       </view>
     </view>
 
-    <!-- 出库按钮 -->
-    <view v-if="canStockOut && checkPermi('business:stockPrepare:createStockOut')" class="bottom-bar">
-      <u-button type="primary" text="出库" @click="openStockOutPopup"></u-button>
+    <!-- 底部操作按钮 -->
+    <view v-if="canStockOut || canCancel" class="bottom-bar">
+      <u-button v-if="canCancel" type="error" text="取消备货" @click="handleCancel" style="flex: 1"></u-button>
+      <u-button v-if="canStockOut && checkPermi('business:stockPrepare:createStockOut')" type="primary" text="出库" @click="openStockOutPopup" style="flex: 1"></u-button>
     </view>
 
     <!-- 出库弹窗 -->
@@ -159,6 +160,16 @@
         <view class="popup-title-bar">
           <text class="popup-title">出库</text>
           <u-icon name="close" size="20" @click="stockOutOpen = false"></u-icon>
+        </view>
+
+        <view class="warehouse-selector-bar" @click="showWarehousePicker = true">
+          <text class="warehouse-label">出库仓库</text>
+          <view class="warehouse-value-wrap">
+            <text v-if="warehouseList.length === 0" class="warehouse-placeholder">您没有仓库权限，请联系管理员</text>
+            <text v-else-if="!currentWarehouseId" class="warehouse-placeholder">请选择仓库</text>
+            <text v-else class="warehouse-name">{{ currentWarehouse?.warehouseName || '-' }}</text>
+            <u-icon name="arrow-right" size="14" color="#86909C"></u-icon>
+          </view>
         </view>
 
         <scroll-view scroll-y class="stock-out-scroll">
@@ -238,6 +249,16 @@
         </view>
       </view>
     </u-popup>
+
+    <!-- 仓库选择器 -->
+    <u-picker
+      :show="showWarehousePicker"
+      :columns="[warehouseList.map(w => ({ label: w.warehouseName, value: w.warehouseId }))]"
+      keyName="label"
+      @confirm="onWarehouseConfirm"
+      @cancel="showWarehousePicker = false"
+      @close="showWarehousePicker = false"
+    ></u-picker>
   </view>
 </template>
 
@@ -248,9 +269,11 @@
  * 支持出库操作（选择货品、设置单位类型/数量/价格）
  */
 import { ref, computed, onMounted } from 'vue'
-import { getStockPrepare, createStockOutFromPrepare } from '@/api/business/stockPrepare'
+import { getStockPrepare, createStockOutFromPrepare, cancelPrepare } from '@/api/business/stockPrepare'
+import { useWarehouse } from '@/composables/useWarehouse'
 import { checkPermi } from '@/utils/permission'
 
+const { currentWarehouseId, warehouseList, currentWarehouse, loadWarehouses, setCurrentWarehouse } = useWarehouse()
 const prepareId = ref(null)
 const prepareInfo = ref({})
 const itemList = ref([])
@@ -258,11 +281,16 @@ const orderList = ref([])
 const activeTab = ref('items')
 const stockOutOpen = ref(false)
 const stockOutItems = ref([])
+const showWarehousePicker = ref(false)
 
 /** 是否可出库：状态为待出库或部分出库 */
 const canStockOut = computed(() => {
   const status = prepareInfo.value.status
-  return (status === '0' || status === '1') && status !== '4'
+  return status === '0' || status === '1'
+})
+
+const canCancel = computed(() => {
+  return prepareInfo.value.status === '0'
 })
 
 /** 出库总数量展示 */
@@ -285,7 +313,7 @@ const stockOutTotalAmount = computed(() => {
 
 /** 状态编码映射为中文名称 */
 function getStatusName(value) {
-  const map = { '0': '待出库', '1': '部分出库', '2': '已完成', '4': '已取消' }
+  const map = { '0': '待出库', '1': '部分出库', '2': '已完成', '3': '已取消' }
   return map[value] || '-'
 }
 
@@ -383,26 +411,54 @@ async function loadDetail() {
   }
 }
 
+/** 取消备货 */
+async function handleCancel() {
+  uni.showModal({
+    title: '确认取消',
+    content: '取消后可重新备货，确认取消该备货单吗？',
+    success: async (res) => {
+      if (!res.confirm) return
+      try {
+        uni.showLoading({ title: '取消中...' })
+        await cancelPrepare(prepareId.value)
+        uni.showToast({ title: '取消成功', icon: 'success' })
+        setTimeout(() => {
+          uni.navigateBack()
+        }, 1000)
+      } catch (e) {
+        uni.showToast({ title: e.message || '取消失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+      }
+    }
+  })
+}
+
 /** 打开出库弹窗，初始化出库数据 */
 function openStockOutPopup() {
-  stockOutItems.value = itemList.value.map(item => ({
-    prepareItemId: item.prepareItemId,
-    itemId: item.prepareItemId,  // 后端需要 item_id
-    productId: item.productId,
-    productName: item.productName,
-    unitLabel: item.unitLabel,
-    specLabel: item.specLabel,
-    packQty: item.packQty || 1,
-    pendingQuantity: item.pendingQuantity || 0,
-    salePrice: item.salePrice || 0,
-    salePriceSpec: item.salePriceSpec || 0,
-    mainSalePrice: item.mainSalePrice || 0,
-    unitType: '1',
-    outQuantity: 0,
-    outPrice: item.mainSalePrice || 0,  // 主单位出货价
-    _mainPrice: item.mainSalePrice || 0,
-    outAmount: '0.00'
-  }))
+  stockOutItems.value = itemList.value.map(item => {
+    const packQty = item.packQty || 1
+    const maxQty = packQty > 1 ? Math.floor((item.pendingQuantity || 0) / packQty) : (item.pendingQuantity || 0)
+    const outPrice = item.mainSalePrice || 0
+    return {
+      prepareItemId: item.prepareItemId,
+      itemId: item.prepareItemId,  // 后端需要 item_id
+      productId: item.productId,
+      productName: item.productName,
+      unitLabel: item.unitLabel,
+      specLabel: item.specLabel,
+      packQty: packQty,
+      pendingQuantity: item.pendingQuantity || 0,
+      salePrice: item.salePrice || 0,
+      salePriceSpec: item.salePriceSpec || 0,
+      mainSalePrice: outPrice,
+      unitType: '1',
+      outQuantity: maxQty,
+      outPrice: outPrice,  // 主单位出货价
+      _mainPrice: outPrice,
+      outAmount: (maxQty * outPrice).toFixed(2)
+    }
+  })
   stockOutOpen.value = true
 }
 
@@ -452,6 +508,15 @@ function onPriceChange(idx, e) {
 
 /** 提交出库 */
 async function submitStockOut() {
+  if (warehouseList.value.length === 0) {
+    uni.showToast({ title: '您没有仓库权限，请联系管理员', icon: 'none' })
+    return
+  }
+  if (!currentWarehouseId.value) {
+    uni.showToast({ title: '请选择出库仓库', icon: 'none' })
+    return
+  }
+
   const items = stockOutItems.value
     .filter(item => item.outQuantity > 0)
     .map(item => ({
@@ -475,7 +540,7 @@ async function submitStockOut() {
       if (res.confirm) {
         try {
           uni.showLoading({ title: '提交中...' })
-          await createStockOutFromPrepare({ prepareId: prepareId.value, items })
+          await createStockOutFromPrepare({ prepareId: prepareId.value, items, warehouseId: currentWarehouseId.value })
           uni.showToast({ title: '出库成功', icon: 'success' })
           loadDetail()
         } catch (e) {
@@ -494,9 +559,19 @@ async function submitStockOut() {
   })
 }
 
+/** 仓库选择确认 */
+function onWarehouseConfirm(e) {
+  const selected = e.value?.[0]
+  if (selected && selected.value) {
+    setCurrentWarehouse(selected.value)
+  }
+  showWarehousePicker.value = false
+}
+
 onMounted(() => {
   const pages = getCurrentPages()
   const options = pages[pages.length - 1].options || {}
+  loadWarehouses()
   prepareId.value = options.id ? parseInt(options.id) : null
 
   uni.setNavigationBarTitle({ title: '备货详情' })
@@ -818,9 +893,10 @@ page {
 
 /* ========== 出库弹窗 ========== */
 .stock-out-popup {
-  max-height: 80vh;
+  height: 80vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .popup-title-bar {
@@ -836,8 +912,41 @@ page {
   }
 }
 
+.warehouse-selector-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 44rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+
+  .warehouse-label {
+    font-size: 28rpx;
+    font-weight: 500;
+    color: #1D2129;
+    flex-shrink: 0;
+  }
+
+  .warehouse-value-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+  }
+
+  .warehouse-name {
+    font-size: 28rpx;
+    color: #3D6DF7;
+  }
+
+  .warehouse-placeholder {
+    font-size: 28rpx;
+    color: #C9CDD4;
+  }
+}
+
 .stock-out-scroll {
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
   padding: 0;
 }
 

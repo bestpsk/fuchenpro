@@ -393,6 +393,14 @@ class BizStockOutService
                     'status' => $newStatus,
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
+
+                // 确认出库时更新方案明细剩余数量（从发货/确认收货移至此处，避免遗漏）
+                if ($stockOut->plan_id) {
+                    \support\Log::info("confirmStockOut: calling updatePlanShippedAmount, stock_out_id={$stockOutId}, plan_id={$stockOut->plan_id}");
+                    $this->updatePlanShippedAmount($stockOut);
+                } else {
+                    \support\Log::info("confirmStockOut: no plan_id, skip updatePlanShippedAmount, stock_out_id={$stockOutId}");
+                }
             });
         } catch (\Exception $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
@@ -520,10 +528,7 @@ class BizStockOutService
                 }
             }
 
-            // ship_type=1 直接完成时，同时更新方案金额（跳过 confirmReceipt）
-            if ($shipType === 1 && $stockOut->plan_id) {
-                $this->updatePlanShippedAmount($stockOut);
-            }
+            // 方案明细已在确认出库时更新，此处不再重复扣减
         });
 
         return ['success' => true, 'msg' => '发货成功'];
@@ -547,9 +552,7 @@ class BizStockOutService
         ];
 
         Db::transaction(function () use ($stockOutId, $stockOut, $updateData) {
-            if ($stockOut->plan_id) {
-                $this->updatePlanShippedAmount($stockOut);
-            }
+            // 方案明细已在确认出库时更新，此处不再重复扣减
             BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
         });
         return ['success' => true, 'msg' => '确认收货成功'];
@@ -563,12 +566,15 @@ class BizStockOutService
         $planId = $stockOut->plan_id;
         $totalAmount = floatval($stockOut->total_amount);
 
+        \support\Log::info("updatePlanShippedAmount called, stock_out_id={$stockOut->stock_out_id}, plan_id={$planId}, total_amount={$totalAmount}");
+
         // 更新方案主表：shipped_amount++，remaining_amount--
         $plan = \app\model\BizPlan::find($planId);
         if ($plan) {
             \app\model\BizPlan::where('plan_id', $planId)->increment('shipped_amount', $totalAmount);
             \app\model\BizPlan::where('plan_id', $planId)->decrement('remaining_amount', $totalAmount);
             $plan->refresh();
+            \support\Log::info("Plan updated, plan_id={$planId}, shipped_amount={$plan->shipped_amount}, remaining_amount={$plan->remaining_amount}");
             if (bccomp($plan->remaining_amount, 0, 2) <= 0) {
                 \app\model\BizPlan::where('plan_id', $planId)->update([
                     'remaining_amount' => 0,
@@ -576,15 +582,22 @@ class BizStockOutService
                     'update_time' => date('Y-m-d H:i:s')
                 ]);
             }
+        } else {
+            \support\Log::warning("updatePlanShippedAmount: plan not found, plan_id={$planId}");
         }
 
         // 更新方案明细：shipped_quantity++，remaining_quantity--
         $items = BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->get();
+        \support\Log::info("updatePlanShippedAmount: found " . count($items) . " stock out items");
         foreach ($items as $item) {
             if ($item->plan_item_id) {
                 $qty = intval($item->quantity);
                 \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->increment('shipped_quantity', $qty);
                 \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->decrement('remaining_quantity', $qty);
+                $updatedPlanItem = \app\model\BizPlanItem::find($item->plan_item_id);
+                \support\Log::info("PlanItem updated, item_id={$item->plan_item_id}, qty={$qty}, shipped={$updatedPlanItem->shipped_quantity}, remaining={$updatedPlanItem->remaining_quantity}");
+            } else {
+                \support\Log::warning("updatePlanShippedAmount: stock_out_item_id={$item->item_id} has empty plan_item_id, product={$item->product_name}");
             }
         }
     }

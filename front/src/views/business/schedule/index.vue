@@ -607,7 +607,7 @@ function resetQuery() {
 function cancel() { open.value = false; reset() }
 
 function reset() {
-  form.value = { scheduleId: undefined, userIds: [], userId: undefined, userName: undefined, enterpriseId: undefined, enterpriseName: undefined, selectedDates: [], purpose: undefined, status: "1", remark: undefined, scheduleIds: [], originalDates: [] }
+  form.value = { scheduleId: undefined, userIds: [], userId: undefined, userName: undefined, enterpriseId: undefined, enterpriseName: undefined, selectedDates: [], purpose: undefined, status: "1", remark: undefined, scheduleIds: [], originalDates: [], originalUserIds: [] }
   bookedDates.value = []
   proxy.resetForm("scheduleRef")
 }
@@ -735,7 +735,8 @@ function handleEdit() {
     selectedDates: [...selectedDates],
     status: String(schedule.status),
     scheduleIds: [...scheduleIds],
-    originalDates: [...selectedDates]
+    originalDates: [...selectedDates],
+    originalUserIds: [schedule.userId]
   }
   loadBookedDates(schedule.userId, schedule.enterpriseId, selectedDates)
   open.value = true
@@ -776,7 +777,8 @@ function handleGroupEdit(row) {
     status: String(row.status),
     scheduleId: scheduleIds[0],
     scheduleIds: [...scheduleIds],
-    originalDates: [...selectedDates]
+    originalDates: [...selectedDates],
+    originalUserIds: [row.userId]
   }
   loadBookedDates(row.userId, row.enterpriseId, selectedDates)
   open.value = true
@@ -835,11 +837,21 @@ function submitForm() {
     })
 
     if (form.value.scheduleIds && form.value.scheduleIds.length > 0) {
-      // 编辑模式：差量更新
-      const newDates = form.value.selectedDates.filter(d => !form.value.originalDates.includes(d))
-      const removedDates = form.value.originalDates.filter(d => !form.value.selectedDates.includes(d))
-      const keptDates = form.value.selectedDates.filter(d => form.value.originalDates.includes(d))
-      doDiffUpdate(newDates, removedDates, keptDates, scheduleList)
+      // 编辑模式：判断员工是否变化
+      const origUserIds = (form.value.originalUserIds || []).slice().sort((a, b) => a - b)
+      const curUserIds = [...userIds].sort((a, b) => a - b)
+      const userChanged = JSON.stringify(origUserIds) !== JSON.stringify(curUserIds)
+
+      if (userChanged) {
+        // 员工有变化：先删后增
+        doFullReplace(scheduleList)
+      } else {
+        // 员工无变化：差量更新日期
+        const newDates = form.value.selectedDates.filter(d => !form.value.originalDates.includes(d))
+        const removedDates = form.value.originalDates.filter(d => !form.value.selectedDates.includes(d))
+        const keptDates = form.value.selectedDates.filter(d => form.value.originalDates.includes(d))
+        doDiffUpdate(newDates, removedDates, keptDates, scheduleList)
+      }
     } else {
       // 新增模式：批量新增
       addScheduleBatch(scheduleList).then(() => {
@@ -849,6 +861,21 @@ function submitForm() {
       })
     }
   })
+}
+
+// 先删除原有记录，再批量新增（员工有变化时使用）
+async function doFullReplace(scheduleList) {
+  try {
+    if (form.value.scheduleIds && form.value.scheduleIds.length > 0) {
+      await delSchedule(form.value.scheduleIds.join(','))
+    }
+    await addScheduleBatch(scheduleList)
+    proxy.$modal.msgSuccess("修改成功")
+    open.value = false
+    getList()
+  } catch (e) {
+    proxy.$modal.msgError("修改失败：" + (e.msg || e.message || e))
+  }
 }
 
 // 差量更新三步走：删除移除的、新增新选的、更新保留的（不传 scheduleDate）

@@ -97,10 +97,11 @@
           <dict-tag :options="biz_stock_prepare_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="150" align="center">
+      <el-table-column label="操作" width="200" align="center">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleDetail(scope.row)">详情</el-button>
           <el-button link type="primary" icon="Sell" @click="handleStockOut(scope.row)" v-if="scope.row.status !== '2' && scope.row.status !== '3'" v-hasPermi="['business:stockPrepare:createStockOut']">出库</el-button>
+          <el-button link type="danger" icon="CircleClose" @click="handleCancel(scope.row)" v-if="scope.row.status === '0'">取消</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -240,14 +241,37 @@
     </el-dialog>
 
     <!-- 方案备货对话框 -->
-    <el-dialog title="方案备货" v-model="stockPrepareOpen" width="800px" append-to-body>
-      <el-form :inline="true" style="margin-bottom: 12px">
-        <el-form-item label="选择方案">
-          <el-select v-model="stockPreparePlanId" filterable remote :remote-method="searchPlanList" :loading="planLoading" placeholder="请选择已审核方案" style="width: 360px" @change="onPlanSelect">
-            <el-option v-for="p in planOptions" :key="p.planId" :label="p.planName + '（' + p.enterpriseName + '）'" :value="p.planId" />
-          </el-select>
+    <el-dialog title="方案备货" v-model="stockPrepareOpen" width="900px" append-to-body>
+      <el-form :inline="true" :model="planQueryParams" style="margin-bottom: 12px">
+        <el-form-item label="企业名称">
+          <el-input v-model="planQueryParams.enterpriseName" placeholder="请输入企业名称" clearable style="width: 180px" @keyup.enter="handlePlanQuery" />
+        </el-form-item>
+        <el-form-item label="方案名称">
+          <el-input v-model="planQueryParams.planName" placeholder="请输入方案名称" clearable style="width: 180px" @keyup.enter="handlePlanQuery" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="Search" @click="handlePlanQuery">搜索</el-button>
+          <el-button icon="Refresh" @click="resetPlanQuery">重置</el-button>
         </el-form-item>
       </el-form>
+      <el-table v-loading="planLoading" :data="planOptions" size="small" highlight-current-row @current-change="onPlanRowSelect">
+        <el-table-column label="选择" width="55" align="center">
+          <template #default="scope">
+            <el-radio v-model="stockPreparePlanId" :value="scope.row.planId">&nbsp;</el-radio>
+          </template>
+        </el-table-column>
+        <el-table-column label="企业名称" prop="enterpriseName" min-width="140" show-overflow-tooltip />
+        <el-table-column label="方案名称" prop="planName" min-width="140" show-overflow-tooltip />
+        <el-table-column label="方案编号" prop="planNo" min-width="120" />
+        <el-table-column label="配赠金额" prop="giftAmount" min-width="100" align="right" />
+        <el-table-column label="审核状态" min-width="90" align="center">
+          <template #default>
+            <el-tag type="success" size="small">已审核</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <pagination v-show="planTotal > 0" :total="planTotal" v-model:page="planQueryParams.pageNum" v-model:limit="planQueryParams.pageSize" @pagination="searchPlanList" />
+      <div style="margin-top: 16px">
       <div v-if="stockPrepareItems.length > 0">
         <el-table :data="stockPrepareItems" border size="small">
           <el-table-column label="货品名称" prop="productName" min-width="120" />
@@ -305,11 +329,14 @@
         </el-table>
       </div>
       <el-descriptions :column="2" border size="small" v-if="stockPreparePlan">
-        <el-descriptions-item label="方案配赠金额">{{ stockPreparePlan?.giftAmount || 0 }}</el-descriptions-item>
-        <el-descriptions-item label="剩余出货金额">
-          <span :style="{ color: stockPrepareRemainingAmount < 0 ? 'red' : '' }">{{ stockPrepareRemainingAmount.toFixed(2) }}</span>
+        <el-descriptions-item label="方案配赠金额">¥{{ stockPreparePlan?.giftAmount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="已出库金额">¥{{ stockPrepareShippedAmount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="备货中金额">¥{{ stockPrepareActiveAmount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="剩余可备货金额">
+          <span :style="{ color: stockPrepareRemainingAmount < 0 ? '#f56c6c' : '#67c23a' }">¥{{ stockPrepareRemainingAmount.toFixed(2) }}</span>
         </el-descriptions-item>
       </el-descriptions>
+      </div>
       <template #footer>
         <el-button type="primary" @click="submitStockPrepare" :loading="stockPrepareSubmitting">确认备货</el-button>
         <el-button @click="stockPrepareOpen = false">取 消</el-button>
@@ -365,7 +392,7 @@
 </template>
 
 <script setup name="BusinessStockPrepare">
-import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount, orderListForPrepare, createFromOrder, batchCreateFromOrder } from "@/api/business/stockPrepare"
+import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount, orderListForPrepare, createFromOrder, batchCreateFromOrder, cancelPrepare } from "@/api/business/stockPrepare"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchStore } from "@/api/business/store"
 import { listPlan, getPlan } from "@/api/business/plan"
@@ -405,6 +432,14 @@ const stockPrepareShippedAmount = ref(0)
 const stockPrepareSubmitting = ref(false)
 const planOptions = ref([])
 const planLoading = ref(false)
+const planTotal = ref(0)
+const planQueryParams = reactive({
+  pageNum: 1,
+  pageSize: 10,
+  enterpriseName: '',
+  planName: '',
+  auditStatus: '2'
+})
 const productOptions = ref([])
 
 const stockPrepareTotalAmount = computed(() => {
@@ -619,17 +654,29 @@ function viewPlan(row) {
   proxy.$router.push({ path: '/business/planList', query: { planId: row.planId } })
 }
 
+function handleCancel(row) {
+  proxy.$modal.confirm('确认取消备货单「' + row.prepareNo + '」吗？取消后可重新备货。').then(() => {
+    cancelPrepare(row.prepareId).then(() => {
+      proxy.$modal.msgSuccess('取消成功')
+      getList()
+    })
+  }).catch(() => {})
+}
+
 function handleStockOut(row) {
   currentPrepareId.value = row.prepareId
   getStockPrepare(row.prepareId).then(response => {
     stockOutDetails.value = (response.data.items || []).map(item => {
+      const packQty = item.packQty || 1
+      const maxQty = packQty > 1 ? Math.floor(item.remainingQuantity / packQty) : item.remainingQuantity
+      const outSalePrice = item.mainSalePrice || 0
       return {
         ...item,
         unitType: '1',
-        outQuantity: 0,
-        outSalePrice: item.mainSalePrice || 0,
-        _mainPrice: item.mainSalePrice || 0,
-        outAmount: '0.00'
+        outQuantity: maxQty,
+        outSalePrice: outSalePrice,
+        _mainPrice: outSalePrice,
+        outAmount: (maxQty * outSalePrice).toFixed(2)
       }
     })
     stockOutOpen.value = true
@@ -688,13 +735,33 @@ function submitStockOut() {
 }
 
 // ============ 方案备货相关方法 ============
-function searchPlanList(query) {
+function searchPlanList() {
   planLoading.value = true
-  return listPlan({ planName: query || '', auditStatus: '2', pageNum: 1, pageSize: 20 }).then(res => {
+  return listPlan(planQueryParams).then(res => {
     planOptions.value = res.rows || []
+    planTotal.value = res.total || 0
   }).finally(() => {
     planLoading.value = false
   })
+}
+
+function handlePlanQuery() {
+  planQueryParams.pageNum = 1
+  searchPlanList()
+}
+
+function resetPlanQuery() {
+  planQueryParams.enterpriseName = ''
+  planQueryParams.planName = ''
+  planQueryParams.pageNum = 1
+  searchPlanList()
+}
+
+function onPlanRowSelect(row) {
+  if (row) {
+    stockPreparePlanId.value = row.planId
+    onPlanSelect(row.planId)
+  }
 }
 
 function handleOpenStockPrepare() {
@@ -704,8 +771,8 @@ function handleOpenStockPrepare() {
   stockPrepareManualItems.value = []
   stockPrepareActiveAmount.value = 0
   stockPrepareShippedAmount.value = 0
+  resetPlanQuery()
   stockPrepareOpen.value = true
-  searchPlanList('')
 }
 
 function onPlanSelect(planId) {
@@ -816,7 +883,7 @@ function submitStockPrepare() {
     return
   }
   if (stockPrepareTotalAmount.value > stockPrepareRemainingAmount.value) {
-    proxy.$modal.msgWarning('本次备货总金额不能超过剩余可用金额')
+    proxy.$modal.msgWarning(`本次备货金额 ${stockPrepareTotalAmount.value.toFixed(2)} 超过剩余可备货金额 ${stockPrepareRemainingAmount.value.toFixed(2)}`)
     return
   }
   stockPrepareSubmitting.value = true
@@ -847,7 +914,7 @@ if (route.query.prepareType === 'plan' && route.query.planId) {
   getList()
   stockPreparePlanId.value = Number(route.query.planId)
   nextTick(() => {
-    searchPlanList('').then(() => {
+    searchPlanList().then(() => {
       onPlanSelect(stockPreparePlanId.value)
       stockPrepareOpen.value = true
     })

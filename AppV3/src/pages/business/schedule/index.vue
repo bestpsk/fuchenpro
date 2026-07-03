@@ -216,7 +216,7 @@
             </view>
             <view class="schedulable-switch" v-if="hasEditPermi">
               <text class="switch-label">可排班</text>
-              <u-switch v-model="item.isSchedulable" activeValue="1" inactiveValue="0" @change="handleSchedulableChange(item)" :activeColor="'#3D6DF7'"></u-switch>
+              <u-switch v-model="item.isSchedulable" activeValue="1" inactiveValue="0" size="small" @change="handleSchedulableChange(item)" :activeColor="'#3D6DF7'"></u-switch>
             </view>
             <view v-else class="schedulable-status">
               <text :class="item.isSchedulable === '1' ? 'schedulable-yes' : 'schedulable-no'">{{ item.isSchedulable === '1' ? '可排班' : '不可排班' }}</text>

@@ -201,7 +201,6 @@
         <u-button v-if="canSubmitAudit && checkPermi('business:plan:submitAudit')" type="warning" text="提交审核" @click="handleSubmitAudit"></u-button>
         <u-button v-if="canAuditPass && checkPermi('business:plan:audit')" type="success" text="审核通过" @click="handleAuditPass"></u-button>
         <u-button v-if="canAuditReject && checkPermi('business:plan:audit')" type="error" plain text="审核驳回" @click="handleAuditReject"></u-button>
-        <u-button v-if="canPrepare && checkPermi('business:stockPrepare:createFromPlan')" type="warning" text="备货" @click="goPrepare"></u-button>
         <u-button v-if="canToggleStatus && checkPermi('business:plan:edit')" :type="planInfo.status === '0' ? 'error' : 'success'" plain :text="planInfo.status === '0' ? '停用' : '启用'" @click="handleToggleStatus"></u-button>
         <u-button v-if="canDelete && checkPermi('business:plan:remove')" type="error" plain text="删除" @click="handleDelete"></u-button>
       </view>
@@ -255,8 +254,7 @@ const canSubmitAudit = computed(() => {
 const canAuditPass = computed(() => planInfo.value.auditStatus === '1')
 const canAuditReject = computed(() => planInfo.value.auditStatus === '1')
 const canToggleStatus = computed(() => planInfo.value.auditStatus === '2')
-const canPrepare = computed(() => planInfo.value.auditStatus === '2' && parseFloat(planInfo.value.remainingAmount || planInfo.value.giftAmount) > 0)
-const showActions = computed(() => canEdit.value || canDelete.value || canSubmitAudit.value || canAuditPass.value || canAuditReject.value || canPrepare.value || canToggleStatus.value)
+const showActions = computed(() => canEdit.value || canDelete.value || canSubmitAudit.value || canAuditPass.value || canAuditReject.value || canToggleStatus.value)
 
 function getAuditStatusLabel(status) {
   const map = { '0': '草稿', '1': '待审核', '2': '已审核', '3': '已完成', '4': '已驳回' }
@@ -311,10 +309,6 @@ async function loadDetail() {
 
 function goEdit() {
   uni.navigateTo({ url: `/pages/business/plan/form?mode=edit&id=${planId.value}` })
-}
-
-function goPrepare() {
-  uni.navigateTo({ url: '/pages/business/plan/prepare?planId=' + planId.value })
 }
 
 function handleSubmitAudit() {

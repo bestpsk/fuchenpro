@@ -52,6 +52,10 @@ class BizStockPrepareService
         } else if ($prepareType === 'plan') {
             $query->whereNotNull('plan_id');
         }
+        // 按具体方案ID过滤（方案详情页调用时传入）
+        if (!empty($params['plan_id'])) {
+            $query->where('plan_id', $params['plan_id']);
+        }
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->with('items.product', 'orders')->orderBy('prepare_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
@@ -341,6 +345,15 @@ class BizStockPrepareService
         }
         if (!empty($params['enterprise_id'])) {
             $query->where('enterprise_id', $params['enterprise_id']);
+        }
+        if (!empty($params['keyword'])) {
+            $kw = $params['keyword'];
+            $query->where(function ($q) use ($kw) {
+                $q->where('order_no', 'like', '%' . $kw . '%')
+                  ->orWhere('customer_name', 'like', '%' . $kw . '%')
+                  ->orWhere('enterprise_name', 'like', '%' . $kw . '%')
+                  ->orWhere('store_name', 'like', '%' . $kw . '%');
+            });
         }
 
         // 数据权限过滤
@@ -723,6 +736,7 @@ class BizStockPrepareService
                     'amount' => $amount,
                     'remark' => null,
                 ];
+                \support\Log::info("createStockOutFromPrepare: prepare_item_id={$prepareItem->item_id}, product={$prepareItem->product_name}, plan_item_id=" . ($prepareItem->plan_item_id ?? 'NULL') . ", quantity={$pi['quantity']}");
             }
 
             $stockOut = BizStockOut::create([
@@ -915,5 +929,54 @@ class BizStockPrepareService
 
             return true;
         });
+    }
+
+    /**
+     * 取消备货（仅未出库status=0可取消，取消后可重新备货）
+     */
+    public function cancelPrepare($prepareId, $loginUser = null)
+    {
+        $prepare = BizStockPrepare::find($prepareId);
+        if (!$prepare) {
+            return ['success' => false, 'msg' => '备货单不存在'];
+        }
+        if ($prepare->status !== '0') {
+            return ['success' => false, 'msg' => '已出库的备货无法取消'];
+        }
+
+        try {
+            Db::transaction(function () use ($prepareId, $loginUser) {
+                // 删除关联的未确认出库单
+                $stockOuts = BizStockOut::where('prepare_id', $prepareId)->get();
+                foreach ($stockOuts as $stockOut) {
+                    if ($stockOut->status !== '0') {
+                        throw new \Exception('备货已有关联的已确认出库单，无法取消');
+                    }
+                    BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->delete();
+                    BizStockOut::where('stock_out_id', $stockOut->stock_out_id)->delete();
+                }
+
+                // 恢复备货明细数量
+                BizStockPrepareItem::where('prepare_id', $prepareId)->update([
+                    'shipped_quantity' => 0,
+                    'shipped_amount' => 0,
+                    'remaining_quantity' => Db::raw('quantity'),
+                    'remaining_amount' => Db::raw('amount'),
+                ]);
+
+                // 删除订单关联记录，使订单可以重新备货
+                BizStockPrepareOrder::where('prepare_id', $prepareId)->delete();
+
+                // 更新备货状态为已取消
+                BizStockPrepare::where('prepare_id', $prepareId)->update([
+                    'status' => '3',
+                    'update_time' => date('Y-m-d H:i:s'),
+                    'update_by' => $loginUser ? ($loginUser->user->user_name ?? '') : '',
+                ]);
+            });
+        } catch (\Exception $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
+        }
+        return ['success' => true, 'msg' => '取消成功'];
     }
 }

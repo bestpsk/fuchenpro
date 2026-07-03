@@ -182,7 +182,7 @@
           </el-col>
         </el-row>
 
-        <el-row v-if="isView && form.shipType == 2 && (form.logisticsCompany || form.logisticsNo || form.shipDate || form.receiptDate)">
+        <el-row v-if="isView && form.shipType == 2 && (form.logisticsCompany || form.logisticsNo || form.shipmentDate || form.receiptDate)">
           <el-col :span="6">
             <el-form-item label="物流公司">
               <el-input :model-value="form.logisticsCompany || '-'" disabled />
@@ -195,7 +195,7 @@
           </el-col>
           <el-col :span="6">
             <el-form-item label="发货日期">
-              <el-input :model-value="form.shipDate || '-'" disabled />
+              <el-input :model-value="form.shipmentDate || '-'" disabled />
             </el-form-item>
           </el-col>
           <el-col :span="6">

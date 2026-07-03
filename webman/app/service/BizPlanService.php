@@ -44,6 +44,15 @@ class BizPlanService
         if (!empty($params['plan_name'])) {
             $query->where('plan_name', 'like', '%' . $params['plan_name'] . '%');
         }
+        if (!empty($params['keyword'])) {
+            $kw = $params['keyword'];
+            $query->where(function ($q) use ($kw) {
+                $q->where('plan_name', 'like', '%' . $kw . '%')
+                  ->orWhereHas('enterprise', function ($eq) use ($kw) {
+                      $eq->where('enterprise_name', 'like', '%' . $kw . '%');
+                  });
+            });
+        }
         if (isset($params['audit_status']) && $params['audit_status'] !== '') {
             $query->where('audit_status', $params['audit_status']);
         }

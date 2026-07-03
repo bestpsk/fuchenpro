@@ -94,7 +94,7 @@
                 <el-button v-if="canAddOrderItem" type="primary" plain icon="Plus" @click="addOrderItemRow" v-hasPermi="['business:sales:add']">添加品项</el-button>
               </div>
               <el-table :data="orderItems" border style="width: 100%" >
-                <el-table-column label="品项" min-width="80">
+                <el-table-column label="品项" min-width="150">
                   <template #default="scope">
                     <el-select v-model="scope.row.cardItemId" filterable remote :remote-method="handleSearchCardItem" :loading="cardItemSearchLoading" placeholder="搜索卡项" clearable style="width: 100%" @focus="handleCardItemFocus" @change="(val) => onCardItemSelect(scope.$index, val)">
                       <el-option v-for="item in cardItemOptions" :key="item.cardItemId" :label="item.cardItemName" :value="item.cardItemId">
@@ -106,7 +106,7 @@
                 </el-table-column>
                 <el-table-column label="付款方式" min-width="120">
                   <template #default="scope">
-                    <el-select v-model="scope.row.paymentMethod" size="small" @change="onItemPaymentMethodChange(scope.$index)" style="width: 100%">
+                    <el-select v-model="scope.row.paymentMethod" @change="onItemPaymentMethodChange(scope.$index)" style="width: 100%">
                       <el-option v-for="dict in biz_payment_method" :key="dict.value" :label="dict.label" :value="dict.value" />
                     </el-select>
                   </template>

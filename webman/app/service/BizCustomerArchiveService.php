@@ -81,7 +81,21 @@ class BizCustomerArchiveService
         }
 
         $exists = BizCustomerArchive::where('source_type', '0')->where('source_id', $orderId)->first();
-        if ($exists) return $exists;
+        if ($exists) {
+            // 校验档案归属是否与当前订单一致，避免陈旧孤儿档案导致 source_id 撞车误判
+            $orderCustomerId = is_array($order) ? ($order['customer_id'] ?? null) : ($order->customer_id ?? null);
+            if ($exists->customer_id == $orderCustomerId) {
+                return $exists; // 真正的重复订单，幂等返回
+            }
+            // customer_id 不一致 → 陈旧孤儿档案，删除后继续创建新档案
+            \support\Log::warning('insertArchiveFromOrder: 检测到陈旧孤儿档案并清理', [
+                'orderId' => $orderId,
+                'stale_archive_id' => $exists->archive_id,
+                'stale_customer_id' => $exists->customer_id,
+                'current_customer_id' => $orderCustomerId,
+            ]);
+            $exists->delete();
+        }
 
         // 优先使用传入的模型，避免事务内二次查询
         $orderModel = $order;

@@ -6,35 +6,26 @@
         <input
           class="search-input"
           type="text"
-          v-model="queryParams.orderNo"
-          placeholder="搜索订单编号"
+          v-model="queryParams.keyword"
+          placeholder="搜索订单号/客户/企业/门店"
           placeholder-class="search-placeholder"
           confirm-type="search"
+          @input="onSearchInput"
           @confirm="handleSearch"
         />
-        <view v-if="queryParams.orderNo" class="clear-btn" @click="clearOrderNo">
+        <view v-if="queryParams.keyword" class="clear-btn" @click="clearKeyword">
           <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
         </view>
-      </view>
-      <view class="search-box" style="margin-top: 12rpx">
-        <u-icon name="search" size="16" color="#86909C"></u-icon>
-        <input
-          class="search-input"
-          type="text"
-          v-model="queryParams.customerName"
-          placeholder="搜索客户名称"
-          placeholder-class="search-placeholder"
-          confirm-type="search"
-          @confirm="handleSearch"
-        />
-        <view v-if="queryParams.customerName" class="clear-btn" @click="clearCustomerName">
-          <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
+        <view class="filter-btn" @click="showFilter = !showFilter">
+          <text>筛选</text>
+          <u-icon name="arrow-down" size="12" color="#3D6DF7" :class="{ 'icon-rotate': showFilter }"></u-icon>
         </view>
       </view>
-      <view class="filter-tabs">
-        <view class="filter-tab" :class="{ active: queryParams.prepareStatus === '' }" @click="changeFilter('')">全部</view>
-        <view class="filter-tab" :class="{ active: queryParams.prepareStatus === 'unprepared' }" @click="changeFilter('unprepared')">未备货</view>
-        <view class="filter-tab" :class="{ active: queryParams.prepareStatus === 'prepared' }" @click="changeFilter('prepared')">已备货</view>
+      <view v-if="hasActiveFilters" class="active-filters">
+        <view v-if="filterParams.prepareStatus" class="filter-tag active" @click="clearFilter('prepareStatus')">
+          <text>备货状态: {{ getPrepareStatusLabel(filterParams.prepareStatus) }}</text>
+          <u-icon name="close" size="12" color="#3D6DF7"></u-icon>
+        </view>
       </view>
     </view>
 
@@ -49,11 +40,15 @@
         <view class="card-header">
           <view class="checkbox-area">
             <u-icon
-              v-if="item.prepareStatus !== '1'"
-              :name="isSelected(item.orderId) ? 'checkmark-circle-fill' : 'circle'"
-              :color="isSelected(item.orderId) ? '#3D6DF7' : '#C9CDD4'"
+              v-if="item.prepareStatus !== '1' && isSelected(item.orderId)"
+              name="checkmark-circle-fill"
+              color="#3D6DF7"
               size="22"
             ></u-icon>
+            <view
+              v-else-if="item.prepareStatus !== '1' && !isSelected(item.orderId)"
+              class="circle-placeholder"
+            ></view>
             <u-icon
               v-else
               name="checkmark-circle"
@@ -98,14 +93,51 @@
       <view class="select-info">
         <text>已选 {{ selectedIds.length }} 单</text>
       </view>
+      <view
+        v-if="selectableList.length > 0"
+        class="select-all-btn"
+        @click="toggleSelectAll"
+      >
+        <text>{{ isAllSelected ? '取消全选' : '全选' }}</text>
+      </view>
       <view class="batch-btn" :class="{ disabled: selectedIds.length === 0 || batchLoading }" @click="handleBatchPrepare">
         <text>{{ batchLoading ? '创建中...' : '批量备货' }}</text>
       </view>
     </view>
+
+    <u-popup :show="showFilter" mode="top" round="16" @close="showFilter = false">
+      <view class="popup-content">
+        <view class="popup-title">筛选条件</view>
+        <view class="form-item">
+          <text class="form-label">备货状态</text>
+          <view class="form-options">
+            <view
+              v-for="opt in prepareStatusOptions"
+              :key="opt.value"
+              class="option-tag"
+              :class="{ active: filterParams.prepareStatus === opt.value }"
+              @click="setPrepareStatus(opt.value)"
+            >
+              {{ opt.label }}
+            </view>
+          </view>
+        </view>
+        <view class="popup-actions">
+          <u-button type="info" plain text="重置" @click="resetFilter"></u-button>
+          <u-button type="primary" text="确定" @click="confirmFilter"></u-button>
+        </view>
+      </view>
+    </u-popup>
   </view>
 </template>
 
 <script setup>
+/**
+ * @description 选择订单备货页 - 从财务已审且未完成备货的订单中批量选择创建备货
+ * @description 单搜索框（keyword 搜订单号/客户/企业/门店）+ 筛选按钮（备货状态：全部/未备货/已备货）
+ * @description 支持单卡点选与"全选"当前页未备货订单，已备货订单不可选
+ */
+import { ref, reactive, computed, onMounted } from 'vue'
 import { orderListForPrepare, batchCreateFromOrder } from '@/api/business/stockPrepare'
 
 const list = ref([])
@@ -113,15 +145,38 @@ const loading = ref(false)
 const loadStatus = ref('loadmore')
 const selectedIds = ref([])
 const batchLoading = ref(false)
+const showFilter = ref(false)
+
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  orderNo: '',
-  customerName: '',
+  keyword: ''
+})
+
+const filterParams = reactive({
   prepareStatus: ''
 })
 
-onLoad(() => {
+const prepareStatusOptions = [
+  { label: '全部', value: '' },
+  { label: '未备货', value: 'unprepared' },
+  { label: '已备货', value: 'prepared' }
+]
+
+const hasActiveFilters = computed(() => !!filterParams.prepareStatus)
+
+/** 当前可见列表中可被选中的订单（未备货） */
+const selectableList = computed(() => list.value.filter(i => i.prepareStatus !== '1'))
+
+/** 是否已全选当前可见可选项 */
+const isAllSelected = computed(() => {
+  return selectableList.value.length > 0 &&
+         selectableList.value.every(i => selectedIds.value.includes(i.orderId))
+})
+
+let searchTimer = null
+
+onMounted(() => {
   getList(true)
 })
 
@@ -135,7 +190,9 @@ async function getList(isRefresh = false) {
   }
 
   try {
-    const response = await orderListForPrepare(queryParams)
+    const params = { ...queryParams }
+    if (filterParams.prepareStatus) params.prepareStatus = filterParams.prepareStatus
+    const response = await orderListForPrepare(params)
     const data = response.data || response
     const rows = data.rows || []
     const total = data.total || 0
@@ -159,22 +216,40 @@ async function getList(isRefresh = false) {
   }
 }
 
+function onSearchInput() {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => getList(true), 500)
+}
+
 function handleSearch() {
   getList(true)
 }
 
-function clearOrderNo() {
-  queryParams.orderNo = ''
+function clearKeyword() {
+  queryParams.keyword = ''
   getList(true)
 }
 
-function clearCustomerName() {
-  queryParams.customerName = ''
+function getPrepareStatusLabel(value) {
+  const item = prepareStatusOptions.find(o => o.value === value)
+  return item ? item.label : value
+}
+
+function setPrepareStatus(value) {
+  filterParams.prepareStatus = value
+}
+
+function clearFilter(field) {
+  filterParams[field] = ''
   getList(true)
 }
 
-function changeFilter(status) {
-  queryParams.prepareStatus = status
+function resetFilter() {
+  filterParams.prepareStatus = ''
+}
+
+function confirmFilter() {
+  showFilter.value = false
   getList(true)
 }
 
@@ -198,6 +273,17 @@ function toggleSelect(item) {
   }
 }
 
+function toggleSelectAll() {
+  const selectable = selectableList.value
+  if (isAllSelected.value) {
+    const idsToRemove = new Set(selectable.map(i => i.orderId))
+    selectedIds.value = selectedIds.value.filter(id => !idsToRemove.has(id))
+  } else {
+    const newIds = selectable.map(i => i.orderId)
+    selectedIds.value = [...new Set([...selectedIds.value, ...newIds])]
+  }
+}
+
 async function handleBatchPrepare() {
   if (selectedIds.value.length === 0 || batchLoading.value) return
   uni.showModal({
@@ -210,14 +296,12 @@ async function handleBatchPrepare() {
       try {
         const response = await batchCreateFromOrder(selectedIds.value)
         uni.hideLoading()
-        // 后端 AjaxResult::success 将关联数组 merge 到响应顶层且转驼峰
         const successCount = response.successCount || 0
         const skippedCount = response.skippedCount || 0
         const failedCount = response.failedCount || 0
         let msg = '成功 ' + successCount + ' 个'
         if (skippedCount > 0) msg += '，跳过 ' + skippedCount + ' 个'
         if (failedCount > 0) msg += '，失败 ' + failedCount + ' 个'
-        // 先清空选中，防止 2 秒延迟内重复提交
         selectedIds.value = []
         uni.showToast({ title: msg, icon: 'none' })
         setTimeout(() => {
@@ -227,7 +311,6 @@ async function handleBatchPrepare() {
         uni.hideLoading()
         uni.showToast({ title: e.message || '创建失败', icon: 'none' })
       } finally {
-        // batchLoading 延迟 2 秒重置，与 navigateBack 同步，期间按钮保持 disabled
         setTimeout(() => {
           batchLoading.value = false
         }, 2000)
@@ -265,12 +348,13 @@ async function handleBatchPrepare() {
 .search-input {
   flex: 1;
   font-size: 28rpx;
-  color: #333;
+  color: #1D2129;
   height: 100%;
+  min-width: 0;
 }
 
 .search-placeholder {
-  color: #C9CDD4;
+  color: #86909C;
   font-size: 28rpx;
 }
 
@@ -279,28 +363,44 @@ async function handleBatchPrepare() {
   align-items: center;
   justify-content: center;
   padding: 8rpx;
+  flex-shrink: 0;
 }
 
-.filter-tabs {
+.filter-btn {
   display: flex;
-  margin-top: 16rpx;
-  gap: 16rpx;
-}
-
-.filter-tab {
-  flex: 1;
-  text-align: center;
-  padding: 12rpx 0;
+  align-items: center;
+  gap: 6rpx;
+  background: #E8F0FE;
+  border-radius: 28rpx;
+  height: 56rpx;
+  padding: 0 22rpx;
   font-size: 26rpx;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 8rpx;
+  color: #3D6DF7;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-.filter-tab.active {
+.icon-rotate {
+  transform: rotate(180deg);
+  transition: transform 0.3s ease;
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.filter-tag.active {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
   background: #fff;
   color: #3D6DF7;
-  font-weight: 600;
+  padding: 10rpx 20rpx;
+  border-radius: 28rpx;
+  font-size: 24rpx;
 }
 
 .order-list {
@@ -316,6 +416,7 @@ async function handleBatchPrepare() {
   margin-bottom: 20rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
   border: 2rpx solid transparent;
+  box-sizing: border-box;
 }
 
 .order-card.selected {
@@ -339,6 +440,19 @@ async function handleBatchPrepare() {
 
 .checkbox-area {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.circle-placeholder {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 2rpx solid #C9CDD4;
+  box-sizing: border-box;
 }
 
 .order-no {
@@ -346,12 +460,17 @@ async function handleBatchPrepare() {
   font-size: 30rpx;
   font-weight: 600;
   color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .order-amount {
   font-size: 32rpx;
   font-weight: 600;
   color: #3D6DF7;
+  flex-shrink: 0;
 }
 
 .card-body {
@@ -410,7 +529,7 @@ async function handleBatchPrepare() {
   right: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 20rpx;
   padding: 20rpx 24rpx;
   background: #fff;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
@@ -420,6 +539,22 @@ async function handleBatchPrepare() {
 .select-info {
   font-size: 28rpx;
   color: #86909C;
+  flex: 1;
+}
+
+.select-all-btn {
+  padding: 12rpx 32rpx;
+  border: 2rpx solid #3D6DF7;
+  border-radius: 40rpx;
+  color: #3D6DF7;
+  background: #fff;
+  font-size: 26rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+
+  &:active {
+    opacity: 0.8;
+  }
 }
 
 .batch-btn {
@@ -429,9 +564,68 @@ async function handleBatchPrepare() {
   color: #fff;
   font-size: 28rpx;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .batch-btn.disabled {
   background: #C9CDD4;
+}
+
+.popup-content {
+  padding: 30rpx;
+  background: #fff;
+}
+
+.popup-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1D2129;
+  margin-bottom: 16rpx;
+}
+
+.form-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.option-tag {
+  padding: 14rpx 28rpx;
+  background: #F5F7FA;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #4E5969;
+  border: 2rpx solid transparent;
+}
+
+.option-tag.active {
+  background: #E8F0FE;
+  color: #3D6DF7;
+  border-color: #3D6DF7;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+  padding-top: 30rpx;
+  border-top: 1rpx solid #E5E6EB;
+}
+
+.popup-actions .u-button {
+  flex: 1;
 }
 </style>

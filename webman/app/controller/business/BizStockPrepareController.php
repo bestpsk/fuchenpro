@@ -149,4 +149,16 @@ class BizStockPrepareController
         $excelUtil = new ExcelUtil(BizStockPrepare::class);
         return $excelUtil->exportExcel($list, '备货数据');
     }
+
+    // 取消备货（仅未出库可取消）
+    public function cancel(Request $request)
+    {
+        $prepareId = $request->input('prepareId');
+        if (!$prepareId) {
+            return AjaxResult::error('缺少备货ID');
+        }
+        $service = new BizStockPrepareService();
+        $result = $service->cancelPrepare($prepareId, $request->loginUser);
+        return $result['success'] ? AjaxResult::success($result['msg']) : AjaxResult::error($result['msg']);
+    }
 }

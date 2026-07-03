@@ -15,7 +15,15 @@
         <text class="info-value amount">¥{{ formatAmount(planInfo.giftAmount) }}</text>
       </view>
       <view class="info-row">
-        <text class="info-label">剩余金额</text>
+        <text class="info-label">已出库金额</text>
+        <text class="info-value">¥{{ formatAmount(planInfo.shippedAmount) }}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">备货中金额</text>
+        <text class="info-value">¥{{ formatAmount(activePreparedAmount) }}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">剩余可备货</text>
         <text class="info-value" :class="{ 'amount-warning': parseFloat(remainingAvailable) <= 0 }">¥{{ formatAmount(remainingAvailable) }}</text>
       </view>
     </view>
@@ -119,6 +127,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { getPlan } from '@/api/business/plan'
 import { createFromPlan, getActivePreparedAmount } from '@/api/business/stockPrepare'
 import { listProduct } from '@/api/wms/product'
@@ -258,12 +267,21 @@ async function loadPlanDetail() {
       }))
     }
 
-    const amountRes = await getActivePreparedAmount(planId.value)
-    activePreparedAmount.value = amountRes.data?.activePreparedAmount || 0
+    await loadActiveAmount()
   } catch (e) {
     console.error('加载方案详情失败:', e)
     uni.showToast({ title: '加载失败', icon: 'none' })
   } finally { uni.hideLoading() }
+}
+
+async function loadActiveAmount() {
+  if (!planId.value) return
+  try {
+    const amountRes = await getActivePreparedAmount(planId.value)
+    activePreparedAmount.value = amountRes.data?.activePreparedAmount || 0
+  } catch (e) {
+    console.error('获取备货中金额失败:', e)
+  }
 }
 
 async function submitForm() {
@@ -277,7 +295,7 @@ async function submitForm() {
     return
   }
   if (parseFloat(totalAmount.value) > parseFloat(remainingAvailable.value)) {
-    uni.showToast({ title: '备货总金额不能大于方案剩余可用金额', icon: 'none' })
+    uni.showToast({ title: `本次备货金额 ${totalAmount.value} 超过剩余可备货金额 ${remainingAvailable.value}`, icon: 'none', duration: 3000 })
     return
   }
 
@@ -313,6 +331,12 @@ onMounted(() => {
   const options = pages[pages.length - 1].options || {}
   planId.value = options.planId ? parseInt(options.planId) : null
   loadPlanDetail()
+})
+
+onShow(() => {
+  if (planId.value) {
+    loadActiveAmount()
+  }
 })
 </script>
 

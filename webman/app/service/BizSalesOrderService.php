@@ -7,6 +7,7 @@ use app\model\BizOrderItem;
 use app\model\BizCustomerPackage;
 use app\model\BizPackageItem;
 use app\model\BizCardItem;
+use app\model\BizCustomerArchive;
 use app\service\BizCustomerArchiveService;
 use app\service\BizStockPrepareService;
 use app\service\DataScopeService;
@@ -264,6 +265,10 @@ class BizSalesOrderService
     {
         return Db::transaction(function () use ($orderIds) {
             BizOrderItem::whereIn('order_id', $orderIds)->delete();
+            // 级联清理关联的客户档案（source_type='0' 表示来源于销售开单）
+            BizCustomerArchive::where('source_type', '0')
+                ->whereIn('source_id', $orderIds)
+                ->delete();
             return BizSalesOrder::whereIn('order_id', $orderIds)->delete();
         });
     }

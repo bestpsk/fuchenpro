@@ -21,9 +21,15 @@
           <u-icon name="arrow-down" size="12" :class="{ 'icon-rotate': showFilter }"></u-icon>
         </view>
       </view>
-      <view class="order-prepare-btn" @click="goSelectOrder">
-        <u-icon name="plus-circle" size="14" color="#fff"></u-icon>
-        <text>订单备货</text>
+      <view class="prepare-action-btns">
+        <view class="action-btn-item" @click="goSelectOrder">
+          <u-icon name="plus-circle" size="14" color="#fff"></u-icon>
+          <text>订单备货</text>
+        </view>
+        <view class="action-btn-item" @click="goSelectPlan">
+          <u-icon name="file-text" size="14" color="#fff"></u-icon>
+          <text>方案备货</text>
+        </view>
       </view>
     </view>
 
@@ -195,6 +201,10 @@
                 <u-icon name="eye" size="14"></u-icon>
                 <text>详情</text>
               </view>
+              <view v-if="item.status === '0'" class="action-btn cancel" @click.stop="handleCancel(item)">
+                <u-icon name="close" size="14" color="#f56c6c"></u-icon>
+                <text style="color: #f56c6c">取消</text>
+              </view>
             </view>
           </view>
         </view>
@@ -225,7 +235,7 @@
  * 分页加载、下拉刷新、跳转详情
  */
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
-import { listStockPrepare } from '@/api/business/stockPrepare'
+import { listStockPrepare, cancelPrepare } from '@/api/business/stockPrepare'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
 import { checkPermi } from '@/utils/permission'
@@ -248,7 +258,8 @@ onUnmounted(() => { clearTimeout(searchTimer) })
 const statusOptions = ref([
   { label: '待出库', value: '0' },
   { label: '部分出库', value: '1' },
-  { label: '已完成', value: '2' }
+  { label: '已完成', value: '2' },
+  { label: '已取消', value: '3' }
 ])
 
 /** 是否有激活的筛选条件 */
@@ -423,6 +434,11 @@ function goSelectOrder() {
   uni.navigateTo({ url: '/pages/business/stockPrepare/selectOrder' })
 }
 
+/** 跳转到方案选择页创建备货 */
+function goSelectPlan() {
+  uni.navigateTo({ url: '/pages/business/stockPrepare/selectPlan' })
+}
+
 /** 搜索输入防抖处理，500ms后触发搜索 */
 function onSearchInput() {
   if (searchTimer) clearTimeout(searchTimer)
@@ -470,6 +486,27 @@ function goDetail(item) {
   })
 }
 
+/** 取消备货 */
+function handleCancel(item) {
+  uni.showModal({
+    title: '确认取消',
+    content: '取消后可重新备货，确认取消该备货单吗？',
+    success: async (res) => {
+      if (!res.confirm) return
+      try {
+        uni.showLoading({ title: '取消中...' })
+        await cancelPrepare(item.prepareId)
+        uni.showToast({ title: '取消成功', icon: 'success' })
+        getList(true)
+      } catch (e) {
+        uni.showToast({ title: e.message || '取消失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+      }
+    }
+  })
+}
+
 onMounted(() => {
   if (checkPermi('business:stockPrepare:list')) {
     loadEnterpriseOptions()
@@ -505,12 +542,18 @@ page {
   background: linear-gradient(180deg, #3D6DF7 0%, #4A7AEF 100%);
 }
 
-.order-prepare-btn {
+.prepare-action-btns {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.action-btn-item {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8rpx;
-  margin-top: 16rpx;
   height: 64rpx;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 32rpx;
