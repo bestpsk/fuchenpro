@@ -252,7 +252,7 @@ async function loadPlanDetail() {
 
     if (data.items && data.items.length > 0) {
       form.items = data.items.filter(item => item.remainingQuantity > 0).map(item => ({
-        planItemId: item.planItemId,
+        planItemId: item.itemId,
         productId: item.productId,
         productName: item.productName,
         supplierId: item.supplierId,
