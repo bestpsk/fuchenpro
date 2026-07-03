@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `biz_card_item` (
 DELETE FROM `biz_card_item`;
 /*!40000 ALTER TABLE `biz_card_item` DISABLE KEYS */;
 INSERT INTO `biz_card_item` (`card_item_id`, `card_item_name`, `card_item_code`, `category`, `default_quantity`, `suggested_price`, `default_unit_price`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
-	(1, '卡项1', 'KX1-20260601', '2', 10, 9380.00, 938.00, '0', NULL, 'admin', '2026-06-01 19:09:02', 'admin', '2026-06-26 11:27:40');
+	(1, '卡项1', 'KX1-20260601', '2', 10, 15180.00, 1518.00, '0', NULL, 'admin', '2026-06-01 19:09:02', 'admin', '2026-07-02 23:35:48');
 /*!40000 ALTER TABLE `biz_card_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_card_item_product 结构
@@ -297,14 +297,15 @@ CREATE TABLE IF NOT EXISTS `biz_card_item_product` (
   PRIMARY KEY (`id`),
   KEY `idx_card_item_id` (`card_item_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='卡项关联货品表';
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='卡项关联货品表';
 
 -- 正在导出表  fuchenpro.biz_card_item_product 的数据：~2 rows (大约)
 DELETE FROM `biz_card_item_product`;
 /*!40000 ALTER TABLE `biz_card_item_product` DISABLE KEYS */;
 INSERT INTO `biz_card_item_product` (`id`, `card_item_id`, `product_id`, `unit_type`, `pack_qty`, `quantity`, `remark`) VALUES
-	(6, 1, 1, '2', 10, 10, NULL),
-	(7, 1, 2, '2', 10, 10, NULL);
+	(8, 1, 1, '1', 10, 1, NULL),
+	(9, 1, 2, '1', 10, 1, NULL),
+	(10, 1, 3, '1', 10, 1, NULL);
 /*!40000 ALTER TABLE `biz_card_item_product` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer 结构
@@ -374,10 +375,22 @@ CREATE TABLE IF NOT EXISTS `biz_customer_archive` (
   KEY `idx_archive_date` (`archive_date`),
   KEY `idx_source_type` (`source_type`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户档案表';
 
 -- 正在导出表  fuchenpro.biz_customer_archive 的数据：~7 rows (大约)
 DELETE FROM `biz_customer_archive`;
+/*!40000 ALTER TABLE `biz_customer_archive` DISABLE KEYS */;
+INSERT INTO `biz_customer_archive` (`archive_id`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `archive_date`, `archive_type`, `source_type`, `source_id`, `plan_items`, `amount`, `satisfaction`, `photos`, `customer_feedback`, `operator_user_id`, `operator_user_name`, `remark`, `create_by`, `create_time`) VALUES
+	(1, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '0', 1, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '11', 1, '若依', '套餐: 套餐1', 'admin', '2026-06-20 19:13:56'),
+	(2, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-20', 'sales', '1', 1, '[{"name":"卡项1","quantity":1}]', 938.00, 4, '["\\/profile\\/upload\\/20260620\\/0996e45411a292d11f0d65c75d4b9ac7.jpg"]', '防守打法水电费第三方', 1, '若依', '放大发的', 'admin', '2026-06-20 19:16:59'),
+	(3, 2, '111', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '0', 3, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '若依', '套餐: 11', 'admin', '2026-06-26 22:08:49'),
+	(4, 1, '客户1', 7, '终测1', 8, '终测门店2', '2026-06-26', 'sales', '1', 2, '[{"name":"卡项1","quantity":1}]', 938.00, 5, NULL, '', 1, '若依', '', 'admin', '2026-06-27 06:13:24'),
+	(5, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 5, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 103, '鹏鹏', '套餐: 发发发', 'pengpeng', '2026-06-28 22:57:02'),
+	(6, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 6, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 1, '超级管理员', '套餐: 111', 'admin', '2026-06-28 23:14:18'),
+	(7, 4, 'LIly', 4, '企业1', 5, '哈哈', '2026-06-28', 'sales', '0', 7, '[{"name":"卡项1","quantity":10}]', 9380.00, NULL, NULL, '', 105, '测试', '套餐: 22', 'ceshi', '2026-06-28 23:16:10'),
+	(8, 3, '新客户1', 7, '终测1', 7, '终测门店1', '2026-07-03', 'sales', '0', 2, '[{"name":"卡项1","quantity":10}]', 15180.00, NULL, NULL, '', 1, '超级管理员', '套餐: ', 'admin', '2026-07-03 00:00:41'),
+	(9, 3, '新客户1', 7, '终测1', 7, '终测门店1', '2026-07-03', 'sales', '0', 4, '[{"name":"卡项1","quantity":10}]', 15180.00, NULL, NULL, '', 1, '超级管理员', '套餐: ', 'admin', '2026-07-03 00:09:15');
+/*!40000 ALTER TABLE `biz_customer_archive` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_customer_package 结构
 DROP TABLE IF EXISTS `biz_customer_package`;
@@ -408,10 +421,25 @@ CREATE TABLE IF NOT EXISTS `biz_customer_package` (
   KEY `idx_customer_id` (`customer_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='客户套餐表';
 
 -- 正在导出表  fuchenpro.biz_customer_package 的数据：~5 rows (大约)
 DELETE FROM `biz_customer_package`;
+/*!40000 ALTER TABLE `biz_customer_package` DISABLE KEYS */;
+INSERT INTO `biz_customer_package` (`package_id`, `package_no`, `customer_id`, `customer_name`, `order_id`, `order_no`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `package_name`, `total_amount`, `paid_amount`, `owed_amount`, `status`, `expire_date`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'PK202606200001', 1, '客户1', 1, 'SO202606200001', 7, '终测1', 8, '终测门店2', '套餐1', 9380.00, 9380.00, 0.00, '1', NULL, '11', 'admin', '2026-06-20 19:13:56', '', '2026-06-20 19:13:56'),
+	(2, 'PK202606260003', 2, '111', 3, 'SO202606260003', 7, '终测1', 8, '终测门店2', '11', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-26 22:08:49', '', '2026-06-26 22:08:49'),
+	(3, 'PK202606280001', 4, 'LIly', 5, 'SO202606280001', 4, '企业1', 5, '哈哈', '发发发', 9380.00, 9380.00, 0.00, '1', NULL, '', 'pengpeng', '2026-06-28 22:57:02', '', '2026-06-28 22:57:02'),
+	(4, 'PK202606280002', 4, 'LIly', 6, 'SO202606280002', 4, '企业1', 5, '哈哈', '111', 9380.00, 9380.00, 0.00, '1', NULL, '', 'admin', '2026-06-28 23:14:18', '', '2026-06-28 23:14:18'),
+	(5, 'PK202606280003', 4, 'LIly', 7, 'SO202606280003', 4, '企业1', 5, '哈哈', '22', 9380.00, 9380.00, 0.00, '1', NULL, '', 'ceshi', '2026-06-28 23:16:10', '', '2026-06-28 23:16:10'),
+	(6, 'PK202607020001', 3, '新客户1', 1, 'SO202607020001', 7, '终测1', 7, '终测门店1', '新客户1 2026-07-02 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-02 23:36:10', '', '2026-07-02 23:36:10'),
+	(7, 'PK202607030001', 3, '新客户1', 2, 'SO202607030001', 7, '终测1', 7, '终测门店1', '新客户1 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:00:41', '', '2026-07-03 00:00:41'),
+	(8, 'PK202607030002', 3, '新客户1', 3, 'SO202607030002', 7, '终测1', 7, '终测门店1', '新客户1 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:07:05', '', '2026-07-03 00:07:05'),
+	(9, 'PK202607030003', 3, '新客户1', 4, 'SO202607030003', 7, '终测1', 7, '终测门店1', '新客户1 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:09:15', '', '2026-07-03 00:09:15'),
+	(10, 'PK202607030004', 2, '111', 5, 'SO202607030004', 7, '终测1', 8, '终测门店2', '111 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:09:22', '', '2026-07-03 00:09:22'),
+	(11, 'PK202607030005', 2, '111', 6, 'SO202607030005', 7, '终测1', 8, '终测门店2', '111 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:10:41', '', '2026-07-03 00:10:41'),
+	(12, 'PK202607030006', 3, '新客户1', 7, 'SO202607030006', 7, '终测1', 7, '终测门店1', '新客户1 2026-07-03 持卡记录', 15180.00, 15180.00, 0.00, '1', NULL, '', 'admin', '2026-07-03 00:10:47', '', '2026-07-03 00:10:47');
+/*!40000 ALTER TABLE `biz_customer_package` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_employee_config 结构
 DROP TABLE IF EXISTS `biz_employee_config`;
@@ -553,6 +581,15 @@ CREATE TABLE IF NOT EXISTS `biz_inventory` (
 
 -- 正在导出表  fuchenpro.biz_inventory 的数据：~4 rows (大约)
 DELETE FROM `biz_inventory`;
+/*!40000 ALTER TABLE `biz_inventory` DISABLE KEYS */;
+INSERT INTO `biz_inventory` (`inventory_id`, `warehouse_id`, `product_id`, `quantity`, `earliest_expiry`, `warn_qty`, `last_stock_in_time`, `last_stock_out_time`, `create_time`, `update_time`) VALUES
+	(1, 2, 3, 100, '2026-07-04', 0, '2026-07-02 23:00:21', NULL, '2026-07-02 23:00:21', '2026-07-02 23:00:21'),
+	(2, 2, 2, 100, '2026-07-04', 20, '2026-07-02 23:00:21', NULL, '2026-07-02 23:00:21', '2026-07-02 23:00:21'),
+	(3, 2, 1, 100, '2026-07-04', 50, '2026-07-02 23:00:21', NULL, '2026-07-02 23:00:21', '2026-07-02 23:00:21'),
+	(4, 1, 2, 90, '2026-07-04', 20, '2026-07-03 00:31:30', '2026-07-03 00:31:37', '2026-07-03 00:31:30', '2026-07-03 00:31:37'),
+	(5, 1, 3, 90, '2026-07-04', 0, '2026-07-03 00:31:30', '2026-07-03 00:31:37', '2026-07-03 00:31:30', '2026-07-03 00:31:37'),
+	(6, 1, 1, 90, '2026-07-04', 50, '2026-07-03 00:31:30', '2026-07-03 00:31:37', '2026-07-03 00:31:30', '2026-07-03 00:31:37');
+/*!40000 ALTER TABLE `biz_inventory` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_operation_record 结构
 DROP TABLE IF EXISTS `biz_operation_record`;
@@ -593,6 +630,11 @@ CREATE TABLE IF NOT EXISTS `biz_operation_record` (
 
 -- 正在导出表  fuchenpro.biz_operation_record 的数据：~2 rows (大约)
 DELETE FROM `biz_operation_record`;
+/*!40000 ALTER TABLE `biz_operation_record` DISABLE KEYS */;
+INSERT INTO `biz_operation_record` (`record_id`, `operation_type`, `customer_id`, `customer_name`, `package_id`, `package_no`, `operation_batch_id`, `package_item_id`, `product_name`, `operation_quantity`, `consume_amount`, `trial_price`, `customer_feedback`, `satisfaction`, `before_photo`, `after_photo`, `operator_user_id`, `operator_user_name`, `operation_date`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `remark`, `create_by`, `create_time`) VALUES
+	(1, '0', 1, '客户1', 1, NULL, 'OB202606201916597727', 1, '卡项1', 1, 938.00, NULL, '防守打法水电费第三方', 4, '/profile/upload/20260620/0996e45411a292d11f0d65c75d4b9ac7.jpg', '', 1, '若依', '2026-06-20', 7, NULL, 8, NULL, '放大发的', 'admin', '2026-06-20 19:16:59'),
+	(2, '0', 1, '客户1', 1, NULL, 'OB202606270613247312', 1, '卡项1', 1, 938.00, NULL, '', 5, '', '', 1, '若依', '2026-06-26', 7, NULL, 8, NULL, '', 'admin', '2026-06-27 06:13:24');
+/*!40000 ALTER TABLE `biz_operation_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_order_item 结构
 DROP TABLE IF EXISTS `biz_order_item`;
@@ -620,6 +662,16 @@ CREATE TABLE IF NOT EXISTS `biz_order_item` (
 
 -- 正在导出表  fuchenpro.biz_order_item 的数据：~7 rows (大约)
 DELETE FROM `biz_order_item`;
+/*!40000 ALTER TABLE `biz_order_item` DISABLE KEYS */;
+INSERT INTO `biz_order_item` (`item_id`, `order_id`, `card_item_id`, `product_name`, `quantity`, `deal_amount`, `paid_amount`, `unit_price`, `owed_amount`, `payment_method`, `is_our_operation`, `customer_feedback`, `before_photo`, `after_photo`, `remark`, `create_time`) VALUES
+	(1, 1, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-02 23:36:10'),
+	(2, 2, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'card', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:00:41'),
+	(3, 3, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:07:05'),
+	(4, 4, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:09:15'),
+	(5, 5, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:09:22'),
+	(6, 6, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:10:41'),
+	(7, 7, 1, '卡项1', 10, 15180.00, 15180.00, 1518.00, 0.00, 'cash', 1, NULL, NULL, NULL, NULL, '2026-07-03 00:10:47');
+/*!40000 ALTER TABLE `biz_order_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_package_item 结构
 DROP TABLE IF EXISTS `biz_package_item`;
@@ -640,10 +692,25 @@ CREATE TABLE IF NOT EXISTS `biz_package_item` (
   PRIMARY KEY (`package_item_id`),
   KEY `idx_package_id` (`package_id`),
   KEY `idx_card_item_id` (`card_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='套餐明细表';
 
 -- 正在导出表  fuchenpro.biz_package_item 的数据：~5 rows (大约)
 DELETE FROM `biz_package_item`;
+/*!40000 ALTER TABLE `biz_package_item` DISABLE KEYS */;
+INSERT INTO `biz_package_item` (`package_item_id`, `package_id`, `card_item_id`, `product_name`, `unit_price`, `plan_price`, `deal_price`, `paid_amount`, `owed_amount`, `total_quantity`, `used_quantity`, `remaining_quantity`, `remark`) VALUES
+	(1, 1, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 2, 8, NULL),
+	(2, 2, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(3, 3, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(4, 4, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(5, 5, 1, '卡项1', 938.00, 9380.00, 9380.00, 9380.00, 0.00, 10, 0, 10, NULL),
+	(6, 6, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(7, 7, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(8, 8, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(9, 9, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(10, 10, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(11, 11, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL),
+	(12, 12, 1, '卡项1', 1518.00, 15180.00, 15180.00, 15180.00, 0.00, 10, 0, 10, NULL);
+/*!40000 ALTER TABLE `biz_package_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan 结构
 DROP TABLE IF EXISTS `biz_plan`;
@@ -676,10 +743,12 @@ CREATE TABLE IF NOT EXISTS `biz_plan` (
   PRIMARY KEY (`plan_id`),
   UNIQUE KEY `uk_plan_no` (`plan_no`),
   KEY `idx_enterprise_id` (`enterprise_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='方案表';
 
 -- 正在导出表  fuchenpro.biz_plan 的数据：~0 rows (大约)
 DELETE FROM `biz_plan`;
+/*!40000 ALTER TABLE `biz_plan` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_plan` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_plan_item 结构
 DROP TABLE IF EXISTS `biz_plan_item`;
@@ -706,6 +775,8 @@ CREATE TABLE IF NOT EXISTS `biz_plan_item` (
 
 -- 正在导出表  fuchenpro.biz_plan_item 的数据：~0 rows (大约)
 DELETE FROM `biz_plan_item`;
+/*!40000 ALTER TABLE `biz_plan_item` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_plan_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_product 结构
 DROP TABLE IF EXISTS `biz_product`;
@@ -786,6 +857,8 @@ CREATE TABLE IF NOT EXISTS `biz_repayment_record` (
 
 -- 正在导出表  fuchenpro.biz_repayment_record 的数据：~0 rows (大约)
 DELETE FROM `biz_repayment_record`;
+/*!40000 ALTER TABLE `biz_repayment_record` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_repayment_record` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_sales_order 结构
 DROP TABLE IF EXISTS `biz_sales_order`;
@@ -833,6 +906,16 @@ CREATE TABLE IF NOT EXISTS `biz_sales_order` (
 
 -- 正在导出表  fuchenpro.biz_sales_order 的数据：~7 rows (大约)
 DELETE FROM `biz_sales_order`;
+/*!40000 ALTER TABLE `biz_sales_order` DISABLE KEYS */;
+INSERT INTO `biz_sales_order` (`order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `store_id`, `store_name`, `store_dealer`, `deal_amount`, `paid_amount`, `owed_amount`, `payment_method`, `order_status`, `source_type`, `operation_batch_id`, `package_name`, `enterprise_audit_status`, `finance_audit_status`, `enterprise_audit_by`, `enterprise_audit_time`, `finance_audit_by`, `finance_audit_time`, `creator_user_id`, `creator_user_name`, `remark`, `customer_feedback`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'SO202607020001', 3, '新客户1', 7, '终测1', 7, '终测门店1', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-02 23:36:23', '超级管理员', '2026-07-02 23:36:36', 1, '超级管理员', '', '', 'admin', '2026-07-02 23:36:10', '', '2026-07-02 23:36:36'),
+	(2, 'SO202607030001', 3, '新客户1', 7, '终测1', 7, '终测门店1', '', 15180.00, 15180.00, 0.00, 'card', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:01:59', '超级管理员', '2026-07-03 00:02:50', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:00:41', '', '2026-07-03 00:02:50'),
+	(3, 'SO202607030002', 3, '新客户1', 7, '终测1', 7, '终测门店1', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:07:11', '超级管理员', '2026-07-03 00:07:12', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:07:05', '', '2026-07-03 00:07:12'),
+	(4, 'SO202607030003', 3, '新客户1', 7, '终测1', 7, '终测门店1', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:09:40', '超级管理员', '2026-07-03 00:09:53', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:09:15', '', '2026-07-03 00:09:53'),
+	(5, 'SO202607030004', 2, '111', 7, '终测1', 8, '终测门店2', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:09:38', '超级管理员', '2026-07-03 00:09:52', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:09:22', '', '2026-07-03 00:09:52'),
+	(6, 'SO202607030005', 2, '111', 7, '终测1', 8, '终测门店2', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:10:54', '超级管理员', '2026-07-03 00:10:56', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:10:41', '', '2026-07-03 00:10:56'),
+	(7, 'SO202607030006', 3, '新客户1', 7, '终测1', 7, '终测门店1', '', 15180.00, 15180.00, 0.00, 'cash', '2', '0', NULL, '', '1', '1', '超级管理员', '2026-07-03 00:10:52', '超级管理员', '2026-07-03 00:10:55', 1, '超级管理员', '', '', 'admin', '2026-07-03 00:10:47', '', '2026-07-03 00:10:55');
+/*!40000 ALTER TABLE `biz_sales_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_schedule 结构
 DROP TABLE IF EXISTS `biz_schedule`;
@@ -896,10 +979,12 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check` (
   UNIQUE KEY `uk_stock_check_no` (`stock_check_no`),
   KEY `idx_check_date` (`check_date`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='盘点单主表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='盘点单主表';
 
 -- 正在导出表  fuchenpro.biz_stock_check 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_check`;
+/*!40000 ALTER TABLE `biz_stock_check` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_check` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_check_item 结构
 DROP TABLE IF EXISTS `biz_stock_check_item`;
@@ -922,10 +1007,12 @@ CREATE TABLE IF NOT EXISTS `biz_stock_check_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_stock_check_id` (`stock_check_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='盘点单明细表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='盘点单明细表';
 
 -- 正在导出表  fuchenpro.biz_stock_check_item 的数据：~12 rows (大约)
 DELETE FROM `biz_stock_check_item`;
+/*!40000 ALTER TABLE `biz_stock_check_item` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_check_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_in 结构
 DROP TABLE IF EXISTS `biz_stock_in`;
@@ -950,10 +1037,15 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in` (
   KEY `idx_stock_in_date` (`stock_in_date`),
   KEY `idx_status` (`status`),
   KEY `idx_warehouse_id` (`warehouse_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单主表';
 
 -- 正在导出表  fuchenpro.biz_stock_in 的数据：~5 rows (大约)
 DELETE FROM `biz_stock_in`;
+/*!40000 ALTER TABLE `biz_stock_in` DISABLE KEYS */;
+INSERT INTO `biz_stock_in` (`stock_in_id`, `stock_in_no`, `stock_in_type`, `warehouse_id`, `total_quantity`, `total_amount`, `stock_in_date`, `operator_id`, `operator_name`, `status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'RK20260702001', '1', 2, 300, 151800.00, '2026-07-02', 1, '超级管理员', '1', NULL, '超级管理员', '2026-07-02 23:00:18', '', '2026-07-02 23:00:21'),
+	(2, 'RK20260703001', '1', 1, 300, 151800.00, '2026-07-02', 1, '超级管理员', '1', NULL, '超级管理员', '2026-07-03 00:31:21', '', '2026-07-03 00:31:30');
+/*!40000 ALTER TABLE `biz_stock_in` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_in_item 结构
 DROP TABLE IF EXISTS `biz_stock_in_item`;
@@ -981,10 +1073,19 @@ CREATE TABLE IF NOT EXISTS `biz_stock_in_item` (
   KEY `idx_stock_in_id` (`stock_in_id`),
   KEY `idx_product_id` (`product_id`),
   KEY `idx_wh_product_expiry` (`warehouse_id`,`product_id`,`expiry_date`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='入库单明细表';
 
 -- 正在导出表  fuchenpro.biz_stock_in_item 的数据：~5 rows (大约)
 DELETE FROM `biz_stock_in_item`;
+/*!40000 ALTER TABLE `biz_stock_in_item` DISABLE KEYS */;
+INSERT INTO `biz_stock_in_item` (`item_id`, `stock_in_id`, `warehouse_id`, `product_id`, `product_name`, `supplier_id`, `supplier_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `purchase_price`, `amount`, `remark`, `production_date`, `expiry_date`, `shipped_quantity`) VALUES
+	(1, 1, 2, 3, '身体套盒', 1, '供货商1', '1', '5', 10, '1', 10, 100, 580.00, 58000.00, NULL, '2026-07-01', '2026-07-04', 0.00),
+	(2, 1, 2, 2, '测试1', 1, '供货商1', '1', '5', 10, '1', 10, 100, 680.00, 68000.00, NULL, '2026-07-01', '2026-07-04', 0.00),
+	(3, 1, 2, 1, 'GCS-p7', 1, '供货商1', '1', '5', 10, '1', 10, 100, 258.00, 25800.00, NULL, '2026-07-01', '2026-07-04', 0.00),
+	(4, 2, 1, 2, '测试1', 1, '供货商1', '1', '5', 10, '1', 10, 100, 680.00, 68000.00, NULL, '2026-07-01', '2026-07-04', 10.00),
+	(5, 2, 1, 3, '身体套盒', 1, '供货商1', '1', '5', 10, '1', 10, 100, 580.00, 58000.00, NULL, '2026-07-01', '2026-07-04', 10.00),
+	(6, 2, 1, 1, 'GCS-p7', 1, '供货商1', '1', '5', 10, '1', 10, 100, 258.00, 25800.00, NULL, '2026-07-01', '2026-07-04', 10.00);
+/*!40000 ALTER TABLE `biz_stock_in_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out 结构
 DROP TABLE IF EXISTS `biz_stock_out`;
@@ -1030,10 +1131,16 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out` (
   KEY `idx_stock_out_date` (`stock_out_date`),
   KEY `idx_status` (`status`),
   KEY `idx_warehouse_id` (`warehouse_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单主表';
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单主表';
 
 -- 正在导出表  fuchenpro.biz_stock_out 的数据：~7 rows (大约)
 DELETE FROM `biz_stock_out`;
+/*!40000 ALTER TABLE `biz_stock_out` DISABLE KEYS */;
+INSERT INTO `biz_stock_out` (`stock_out_id`, `stock_out_no`, `stock_out_type`, `warehouse_id`, `out_target_type`, `prepare_id`, `plan_id`, `enterprise_id`, `enterprise_name`, `contact_person`, `contact_phone`, `shipping_address`, `logistics_company`, `logistics_no`, `shipment_date`, `receipt_date`, `shipment_images`, `audit_by`, `audit_time`, `contact_employee_id`, `contact_employee_name`, `responsible_id`, `responsible_name`, `total_quantity`, `total_amount`, `stock_out_date`, `status`, `ship_type`, `ship_status`, `remark`, `create_by`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'CK20260702001', '1', 1, '1', 1, NULL, 7, '终测1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, '超级管理员', 30, 15180.00, '2026-07-02', '0', 2, 0, NULL, 'admin', '2026-07-02 23:58:53', '', '2026-07-02 23:58:53'),
+	(2, 'CK20260703001', '1', 1, '1', 7, NULL, 7, '终测1', NULL, NULL, NULL, 'shunfeng', '111', '2026-07-03 00:31:44', '2026-07-03 00:31:47', NULL, NULL, NULL, NULL, '-', 1, '超级管理员', 30, 15180.00, '2026-07-03', '3', 2, 2, NULL, 'admin', '2026-07-03 00:29:48', 'admin', '2026-07-03 00:31:47'),
+	(3, 'CK20260703002', '1', 2, '1', 6, NULL, 7, '终测1', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 103, '鹏鹏', 30, 15180.00, '2026-07-03', '0', 2, 0, NULL, 'admin', '2026-07-03 01:12:24', '', '2026-07-03 01:12:24');
+/*!40000 ALTER TABLE `biz_stock_out` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_out_item 结构
 DROP TABLE IF EXISTS `biz_stock_out_item`;
@@ -1058,10 +1165,22 @@ CREATE TABLE IF NOT EXISTS `biz_stock_out_item` (
   PRIMARY KEY (`item_id`),
   KEY `idx_stock_out_id` (`stock_out_id`),
   KEY `idx_product_id` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='出库单明细表';
 
 -- 正在导出表  fuchenpro.biz_stock_out_item 的数据：~9 rows (大约)
 DELETE FROM `biz_stock_out_item`;
+/*!40000 ALTER TABLE `biz_stock_out_item` DISABLE KEYS */;
+INSERT INTO `biz_stock_out_item` (`item_id`, `stock_out_id`, `product_id`, `plan_item_id`, `supplier_id`, `supplier_name`, `product_name`, `spec`, `unit`, `pack_qty`, `unit_type`, `original_quantity`, `quantity`, `sale_price`, `discount_price`, `amount`, `remark`) VALUES
+	(1, 1, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
+	(2, 1, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(3, 1, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL),
+	(7, 2, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
+	(8, 2, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(9, 2, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL),
+	(10, 3, 1, NULL, NULL, NULL, 'GCS-p7', '1', '5', 10, '1', 1, 10, 258.00, NULL, 2580.00, NULL),
+	(11, 3, 2, NULL, NULL, NULL, '测试1', '1', '5', 10, '1', 1, 10, 680.00, NULL, 6800.00, NULL),
+	(12, 3, 3, NULL, NULL, NULL, '身体套盒', '1', '5', 10, '1', 1, 10, 580.00, NULL, 5800.00, NULL);
+/*!40000 ALTER TABLE `biz_stock_out_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare 结构
 DROP TABLE IF EXISTS `biz_stock_prepare`;
@@ -1099,10 +1218,20 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare` (
   KEY `idx_store_id` (`store_id`),
   KEY `idx_status` (`status`),
   KEY `idx_plan_id` (`plan_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货表';
 
 -- 正在导出表  fuchenpro.biz_stock_prepare 的数据：~15 rows (大约)
 DELETE FROM `biz_stock_prepare`;
+/*!40000 ALTER TABLE `biz_stock_prepare` DISABLE KEYS */;
+INSERT INTO `biz_stock_prepare` (`prepare_id`, `prepare_no`, `plan_id`, `plan_no`, `order_id`, `order_no`, `customer_id`, `customer_name`, `enterprise_id`, `enterprise_name`, `warehouse_id`, `store_id`, `store_name`, `total_quantity`, `total_amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `status`, `remark`, `create_by`, `creator_user_id`, `create_time`, `update_by`, `update_time`) VALUES
+	(1, 'SP202607020002', NULL, NULL, 1, 'SO202607020001', 3, '新客户1', 7, '终测1', NULL, 7, '终测门店1', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-02 23:36:46', '', '2026-07-02 23:36:46'),
+	(2, 'SP202607030001', NULL, NULL, 3, 'SO202607030002', 3, '新客户1', 7, '终测1', NULL, 7, '终测门店1', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-03 00:07:39', '', '2026-07-03 00:07:39'),
+	(3, 'SP202607030002', NULL, NULL, 2, 'SO202607030001', 3, '新客户1', 7, '终测1', NULL, 7, '终测门店1', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-03 00:07:40', '', '2026-07-03 00:07:40'),
+	(4, 'SP202607030003', NULL, NULL, 5, 'SO202607030004', 2, '111', 7, '终测1', NULL, 8, '终测门店2', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-03 00:10:10', '', '2026-07-03 00:10:10'),
+	(5, 'SP202607030004', NULL, NULL, 4, 'SO202607030003', 3, '新客户1', 7, '终测1', NULL, 7, '终测门店1', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-03 00:10:10', '', '2026-07-03 00:10:10'),
+	(6, 'SP202607030005', NULL, NULL, 6, 'SO202607030005', 2, '111', 7, '终测1', NULL, 8, '终测门店2', 30, 15180.00, 0, 0.00, 30, 15180.00, '0', NULL, 'admin', NULL, '2026-07-03 00:11:09', '', '2026-07-03 00:11:09'),
+	(7, 'SP202607030006', NULL, NULL, 7, 'SO202607030006', 3, '新客户1', 7, '终测1', NULL, 7, '终测门店1', 30, 15180.00, 30, 15180.00, 0, 0.00, '2', NULL, 'admin', NULL, '2026-07-03 00:11:09', '', '2026-07-03 00:31:44');
+/*!40000 ALTER TABLE `biz_stock_prepare` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_item 结构
 DROP TABLE IF EXISTS `biz_stock_prepare_item`;
@@ -1129,10 +1258,34 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_item` (
   KEY `idx_prepare_id` (`prepare_id`),
   KEY `idx_product_id` (`product_id`),
   KEY `idx_plan_item_id` (`plan_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货明细表';
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='备货明细表';
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_item 的数据：~14 rows (大约)
 DELETE FROM `biz_stock_prepare_item`;
+/*!40000 ALTER TABLE `biz_stock_prepare_item` DISABLE KEYS */;
+INSERT INTO `biz_stock_prepare_item` (`item_id`, `prepare_id`, `plan_item_id`, `card_item_id`, `product_id`, `product_name`, `unit`, `spec`, `unit_type`, `pack_qty`, `sale_price`, `quantity`, `amount`, `shipped_quantity`, `shipped_amount`, `remaining_quantity`, `remaining_amount`, `remark`) VALUES
+	(1, 1, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 10, 2580.00, 0, 0.00, NULL),
+	(2, 1, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(3, 1, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
+	(4, 2, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(5, 2, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(6, 2, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 0, 0.00, 10, 5800.00, NULL),
+	(7, 3, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(8, 3, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(9, 3, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 0, 0.00, 10, 5800.00, NULL),
+	(10, 4, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(11, 4, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(12, 4, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 0, 0.00, 10, 5800.00, NULL),
+	(13, 5, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 0, 0.00, 10, 2580.00, NULL),
+	(14, 5, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 0, 0.00, 10, 6800.00, NULL),
+	(15, 5, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 0, 0.00, 10, 5800.00, NULL),
+	(16, 6, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 10, 2580.00, 0, 0.00, NULL),
+	(17, 6, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(18, 6, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL),
+	(19, 7, NULL, NULL, 1, 'GCS-p7', '5', '1', '1', 10, 258.00, 10, 2580.00, 10, 2580.00, 0, 0.00, NULL),
+	(20, 7, NULL, NULL, 2, '测试1', '5', '1', '1', 10, 680.00, 10, 6800.00, 10, 6800.00, 0, 0.00, NULL),
+	(21, 7, NULL, NULL, 3, '身体套盒', '5', '1', '1', 10, 580.00, 10, 5800.00, 10, 5800.00, 0, 0.00, NULL);
+/*!40000 ALTER TABLE `biz_stock_prepare_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_prepare_order 结构
 DROP TABLE IF EXISTS `biz_stock_prepare_order`;
@@ -1148,10 +1301,20 @@ CREATE TABLE IF NOT EXISTS `biz_stock_prepare_order` (
   PRIMARY KEY (`id`),
   KEY `idx_prepare_id` (`prepare_id`),
   KEY `idx_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='库存-订单关联表';
 
 -- 正在导出表  fuchenpro.biz_stock_prepare_order 的数据：~2 rows (大约)
 DELETE FROM `biz_stock_prepare_order`;
+/*!40000 ALTER TABLE `biz_stock_prepare_order` DISABLE KEYS */;
+INSERT INTO `biz_stock_prepare_order` (`id`, `prepare_id`, `order_id`, `order_no`, `customer_id`, `customer_name`, `store_id`, `store_name`) VALUES
+	(1, 1, 1, 'SO202607020001', 3, '新客户1', 7, '终测门店1'),
+	(2, 2, 3, 'SO202607030002', 3, '新客户1', 7, '终测门店1'),
+	(3, 3, 2, 'SO202607030001', 3, '新客户1', 7, '终测门店1'),
+	(4, 4, 5, 'SO202607030004', 2, '111', 8, '终测门店2'),
+	(5, 5, 4, 'SO202607030003', 3, '新客户1', 7, '终测门店1'),
+	(6, 6, 6, 'SO202607030005', 2, '111', 8, '终测门店2'),
+	(7, 7, 7, 'SO202607030006', 3, '新客户1', 7, '终测门店1');
+/*!40000 ALTER TABLE `biz_stock_prepare_order` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_transfer 结构
 DROP TABLE IF EXISTS `biz_stock_transfer`;
@@ -1172,10 +1335,12 @@ CREATE TABLE IF NOT EXISTS `biz_stock_transfer` (
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`transfer_id`),
   UNIQUE KEY `uk_transfer_no` (`transfer_no`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单主表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单主表';
 
 -- 正在导出表  fuchenpro.biz_stock_transfer 的数据：~3 rows (大约)
 DELETE FROM `biz_stock_transfer`;
+/*!40000 ALTER TABLE `biz_stock_transfer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_transfer` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_stock_transfer_item 结构
 DROP TABLE IF EXISTS `biz_stock_transfer_item`;
@@ -1192,10 +1357,12 @@ CREATE TABLE IF NOT EXISTS `biz_stock_transfer_item` (
   `quantity` int(11) DEFAULT '0' COMMENT '调拨数量(最小单位)',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单明细表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='调拨单明细表';
 
 -- 正在导出表  fuchenpro.biz_stock_transfer_item 的数据：~4 rows (大约)
 DELETE FROM `biz_stock_transfer_item`;
+/*!40000 ALTER TABLE `biz_stock_transfer_item` DISABLE KEYS */;
+/*!40000 ALTER TABLE `biz_stock_transfer_item` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.biz_store 结构
 DROP TABLE IF EXISTS `biz_store`;
@@ -2236,7 +2403,7 @@ CREATE TABLE IF NOT EXISTS `sys_logininfor` (
   PRIMARY KEY (`info_id`),
   KEY `idx_sys_logininfor_s` (`status`),
   KEY `idx_sys_logininfor_lt` (`login_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=423 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
+) ENGINE=InnoDB AUTO_INCREMENT=428 DEFAULT CHARSET=utf8 COMMENT='系统访问记录';
 
 -- 正在导出表  fuchenpro.sys_logininfor 的数据：~310 rows (大约)
 DELETE FROM `sys_logininfor`;
@@ -2564,7 +2731,12 @@ INSERT INTO `sys_logininfor` (`info_id`, `user_name`, `ipaddr`, `login_location`
 	(419, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-01 09:05:17', 'web'),
 	(420, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-01 14:53:27', 'web'),
 	(421, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-01 16:35:28', 'app'),
-	(422, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-01 16:59:36', 'web');
+	(422, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-01 16:59:36', 'web'),
+	(423, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-02 17:54:09', 'web'),
+	(424, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-02 18:59:19', 'web'),
+	(425, 'admin', '127.0.0.1', '内网IP', 'Unknown', 'Windows 10', '0', '登录成功', '2026-07-03 00:55:01', 'web'),
+	(426, 'pengpeng', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-03 01:11:36', 'web'),
+	(427, 'admin', '127.0.0.1', '内网IP', 'Chrome', 'Windows 10', '0', '登录成功', '2026-07-03 14:07:19', 'web');
 /*!40000 ALTER TABLE `sys_logininfor` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_menu 结构
@@ -2917,7 +3089,7 @@ CREATE TABLE IF NOT EXISTS `sys_oper_log` (
   KEY `idx_sys_oper_log_bt` (`business_type`),
   KEY `idx_sys_oper_log_s` (`status`),
   KEY `idx_sys_oper_log_ot` (`oper_time`)
-) ENGINE=InnoDB AUTO_INCREMENT=561 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
+) ENGINE=InnoDB AUTO_INCREMENT=613 DEFAULT CHARSET=utf8 COMMENT='操作日志记录';
 
 -- 正在导出表  fuchenpro.sys_oper_log 的数据：~454 rows (大约)
 DELETE FROM `sys_oper_log`;
@@ -3383,7 +3555,59 @@ INSERT INTO `sys_oper_log` (`oper_id`, `title`, `business_type`, `method`, `requ
 	(557, '备货管理', 1, '/business/stockPrepare/createFromPlan', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createFromPlan', '127.0.0.1', '内网IP', '{"planId":2,"items":[{"productId":3,"productName":"身体套盒","spec":"支","unitType":"2","salePrice":580,"quantity":1}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 00:43:05', 44),
 	(558, '备货管理', 1, '/business/stockPrepare/createFromPlan', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createFromPlan', '127.0.0.1', '内网IP', '{"planId":2,"items":[{"productId":3,"productName":"身体套盒","spec":"盒","unitType":"1","salePrice":"5800.00","quantity":1}]}', '{"code":500,"msg":"备货总金额超过方案配赠金额剩余额度"}', 1, '备货总金额超过方案配赠金额剩余额度', '2026-07-02 00:43:19', 3),
 	(559, '备货管理', 1, '/business/stockPrepare/createFromPlan', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createFromPlan', '127.0.0.1', '内网IP', '{"planId":1,"items":[{"productId":3,"productName":"身体套盒","spec":"盒","unitType":"1","salePrice":"5800.00","quantity":1}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 00:43:43', 54),
-	(560, '备货管理', 1, '/business/stockPrepare/createStockOut', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createStockOut', '127.0.0.1', '内网IP', '{"prepareId":15,"items":[{"itemId":16,"unitType":"1","originalQuantity":1}],"warehouseId":2}', '{"code":200,"msg":"操作成功","data":{"stockOutNo":"CK20260702001","stockOutType":"1","outTargetType":"1","prepareId":15,"planId":1,"warehouseId":2,"enterpriseId":7,"enterpriseName":"终测1","responsibleId":1,"responsibleName":"超级管理员","totalQuantity":10,"totalAmount":"5800.00","stockOutDate":"2026-07-02","status":"0","shipType":"2","remark":null,"createBy":"admin","createTime":"2026-07-02 00:45:51","stockOutId":15}}', 0, '', '2026-07-02 00:45:51', 87);
+	(560, '备货管理', 1, '/business/stockPrepare/createStockOut', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createStockOut', '127.0.0.1', '内网IP', '{"prepareId":15,"items":[{"itemId":16,"unitType":"1","originalQuantity":1}],"warehouseId":2}', '{"code":200,"msg":"操作成功","data":{"stockOutNo":"CK20260702001","stockOutType":"1","outTargetType":"1","prepareId":15,"planId":1,"warehouseId":2,"enterpriseId":7,"enterpriseName":"终测1","responsibleId":1,"responsibleName":"超级管理员","totalQuantity":10,"totalAmount":"5800.00","stockOutDate":"2026-07-02","status":"0","shipType":"2","remark":null,"createBy":"admin","createTime":"2026-07-02 00:45:51","stockOutId":15}}', 0, '', '2026-07-02 00:45:51', 87),
+	(561, '入库管理', 1, '/wms/stockIn', 'POST', 1, 'admin', '', '//localhost:8787/wms/stockIn', '127.0.0.1', '内网IP', '{"stockInType":"1","stockInDate":"2026-07-02","warehouseId":2,"items":[{"productId":3,"productName":"身体套盒","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":5800,"_mainPrice":5800,"amount":58000,"productionDate":"2026-07-01","expiryDate":"2026-07-04"},{"productId":2,"productName":"测试1","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":6800,"_mainPrice":6800,"amount":68000,"productionDate":"2026-07-01","expiryDate":"2026-07-04"},{"productId":1,"productName":"GCS-p7","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":2580,"_mainPrice":2580,"amount":25800,"productionDate":"2026-07-01","expiryDate":"2026-07-04"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 23:00:18', 69),
+	(562, '入库管理', 2, '/wms/stockIn/confirm/1', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockIn/confirm/1', '127.0.0.1', '内网IP', '[]', '{"code":200,"msg":"入库确认成功"}', 0, '', '2026-07-02 23:00:21', 23),
+	(563, '卡项管理', 2, '/business/cardItem', 'PUT', 1, 'admin', '', '//localhost:8787/business/cardItem', '127.0.0.1', '内网IP', '{"cardItemId":1,"cardItemName":"卡项1","cardItemCode":"KX1-20260601","category":"2","defaultQuantity":10,"suggestedPrice":15180,"defaultUnitPrice":1518,"status":"0","remark":null,"createBy":"admin","createTime":"2026-06-01 19:09:02","updateBy":"admin","updateTime":"2026-06-26 11:27:40","products":[{"product_id":1,"unit_type":"1","pack_qty":10,"quantity":1,"remark":null},{"product_id":2,"unit_type":"1","pack_qty":10,"quantity":1,"remark":null},{"product_id":3,"unit_type":"1","pack_qty":10,"quantity":1,"remark":null}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 23:35:48', 40),
+	(564, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 23:36:10', 37),
+	(565, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 23:36:23', 45),
+	(566, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":1}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-02 23:36:36', 12),
+	(567, '备货管理', 1, '/business/stockPrepare/createFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createFromOrder', '127.0.0.1', '内网IP', '{"orderId":1}', '{"code":200,"msg":"操作成功","data":{"prepareNo":"SP202607020002","orderId":1,"orderNo":"SO202607020001","customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","totalQuantity":30,"totalAmount":"15180.00","shippedQuantity":0,"shippedAmount":0,"remainingQuantity":30,"remainingAmount":"15180.00","status":"0","remark":null,"createBy":"admin","createTime":"2026-07-02 23:36:46","prepareId":1}}', 0, '', '2026-07-02 23:36:46', 37),
+	(568, '备货管理', 1, '/business/stockPrepare/createStockOut', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createStockOut', '127.0.0.1', '内网IP', '{"prepareId":1,"items":[{"itemId":1,"unitType":"1","originalQuantity":1},{"itemId":2,"unitType":"1","originalQuantity":1},{"itemId":3,"unitType":"1","originalQuantity":1}],"warehouseId":1}', '{"code":200,"msg":"操作成功","data":{"stockOutNo":"CK20260702001","stockOutType":"1","outTargetType":"1","prepareId":1,"planId":null,"warehouseId":1,"enterpriseId":7,"enterpriseName":"终测1","responsibleId":1,"responsibleName":"超级管理员","totalQuantity":30,"totalAmount":"15180.00","stockOutDate":"2026-07-02","status":"0","shipType":"2","remark":null,"createBy":"admin","createTime":"2026-07-02 23:58:53","stockOutId":1}}', 0, '', '2026-07-02 23:58:53', 37),
+	(569, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"card"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:00:41', 102),
+	(570, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:00:48', 9),
+	(571, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":500,"msg":"订单已审核，不可重复审核"}', 1, '订单已审核，不可重复审核', '2026-07-03 00:00:50', 2),
+	(572, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":500,"msg":"订单已审核，不可重复审核"}', 1, '订单已审核，不可重复审核', '2026-07-03 00:00:52', 1),
+	(573, '销售管理', 1, '/business/sales/cancel', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/cancel', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":200,"msg":"取消成功"}', 0, '', '2026-07-03 00:01:02', 19),
+	(574, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"close"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:19', 14),
+	(575, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:31', 87),
+	(576, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"close"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:35', 17),
+	(577, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:39', 18),
+	(578, '销售管理', 1, '/business/sales/cancel', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/cancel', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":200,"msg":"取消成功"}', 0, '', '2026-07-03 00:01:42', 14),
+	(579, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"close"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:54', 31),
+	(580, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":2,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:01:59', 20),
+	(581, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":2}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:02:50', 64),
+	(582, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:07:05', 47),
+	(583, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":3,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:07:11', 18),
+	(584, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":3}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:07:12', 20),
+	(585, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[3,2]}', '{"code":200,"msg":"操作成功","successCount":2,"failedCount":0,"skippedCount":0,"details":[{"orderId":3,"orderNo":"SO202607030002","status":"success","prepareNo":"SP202607030001"},{"orderId":2,"orderNo":"SO202607030001","status":"success","prepareNo":"SP202607030002"}]}', 0, '', '2026-07-03 00:07:40', 95),
+	(586, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[3,2]}', '{"code":200,"msg":"操作成功","successCount":0,"failedCount":0,"skippedCount":2,"details":[{"orderId":3,"orderNo":"SO202607030002","status":"skipped","msg":"已备货"},{"orderId":2,"orderNo":"SO202607030001","status":"skipped","msg":"已备货"}]}', 0, '', '2026-07-03 00:07:44', 8),
+	(587, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[3,2]}', '{"code":200,"msg":"操作成功","successCount":0,"failedCount":0,"skippedCount":2,"details":[{"orderId":3,"orderNo":"SO202607030002","status":"skipped","msg":"已备货"},{"orderId":2,"orderNo":"SO202607030001","status":"skipped","msg":"已备货"}]}', 0, '', '2026-07-03 00:07:47', 5),
+	(588, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:15', 27),
+	(589, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":2,"customerName":"111","enterpriseId":7,"enterpriseName":"终测1","storeId":8,"storeName":"终测门店2","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:22', 17),
+	(590, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":5,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:38', 28),
+	(591, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":4,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:40', 7),
+	(592, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":5}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:52', 42),
+	(593, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":4}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:09:53', 16),
+	(594, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[5,4]}', '{"code":200,"msg":"操作成功","successCount":2,"failedCount":0,"skippedCount":0,"details":[{"orderId":5,"orderNo":"SO202607030004","status":"success","prepareNo":"SP202607030003"},{"orderId":4,"orderNo":"SO202607030003","status":"success","prepareNo":"SP202607030004"}]}', 0, '', '2026-07-03 00:10:10', 31),
+	(595, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[5,4]}', '{"code":200,"msg":"操作成功","successCount":0,"failedCount":0,"skippedCount":2,"details":[{"orderId":5,"orderNo":"SO202607030004","status":"skipped","msg":"已备货"},{"orderId":4,"orderNo":"SO202607030003","status":"skipped","msg":"已备货"}]}', 0, '', '2026-07-03 00:10:16', 7),
+	(596, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":2,"customerName":"111","enterpriseId":7,"enterpriseName":"终测1","storeId":8,"storeName":"终测门店2","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:41', 97),
+	(597, '销售管理', 1, '/business/sales', 'POST', 1, 'admin', '', '//localhost:8787/business/sales', '127.0.0.1', '内网IP', '{"customerId":3,"customerName":"新客户1","enterpriseId":7,"enterpriseName":"终测1","storeId":7,"storeName":"终测门店1","orderStatus":"0","packageName":"","storeDealer":"","customerFeedback":"","remark":"","items":[{"cardItemId":1,"productName":"卡项1","quantity":10,"dealAmount":"15180.00","paidAmount":"15180.00","paymentMethod":"cash"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:47', 23),
+	(598, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":7,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:52', 19),
+	(599, '销售管理', 1, '/business/sales/enterpriseAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/enterpriseAudit', '127.0.0.1', '内网IP', '{"orderId":6,"action":"open"}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:54', 21),
+	(600, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":7}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:55', 14),
+	(601, '销售管理', 1, '/business/sales/financeAudit', 'POST', 1, 'admin', '', '//localhost:8787/business/sales/financeAudit', '127.0.0.1', '内网IP', '{"orderId":6}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:10:56', 16),
+	(602, '备货管理', 1, '/business/stockPrepare/batchCreateFromOrder', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/batchCreateFromOrder', '127.0.0.1', '内网IP', '{"orderIds":[6,7]}', '{"code":200,"msg":"操作成功","successCount":2,"failedCount":0,"skippedCount":0,"details":[{"orderId":6,"orderNo":"SO202607030005","status":"success","prepareNo":"SP202607030005"},{"orderId":7,"orderNo":"SO202607030006","status":"success","prepareNo":"SP202607030006"}]}', 0, '', '2026-07-03 00:11:09', 35),
+	(603, '备货管理', 1, '/business/stockPrepare/createStockOut', 'POST', 1, 'admin', '', '//localhost:8787/business/stockPrepare/createStockOut', '127.0.0.1', '内网IP', '{"prepareId":7,"items":[{"itemId":19,"unitType":"1","originalQuantity":1},{"itemId":20,"unitType":"1","originalQuantity":1},{"itemId":21,"unitType":"1","originalQuantity":1}],"warehouseId":1}', '{"code":200,"msg":"操作成功","data":{"stockOutNo":"CK20260703001","stockOutType":"1","outTargetType":"1","prepareId":7,"planId":null,"warehouseId":1,"enterpriseId":7,"enterpriseName":"终测1","responsibleId":1,"responsibleName":"超级管理员","totalQuantity":30,"totalAmount":"15180.00","stockOutDate":"2026-07-03","status":"0","shipType":"2","remark":null,"createBy":"admin","createTime":"2026-07-03 00:29:48","stockOutId":2}}', 0, '', '2026-07-03 00:29:48', 100),
+	(604, '出库管理', 2, '/wms/stockOut/confirm/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut/confirm/2', '127.0.0.1', '内网IP', '[]', '{"code":500,"msg":"货品【GCS-p7】库存不足，当前库存：0，出库数量：10"}', 1, '货品【GCS-p7】库存不足，当前库存：0，出库数量：10', '2026-07-03 00:30:22', 9),
+	(605, '出库管理', 2, '/wms/stockOut', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut', '127.0.0.1', '内网IP', '{"stockOutId":2,"stockOutNo":"CK20260703001","stockOutType":"1","outTargetType":"1","enterpriseId":7,"enterpriseName":"终测1","warehouseId":1,"warehouseName":"上海仓库","contactEmployeeId":null,"contactEmployeeName":"-","contactPerson":null,"contactPhone":null,"shippingAddress":null,"responsibleId":1,"responsibleName":"超级管理员","totalQuantity":30,"totalAmount":"15180.00","stockOutDate":"2026-07-03","status":"0","shipType":"2","shipStatus":0,"logisticsCompany":null,"logisticsNo":null,"shipmentDate":null,"receiptDate":null,"shipmentImages":null,"planId":null,"planName":null,"prepareId":7,"remark":null,"createBy":"admin","createTime":"2026-07-03 00:29:48","updateBy":"","updateTime":"2026-07-03 00:29:48","items":[{"itemId":4,"productId":1,"productName":"GCS-p7","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":1,"quantity":1,"salePrice":2580,"_mainPrice":2580,"amount":2580,"remark":null},{"itemId":5,"productId":2,"productName":"测试1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":1,"quantity":1,"salePrice":6800,"_mainPrice":6800,"amount":6800,"remark":null},{"itemId":6,"productId":3,"productName":"身体套盒","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":1,"quantity":1,"salePrice":5800,"_mainPrice":5800,"amount":5800,"remark":null}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:30:44', 69),
+	(606, '出库管理', 2, '/wms/stockOut/confirm/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut/confirm/2', '127.0.0.1', '内网IP', '[]', '{"code":500,"msg":"货品【GCS-p7】库存不足，当前库存：0，出库数量：10"}', 1, '货品【GCS-p7】库存不足，当前库存：0，出库数量：10', '2026-07-03 00:30:46', 5),
+	(607, '入库管理', 1, '/wms/stockIn', 'POST', 1, 'admin', '', '//localhost:8787/wms/stockIn', '127.0.0.1', '内网IP', '{"stockInType":"1","stockInDate":"2026-07-02","warehouseId":1,"items":[{"productId":2,"productName":"测试1","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":6800,"_mainPrice":6800,"amount":68000,"productionDate":"2026-07-01","expiryDate":"2026-07-04"},{"productId":3,"productName":"身体套盒","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":5800,"_mainPrice":5800,"amount":58000,"productionDate":"2026-07-01","expiryDate":"2026-07-04"},{"productId":1,"productName":"GCS-p7","supplierId":1,"supplierName":"供货商1","spec":"1","unit":"5","packQty":10,"unitType":"1","originalQuantity":10,"quantity":10,"purchasePrice":2580,"_mainPrice":2580,"amount":25800,"productionDate":"2026-07-01","expiryDate":"2026-07-04"}]}', '{"code":200,"msg":"操作成功"}', 0, '', '2026-07-03 00:31:21', 49),
+	(608, '入库管理', 2, '/wms/stockIn/confirm/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockIn/confirm/2', '127.0.0.1', '内网IP', '[]', '{"code":200,"msg":"入库确认成功"}', 0, '', '2026-07-03 00:31:30', 39),
+	(609, '出库管理', 2, '/wms/stockOut/confirm/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut/confirm/2', '127.0.0.1', '内网IP', '[]', '{"code":200,"msg":"出库确认成功"}', 0, '', '2026-07-03 00:31:37', 30),
+	(610, '出库管理', 2, '/wms/stockOut/ship/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut/ship/2', '127.0.0.1', '内网IP', '{"ship_type":"2","logistics_company":"shunfeng","logistics_no":"111"}', '{"code":200,"msg":"发货成功"}', 0, '', '2026-07-03 00:31:44', 15),
+	(611, '出库管理', 2, '/wms/stockOut/confirmReceipt/2', 'PUT', 1, 'admin', '', '//localhost:8787/wms/stockOut/confirmReceipt/2', '127.0.0.1', '内网IP', '[]', '{"code":200,"msg":"确认收货成功"}', 0, '', '2026-07-03 00:31:47', 6),
+	(612, '备货管理', 1, '/business/stockPrepare/createStockOut', 'POST', 1, 'pengpeng', '', '//localhost:8787/business/stockPrepare/createStockOut', '127.0.0.1', '内网IP', '{"prepareId":6,"items":[{"itemId":16,"unitType":"1","originalQuantity":1},{"itemId":17,"unitType":"1","originalQuantity":1},{"itemId":18,"unitType":"1","originalQuantity":1}],"warehouseId":2}', '{"code":200,"msg":"操作成功","data":{"stockOutNo":"CK20260703002","stockOutType":"1","outTargetType":"1","prepareId":6,"planId":null,"warehouseId":2,"enterpriseId":7,"enterpriseName":"终测1","responsibleId":103,"responsibleName":"鹏鹏","totalQuantity":30,"totalAmount":"15180.00","stockOutDate":"2026-07-03","status":"0","shipType":"2","remark":null,"createBy":"admin","createTime":"2026-07-03 01:12:24","stockOutId":3}}', 0, '', '2026-07-03 01:12:24', 64);
 /*!40000 ALTER TABLE `sys_oper_log` ENABLE KEYS */;
 
 -- 导出  表 fuchenpro.sys_post 结构
@@ -3962,12 +4186,12 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 DELETE FROM `sys_user`;
 /*!40000 ALTER TABLE `sys_user` DISABLE KEYS */;
 INSERT INTO `sys_user` (`user_id`, `dept_id`, `user_name`, `nick_name`, `user_type`, `email`, `phonenumber`, `sex`, `avatar`, `password`, `status`, `del_flag`, `login_ip`, `login_date`, `pwd_update_date`, `create_by`, `create_time`, `update_by`, `update_time`, `remark`) VALUES
-	(1, 103, 'admin', '超级管理员', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-07-01 16:59:36', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
+	(1, 103, 'admin', '超级管理员', '00', 'ry@163.com', '15888888888', '1', 'https://mydream-1302682813.cos.ap-shanghai.myqcloud.com/avatar/a66467cde77a863b9a21bff37f912c67.png', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-07-03 14:07:19', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', '', NULL, '管理员'),
 	(2, 106, 'ry', '若人头', '00', 'ry@qq.com', '15666666666', '1', '', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '0', '0', '127.0.0.1', '2026-04-25 01:10:45', '2026-04-25 01:10:45', 'admin', '2026-04-25 01:10:45', 'admin', '2026-04-28 22:24:11', '测试员'),
 	(100, 101, '测试', '测试', '00', '', '15877778888', '0', '', '$2y$10$XouudTyFvzABxDZVRaQhZ.Jh9TSE9Qil2RA2N9mzv6hPqcyo.O4Uy', '0', '0', '', NULL, NULL, 'admin', '2026-04-25 21:08:28', 'admin', '2026-06-20 12:28:59', '111'),
 	(101, NULL, '辅导费', '奋斗奋斗', '00', '', '', '0', '', '$2y$10$GiUlf1m6QaMIwgfxTHuDfeEoedCiiS0O1HBb3bcR.rW0DKPuua8gK', '0', '2', '', NULL, NULL, 'admin', '2026-05-20 19:52:31', '', NULL, NULL),
 	(102, 103, '测试1', 'ceshi1', '00', '', '', '0', '', '$2y$10$wEWrRMhpcXRoi2k4wwXk4e5k/uAafpDT9XeVWUlymXgneSA66TvbS', '0', '0', '', NULL, NULL, 'admin', '2026-06-02 20:57:05', 'admin', '2026-06-03 00:31:47', NULL),
-	(103, 101, 'pengpeng', '鹏鹏', '00', '', '', '0', '', '$2y$10$GesZnLrx.4nAp9MLcyqaYe7aDC0WeeMpbHXX5OlM253JrmgCESl1O', '0', '0', '127.0.0.1', '2026-07-01 08:57:21', '2026-06-28 21:44:07', 'admin', '2026-06-03 15:16:56', 'admin', '2026-06-28 21:44:07', NULL),
+	(103, 101, 'pengpeng', '鹏鹏', '00', '', '', '0', '', '$2y$10$GesZnLrx.4nAp9MLcyqaYe7aDC0WeeMpbHXX5OlM253JrmgCESl1O', '0', '0', '127.0.0.1', '2026-07-03 01:11:36', '2026-06-28 21:44:07', 'admin', '2026-06-03 15:16:56', 'admin', '2026-06-28 21:44:07', NULL),
 	(104, 103, '测试2', 'ceshi2', '00', '', '', '0', '', '$2y$10$yd7mU9koqjvPDFDBKjdRTuZx9FBfYV9azugwGnMg/Tt.WUO9xA3Ue', '0', '0', '', NULL, NULL, 'admin', '2026-06-28 23:01:09', '', NULL, NULL),
 	(105, 104, 'ceshi', '测试', '00', '', '', '0', '', '$2y$10$OgLsq63yNo3Ikyt9IU0lIOn8ZD2kP4Brsp166K5lBTS4DDtyhaxTW', '0', '0', '127.0.0.1', '2026-06-28 23:15:43', NULL, 'admin', '2026-06-28 23:02:22', '', NULL, NULL);
 /*!40000 ALTER TABLE `sys_user` ENABLE KEYS */;
