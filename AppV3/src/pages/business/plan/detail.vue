@@ -107,21 +107,21 @@
           <view class="info-line">
             <view class="info-left">
               <text class="info-label">数量</text>
-              <text class="info-value">{{ item.quantity || 0 }}</text>
+              <text class="info-value">{{ formatDisplayQty(item.quantity, item.unitType, item.packQty) }}</text>
             </view>
             <view class="info-right">
               <text class="info-label">单价</text>
-              <text class="info-value price">¥{{ formatAmount(item.salePrice) }}</text>
+              <text class="info-value price">¥{{ formatAmount(formatDisplayPrice(item.salePrice, item.unitType, item.packQty)) }}</text>
             </view>
           </view>
           <view class="info-line">
             <view class="info-left">
               <text class="info-label">已出</text>
-              <text class="info-value">{{ item.shippedQuantity || 0 }}</text>
+              <text class="info-value">{{ formatDisplayQty(item.shippedQuantity, item.unitType, item.packQty) }}</text>
             </view>
             <view class="info-right">
               <text class="info-label">剩余</text>
-              <text class="info-value">{{ item.remainingQuantity || 0 }}</text>
+              <text class="info-value">{{ formatDisplayQty(item.remainingQuantity, item.unitType, item.packQty) }}</text>
             </view>
           </view>
           <view class="info-line summary-line">
@@ -283,6 +283,31 @@ function formatDateRange(start, end) {
 function formatTime(time) {
   if (!time) return ''
   return String(time).substring(0, 16)
+}
+
+// 备货记录状态文本
+function getPrepareStatusText(status) {
+  const map = { '0': '待出库', '1': '部分出库', '2': '已完成', '3': '已取消' }
+  return map[String(status)] || '未知'
+}
+
+// 副单位数量转回显示单位（主单位时除以packQty）
+function formatDisplayQty(qty, unitType, packQty) {
+  const n = Number(qty) || 0
+  const pk = Number(packQty) || 1
+  if (String(unitType) === '1' && pk > 1) {
+    return n / pk
+  }
+  return n
+}
+// 副单位价转回显示价（主单位时乘以packQty）
+function formatDisplayPrice(price, unitType, packQty) {
+  const p = Number(price) || 0
+  const pk = Number(packQty) || 1
+  if (String(unitType) === '1' && pk > 1) {
+    return p * pk
+  }
+  return p
 }
 
 async function loadDetail() {
@@ -475,4 +500,17 @@ page { background-color: #F5F7FA; }
 .reject-input-box { background: #F7F8FA; border-radius: 12rpx; padding: 16rpx 20rpx; margin-bottom: 24rpx; }
 .reject-textarea { width: 100%; min-height: 160rpx; font-size: 28rpx; color: #1D2129; line-height: 1.6; }
 .reject-actions { display: flex; gap: 20rpx; .u-button { flex: 1; } }
+
+/* 备货记录状态 tag */
+.prepare-status-tag {
+  display: inline-block;
+  padding: 2rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+.prepare-status-tag.status-0 { background: #FFF7E8; color: #FF7D00; }
+.prepare-status-tag.status-1 { background: #E8F3FF; color: #3D6DF7; }
+.prepare-status-tag.status-2 { background: #E8FFEA; color: #00B42A; }
+.prepare-status-tag.status-3 { background: #FFECE8; color: #F53F3F; }
 </style>

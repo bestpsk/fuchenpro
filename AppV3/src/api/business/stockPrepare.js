@@ -71,3 +71,8 @@ export function batchCreateFromOrder(orderIds) {
 export function cancelPrepare(prepareId) {
   return request({ url: '/business/stockPrepare/cancel', method: 'put', data: { prepareId } })
 }
+
+// 删除备货（仅已取消状态可删除）
+export function deleteStockPrepare(prepareId) {
+  return request({ url: '/business/stockPrepare/' + prepareId, method: 'delete' })
+}

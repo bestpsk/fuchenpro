@@ -885,9 +885,11 @@ page {
   background: #fff;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
   z-index: 10;
+  display: flex;
+  gap: 20rpx;
 
   .u-button {
-    width: 100%;
+    flex: 1;
   }
 }
 

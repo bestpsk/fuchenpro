@@ -161,4 +161,15 @@ class BizStockPrepareController
         $result = $service->cancelPrepare($prepareId, $request->loginUser);
         return $result['success'] ? AjaxResult::success($result['msg']) : AjaxResult::error($result['msg']);
     }
+
+    // 删除备货（仅已取消状态可删除）
+    public function delete(Request $request)
+    {
+        $parts = explode('/', $request->path());
+        $prepareId = intval(end($parts));
+        if (!$prepareId) return AjaxResult::error('缺少备货ID');
+        $service = new BizStockPrepareService();
+        $result = $service->deletePrepareByIds([$prepareId]);
+        return $result['success'] ? AjaxResult::success($result['msg']) : AjaxResult::error($result['msg']);
+    }
 }

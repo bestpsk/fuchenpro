@@ -160,10 +160,22 @@ class BizPlanService
 
         foreach ($items as $item) {
             $item['plan_id'] = $planId;
-            $item['remaining_quantity'] = $item['quantity'] ?? 0;
+            $unitType = $item['unit_type'] ?? ($item['unitType'] ?? '1');
+            $packQty = intval($item['pack_qty'] ?? ($item['packQty'] ?? 1));
+            $quantity = intval($item['quantity'] ?? 0);
+            $salePrice = floatval($item['sale_price'] ?? ($item['salePrice'] ?? 0));
+
+            // 统一转为副单位（最小单位）存储，与备货/出库逻辑一致
+            if ($unitType === '1' && $packQty > 1) {
+                $quantity = $quantity * $packQty;
+                $salePrice = $salePrice / $packQty;
+            }
+            $item['quantity'] = $quantity;
+            $item['sale_price'] = $salePrice;
+            $item['remaining_quantity'] = $quantity;
             $item['shipped_quantity'] = 0;
             if (isset($item['amount']) === false) {
-                $item['amount'] = bcmul($item['quantity'] ?? 0, $item['sale_price'] ?? 0, 2);
+                $item['amount'] = bcmul($quantity, $salePrice, 2);
             }
             BizPlanItem::create($item);
         }

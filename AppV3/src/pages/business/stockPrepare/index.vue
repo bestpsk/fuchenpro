@@ -205,6 +205,10 @@
                 <u-icon name="close" size="14" color="#f56c6c"></u-icon>
                 <text style="color: #f56c6c">取消</text>
               </view>
+              <view v-if="item.status === '3'" class="action-btn delete" @click.stop="handleDelete(item)">
+                <u-icon name="trash" size="14" color="#f56c6c"></u-icon>
+                <text style="color: #f56c6c">删除</text>
+              </view>
             </view>
           </view>
         </view>
@@ -235,7 +239,7 @@
  * 分页加载、下拉刷新、跳转详情
  */
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
-import { listStockPrepare, cancelPrepare } from '@/api/business/stockPrepare'
+import { listStockPrepare, cancelPrepare, deleteStockPrepare } from '@/api/business/stockPrepare'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
 import { checkPermi } from '@/utils/permission'
@@ -500,6 +504,27 @@ function handleCancel(item) {
         getList(true)
       } catch (e) {
         uni.showToast({ title: e.message || '取消失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
+      }
+    }
+  })
+}
+
+/** 删除备货（仅已取消状态可删除） */
+function handleDelete(item) {
+  uni.showModal({
+    title: '确认删除',
+    content: '删除后不可恢复，确认删除该备货单吗？',
+    success: async (res) => {
+      if (!res.confirm) return
+      try {
+        uni.showLoading({ title: '删除中...' })
+        await deleteStockPrepare(item.prepareId)
+        uni.showToast({ title: '删除成功', icon: 'success' })
+        getList(true)
+      } catch (e) {
+        uni.showToast({ title: e.message || '删除失败', icon: 'none' })
       } finally {
         uni.hideLoading()
       }

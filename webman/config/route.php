@@ -238,6 +238,7 @@ Route::post('/business/stockPrepare/createStockOut', [app\controller\business\Bi
 Route::post('/business/stockPrepare/createFromPlan', [app\controller\business\BizStockPrepareController::class, 'createFromPlan']);
 Route::post('/business/stockPrepare/export', [app\controller\business\BizStockPrepareController::class, 'export']);
 Route::put('/business/stockPrepare/cancel', [app\controller\business\BizStockPrepareController::class, 'cancel']);
+Route::delete('/business/stockPrepare/{prepareId}', [app\controller\business\BizStockPrepareController::class, 'delete']);
 
 Route::get('/business/archive/list', [app\controller\business\BizCustomerArchiveController::class, 'list']);
 Route::post('/business/archive/add', [app\controller\business\BizCustomerArchiveController::class, 'add']);

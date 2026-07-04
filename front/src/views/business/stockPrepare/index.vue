@@ -97,11 +97,12 @@
           <dict-tag :options="biz_stock_prepare_status" :value="scope.row.status" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" align="center">
+      <el-table-column label="操作" width="240" align="center">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleDetail(scope.row)">详情</el-button>
           <el-button link type="primary" icon="Sell" @click="handleStockOut(scope.row)" v-if="scope.row.status !== '2' && scope.row.status !== '3'" v-hasPermi="['business:stockPrepare:createStockOut']">出库</el-button>
           <el-button link type="danger" icon="CircleClose" @click="handleCancel(scope.row)" v-if="scope.row.status === '0'">取消</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-if="scope.row.status === '3'" v-hasPermi="['business:stockPrepare:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -392,7 +393,7 @@
 </template>
 
 <script setup name="BusinessStockPrepare">
-import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount, orderListForPrepare, createFromOrder, batchCreateFromOrder, cancelPrepare } from "@/api/business/stockPrepare"
+import { listStockPrepare, getStockPrepare, createStockOutFromPrepare, createFromPlan, getActivePreparedAmount, orderListForPrepare, createFromOrder, batchCreateFromOrder, cancelPrepare, deleteStockPrepare } from "@/api/business/stockPrepare"
 import { searchEnterprise } from "@/api/business/enterprise"
 import { searchStore } from "@/api/business/store"
 import { listPlan, getPlan } from "@/api/business/plan"
@@ -658,6 +659,15 @@ function handleCancel(row) {
   proxy.$modal.confirm('确认取消备货单「' + row.prepareNo + '」吗？取消后可重新备货。').then(() => {
     cancelPrepare(row.prepareId).then(() => {
       proxy.$modal.msgSuccess('取消成功')
+      getList()
+    })
+  }).catch(() => {})
+}
+
+function handleDelete(row) {
+  proxy.$modal.confirm('确认删除备货单「' + row.prepareNo + '」吗？删除后不可恢复。').then(() => {
+    deleteStockPrepare(row.prepareId).then(() => {
+      proxy.$modal.msgSuccess('删除成功')
       getList()
     })
   }).catch(() => {})

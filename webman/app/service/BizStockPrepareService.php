@@ -858,13 +858,8 @@ class BizStockPrepareService
                 if (!$planItem || $planItem->plan_id != $planId) {
                     throw new \Exception('方案明细不存在或不属于该方案');
                 }
-                // 方案明细 remaining_quantity 换算成副单位（最小单位）比较
-                $planItemPackQty = intval($planItem->pack_qty ?? 1);
-                $planItemUnitType = $planItem->unit_type ?? '1';
+                // 方案明细 remaining_quantity 现在已是副单位（最小单位），直接比较
                 $planItemRemaining = intval($planItem->remaining_quantity);
-                if ($planItemUnitType === '1' && $planItemPackQty > 1) {
-                    $planItemRemaining = $planItemRemaining * $planItemPackQty;
-                }
                 if ($quantity > $planItemRemaining) {
                     throw new \Exception('备货数量超过方案明细剩余数量：' . $product->product_name);
                 }
@@ -978,5 +973,23 @@ class BizStockPrepareService
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '取消成功'];
+    }
+
+    // 删除备货（仅已取消状态 status='3' 可删除）
+    public function deletePrepareByIds($prepareIds)
+    {
+        if (empty($prepareIds)) return ['success' => false, 'msg' => '缺少备货ID'];
+        $preparing = BizStockPrepare::whereIn('prepare_id', $prepareIds)->get();
+        foreach ($preparing as $p) {
+            if ($p->status !== '3') {
+                return ['success' => false, 'msg' => '只有已取消的备货才能删除（备货编号：' . $p->prepare_no . '）'];
+            }
+        }
+        Db::transaction(function () use ($prepareIds) {
+            BizStockPrepareItem::whereIn('prepare_id', $prepareIds)->delete();
+            Db::table('biz_stock_prepare_order')->whereIn('prepare_id', $prepareIds)->delete();
+            BizStockPrepare::whereIn('prepare_id', $prepareIds)->delete();
+        });
+        return ['success' => true, 'msg' => '删除成功'];
     }
 }
