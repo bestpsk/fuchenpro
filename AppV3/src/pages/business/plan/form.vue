@@ -100,7 +100,7 @@
               <text class="item-label">单位</text>
               <text class="item-value">{{ item.unitType === '1' ? '主单位整' : '副单位拆' }}</text>
               <text class="item-label" style="margin-left: 20rpx;">数量</text>
-              <text class="item-value">{{ item.quantity || 0 }}</text>
+              <text class="item-value">{{ (item.quantity || 0) + (item.spec ? item.spec : '') }}</text>
             </view>
             <view class="item-info-row">
               <text class="item-label">单价</text>

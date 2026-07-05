@@ -135,6 +135,12 @@ class BizStockPrepareService
         if ($prepare->plan_id) {
             $plan = BizPlan::where('plan_id', $prepare->plan_id)->first();
             $prepare->planName = $plan ? $plan->plan_name : '';
+            if ($plan) {
+                $prepare->giftAmount = $plan->gift_amount;
+                $prepare->shippedAmount = $plan->shipped_amount;
+                $prepare->planAmount = $plan->plan_amount;
+                $prepare->remainingAmount = $plan->remaining_amount;
+            }
         }
 
         // 补全items字段

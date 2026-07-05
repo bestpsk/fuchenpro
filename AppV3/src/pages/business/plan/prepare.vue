@@ -31,7 +31,7 @@
     <view class="form-section">
       <view class="section-header">
         <view class="section-title">备货明细</view>
-        <view class="add-item-btn" v-if="!hasPlanItems" @click="openAddProduct">
+        <view class="add-item-btn" @click="openAddProduct">
           <u-icon name="plus" size="14" color="#3D6DF7"></u-icon>
           <text>添加货品</text>
         </view>
@@ -47,10 +47,11 @@
           </view>
           <view class="item-body">
             <view class="item-info-row">
-              <text class="item-label">规格</text>
-              <text class="item-value">{{ item.spec || '-' }}</text>
-              <text class="item-label" style="margin-left: 20rpx;">单位</text>
-              <text class="item-value">{{ getUnitTypeLabel(item) }}</text>
+              <view class="unit-type-switch">
+                <view class="unit-type-btn" :class="{ active: item.unitType === '1' }" @click="changeUnitType(index, '1')">主单位(整)</view>
+                <view class="unit-type-btn" :class="{ active: item.unitType === '2' }" @click="changeUnitType(index, '2')">副单位(拆)</view>
+              </view>
+              <text v-if="item.packQty > 1" class="conversion-text" style="margin-left: 20rpx;">1主={{ item.packQty }}副</text>
             </view>
             <view class="item-info-row item-row-between">
               <view class="item-left">
@@ -59,12 +60,12 @@
               </view>
               <view class="item-right">
                 <text class="item-label">方案剩余</text>
-                <text class="item-value">{{ item.maxQuantity || 0 }}</text>
+                <text class="item-value">{{ formatRemainingQuantity(item) }}</text>
               </view>
             </view>
             <view class="item-info-row item-row-between">
               <view class="item-left">
-                <text class="item-label">数量</text>
+                <text class="item-label">数量({{ getCurrentUnitName(item) }})</text>
                 <view class="quantity-control">
                   <view class="qty-btn" @click="changeQuantity(index, -1)"><u-icon name="minus" size="12" color="#86909C"></u-icon></view>
                   <input class="qty-input" type="number" v-model.number="item.quantity" @input="onItemChange(index)" />
@@ -131,6 +132,11 @@ import { onShow } from '@dcloudio/uni-app'
 import { getPlan } from '@/api/business/plan'
 import { createFromPlan, getActivePreparedAmount } from '@/api/business/stockPrepare'
 import { listProduct } from '@/api/wms/product'
+
+// 单位字典映射（与 form.vue 保持一致）
+const unitMap = { '1': '箱', '2': '件', '3': '套', '4': '罐', '5': '盒', '6': '袋', '7': '包' }
+const specMap = { '1': '支', '2': '瓶', '3': '件', '4': '套', '5': '片', '6': '个' }
+
 const submitting = ref(false)
 const planId = ref(null)
 const planInfo = ref({})
@@ -166,30 +172,146 @@ function formatAmount(val) {
   return num.toFixed(2)
 }
 
-function getUnitTypeLabel(item) {
-  if (item.unitType === '1') {
-    return '整'
-  } else {
-    return '拆'
+// 获取当前单位类型对应的单位名称（用于数量标签显示）
+function getCurrentUnitName(item) {
+  return String(item.unitType) === '1' ? getMainUnitName(item) : getSecondaryUnitName(item)
+}
+
+// 计算明细金额
+function calcItemAmount(index) {
+  const item = form.items[index]
+  const qty = parseFloat(item.quantity) || 0
+  const price = parseFloat(item.salePrice) || 0
+  item.amount = Math.round(qty * price * 100) / 100
+}
+
+// 切换单位类型
+function changeUnitType(index, type) {
+  const item = form.items[index]
+  if (String(item.unitType) === String(type)) return
+  item.unitType = String(type)
+  onUnitTypeChange(index)
+}
+
+// 单位类型切换处理：转换数量与出货价
+function onUnitTypeChange(index) {
+  const item = form.items[index]
+  const packQty = Number(item.packQty) || 1
+  const newType = String(item.unitType)
+  const oldType = item._prevUnitType
+
+  if (!oldType || newType === oldType) {
+    item._prevUnitType = newType
+    return
   }
+
+  const currentQty = Number(item.quantity) || 0
+  const currentSalePrice = Number(item.salePrice) || 0
+
+  // 若已有备份（切换回原单位），直接还原
+  if (item._prevQuantity !== undefined && item._prevSalePrice !== undefined) {
+    const tempQty = currentQty
+    const tempSalePrice = currentSalePrice
+    item.quantity = item._prevQuantity
+    item.salePrice = item._prevSalePrice
+    item._prevQuantity = tempQty
+    item._prevSalePrice = tempSalePrice
+  } else {
+    // 首次切换，按 packQty 转换
+    if (newType === '1') {
+      // 副 → 主: quantity / packQty, salePrice * packQty
+      item.quantity = packQty > 0 ? Math.round(currentQty / packQty * 10000) / 10000 : 0
+      item.salePrice = Math.round(currentSalePrice * packQty * 100) / 100
+    } else {
+      // 主 → 副: quantity * packQty, salePrice / packQty
+      item.quantity = Math.round(currentQty * packQty * 10000) / 10000
+      item.salePrice = packQty > 0 ? Math.round(currentSalePrice / packQty * 100) / 100 : 0
+    }
+    item._prevQuantity = currentQty
+    item._prevSalePrice = currentSalePrice
+  }
+
+  // 同步更新 displayMaxQuantity（用于数量校验上限）
+  item.displayMaxQuantity = newType === '1'
+    ? (packQty > 0 ? Math.round((item.maxQuantity || 0) / packQty * 10000) / 10000 : 0)
+    : (item.maxQuantity || 0)
+
+  // 同步更新 spec 显示
+  item.spec = newType === '1' ? getMainUnitName(item) : getSecondaryUnitName(item)
+
+  item._prevUnitType = newType
+  calcItemAmount(index)
+}
+
+// 获取主单位名称（如"盒"）
+function getMainUnitName(item) {
+  // 优先用 product.unit 字典 key 解析
+  if (item.productUnit) {
+    return unitMap[item.productUnit] || item.productUnit
+  }
+  // 兜底：unitType='1' 时 item.spec 即主单位名
+  if (String(item.unitType) === '1') {
+    return item.spec || ''
+  }
+  return ''
+}
+
+// 获取副单位名称（如"支"）
+function getSecondaryUnitName(item) {
+  // 优先用 product.spec 字典 key 解析
+  if (item.productSpec) {
+    return specMap[item.productSpec] || item.productSpec
+  }
+  // 兜底：unitType='2' 时 item.spec 即副单位名
+  if (String(item.unitType) === '2') {
+    return item.spec || ''
+  }
+  return ''
+}
+
+// 格式化方案剩余数量：主单位时显示 "2盒（20支）"，副单位时显示 "20支"
+function formatRemainingQuantity(item) {
+  const qty = Number(item.maxQuantity) || 0
+  const packQty = Number(item.packQty) || 1
+  const unitType = String(item.unitType)
+  const mainUnit = getMainUnitName(item)
+  const secondaryUnit = getSecondaryUnitName(item)
+
+  // 无换算或无副单位名：仅显示数量+当前单位
+  if (packQty <= 1 || !mainUnit || !secondaryUnit) {
+    const unit = unitType === '1' ? mainUnit : secondaryUnit
+    return qty + (unit ? unit : '')
+  }
+
+  // 主单位（整）：显示 "主数量+主单位（副数量+副单位）"
+  if (unitType === '1') {
+    const mainQty = qty / packQty
+    const mainQtyStr = Number.isInteger(mainQty) ? mainQty : mainQty.toFixed(2)
+    return `${mainQtyStr}${mainUnit}（${qty}${secondaryUnit}）`
+  }
+
+  // 副单位（拆）：显示 "副数量+副单位"
+  return `${qty}${secondaryUnit}`
 }
 
 function onItemChange(index) {
   const item = form.items[index]
-  let qty = parseInt(item.quantity) || 0
+  let qty = parseFloat(item.quantity) || 0
   if (qty < 0) qty = 0
-  if (item.maxQuantity && qty > item.maxQuantity) qty = item.maxQuantity
+  const maxQty = Number(item.displayMaxQuantity) || 0
+  if (maxQty > 0 && qty > maxQty) qty = maxQty
   item.quantity = qty
-  item.amount = (parseFloat(item.salePrice) || 0) * qty
+  calcItemAmount(index)
 }
 
 function changeQuantity(index, delta) {
   const item = form.items[index]
-  let qty = (parseInt(item.quantity) || 0) + delta
+  let qty = (parseFloat(item.quantity) || 0) + delta
   if (qty < 0) qty = 0
-  if (item.maxQuantity && qty > item.maxQuantity) qty = item.maxQuantity
+  const maxQty = Number(item.displayMaxQuantity) || 0
+  if (maxQty > 0 && qty > maxQty) qty = maxQty
   item.quantity = qty
-  onItemChange(index)
+  calcItemAmount(index)
 }
 
 function removeItem(index) {
@@ -225,18 +347,27 @@ function selectProduct(p) {
     uni.showToast({ title: '该货品已添加', icon: 'none' })
     return
   }
+  const productUnit = p.unit
+  const productSpec = p.spec
+  const mainUnitName = unitMap[productUnit] || productUnit || ''
   form.items.push({
     productId: p.productId,
     productName: p.productName,
     supplierId: p.supplierId,
     supplierName: p.supplierName || '',
     unitType: '1',
+    _prevUnitType: '1',
+    _prevQuantity: undefined,
+    _prevSalePrice: undefined,
     packQty: p.packQty || 1,
-    spec: p.spec || '',
+    spec: mainUnitName,
     salePrice: p.salePrice || 0,
+    productUnit: productUnit,
+    productSpec: productSpec,
     quantity: 0,
     maxQuantity: 0,
-    amount: parseFloat(p.salePrice) || 0,
+    displayMaxQuantity: 0,
+    amount: 0,
     planItemId: undefined
   })
   showProductPicker.value = false
@@ -251,20 +382,43 @@ async function loadPlanDetail() {
     planInfo.value = data
 
     if (data.items && data.items.length > 0) {
-      form.items = data.items.filter(item => item.remainingQuantity > 0).map(item => ({
-        planItemId: item.itemId,
-        productId: item.productId,
-        productName: item.productName,
-        supplierId: item.supplierId,
-        supplierName: item.supplierName,
-        unitType: item.unitType,
-        packQty: item.packQty,
-        spec: item.spec,
-        salePrice: item.salePrice,
-        quantity: 0,
-        maxQuantity: item.remainingQuantity,
-        amount: parseFloat(item.salePrice) || 0
-      }))
+      form.items = data.items.filter(item => item.remainingQuantity > 0).map(item => {
+        const unitType = String(item.unitType || '1')
+        const packQty = Number(item.packQty) || 1
+        const maxQuantity = Number(item.remainingQuantity) || 0
+        // 后端 biz_plan_item.sale_price 恒为副单位价（由 BizPlanService::syncPlanItems 统一归一化）
+        const backendSalePrice = Number(item.salePrice) || 0
+        // 主单位价：packQty>1 时 = 后端价 * packQty；否则 = 后端价
+        const mainPrice = packQty > 1
+          ? Math.round(backendSalePrice * packQty * 100) / 100
+          : backendSalePrice
+        // 按当前单位类型决定显示价
+        const displayPrice = unitType === '1' ? mainPrice : backendSalePrice
+        // 根据单位类型计算显示用最大数量
+        const displayMaxQuantity = unitType === '1' && packQty > 1
+          ? Math.round(maxQuantity / packQty * 10000) / 10000
+          : maxQuantity
+        return {
+          planItemId: item.itemId,
+          productId: item.productId,
+          productName: item.productName,
+          supplierId: item.supplierId,
+          supplierName: item.supplierName,
+          unitType: unitType,
+          _prevUnitType: unitType,
+          _prevQuantity: undefined,
+          _prevSalePrice: undefined,
+          packQty: packQty,
+          spec: item.spec,
+          salePrice: displayPrice,
+          productUnit: item.product?.unit,
+          productSpec: item.product?.spec,
+          quantity: 0,
+          maxQuantity: maxQuantity,
+          displayMaxQuantity: displayMaxQuantity,
+          amount: 0
+        }
+      })
     }
 
     await loadActiveAmount()
@@ -308,7 +462,7 @@ async function submitForm() {
       spec: item.spec,
       unitType: item.unitType,
       salePrice: parseFloat(item.salePrice) || 0,
-      quantity: parseInt(item.quantity) || 0
+      quantity: parseFloat(item.quantity) || 0
     }))
     await createFromPlan(planId.value, items)
     uni.showToast({ title: '备货成功，已自动创建出库单', icon: 'success' })
@@ -380,6 +534,12 @@ page { background-color: #F5F7FA; }
 .quantity-control { display: flex; align-items: center; gap: 4rpx; }
 .qty-btn { width: 48rpx; height: 48rpx; display: flex; align-items: center; justify-content: center; background: #F2F3F5; border-radius: 8rpx; }
 .qty-input { width: 80rpx; text-align: center; font-size: 26rpx; color: #1D2129; height: 48rpx; line-height: 48rpx; background: #fff; border-radius: 8rpx; }
+
+.unit-type-switch { display: flex; background: #F2F3F5; border-radius: 12rpx; overflow: hidden; height: 60rpx; flex: 1; max-width: 320rpx; }
+.unit-type-btn { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 24rpx; color: #86909C; font-weight: 500; transition: all 0.2s;
+  &.active { background: #3D6DF7; color: #fff; border-radius: 12rpx; }
+}
+.conversion-text { font-size: 24rpx; color: #86909C; }
 
 .empty-items { padding: 40rpx 0; text-align: center; }
 .empty-text { font-size: 26rpx; color: #C9CDD4; }

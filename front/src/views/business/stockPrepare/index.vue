@@ -110,10 +110,6 @@
     <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <el-dialog title="备货详情" v-model="detailOpen" width="1400px" append-to-body>
-      <el-descriptions v-if="detailData.planId" :column="2" border size="small" style="margin-bottom: 16px;">
-        <el-descriptions-item label="方案编号">{{ detailData.planNo }}</el-descriptions-item>
-        <el-descriptions-item label="方案名称">{{ detailData.planName }}</el-descriptions-item>
-      </el-descriptions>
       <el-tabs v-model="detailActiveTab">
         <el-tab-pane label="库存明细" name="items">
           <el-table :data="detailData.items" border size="small">
@@ -156,8 +152,16 @@
             <el-table-column label="待出库金额" prop="remainingAmount" min-width="100" align="right" />
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="关联订单" name="orders">
-          <el-table :data="detailData.orders" border size="small">
+        <el-tab-pane :label="detailData.planId ? '关联方案' : '关联订单'" name="orders">
+          <el-descriptions v-if="detailData.planId" :column="2" border size="small">
+            <el-descriptions-item label="方案编号">{{ detailData.planNo }}</el-descriptions-item>
+            <el-descriptions-item label="方案名称">{{ detailData.planName }}</el-descriptions-item>
+            <el-descriptions-item label="方案金额">¥{{ detailData.planAmount || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="配赠金额">¥{{ detailData.giftAmount || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="已出库金额">¥{{ detailData.shippedAmount || 0 }}</el-descriptions-item>
+            <el-descriptions-item label="剩余可备金额">¥{{ detailData.remainingAmount || 0 }}</el-descriptions-item>
+          </el-descriptions>
+          <el-table v-else :data="detailData.orders" border size="small">
             <el-table-column label="订单编号" prop="orderNo" min-width="160" />
             <el-table-column label="类别" prop="sourceType" min-width="80" align="center">
               <template #default="scope">
@@ -276,13 +280,32 @@
       <div v-if="stockPrepareItems.length > 0">
         <el-table :data="stockPrepareItems" border size="small">
           <el-table-column label="货品名称" prop="productName" min-width="120" />
-          <el-table-column label="规格" prop="spec" min-width="80" align="center" />
-          <el-table-column label="单位" prop="unitLabel" min-width="80" align="center" />
+          <el-table-column label="单位类型" min-width="120">
+            <template #default="scope">
+              <el-select v-model="scope.row.unitType" @change="onStockPreparePlanUnitTypeChange(scope.$index)" style="width: 100%">
+                <el-option label="主单位(整)" value="1" />
+                <el-option label="副单位(拆)" value="2" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column label="换算/剩余" min-width="160" align="center">
+            <template #default="scope">
+              <div v-if="scope.row.packQty > 1" style="color: #909399; font-size: 12px;">
+                <div>1{{ getUnitLabel(scope.row.unit) }}={{ scope.row.packQty }}{{ getSpecLabel(scope.row.specKey) }}</div>
+                <div style="color: #67c23a;">剩余: {{ formatRemainingDisplay(scope.row) }}</div>
+              </div>
+              <div v-else style="color: #67c23a; font-size: 12px;">剩余: {{ scope.row.remainingQuantity }}{{ getSpecLabel(scope.row.specKey) }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column label="规格" min-width="80" align="center">
+            <template #default="scope">
+              <span>{{ scope.row.unitType === '1' ? getUnitLabel(scope.row.unit) : getSpecLabel(scope.row.specKey) }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="出货价" prop="salePrice" min-width="90" align="right" />
-          <el-table-column label="方案剩余数量" prop="remainingQuantity" min-width="110" align="center" />
           <el-table-column label="本次备货数量" min-width="140" align="center">
             <template #default="scope">
-              <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.remainingQuantity" controls-position="right" size="small" style="width: 120px" @change="onStockPrepareQuantityChange" />
+              <el-input-number v-model="scope.row.quantity" :min="0" :max="scope.row.displayMaxQuantity" controls-position="right" size="small" style="width: 120px" @change="onStockPrepareQuantityChange" />
             </template>
           </el-table-column>
           <el-table-column label="总价" min-width="100" align="right">
@@ -292,7 +315,7 @@
           </el-table-column>
         </el-table>
       </div>
-      <div v-else-if="stockPreparePlanId">
+      <div v-if="stockPreparePlanId" style="margin-top: 16px;">
         <el-button type="primary" icon="Plus" @click="addStockPrepareManualItem">添加货品</el-button>
         <el-table :data="stockPrepareManualItems" border size="small" style="margin-top: 10px" v-if="stockPrepareManualItems.length > 0">
           <el-table-column label="货品名称" min-width="130">
@@ -444,10 +467,9 @@ const planQueryParams = reactive({
 const productOptions = ref([])
 
 const stockPrepareTotalAmount = computed(() => {
-  if (stockPrepareItems.value.length > 0) {
-    return stockPrepareItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
-  }
-  return stockPrepareManualItems.value.reduce((sum, item) => sum + (item.salePrice || 0) * (item.quantity || 0), 0)
+  const planAmount = stockPrepareItems.value.reduce((sum, item) => sum + (parseFloat(item.salePrice) || 0) * (parseFloat(item.quantity) || 0), 0)
+  const manualAmount = stockPrepareManualItems.value.reduce((sum, item) => sum + (parseFloat(item.salePrice) || 0) * (parseFloat(item.quantity) || 0), 0)
+  return planAmount + manualAmount
 })
 
 const stockPrepareRemainingAmount = computed(() => {
@@ -801,16 +823,38 @@ function onPlanSelect(planId) {
     if (items.length > 0) {
       stockPrepareItems.value = items
         .filter(item => (item.remainingQuantity || 0) > 0)
-        .map(item => ({
-          planItemId: item.planItemId,
-          productId: item.productId,
-          productName: item.productName,
-          spec: item.spec,
-          unitLabel: item.unitType === '1' ? '主单位整' : '副单位拆',
-          salePrice: item.salePrice,
-          remainingQuantity: item.remainingQuantity,
-          quantity: 0
-        }))
+        .map(item => {
+          const unitType = String(item.unitType || '1')
+          const packQty = Number(item.packQty) || 1
+          const remainingQuantity = Number(item.remainingQuantity) || 0
+          // 后端 biz_plan_item.sale_price 恒为副单位价（由 BizPlanService::syncPlanItems 统一归一化）
+          const backendSalePrice = Number(item.salePrice) || 0
+          // 主单位价：packQty>1 时 = 后端价 * packQty；否则 = 后端价
+          const mainPrice = packQty > 1
+            ? Math.round(backendSalePrice * packQty * 100) / 100
+            : backendSalePrice
+          // 按当前单位类型决定显示价
+          const displayPrice = unitType === '1' ? mainPrice : backendSalePrice
+          // 根据单位类型计算显示用最大数量
+          const displayMaxQuantity = unitType === '1' && packQty > 1
+            ? Math.floor(remainingQuantity / packQty)
+            : remainingQuantity
+          return {
+            planItemId: item.planItemId,
+            productId: item.productId,
+            productName: item.productName,
+            unitType: unitType,
+            packQty: packQty,
+            unit: item.product?.unit,
+            specKey: item.product?.spec,
+            spec: item.spec,
+            salePrice: displayPrice,
+            _mainPrice: mainPrice,
+            remainingQuantity: remainingQuantity,
+            displayMaxQuantity: displayMaxQuantity,
+            quantity: 0
+          }
+        })
       stockPrepareManualItems.value = []
     } else {
       stockPrepareItems.value = []
@@ -874,6 +918,39 @@ function onStockPrepareQuantityChange() {
   }
 }
 
+// 方案明细切换单位类型：转换出货价与显示最大数量
+function onStockPreparePlanUnitTypeChange(index) {
+  const item = stockPrepareItems.value[index]
+  const packQty = item.packQty || 1
+  if (item.unitType === '1') {
+    // 切换到主单位：还原主单位价，最大数量为 remainingQuantity / packQty
+    item.salePrice = item._mainPrice || 0
+    item.displayMaxQuantity = packQty > 1 ? Math.floor(item.remainingQuantity / packQty) : item.remainingQuantity
+  } else {
+    // 切换到副单位：计算副单位价，最大数量为 remainingQuantity
+    const subPrice = item._mainPrice && packQty > 0 ? Math.round((item._mainPrice / packQty) * 100) / 100 : item.salePrice
+    item.salePrice = subPrice
+    item.displayMaxQuantity = item.remainingQuantity
+  }
+  // 数量超出新上限时重置为 0
+  if (Number(item.quantity) > Number(item.displayMaxQuantity)) {
+    item.quantity = 0
+  }
+  onStockPrepareQuantityChange()
+}
+
+// 格式化方案剩余数量显示
+function formatRemainingDisplay(row) {
+  const packQty = row.packQty || 1
+  const unitLabel = getUnitLabel(row.unit)
+  const specLabel = getSpecLabel(row.specKey)
+  if (row.unitType === '1' && packQty > 1 && unitLabel && specLabel) {
+    const mainQty = Math.floor(row.remainingQuantity / packQty)
+    return mainQty + unitLabel + '（' + row.remainingQuantity + specLabel + '）'
+  }
+  return row.remainingQuantity + (specLabel || unitLabel || '')
+}
+
 function addStockPrepareManualItem() {
   stockPrepareManualItems.value.push({
     productId: '',
@@ -886,7 +963,7 @@ function addStockPrepareManualItem() {
 }
 
 function submitStockPrepare() {
-  const items = stockPrepareItems.value.length > 0 ? stockPrepareItems.value : stockPrepareManualItems.value
+  const items = [...stockPrepareItems.value, ...stockPrepareManualItems.value]
   const validItems = items.filter(item => item.quantity > 0)
   if (validItems.length === 0) {
     proxy.$modal.msgWarning('请至少选择一个货品且数量大于0')
