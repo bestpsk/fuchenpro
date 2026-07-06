@@ -61,7 +61,7 @@
           :class="{ active: activeTab === 'orders' }"
           @click="activeTab = 'orders'"
         >
-          <text>关联订单</text>
+          <text>{{ prepareInfo.planId ? '关联方案' : '关联订单' }}</text>
         </view>
       </view>
 
@@ -122,29 +122,71 @@
       </view>
 
       <view v-if="activeTab === 'orders'" class="tab-content">
-        <view v-if="orderList.length > 0" class="order-list">
-          <view v-for="(order, idx) in orderList" :key="order.orderId" class="order-card">
-            <view class="order-header">
-              <text class="order-no">{{ order.orderNo || '-' }}</text>
-              <view class="order-status-tag" :class="getOrderStatusClass(order.orderStatus)">
-                {{ getOrderStatusName(order.orderStatus) }}
-              </view>
+        <!-- 方案备货：显示方案详细信息 -->
+        <view v-if="prepareInfo.planId" class="plan-info-card">
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">方案编号</text>
+              <text class="info-value">{{ prepareInfo.planNo || '-' }}</text>
             </view>
-            <view class="order-body">
-              <view class="info-line">
-                <view class="info-left">
-                  <text class="info-label">客户</text>
-                  <text class="info-value">{{ order.customerName || '-' }}</text>
+          </view>
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">方案名称</text>
+              <text class="info-value">{{ prepareInfo.planName || '-' }}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">方案金额</text>
+              <text class="info-value amount">¥{{ formatAmount(prepareInfo.planAmount) }}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">配赠金额</text>
+              <text class="info-value amount">¥{{ formatAmount(prepareInfo.giftAmount) }}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">已出库金额</text>
+              <text class="info-value amount">¥{{ formatAmount(prepareInfo.shippedAmount) }}</text>
+            </view>
+          </view>
+          <view class="info-line">
+            <view class="info-left">
+              <text class="info-label">剩余可备金额</text>
+              <text class="info-value amount">¥{{ formatAmount(prepareInfo.remainingAmount) }}</text>
+            </view>
+          </view>
+        </view>
+        <!-- 订单备货：显示关联订单列表 -->
+        <view v-else>
+          <view v-if="orderList.length > 0" class="order-list">
+            <view v-for="(order, idx) in orderList" :key="order.orderId" class="order-card">
+              <view class="order-header">
+                <text class="order-no">{{ order.orderNo || '-' }}</text>
+                <view class="order-status-tag" :class="getOrderStatusClass(order.orderStatus)">
+                  {{ getOrderStatusName(order.orderStatus) }}
                 </view>
-                <view class="info-right">
-                  <text class="info-label">金额</text>
-                  <text class="info-value amount">¥{{ order.dealAmount || '0' }}</text>
+              </view>
+              <view class="order-body">
+                <view class="info-line">
+                  <view class="info-left">
+                    <text class="info-label">客户</text>
+                    <text class="info-value">{{ order.customerName || '-' }}</text>
+                  </view>
+                  <view class="info-right">
+                    <text class="info-label">金额</text>
+                    <text class="info-value amount">¥{{ order.dealAmount || '0' }}</text>
+                  </view>
                 </view>
               </view>
             </view>
           </view>
+          <u-empty v-else mode="data" text="暂无关联订单" :marginTop="40"></u-empty>
         </view>
-        <u-empty v-else mode="data" text="暂无关联订单" :marginTop="40"></u-empty>
       </view>
     </view>
 
@@ -333,6 +375,12 @@ function getOrderStatusName(value) {
 function getOrderStatusClass(value) {
   const map = { '0': 'status-0', '1': 'status-1', '2': 'status-2', '3': 'status-3', '4': 'status-3' }
   return map[value] || 'status-0'
+}
+
+function formatAmount(val) {
+  const num = parseFloat(val)
+  if (isNaN(num)) return '0.00'
+  return num.toFixed(2)
 }
 
 function formatTime(time) {
@@ -823,6 +871,23 @@ page {
     &.convert {
       color: #86909C;
       font-size: 23rpx;
+    }
+  }
+}
+
+/* ========== 关联方案 ========== */
+.plan-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 20rpx;
+  background: #F5F7FA;
+  border-radius: 8rpx;
+
+  .info-line {
+    .info-value.amount {
+      color: #FF6B35;
+      font-weight: 600;
     }
   }
 }

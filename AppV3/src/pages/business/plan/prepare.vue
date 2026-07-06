@@ -99,7 +99,7 @@
           <view v-for="p in productOptions" :key="p.productId" class="picker-item" @click="selectProduct(p)">
             <view class="picker-item-info">
               <text class="picker-item-text">{{ p.productName }}</text>
-              <text class="picker-item-spec">{{ p.spec || '-' }}</text>
+              <text class="picker-item-spec">{{ formatProductConversion(p) }}</text>
             </view>
             <text class="picker-item-price">¥{{ formatAmount(p.salePrice) }}</text>
           </view>
@@ -170,6 +170,17 @@ function formatAmount(val) {
   const num = parseFloat(val)
   if (isNaN(num)) return '0.00'
   return num.toFixed(2)
+}
+
+// 格式化货品换算规则：1盒=10支
+function formatProductConversion(p) {
+  const packQty = Number(p.packQty) || 1
+  const mainUnit = unitMap[p.unit] || ''
+  const subUnit = specMap[p.spec] || ''
+  if (packQty > 1 && mainUnit && subUnit) {
+    return '1' + mainUnit + '=' + packQty + subUnit
+  }
+  return mainUnit || subUnit || '-'
 }
 
 // 获取当前单位类型对应的单位名称（用于数量标签显示）
