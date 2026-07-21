@@ -69,42 +69,6 @@ class BizAttendanceController
         return AjaxResult::success($clocks);
     }
 
-    // 上班打卡
-    public function clockIn(Request $request)
-    {
-        $user = $request->loginUser->user;
-        $data = convert_to_snake_case($request->post());
-        $data['user_id'] = $user->user_id;
-        $data['user_name'] = $user->nick_name ?? $user->user_name;
-
-        $service = new BizAttendanceRecordService();
-        $result = $service->clockIn($data);
-
-        if (isset($result['error'])) {
-            return AjaxResult::error($result['error']);
-        }
-
-        return AjaxResult::success('打卡成功', $result);
-    }
-
-    // 下班打卡
-    public function clockOut(Request $request)
-    {
-        $user = $request->loginUser->user;
-        $data = convert_to_snake_case($request->post());
-        $data['user_id'] = $user->user_id;
-        $data['user_name'] = $user->nick_name ?? $user->user_name;
-
-        $service = new BizAttendanceRecordService();
-        $result = $service->clockOut($data);
-
-        if (isset($result['error'])) {
-            return AjaxResult::error($result['error']);
-        }
-
-        return AjaxResult::success('打卡成功', $result);
-    }
-
     // 获取指定月份的考勤统计数据（出勤天数、迟到次数等）
     public function monthStats(Request $request)
     {

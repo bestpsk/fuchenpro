@@ -26,7 +26,7 @@ class FinPlanAuditController
         if (PermissionService::lacksPermi($request->loginUser, 'finance:planAudit:list')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $params = $request->all();
+        $params = convert_to_snake_case($request->all());
 
         $result = $this->service->selectPlanList($params);
 

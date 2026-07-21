@@ -41,24 +41,6 @@ export function getClockListByRecordId(recordId) {
 }
 
 /**
- * 上班打卡，记录上班时间和位置
- * @param {object} data - 打卡数据 { latitude, longitude, address }
- * @returns {Promise<object>} 打卡结果
- */
-export function clockIn(data) {
-  return request({ url: '/business/attendance/clockIn', method: 'post', data })
-}
-
-/**
- * 下班打卡，记录下班时间和位置
- * @param {object} data - 打卡数据 { latitude, longitude, address }
- * @returns {Promise<object>} 打卡结果
- */
-export function clockOut(data) {
-  return request({ url: '/business/attendance/clockOut', method: 'post', data })
-}
-
-/**
  * 获取月度考勤统计，包含出勤天数、迟到次数等汇总数据
  * @param {object} params - 查询参数 { yearMonth, enterpriseId, storeId }
  * @returns {Promise<object>} 月度统计数据
@@ -87,10 +69,11 @@ export function uploadAttendancePhoto(data) {
 
 /**
  * 获取当前用户的考勤规则，包括上下班时间、迟到阈值等配置
+ * @param {string} [clockType='0'] - 打卡类型(0坐班 1外勤)
  * @returns {Promise<object>} 用户考勤规则
  */
-export function getUserAttendanceRule() {
-  return request({ url: '/business/attendance/config/userRule', method: 'get' })
+export function getUserAttendanceRule(clockType = '0') {
+  return request({ url: '/business/attendance/config/userRule', method: 'get', params: { clock_type: clockType } })
 }
 
 export function listAttendanceConfig(params) {

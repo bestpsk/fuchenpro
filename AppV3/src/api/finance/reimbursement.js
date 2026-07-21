@@ -13,7 +13,7 @@ export function updateReimbursement(data) {
   return request({ url: '/finance/reimbursement', method: 'put', data })
 }
 export function delReimbursement(ids) {
-  return request({ url: '/finance/reimbursement', method: 'delete', data: { ids } })
+  return request({ url: '/finance/reimbursement', method: 'delete', params: { ids } })
 }
 export function auditReimbursement(data) {
   return request({ url: '/finance/reimbursement/audit', method: 'post', data })

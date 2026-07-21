@@ -44,7 +44,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="考勤规则" align="center" prop="rule.ruleName" min-width="120" />
+      <el-table-column label="考勤规则" align="center" min-width="160">
+        <template #default="scope">
+          <span>{{ scope.row.rule?.ruleName || '-' }}</span>
+          <el-tag v-if="scope.row.rule" :type="scope.row.rule.clockType === '1' ? 'warning' : 'primary'" size="small" style="margin-left: 6px;">
+            {{ scope.row.rule.clockType === '1' ? '外勤' : '坐班' }}
+          </el-tag>
+          <el-tag v-if="scope.row.rule && scope.row.rule.workMode === '1'" type="success" size="small" style="margin-left: 4px;">
+            弹性
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="关联用户" align="center" min-width="150">
         <template #default="scope">
           <template v-if="scope.row.configType === 1">
@@ -92,7 +102,7 @@
         </el-form-item>
         <el-form-item label="考勤规则" prop="ruleId">
           <el-select v-model="form.ruleId" placeholder="请选择考勤规则" style="width: 100%">
-            <el-option v-for="rule in ruleOptions" :key="rule.ruleId" :label="rule.ruleName" :value="rule.ruleId" />
+            <el-option v-for="rule in ruleOptions" :key="rule.ruleId" :label="rule.ruleName + (rule.clockType === '1' ? '（外勤）' : '（坐班）') + (rule.workMode === '1' ? '-弹性' : '')" :value="rule.ruleId" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="form.configType === 1" label="关联用户" prop="userIds">

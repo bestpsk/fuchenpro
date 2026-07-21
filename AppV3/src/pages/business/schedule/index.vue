@@ -275,6 +275,7 @@ import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
 import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
+import { getDicts } from '@/api/system/dict/data'
 import { checkPermi } from '@/utils/permission'
 
 // ==================== 通用 ====================
@@ -325,6 +326,24 @@ const statusOptions = ref([
   { label: '已完成', value: '3' },
   { label: '已取消', value: '4' }
 ])
+
+/** 动态加载行程目的和状态的字典数据，失败时保留硬编码兜底 */
+async function loadDictData() {
+  try {
+    const [purposeRes, statusRes] = await Promise.all([
+      getDicts('biz_schedule_purpose'),
+      getDicts('biz_schedule_status')
+    ])
+    const purposeData = (purposeRes.data || [])
+    const statusData = (statusRes.data || [])
+    if (purposeData.length > 0) {
+      purposeOptions.value = purposeData.map(p => ({ label: p.dictLabel, value: p.dictValue }))
+    }
+    if (statusData.length > 0) {
+      statusOptions.value = statusData.map(p => ({ label: p.dictLabel, value: p.dictValue }))
+    }
+  } catch (e) { console.error('加载字典数据失败:', e) }
+}
 
 function getPurposeName(value) {
   const item = purposeOptions.value.find(p => p.value === String(value))
@@ -675,8 +694,17 @@ async function onRestDateConfirm(e) {
 }
 
 // ==================== 初始化 ====================
-onMounted(() => { getList(true) })
-onShow(() => { getList(true) })
+onMounted(() => { loadDictData() })
+onShow(() => {
+  // 按当前 Tab 刷新对应数据，避免返回后列表不更新
+  if (currentTab.value === 0) {
+    getList(true)
+  } else if (currentTab.value === 1) {
+    getEnterpriseList()
+  } else if (currentTab.value === 2) {
+    queryConfig()
+  }
+})
 </script>
 
 <style lang="scss" scoped>

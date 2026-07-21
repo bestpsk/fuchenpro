@@ -251,11 +251,7 @@ async function getList(isRefresh = false) {
 
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.cardItemName = params.keyword
-      params.cardItemCode = params.keyword
-    }
-    delete params.keyword
+    // 保留 keyword 字段，由后端 BizCardItemService::selectCardItemList 对 cardItemName/cardItemCode 做 OR 匹配
 
     const response = await listCardItem(params)
     const data = response.data || response

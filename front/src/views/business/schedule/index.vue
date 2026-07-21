@@ -744,7 +744,16 @@ function handleEdit() {
 }
 
 function handleDelete() {
-  proxy.$modal.confirm('是否确认删除该行程？').then(() => delSchedule(currentSchedule.value.scheduleId)).then(() => {
+  // 按 userId+enterpriseId+purpose+status 找出同一行程的所有日期记录
+  const schedule = currentSchedule.value
+  const ids = scheduleListData.value.filter(item =>
+    item.userId === schedule.userId &&
+    item.enterpriseId === schedule.enterpriseId &&
+    item.purpose === schedule.purpose &&
+    String(item.status) === String(schedule.status)
+  ).map(item => item.scheduleId)
+
+  proxy.$modal.confirm(`是否确认删除该行程（共${ids.length}天）？`).then(() => delSchedule(ids.join(','))).then(() => {
     detailOpen.value = false
     getList()
     proxy.$modal.msgSuccess("删除成功")

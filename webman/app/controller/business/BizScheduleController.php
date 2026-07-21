@@ -95,6 +95,9 @@ class BizScheduleController
     // 批量新增行程
     public function addBatch(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $dataList = $request->post();
         $service = new BizScheduleService();
         
@@ -152,6 +155,9 @@ class BizScheduleController
     // 导出行程数据
     public function export(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:export')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $params['pageSize'] = 10000;

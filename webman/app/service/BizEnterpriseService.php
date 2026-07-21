@@ -41,6 +41,9 @@ class BizEnterpriseService
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
         }
+        if (isset($params['contract_status']) && $params['contract_status'] !== '') {
+            $query->where('contract_status', $params['contract_status']);
+        }
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);

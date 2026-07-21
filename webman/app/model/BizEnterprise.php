@@ -17,6 +17,7 @@ class BizEnterprise extends Model
         'enterprise_name', 'pinyin', 'boss_name', 'phone', 'address', 'enterprise_type',
         'store_count', 'annual_performance', 'enterprise_level', 'server_user_id',
         'server_user_name', 'cooperation_start_date', 'cooperation_end_date',
+        'contract_status', 'contract_files',
         'status', 'remark', 'create_by', 'create_time',
         'update_by', 'update_time'
     ];

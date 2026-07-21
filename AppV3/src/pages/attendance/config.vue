@@ -31,7 +31,15 @@
         </view>
         <view class="card-row">
           <text class="row-label">考勤规则</text>
-          <text class="row-value">{{ item.rule?.ruleName || '-' }}</text>
+          <view class="rule-value-wrap">
+            <text class="row-value">{{ item.rule?.ruleName || '-' }}</text>
+            <template v-if="item.rule">
+              <text class="rule-type-mini-tag" :class="item.rule.clockType === '1' ? 'mini-outside' : 'mini-office'">
+                {{ item.rule.clockType === '1' ? '外勤' : '坐班' }}
+              </text>
+              <text v-if="item.rule.workMode === '1'" class="rule-type-mini-tag mini-flexible">弹性</text>
+            </template>
+          </view>
         </view>
         <view class="card-row" v-if="item.configType === 1">
           <text class="row-label">关联用户</text>
@@ -240,7 +248,10 @@ const showDeptPicker = ref(false)
 const selectedRuleName = computed(() => {
   if (!form.value.ruleId) return ''
   const rule = ruleOptions.value.find(r => r.ruleId === form.value.ruleId)
-  return rule ? rule.ruleName : ''
+  if (!rule) return ''
+  const typeText = rule.clockType === '1' ? '外勤' : '坐班'
+  const modeText = rule.workMode === '1' ? '弹性' : ''
+  return `${rule.ruleName}（${typeText}${modeText ? '-' + modeText : ''}）`
 })
 
 const flatDeptList = computed(() => {
@@ -519,6 +530,26 @@ page { background-color: #F5F7FA; }
 
 .row-label { font-size: 24rpx; color: #86909C; width: 140rpx; flex-shrink: 0; }
 .row-value { font-size: 24rpx; color: #1D2129; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rule-value-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  overflow: hidden;
+}
+
+.rule-type-mini-tag {
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.mini-office { background: #E8F0FE; color: #3D6DF7; }
+.mini-outside { background: #FFF7E8; color: #FF9C00; }
+.mini-flexible { background: #E8FFEA; color: #00B42A; }
 
 .card-actions {
   display: flex;

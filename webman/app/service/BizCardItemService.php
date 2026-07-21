@@ -12,6 +12,15 @@ class BizCardItemService
     public function selectCardItemList($params = [])
     {
         $query = BizCardItem::with('products.product');
+        // 统一关键字搜索（AppV3 传入 keyword，对名称/编码做 OR 匹配）
+        if (!empty($params['keyword'])) {
+            $keyword = $params['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('card_item_name', 'like', '%' . $keyword . '%')
+                  ->orWhere('card_item_code', 'like', '%' . $keyword . '%');
+            });
+        }
+        // PC 端两个字段独立查询（AND 逻辑）
         if (!empty($params['card_item_name'])) {
             $query->where('card_item_name', 'like', '%' . $params['card_item_name'] . '%');
         }

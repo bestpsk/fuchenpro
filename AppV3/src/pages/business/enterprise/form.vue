@@ -72,6 +72,68 @@
         <view class="status-options">
           <view
             class="status-item"
+            :class="{ active: form.contractStatus === '0', disabled: mode === 'view' }"
+            @click="mode !== 'view' && (form.contractStatus = '0')"
+          >
+            <view class="status-radio" :class="{ checked: form.contractStatus === '0' }"></view>
+            <text>未签约</text>
+          </view>
+          <view
+            class="status-item"
+            :class="{ active: form.contractStatus === '1', disabled: mode === 'view' }"
+            @click="mode !== 'view' && (form.contractStatus = '1')"
+          >
+            <view class="status-radio" :class="{ checked: form.contractStatus === '1' }"></view>
+            <text>已签约</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="form-field" @click="mode !== 'view' && (showStartDatePicker = true)">
+        <view class="field-input-box">
+          <u-icon name="calendar" size="18" color="#86909C"></u-icon>
+          <input class="field-input" :value="form.cooperationStartDate" placeholder="开始合作日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+        </view>
+      </view>
+
+      <view class="form-field" @click="mode !== 'view' && (showEndDatePicker = true)">
+        <view class="field-input-box">
+          <u-icon name="calendar" size="18" color="#86909C"></u-icon>
+          <input class="field-input" :value="form.cooperationEndDate" placeholder="结束合作日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+          <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+        </view>
+      </view>
+
+      <view class="form-field" v-if="form.contractStatus === '1' || form.contractFiles">
+        <view class="upload-section">
+          <view class="upload-header">
+            <u-icon name="file-text" size="18" color="#86909C"></u-icon>
+            <text class="upload-title">合同文件</text>
+          </view>
+          <view class="upload-grid" v-if="mode !== 'view'">
+            <view v-for="(file, idx) in contractFileList" :key="idx" class="upload-image-item">
+              <image :src="getFilePreviewUrl(file)" class="preview-image" mode="aspectFill" @click="previewContractFile(file)" />
+              <view class="delete-btn" @click.stop="removeContractFile(idx)">
+                <u-icon name="close" size="10" color="#fff"></u-icon>
+              </view>
+            </view>
+            <view class="upload-add-btn" @click="chooseContractFile" v-if="contractFileList.length < 10">
+              <u-icon name="plus" size="24" color="#86909C"></u-icon>
+            </view>
+          </view>
+          <view class="upload-grid" v-else>
+            <view v-for="(file, idx) in contractFileList" :key="idx" class="upload-image-item" @click="previewContractFile(file)">
+              <image :src="getFilePreviewUrl(file)" class="preview-image" mode="aspectFill" />
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="form-field status-field">
+        <view class="status-options">
+          <view
+            class="status-item"
             :class="{ active: form.status === '0', disabled: mode === 'view' }"
             @click="mode !== 'view' && (form.status = '0')"
           >
@@ -116,6 +178,24 @@
       @cancel="showLevelPicker = false"
       @close="showLevelPicker = false"
     ></u-picker>
+
+    <u-datetime-picker
+      :show="showStartDatePicker"
+      mode="date"
+      :value="form.cooperationStartDate ? new Date(form.cooperationStartDate).getTime() : Date.now()"
+      @confirm="onStartDateConfirm"
+      @cancel="showStartDatePicker = false"
+      @close="showStartDatePicker = false"
+    ></u-datetime-picker>
+
+    <u-datetime-picker
+      :show="showEndDatePicker"
+      mode="date"
+      :value="form.cooperationEndDate ? new Date(form.cooperationEndDate).getTime() : Date.now()"
+      @confirm="onEndDateConfirm"
+      @cancel="showEndDatePicker = false"
+      @close="showEndDatePicker = false"
+    ></u-datetime-picker>
 
     <!-- 服务人多选弹窗 -->
     <u-popup :show="showUserPicker" mode="bottom" round="16" @close="showUserPicker = false">
@@ -168,15 +248,20 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { getEnterprise, addEnterprise, updateEnterprise, delEnterprise } from '@/api/business/enterprise'
 import { listUser } from '@/api/system/user'
 import { checkPermi } from '@/utils/permission'
+import upload from '@/utils/upload'
+import config from '@/config'
 
 const submitting = ref(false)
 const showTypePicker = ref(false)
 const showLevelPicker = ref(false)
+const showStartDatePicker = ref(false)
+const showEndDatePicker = ref(false)
 const showUserPicker = ref(false)
 const userSearchKeyword = ref('')
 const userList = ref([])
 const filteredUserList = ref([])
 const selectedUsers = ref([])
+const contractFileList = ref([])
 /** 页面模式：add/edit/view */
 const mode = ref('add')
 const enterpriseId = ref(null)
@@ -195,6 +280,10 @@ const form = reactive({
   levelName: '',
   serverUserId: '',
   serverUserName: '',
+  contractStatus: '0',
+  contractFiles: '',
+  cooperationStartDate: '',
+  cooperationEndDate: '',
   status: '0',
   remark: ''
 })
@@ -266,6 +355,58 @@ function onLevelConfirm(e) {
   showLevelPicker.value = false
 }
 
+// 选择并上传合同文件
+function chooseContractFile() {
+  uni.chooseImage({
+    count: 10 - contractFileList.value.length,
+    extension: ['.jpg', '.jpeg', '.png'],
+    success: async (res) => {
+      for (const path of res.tempFilePaths) {
+        try {
+          uni.showLoading({ title: '上传中...' })
+          const uploadRes = await upload({ url: '/common/upload', filePath: path, name: 'file' })
+          if (uploadRes.code === 200) {
+            contractFileList.value.push({
+              name: uploadRes.originalFilename || uploadRes.newFileName,
+              url: uploadRes.fileName,
+              tempUrl: path
+            })
+            form.contractFiles = contractFileList.value.map(f => f.url).join(',')
+          }
+        } catch (e) {
+          uni.showToast({ title: '上传失败', icon: 'none' })
+        } finally { uni.hideLoading() }
+      }
+    }
+  })
+}
+
+function getFilePreviewUrl(file) {
+  if (file.tempUrl) return file.tempUrl
+  const ext = (file.url || '').split('.').pop().toLowerCase()
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+  if (imageExts.includes(ext)) return config.baseUrl + file.url
+  return ''
+}
+
+function removeContractFile(idx) {
+  contractFileList.value.splice(idx, 1)
+  form.contractFiles = contractFileList.value.map(f => f.url).join(',')
+}
+
+function previewContractFile(file) {
+  const url = config.baseUrl + file.url
+  // #ifdef H5
+  window.open(url, '_blank')
+  // #endif
+  // #ifndef H5
+  uni.downloadFile({
+    url: url,
+    success: (res) => { uni.openDocument({ filePath: res.tempFilePath }) }
+  })
+  // #endif
+}
+
 /** 加载企业详情数据并填充到表单，用于编辑和查看模式 */
 async function loadDetail() {
   if (!enterpriseId.value) return
@@ -287,9 +428,21 @@ async function loadDetail() {
       levelName: getLevelName(data.enterpriseLevel),
       serverUserId: data.serverUserId || '',
       serverUserName: data.serverUserName || '',
+      contractStatus: String(data.contractStatus ?? '0'),
+      contractFiles: data.contractFiles || '',
+      cooperationStartDate: data.cooperationStartDate || '',
+      cooperationEndDate: data.cooperationEndDate || '',
       status: String(data.status ?? '0'),
       remark: data.remark || ''
     })
+    if (data.contractFiles) {
+      contractFileList.value = data.contractFiles.split(',').map((url, idx) => ({
+        name: url.split('/').pop() || '合同' + (idx + 1),
+        url: url
+      }))
+    } else {
+      contractFileList.value = []
+    }
     if (form.serverUserId && typeof form.serverUserId === 'string') {
       const ids = form.serverUserId.split(',').map(id => parseInt(id))
       const names = form.serverUserName ? form.serverUserName.split('、') : []
@@ -317,6 +470,24 @@ function getLevelName(value) {
   return item ? item.label : ''
 }
 
+function formatDate(timestamp) {
+  const d = new Date(timestamp)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function onStartDateConfirm(e) {
+  form.cooperationStartDate = formatDate(e.value)
+  showStartDatePicker.value = false
+}
+
+function onEndDateConfirm(e) {
+  form.cooperationEndDate = formatDate(e.value)
+  showEndDatePicker.value = false
+}
+
 /** 提交企业表单，校验必填项和手机号格式后，根据是否有ID区分新增和修改 */
 async function submitForm() {
   if (!form.enterpriseName) { uni.showToast({ title: '请输入企业名称', icon: 'none' }); return }
@@ -340,6 +511,10 @@ async function submitForm() {
       enterpriseLevel: form.enterpriseLevel,
       serverUserId: selectedUsers.value.map(u => u.userId),
       serverUserName: selectedUsers.value.map(u => u.userName),
+      contractStatus: form.contractStatus,
+      contractFiles: form.contractFiles || null,
+      cooperationStartDate: form.cooperationStartDate || null,
+      cooperationEndDate: form.cooperationEndDate || null,
       status: form.status,
       remark: form.remark || null
     }
@@ -642,4 +817,69 @@ page { background-color: #F5F7FA; }
   flex-shrink: 0;
   width: auto;
 }
+
+.upload-section {
+  background: #F7F8FA;
+  border-radius: 12rpx;
+  padding: 16rpx 20rpx;
+}
+
+.upload-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.upload-title {
+  font-size: 26rpx;
+  color: #86909C;
+  font-weight: 500;
+}
+
+.upload-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.upload-image-item {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  border: 2rpx solid #E5E6EB;
+
+  .preview-image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: 4rpx;
+    right: 4rpx;
+    width: 32rpx;
+    height: 32rpx;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.upload-add-btn {
+  width: 160rpx;
+  height: 160rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx dashed #C9CDD4;
+  border-radius: 8rpx;
+  background: #FAFAFA;
+}
+
+.clickable { cursor: pointer; }
 </style>

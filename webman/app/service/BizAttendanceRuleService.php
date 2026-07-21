@@ -3,7 +3,6 @@
 namespace app\service;
 
 use app\model\BizAttendanceRule;
-use app\service\DataScopeService;
 
 /**
  * 考勤规则服务层，处理考勤规则的增删改查
@@ -21,8 +20,8 @@ class BizAttendanceRuleService
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
         }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
+        if (isset($params['clock_type']) && $params['clock_type'] !== '') {
+            $query->where('clock_type', $params['clock_type']);
         }
 
         $pageNum = intval($params['page_num'] ?? 1);

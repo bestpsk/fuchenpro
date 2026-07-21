@@ -89,7 +89,8 @@ class BizAttendanceConfigController
     public function getUserRule(Request $request)
     {
         $userId = $request->loginUser->userId;
-        $rule = $this->configService->getUserRule($userId);
+        $clockType = $request->input('clock_type', '0');
+        $rule = $this->configService->getUserRuleByClockType($userId, $clockType);
         return AjaxResult::success($rule);
     }
 }

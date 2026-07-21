@@ -99,8 +99,6 @@ class BizScheduleService
         }
         if (!empty($params['status'])) {
             $query->where('status', $params['status']);
-        } else {
-            $query->where('status', '0');
         }
 
         DataScopeService::applyUserScope($query, $params['login_user'], 'user_id');
@@ -178,10 +176,13 @@ class BizScheduleService
         if (empty($data['schedule_id'])) {
             throw new \Exception('行程ID不能为空');
         }
-        $data['update_time'] = date('Y-m-d H:i:s');
-        $updateData = $data;
-        unset($updateData['schedule_id']);  // 主键已在WHERE条件中
-        return BizSchedule::where('schedule_id', $data['schedule_id'])->update($updateData);
+        $schedule = BizSchedule::find($data['schedule_id']);
+        if (!$schedule) {
+            throw new \Exception('行程不存在');
+        }
+        unset($data['schedule_id']);
+        $schedule->fill($data)->save();
+        return true;
     }
 
     // 批量删除日程

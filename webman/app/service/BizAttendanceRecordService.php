@@ -33,6 +33,9 @@ class BizAttendanceRecordService
         if (isset($params['attendance_status']) && $params['attendance_status'] !== '') {
             $query->where('attendance_status', $params['attendance_status']);
         }
+        if (isset($params['clock_type']) && $params['clock_type'] !== '') {
+            $query->where('clock_type', $params['clock_type']);
+        }
 
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
@@ -74,7 +77,7 @@ class BizAttendanceRecordService
             }
 
             $configService = new BizAttendanceConfigService();
-            $rule = $configService->getUserRule($userId);
+            $rule = $configService->getUserRuleByClockType($userId, $clockType);
 
             if ($clockType === '0' && $rule) {
                 if ($rule->work_latitude && $rule->work_longitude && !empty($data['latitude']) && !empty($data['longitude'])) {
@@ -112,6 +115,9 @@ class BizAttendanceRecordService
                     'attendance_date' => $today,
                     'clock_count' => 0,
                     'attendance_status' => '0',
+                    'clock_type' => $clockType,
+                    'rule_id' => $rule ? $rule->rule_id : null,
+                    'outside_reason' => $outsideReason,
                     'create_by' => $userName,
                     'create_time' => $now,
                 ]);
@@ -133,7 +139,7 @@ class BizAttendanceRecordService
 
             \app\model\BizAttendanceClock::create($clockData);
 
-            $this->updateRecordSummary($record);
+            $this->updateRecordSummary($record, $clockType, $rule);
 
             return BizAttendanceRecord::find($record->record_id);
         });
@@ -144,7 +150,7 @@ class BizAttendanceRecordService
         return $record->clock_count == 0 ? '0' : '1';
     }
 
-    private function updateRecordSummary($record)
+    private function updateRecordSummary($record, $clockType = '0', $rule = null)
     {
         $clockCount = \app\model\BizAttendanceClock::where('record_id', $record->record_id)->count();
         $firstClock = \app\model\BizAttendanceClock::where('record_id', $record->record_id)
@@ -171,20 +177,44 @@ class BizAttendanceRecordService
             'clock_out_address' => $lastClock ? $lastClock->address : '',
             'clock_out_photo' => $lastClock ? $lastClock->photo : '',
             'attendance_status' => $attendanceStatus,
+            'clock_type' => $clockType,
+            'rule_id' => $rule ? $rule->rule_id : ($record->rule_id ?? null),
+            'outside_reason' => $firstClock ? ($firstClock->outside_reason ?? '') : '',
             'update_time' => date('Y-m-d H:i:s'),
         ]);
     }
 
     private function calculateAttendanceStatus($firstClock, $lastClock, $userId)
     {
-        $ruleService = new BizAttendanceRuleService();
         $configService = new \app\service\BizAttendanceConfigService();
-        $rule = $configService->getUserRule($userId);
+        // 根据首次打卡的 work_type 确定规则类型
+        $clockType = $firstClock ? ($firstClock->work_type ?? '0') : '0';
+        $rule = $configService->getUserRuleByClockType($userId, $clockType);
 
         if (!$rule) {
             return '0';
         }
 
+        // 弹性打卡模式：按工时判断
+        if ((string)$rule->work_mode === '1') {
+            if (!$firstClock) {
+                return '4'; // 缺勤：完全无打卡记录
+            }
+            // 只有上班打卡（无下班打卡）：状态为正常（进行中），待下班打卡后计算工时
+            if (!$lastClock || $lastClock->clock_id === $firstClock->clock_id) {
+                return '0'; // 正常（进行中）
+            }
+            $firstTime = strtotime($firstClock->clock_time);
+            $lastTime = strtotime($lastClock->clock_time);
+            $workHours = ($lastTime - $firstTime) / 3600;
+            $requiredHours = floatval($rule->required_work_hours);
+            if ($workHours < $requiredHours) {
+                return '1'; // 工时不足 → 迟到
+            }
+            return '0'; // 正常
+        }
+
+        // 固定时间模式：迟到/早退判断
         $isLate = false;
         $isEarly = false;
 
@@ -228,188 +258,6 @@ class BizAttendanceRecordService
         return \app\model\BizAttendanceClock::where('record_id', $record->record_id)
             ->orderBy('clock_time', 'asc')
             ->get();
-    }
-
-    // 员工打卡，更新考勤日记录并创建打卡明细
-
-    public function clockIn($data)
-    {
-        $userId = $data['user_id'];
-        $userName = $data['user_name'] ?? '';
-        $now = date('Y-m-d H:i:s');
-        $today = date('Y-m-d');
-        $clockType = $data['clock_type'] ?? '0';
-        $outsideReason = $data['outside_reason'] ?? '';
-
-        if ($clockType === '1' && empty($outsideReason)) {
-            return ['error' => '外勤打卡请填写外勤事由'];
-        }
-
-        $record = BizAttendanceRecord::where('user_id', $userId)
-            ->where('attendance_date', $today)
-            ->first();
-
-        if ($record && $record->clock_in_time) {
-            return ['error' => '已打过上班卡'];
-        }
-
-        $configService = new BizAttendanceConfigService();
-        $rule = $configService->getUserRule($userId);
-
-        $attendanceStatus = '0';
-
-        if ($rule) {
-            if ($clockType === '0') {
-                if ($rule->work_latitude && $rule->work_longitude && !empty($data['latitude']) && !empty($data['longitude'])) {
-                    $distance = $this->calculateDistance(
-                        $data['latitude'], $data['longitude'],
-                        $rule->work_latitude, $rule->work_longitude
-                    );
-                    \support\Log::info('考勤距离校验', [
-                        'user_id' => $userId,
-                        'user_location' => [$data['latitude'], $data['longitude']],
-                        'rule_location' => [$rule->work_latitude, $rule->work_longitude],
-                        'distance' => $distance,
-                        'allowed_distance' => $rule->allowed_distance,
-                        'is_in_range' => $distance <= $rule->allowed_distance
-                    ]);
-                    if ($distance > $rule->allowed_distance) {
-                        return ['error' => '不在考勤范围内，距离考勤点' . intval($distance) . '米'];
-                    }
-                }
-            } else {
-                \support\Log::info('外勤打卡-跳过距离校验', [
-                    'user_id' => $userId,
-                    'clockType' => $clockType
-                ]);
-            }
-
-            $currentTime = date('H:i:s');
-            $workStartTime = $rule->work_start_time;
-            $lateThreshold = $rule->late_threshold;
-            $lateTime = date('H:i:s', strtotime("$workStartTime + $lateThreshold minutes"));
-            if ($currentTime > $lateTime) {
-                $attendanceStatus = '1';
-            }
-        }
-
-        $recordData = [
-            'user_id' => $userId,
-            'user_name' => $userName,
-            'attendance_date' => $today,
-            'clock_in_time' => $now,
-            'clock_in_latitude' => $data['latitude'] ?? null,
-            'clock_in_longitude' => $data['longitude'] ?? null,
-            'clock_in_address' => $data['address'] ?? '',
-            'clock_in_photo' => $data['photo'] ?? '',
-            'attendance_status' => $attendanceStatus,
-            'clock_type' => $clockType,
-            'outside_reason' => $outsideReason,
-            'rule_id' => $rule ? $rule->rule_id : null,
-            'create_by' => $userName,
-            'create_time' => $now,
-        ];
-
-        if ($record) {
-            $record->update([
-                'clock_in_time' => $now,
-                'clock_in_latitude' => $data['latitude'] ?? null,
-                'clock_in_longitude' => $data['longitude'] ?? null,
-                'clock_in_address' => $data['address'] ?? '',
-                'clock_in_photo' => $data['photo'] ?? '',
-                'attendance_status' => $attendanceStatus,
-                'clock_type' => $clockType,
-                'outside_reason' => $outsideReason,
-                'rule_id' => $rule ? $rule->rule_id : null,
-                'update_by' => $userName,
-                'update_time' => $now,
-            ]);
-            return $record;
-        }
-
-        return BizAttendanceRecord::create($recordData);
-    }
-
-    public function clockOut($data)
-    {
-        $userId = $data['user_id'];
-        $userName = $data['user_name'] ?? '';
-        $now = date('Y-m-d H:i:s');
-        $today = date('Y-m-d');
-
-        $record = BizAttendanceRecord::where('user_id', $userId)
-            ->where('attendance_date', $today)
-            ->first();
-
-        if (!$record || !$record->clock_in_time) {
-            return ['error' => '请先打上班卡'];
-        }
-
-        if ($record->clock_out_time) {
-            return ['error' => '已打过下班卡'];
-        }
-
-        $configService = new BizAttendanceConfigService();
-        $rule = $configService->getUserRule($userId);
-
-        if ($rule) {
-            $clockType = $record->clock_type ?? '0';
-            if ($clockType === '0') {
-                if ($rule->work_latitude && $rule->work_longitude && !empty($data['latitude']) && !empty($data['longitude'])) {
-                    $distance = $this->calculateDistance(
-                        $data['latitude'], $data['longitude'],
-                        $rule->work_latitude, $rule->work_longitude
-                    );
-                    \support\Log::info('考勤距离校验(clockOut)', [
-                        'user_id' => $userId,
-                        'user_location' => [$data['latitude'], $data['longitude']],
-                        'rule_location' => [$rule->work_latitude, $rule->work_longitude],
-                        'distance' => $distance,
-                        'allowed_distance' => $rule->allowed_distance,
-                        'is_in_range' => $distance <= $rule->allowed_distance
-                    ]);
-                    if ($distance > $rule->allowed_distance) {
-                        return ['error' => '不在考勤范围内，距离考勤点' . intval($distance) . '米'];
-                    }
-                }
-            }
-        }
-
-        $isEarly = false;
-
-        if ($rule) {
-            $currentTime = date('H:i:s');
-            $workEndTime = $rule->work_end_time;
-            $earlyThreshold = $rule->early_leave_threshold;
-            $earlyTime = date('H:i:s', strtotime("$workEndTime - $earlyThreshold minutes"));
-            if ($currentTime < $earlyTime) {
-                $isEarly = true;
-            }
-        }
-
-        $currentStatus = $record->attendance_status;
-        if ($isEarly) {
-            if ($currentStatus === '1') {
-                $newStatus = '3';
-            } else {
-                $newStatus = '2';
-            }
-        } else {
-            $newStatus = $currentStatus;
-        }
-
-        $record->update([
-            'clock_out_time' => $now,
-            'clock_out_latitude' => $data['latitude'] ?? null,
-            'clock_out_longitude' => $data['longitude'] ?? null,
-            'clock_out_address' => $data['address'] ?? '',
-            'clock_out_photo' => $data['photo'] ?? '',
-            'attendance_status' => $newStatus,
-            'update_by' => $userName,
-            'update_time' => $now,
-        ]);
-
-        return $record;
     }
 
     public function getMonthStats($userId, $month)

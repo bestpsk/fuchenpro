@@ -61,8 +61,13 @@
       <view v-for="(item, index) in filteredRecordList" :key="index" class="record-item">
         <view class="record-date">
           <text class="date-main">{{ item.attendanceDate }}</text>
-          <view class="record-status-tag" :class="'tag-' + getStatusColor(item.attendanceStatus)">
-            <text>{{ getStatusText(item.attendanceStatus) }}</text>
+          <view class="date-tags">
+            <view class="record-type-tag" :class="item.clockType === '1' ? 'tag-outside' : 'tag-office'">
+              <text>{{ item.clockType === '1' ? '外勤' : '坐班' }}</text>
+            </view>
+            <view class="record-status-tag" :class="'tag-' + getStatusColor(item.attendanceStatus)">
+              <text>{{ getStatusText(item.attendanceStatus) }}</text>
+            </view>
           </view>
         </view>
         
@@ -580,6 +585,20 @@ page {
   &.tag-early { background: #fff7e6; color: #fa8c16; }
   &.tag-late-early { background: #f9f0ff; color: #722ed1; }
   &.tag-absent { background: #fff1f0; color: #f5222d; }
+}
+
+.date-tags {
+  display: flex;
+  gap: 8rpx;
+}
+
+.record-type-tag {
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+
+  &.tag-office { background: #e6f7ff; color: #1890ff; }
+  &.tag-outside { background: #f9f0ff; color: #722ed1; }
 }
 
 .record-times {

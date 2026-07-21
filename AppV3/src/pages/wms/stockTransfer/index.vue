@@ -80,6 +80,7 @@ import { onShow, onPullDownRefresh as onPagePullDownRefresh, onReachBottom } fro
 import { listStockTransfer, delStockTransfer } from '@/api/wms/stockTransfer'
 import { useWarehouse } from '@/composables/useWarehouse'
 import WarehouseSelector from '@/components/WarehouseSelector/index.vue'
+import { checkPermi } from '@/utils/permission'
 
 const { currentWarehouseId, loadWarehouses } = useWarehouse()
 
@@ -112,7 +113,7 @@ function formatTime(time) {
   return String(time).substring(0, 16)
 }
 
-function canDelete(item) { return String(item.status) === '0' }
+function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:stockTransfer:remove') }
 
 function handleWarehouseChange(warehouseId) {
   queryParams.warehouseId = warehouseId

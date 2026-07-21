@@ -256,8 +256,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
-import { listPlanAudit, getPlanAudit } from '@/api/finance/planAudit'
-import { auditPlan } from '@/api/business/plan'
+import { listPlanAudit, getPlanAudit, auditPlan } from '@/api/finance/planAudit'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
@@ -333,10 +332,7 @@ async function getList(isRefresh = false) {
 
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.planName = params.keyword
-    }
-    delete params.keyword
+    // 保留 keyword 字段，由后端 BizPlanService::selectPlanList 对 planName/enterpriseName 做 OR 匹配
 
     const response = await listPlanAudit(params)
     const data = response.data || response

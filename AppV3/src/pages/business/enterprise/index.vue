@@ -43,6 +43,14 @@
             <u-icon name="close" size="12"></u-icon>
           </view>
           <view
+            v-if="queryParams.contractStatus"
+            class="filter-tag active"
+            @click="clearFilter('contractStatus')"
+          >
+            <text>{{ queryParams.contractStatus === '1' ? '已签约' : '未签约' }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+          <view
             v-if="queryParams.status !== '' && queryParams.status !== undefined"
             class="filter-tag active"
             @click="clearFilter('status')"
@@ -83,6 +91,21 @@
             >
               {{ item.label }}
             </view>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">合同签订</view>
+          <view class="form-options">
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.contractStatus === '0' }"
+              @click="queryParams.contractStatus = queryParams.contractStatus === '0' ? '' : '0'"
+            >未签约</view>
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.contractStatus === '1' }"
+              @click="queryParams.contractStatus = queryParams.contractStatus === '1' ? '' : '1'"
+            >已签约</view>
           </view>
         </view>
         <view class="form-item">
@@ -129,6 +152,9 @@
             </view>
             <view class="status-tag" :class="item.status === '0' ? 'status-normal' : 'status-stop'">
               {{ item.status === '0' ? '正常' : '停用' }}
+            </view>
+            <view class="contract-tag" :class="item.contractStatus === '1' ? 'contract-signed' : 'contract-unsigned'">
+              {{ item.contractStatus === '1' ? '已签约' : '未签约' }}
             </view>
           </view>
 
@@ -234,6 +260,7 @@ onUnmounted(() => { clearTimeout(searchTimer) })
 /** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {
   return queryParams.enterpriseType || queryParams.enterpriseLevel ||
+         queryParams.contractStatus ||
          (queryParams.status !== '' && queryParams.status !== undefined)
 })
 
@@ -243,6 +270,7 @@ const queryParams = reactive({
   keyword: '',
   enterpriseType: '',
   enterpriseLevel: '',
+  contractStatus: '',
   status: ''
 })
 
@@ -352,6 +380,7 @@ function toggleFilter() {
 function resetFilter() {
   queryParams.enterpriseType = ''
   queryParams.enterpriseLevel = ''
+  queryParams.contractStatus = ''
   queryParams.status = ''
 }
 
@@ -652,6 +681,26 @@ page {
   &.status-stop {
     background: #FFF1F0;
     color: #F53F3F;
+  }
+}
+
+.contract-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  margin-left: 12rpx;
+
+  &.contract-signed {
+    background: #E8F3FF;
+    color: #3D6DF7;
+  }
+
+  &.contract-unsigned {
+    background: #F7F8FA;
+    color: #86909C;
   }
 }
 

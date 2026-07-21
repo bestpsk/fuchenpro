@@ -26,6 +26,15 @@
           <view v-if="queryParams.creatorUserId" class="filter-tag active" @click="clearFilter('creatorUserId')">
             <text>{{ getEmployeeName(queryParams.creatorUserId) }}</text><u-icon name="close" size="12"></u-icon>
           </view>
+          <view v-if="queryParams.sourceType" class="filter-tag active" @click="clearFilter('sourceType')">
+            <text>{{ getSourceTypeName(queryParams.sourceType) }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.beginTime" class="filter-tag active" @click="clearFilter('beginTime')">
+            <text>起:{{ queryParams.beginTime }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.endTime" class="filter-tag active" @click="clearFilter('endTime')">
+            <text>止:{{ queryParams.endTime }}</text><u-icon name="close" size="12"></u-icon>
+          </view>
           <view v-if="queryParams.status !== '' && queryParams.status !== undefined" class="filter-tag active" @click="clearFilter('status')">
             <text>{{ getOrderStatusName(queryParams.status) }}</text><u-icon name="close" size="12"></u-icon>
           </view>
@@ -64,6 +73,30 @@
           </view>
         </view>
         <view class="form-item">
+          <view class="form-label">来源类型</view>
+          <view class="form-options">
+            <view v-for="item in sourceTypeOptions" :key="item.value" class="option-tag" :class="{ active: queryParams.sourceType === item.value }" @click="queryParams.sourceType = queryParams.sourceType === item.value ? '' : item.value">{{ item.label }}</view>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">开始日期</view>
+          <view class="form-select" @click="showStartDatePicker = true">
+            <text :class="queryParams.beginTime ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.beginTime || '请选择开始日期' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">结束日期</view>
+          <view class="form-select" @click="showEndDatePicker = true">
+            <text :class="queryParams.endTime ? 'selected-text' : 'placeholder-text'">
+              {{ queryParams.endTime || '请选择结束日期' }}
+            </text>
+            <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+        <view class="form-item">
           <view class="form-label">订单状态</view>
           <view class="form-options">
             <view v-for="item in orderStatusOptions" :key="item.value" class="option-tag" :class="{ active: queryParams.status === item.value }" @click="queryParams.status = queryParams.status === item.value ? '' : item.value">{{ item.label }}</view>
@@ -79,6 +112,9 @@
     <u-picker :show="showEnterprisePicker" :columns="enterprisePickerColumns" keyName="enterpriseName" @confirm="onEnterprisePickerConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
     <u-picker :show="showStorePicker" :columns="storePickerColumns" keyName="storeName" @confirm="onStorePickerConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
     <u-picker :show="showEmployeePicker" :columns="employeePickerColumns" keyName="nickName" @confirm="onEmployeePickerConfirm" @cancel="showEmployeePicker = false" @close="showEmployeePicker = false"></u-picker>
+
+    <u-datetime-picker :show="showStartDatePicker" mode="date" :value="queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()" @confirm="onStartDateConfirm" @cancel="showStartDatePicker = false" @close="showStartDatePicker = false"></u-datetime-picker>
+    <u-datetime-picker :show="showEndDatePicker" mode="date" :value="queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()" @confirm="onEndDateConfirm" @cancel="showEndDatePicker = false" @close="showEndDatePicker = false"></u-datetime-picker>
 
     <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="orderList.length > 0" class="card-list">
@@ -143,9 +179,9 @@ const employeeOptions = ref([])
 let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
 
-const hasActiveFilters = computed(() => queryParams.enterpriseId || queryParams.storeId || queryParams.creatorUserId || (queryParams.status !== '' && queryParams.status !== undefined))
+const hasActiveFilters = computed(() => queryParams.enterpriseId || queryParams.storeId || queryParams.creatorUserId || queryParams.sourceType || queryParams.beginTime || queryParams.endTime || (queryParams.status !== '' && queryParams.status !== undefined))
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', enterpriseId: '', storeId: '', creatorUserId: '', status: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, keyword: '', enterpriseId: '', storeId: '', creatorUserId: '', sourceType: '', beginTime: '', endTime: '', status: '' })
 
 const orderStatusOptions = ref([
   { label: '待确认', value: '0' },
@@ -153,6 +189,39 @@ const orderStatusOptions = ref([
   { label: '财务已审', value: '2' },
   { label: '已取消', value: '4' }
 ])
+
+const sourceTypeOptions = ref([
+  { label: '开单', value: '0' },
+  { label: '操作', value: '1' },
+  { label: '还款', value: '2' },
+  { label: '手动', value: '3' }
+])
+
+const showStartDatePicker = ref(false)
+const showEndDatePicker = ref(false)
+
+function getSourceTypeName(value) {
+  const item = sourceTypeOptions.value.find(t => t.value === String(value))
+  return item ? item.label : ''
+}
+
+function formatDate(timestamp) {
+  const d = new Date(timestamp)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function onStartDateConfirm(e) {
+  queryParams.beginTime = formatDate(e.value)
+  showStartDatePicker.value = false
+}
+
+function onEndDateConfirm(e) {
+  queryParams.endTime = formatDate(e.value)
+  showEndDatePicker.value = false
+}
 
 const enterprisePickerColumns = computed(() => [enterpriseOptions.value])
 const storePickerColumns = computed(() => [storeOptions.value])
@@ -307,7 +376,7 @@ function handleSearch() { getList(true) }
 function onSearchInput() { if (searchTimer) clearTimeout(searchTimer); searchTimer = setTimeout(() => handleSearch(), 500) }
 function clearKeyword() { queryParams.keyword = ''; handleSearch() }
 function toggleFilter() { showFilter.value = !showFilter.value }
-function resetFilter() { queryParams.enterpriseId = ''; queryParams.storeId = ''; queryParams.creatorUserId = ''; queryParams.status = ''; storeOptions.value = [] }
+function resetFilter() { queryParams.enterpriseId = ''; queryParams.storeId = ''; queryParams.creatorUserId = ''; queryParams.sourceType = ''; queryParams.beginTime = ''; queryParams.endTime = ''; queryParams.status = ''; storeOptions.value = [] }
 function confirmFilter() { showFilter.value = false; getList(true) }
 function clearFilter(field) {
   if (field === 'enterpriseId') {

@@ -5,7 +5,6 @@ namespace app\service;
 use app\model\BizAttendanceConfig;
 use app\model\BizAttendanceRule;
 use app\model\SysUser;
-use app\service\DataScopeService;
 
 class BizAttendanceConfigService
 {
@@ -24,9 +23,6 @@ class BizAttendanceConfigService
         }
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
-        }
-        if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
-            DataScopeService::applyUserScope($query, $params['login_user'], 'create_by', 'username');
         }
 
         $pageNum = intval($params['page_num'] ?? 1);
@@ -77,27 +73,55 @@ class BizAttendanceConfigService
 
     public function getUserRule($userId)
     {
+        return $this->getUserRuleByClockType($userId, '0');
+    }
+
+    /**
+     * 根据打卡类型获取用户考勤规则
+     * 优先从配置查找关联规则（用户级→部门级），且规则 clock_type 匹配
+     * 未找到时降级到 getActiveRule() 并按 clock_type 过滤
+     */
+    public function getUserRuleByClockType($userId, $clockType = '0')
+    {
+        // 1. 用户级配置：查找关联的且 clock_type 匹配的规则
         $userConfig = BizAttendanceConfig::whereRaw("FIND_IN_SET(?, user_ids)", [$userId])
             ->where('config_type', 1)
             ->where('status', '0')
-            ->first();
+            ->get();
 
-        if ($userConfig) {
-            return BizAttendanceRule::find($userConfig->rule_id);
+        foreach ($userConfig as $config) {
+            $rule = BizAttendanceRule::find($config->rule_id);
+            if ($rule && (string)$rule->clock_type === (string)$clockType) {
+                return $rule;
+            }
         }
 
+        // 2. 部门级配置
         $user = SysUser::find($userId);
         if ($user && $user->dept_id) {
             $deptConfig = BizAttendanceConfig::whereRaw("FIND_IN_SET(?, dept_ids)", [$user->dept_id])
                 ->where('config_type', 2)
                 ->where('status', '0')
-                ->first();
+                ->get();
 
-            if ($deptConfig) {
-                return BizAttendanceRule::find($deptConfig->rule_id);
+            foreach ($deptConfig as $config) {
+                $rule = BizAttendanceRule::find($config->rule_id);
+                if ($rule && (string)$rule->clock_type === (string)$clockType) {
+                    return $rule;
+                }
             }
         }
 
+        // 3. 降级：从所有活跃规则中按 clock_type 查找
+        $rule = BizAttendanceRule::where('status', '0')
+            ->where('clock_type', $clockType)
+            ->first();
+
+        if ($rule) {
+            return $rule;
+        }
+
+        // 4. 最终降级：返回默认活跃规则（不区分 clock_type）
         $ruleService = new BizAttendanceRuleService();
         return $ruleService->getActiveRule();
     }

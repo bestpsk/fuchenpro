@@ -53,6 +53,14 @@
             <u-icon name="close" size="12"></u-icon>
           </view>
           <view
+            v-if="queryParams.prepareType"
+            class="filter-tag active"
+            @click="clearFilter('prepareType')"
+          >
+            <text>{{ getPrepareTypeName(queryParams.prepareType) }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+          <view
             v-if="queryParams.status !== '' && queryParams.status !== undefined"
             class="filter-tag active"
             @click="clearFilter('status')"
@@ -83,6 +91,20 @@
               {{ queryParams.storeId ? getStoreName(queryParams.storeId) : '请选择门店' }}
             </text>
             <u-icon name="arrow-right" size="14" color="#C9CDD4"></u-icon>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">备货类型</view>
+          <view class="form-options">
+            <view
+              v-for="item in prepareTypeOptions"
+              :key="item.value"
+              class="option-tag"
+              :class="{ active: queryParams.prepareType === item.value }"
+              @click="queryParams.prepareType = queryParams.prepareType === item.value ? '' : item.value"
+            >
+              {{ item.label }}
+            </view>
           </view>
         </view>
         <view class="form-item">
@@ -269,8 +291,19 @@ const statusOptions = ref([
 /** 是否有激活的筛选条件 */
 const hasActiveFilters = computed(() => {
   return queryParams.enterpriseId || queryParams.storeId ||
-         (queryParams.status !== '' && queryParams.status !== undefined)
+         (queryParams.status !== '' && queryParams.status !== undefined) ||
+         queryParams.prepareType
 })
+
+const prepareTypeOptions = ref([
+  { label: '订单备货', value: 'order' },
+  { label: '方案备货', value: 'plan' }
+])
+
+function getPrepareTypeName(value) {
+  const item = prepareTypeOptions.value.find(t => t.value === value)
+  return item ? item.label : ''
+}
 
 const queryParams = reactive({
   pageNum: 1,
@@ -278,7 +311,8 @@ const queryParams = reactive({
   prepareNo: '',
   enterpriseId: '',
   storeId: '',
-  status: ''
+  status: '',
+  prepareType: ''
 })
 
 /** 企业选择器列数据 */
@@ -464,6 +498,7 @@ function resetFilter() {
   queryParams.enterpriseId = ''
   queryParams.storeId = ''
   queryParams.status = ''
+  queryParams.prepareType = ''
   storeOptions.value = []
 }
 

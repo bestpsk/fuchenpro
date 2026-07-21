@@ -14,6 +14,9 @@ class BizCardItemController
 {
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new BizCardItemService();
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
@@ -23,6 +26,9 @@ class BizCardItemController
 
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $cardItemId = intval(end($parts));
         $service = new BizCardItemService();
@@ -33,6 +39,9 @@ class BizCardItemController
 
     public function search(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $keyword = $request->input('keyword', '');
         $params = ['login_user' => $request->loginUser];
         $service = new BizCardItemService();
@@ -81,6 +90,9 @@ class BizCardItemController
 
     public function export(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:export')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
         $params['page_size'] = 10000;

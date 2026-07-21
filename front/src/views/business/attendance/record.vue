@@ -31,6 +31,12 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="打卡类型" prop="clockType">
+        <el-select v-model="queryParams.clockType" placeholder="打卡类型" clearable style="width: 160px">
+          <el-option label="坐班" value="0" />
+          <el-option label="外勤" value="1" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -62,6 +68,13 @@
           <dict-tag :options="biz_attendance_status" :value="scope.row.attendanceStatus" />
         </template>
       </el-table-column>
+      <el-table-column label="打卡类型" align="center" prop="clockType" min-width="90">
+        <template #default="scope">
+          <el-tag :type="scope.row.clockType === '1' ? 'warning' : 'primary'" size="small">
+            {{ scope.row.clockType === '1' ? '外勤' : '坐班' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width" min-width="80">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['business:attendance:record:detail']">详情</el-button>
@@ -83,6 +96,11 @@
         <el-descriptions-item label="考勤日期">{{ detailData.attendanceDate }}</el-descriptions-item>
         <el-descriptions-item label="考勤状态">
           <dict-tag :options="biz_attendance_status" :value="detailData.attendanceStatus" />
+        </el-descriptions-item>
+        <el-descriptions-item label="打卡类型">
+          <el-tag :type="detailData.clockType === '1' ? 'warning' : 'primary'" size="small">
+            {{ detailData.clockType === '1' ? '外勤' : '坐班' }}
+          </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="备注">{{ detailData.remark || '--' }}</el-descriptions-item>
         <el-descriptions-item label="外勤事由" :span="2" v-if="detailData.clockType === '1'">{{ detailData.outsideReason || '--' }}</el-descriptions-item>
@@ -153,6 +171,7 @@ const data = reactive({
     pageSize: 10,
     userName: undefined,
     attendanceStatus: undefined,
+    clockType: undefined,
     startDate: undefined,
     endDate: undefined
   }

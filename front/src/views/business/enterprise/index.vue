@@ -17,6 +17,11 @@
           <el-option v-for="dict in biz_enterprise_level" :key="dict.value" :label="dict.label" :value="dict.value" />
         </el-select>
       </el-form-item>
+      <el-form-item label="合同签订" prop="contractStatus">
+        <el-select v-model="queryParams.contractStatus" placeholder="合同签订" clearable style="width: 160px">
+          <el-option v-for="dict in biz_contract_status" :key="dict.value" :label="dict.label" :value="dict.value" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="企业状态" clearable style="width: 160px">
           <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -55,6 +60,11 @@
         </template>
       </el-table-column>
       <el-table-column label="服务人" align="center" prop="serverUserName" min-width="70" />
+      <el-table-column label="合同签订" align="center" prop="contractStatus" min-width="80">
+        <template #default="scope">
+          <dict-tag :options="biz_contract_status" :value="scope.row.contractStatus" />
+        </template>
+      </el-table-column>
       <el-table-column label="开始合作" align="center" prop="cooperationStartDate" min-width="90" />
       <el-table-column label="结束合作" align="center" prop="cooperationEndDate" min-width="90" />
       <el-table-column label="状态" align="center" prop="status" min-width="60">
@@ -143,6 +153,22 @@
         </el-row>
         <el-row>
           <el-col :span="12">
+            <el-form-item label="合同签订" prop="contractStatus">
+              <el-radio-group v-model="form.contractStatus">
+                <el-radio v-for="dict in biz_contract_status" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-radio-group v-model="form.status">
+                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="12">
             <el-form-item label="开始合作" prop="cooperationStartDate">
               <el-date-picker v-model="form.cooperationStartDate" type="date" value-format="YYYY-MM-DD" placeholder="选择开始合作日期" style="width: 100%" />
             </el-form-item>
@@ -154,11 +180,16 @@
           </el-col>
         </el-row>
         <el-row>
-          <el-col :span="12">
-            <el-form-item label="状态" prop="status">
-              <el-radio-group v-model="form.status">
-                <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
-              </el-radio-group>
+          <el-col :span="24">
+            <el-form-item label="合同文件" prop="contractFiles">
+              <image-upload v-model="form.contractFiles" :limit="10" :fileSize="20" :fileType="['doc','docx','pdf','jpg','jpeg','png']" :isShowTip="false" />
+              <el-tooltip placement="top" effect="light">
+                <template #content>
+                  <div>大小不超过 <b style="color:#f56c6c">20MB</b></div>
+                  <div>格式为 <b style="color:#f56c6c">doc/docx/pdf/jpg/jpeg/png</b></div>
+                </template>
+                <el-icon style="margin-left:4px;cursor:pointer;color:#86909C"><QuestionFilled /></el-icon>
+              </el-tooltip>
             </el-form-item>
           </el-col>
         </el-row>
@@ -383,6 +414,15 @@
         <el-descriptions-item label="服务人">{{ detailForm.serverUserName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="开始合作">{{ detailForm.cooperationStartDate || '-' }}</el-descriptions-item>
         <el-descriptions-item label="结束合作">{{ detailForm.cooperationEndDate || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="合同签订">
+          <dict-tag :options="biz_contract_status" :value="detailForm.contractStatus" />
+        </el-descriptions-item>
+        <el-descriptions-item label="合同文件">
+          <template v-if="detailForm.contractFiles">
+            <el-image v-for="(url, idx) in detailForm.contractFiles.split(',')" :key="idx" :src="baseUrl + url" :preview-src-list="detailForm.contractFiles.split(',').map(u => baseUrl + u)" :initial-index="idx" fit="cover" style="width: 60px; height: 60px; border-radius: 6px; border: 1px solid #ebeef5; margin-right: 8px" />
+          </template>
+          <span v-else>-</span>
+        </el-descriptions-item>
         <el-descriptions-item label="状态">
           <dict-tag :options="sys_normal_disable" :value="detailForm.status" />
         </el-descriptions-item>
@@ -406,9 +446,13 @@ import { listEnterprise, getEnterprise, delEnterprise, addEnterprise, updateEnte
 import { listPlan, getPlan, updatePlan, submitAuditPlan, auditPlan, changePlanStatus } from "@/api/business/plan"
 import { listProduct } from "@/api/wms/product"
 import { listUser } from "@/api/system/user"
+import ImageUpload from "@/components/ImageUpload"
+import { QuestionFilled } from '@element-plus/icons-vue'
+
+const baseUrl = import.meta.env.VITE_APP_BASE_API
 
 const { proxy } = getCurrentInstance()
-const { sys_normal_disable, biz_enterprise_type, biz_enterprise_level, biz_product_unit, biz_product_spec } = useDict("sys_normal_disable", "biz_enterprise_type", "biz_enterprise_level", "biz_product_unit", "biz_product_spec")
+const { sys_normal_disable, biz_enterprise_type, biz_enterprise_level, biz_product_unit, biz_product_spec, biz_contract_status } = useDict("sys_normal_disable", "biz_enterprise_type", "biz_enterprise_level", "biz_product_unit", "biz_product_spec", "biz_contract_status")
 
 function getUnitLabel(value) { if (!value) return ''; const dict = biz_product_unit.value?.find(d => d.value === value); return dict ? dict.label : '' }
 function getSpecLabel(value) { if (!value) return ''; const dict = biz_product_spec.value?.find(d => d.value === value); return dict ? dict.label : '' }
@@ -502,7 +546,9 @@ function reset() {
     enterpriseId: undefined, enterpriseName: undefined, bossName: undefined, phone: undefined,
     address: undefined, enterpriseType: "1", storeCount: 0, annualPerformance: 0,
     enterpriseLevel: "3", serverUserId: [], serverUserName: undefined,
-    cooperationStartDate: undefined, cooperationEndDate: undefined, status: "0", remark: undefined
+    cooperationStartDate: undefined, cooperationEndDate: undefined,
+    contractStatus: "0", contractFiles: undefined,
+    status: "0", remark: undefined
   }
   proxy.resetForm("enterpriseRef")
 }

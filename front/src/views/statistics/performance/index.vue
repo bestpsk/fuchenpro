@@ -4,7 +4,16 @@
       <el-tab-pane label="按部门" name="dept">
         <el-form :inline="true" :model="deptQuery">
           <el-form-item label="日期范围" required>
-            <el-date-picker v-model="deptDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" />
+            <el-button-group style="margin-right: 12px">
+              <el-button
+                v-for="opt in shortcutOptions"
+                :key="opt.value"
+                size="small"
+                :type="deptShortcut === opt.value ? 'primary' : ''"
+                @click="applyDeptShortcut(opt.value)"
+              >{{ opt.label }}</el-button>
+            </el-button-group>
+            <el-date-picker v-model="deptDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" @change="onDeptDateChange" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getDeptData">查询</el-button>
@@ -47,7 +56,16 @@
       <el-tab-pane label="按个人" name="user">
         <el-form :inline="true" :model="userQuery">
           <el-form-item label="日期范围" required>
-            <el-date-picker v-model="userDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" />
+            <el-button-group style="margin-right: 12px">
+              <el-button
+                v-for="opt in shortcutOptions"
+                :key="opt.value"
+                size="small"
+                :type="userShortcut === opt.value ? 'primary' : ''"
+                @click="applyUserShortcut(opt.value)"
+              >{{ opt.label }}</el-button>
+            </el-button-group>
+            <el-date-picker v-model="userDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" @change="onUserDateChange" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getUserData">查询</el-button>
@@ -101,11 +119,73 @@ const deptQuery = ref({})
 const deptDateRange = ref([])
 const deptData = ref([])
 const deptLoading = ref(false)
+const deptShortcut = ref('')
 
 const userQuery = ref({})
 const userDateRange = ref([])
 const userData = ref([])
 const userLoading = ref(false)
+const userShortcut = ref('')
+
+// 快捷选项
+const shortcutOptions = [
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '近3月', value: 'quarter' }
+]
+
+// 日期格式化为 YYYY-MM-DD
+function formatDate(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// 根据快捷类型计算日期范围
+function getShortcutRange(type) {
+  const now = new Date()
+  const end = new Date(now)
+  const start = new Date(now)
+  if (type === 'today') {
+    // [今天, 今天]
+  } else if (type === 'week') {
+    // 本周一到今天（周一为一周开始）
+    const day = now.getDay() || 7
+    start.setDate(now.getDate() - day + 1)
+  } else if (type === 'month') {
+    // 本月1号到今天
+    start.setDate(1)
+  } else if (type === 'quarter') {
+    // 近3月：3个月前的今天到今天
+    start.setMonth(now.getMonth() - 3)
+  }
+  return [formatDate(start), formatDate(end)]
+}
+
+// 应用快捷按钮（部门）
+function applyDeptShortcut(value) {
+  deptShortcut.value = value
+  deptDateRange.value = getShortcutRange(value)
+  getDeptData()
+}
+
+// 手动修改日期时清除快捷激活态
+function onDeptDateChange() {
+  deptShortcut.value = ''
+}
+
+// 应用快捷按钮（个人）
+function applyUserShortcut(value) {
+  userShortcut.value = value
+  userDateRange.value = getShortcutRange(value)
+  getUserData()
+}
+
+function onUserDateChange() {
+  userShortcut.value = ''
+}
 
 function getDeptData() {
   if (!deptDateRange.value || deptDateRange.value.length !== 2) {

@@ -14,7 +14,8 @@ class BizAttendanceRule extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'rule_name', 'work_start_time', 'work_end_time',
+        'rule_name', 'clock_type', 'work_mode', 'required_work_hours',
+        'work_start_time', 'work_end_time',
         'late_threshold', 'early_leave_threshold',
         'work_latitude', 'work_longitude', 'work_address', 'allowed_distance',
         'status', 'remark',

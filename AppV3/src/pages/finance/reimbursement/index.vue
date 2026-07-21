@@ -454,10 +454,7 @@ async function getList(isRefresh = false) {
 
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.applicantName = params.keyword
-    }
-    delete params.keyword
+    // 保留 keyword 字段，由后端 FinReimbursementService::selectReimbursementList 对 reimbursementNo/applicantName 做 OR 匹配
 
     const response = await listReimbursement(params)
     const data = response.data || response

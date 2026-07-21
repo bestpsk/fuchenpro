@@ -39,7 +39,14 @@
             <u-icon name="navigation" size="12" color="#52c41a" />
             距考勤点{{ formatDistance(distanceToWorkplace) }}
           </text>
-          <text class="loc-distance loc-outside-hint" v-if="clockType === '1'">
+          <text class="loc-distance" v-if="clockType === '0' && userRule && userRule.work_start_time" style="color: #86909C;">
+            {{ userRule.work_start_time?.substring(0,5) }}-{{ userRule.work_end_time?.substring(0,5) }}
+          </text>
+          <text class="loc-distance loc-outside-hint" v-if="clockType === '1' && userRule && userRule.work_mode === '1'">
+            <u-icon name="clock" size="12" color="#3D6DF7" />
+            需工作{{ userRule.required_work_hours }}小时
+          </text>
+          <text class="loc-distance loc-outside-hint" v-if="clockType === '1' && (!userRule || userRule.work_mode !== '1')">
             <u-icon name="checkmark-circle" size="12" color="#3D6DF7" />
             已获取当前位置
           </text>
@@ -122,6 +129,9 @@
       
       <view class="clock-count-info">
         <text>已打卡 {{ todayRecord.clockCount || 0 }} 次</text>
+        <text v-if="userRule && userRule.work_mode === '1' && todayRecord.clockInTime && todayRecord.clockOutTime" style="margin-left: 16rpx; color: #3D6DF7;">
+          工时 {{ calcWorkHours(todayRecord) }}小时
+        </text>
       </view>
       
       <view class="clock-list" v-if="clockList.length > 0">
@@ -194,7 +204,7 @@
  * 定位采用三级降级策略：uni.getLocation → navigator.geolocation → IP定位，
  * 使用高德Web服务API进行逆地理编码，计算与工作地点距离，打卡成功后震动反馈
  */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { getTodayRecord, clock, getTodayClockList, uploadAttendancePhoto, getUserAttendanceRule } from '@/api/attendance'
 import { getConfigKey } from '@/api/system/config'
 import config from '@/config'
@@ -386,6 +396,15 @@ function formatDistance(meters) {
 function formatTime(time) {
   if (!time) return '--:--'
   return time.substring(11, 16)
+}
+
+/** 计算弹性模式工时 */
+function calcWorkHours(record) {
+  if (!record || !record.clockInTime || !record.clockOutTime) return '0'
+  const start = new Date(record.clockInTime).getTime()
+  const end = new Date(record.clockOutTime).getTime()
+  const hours = (end - start) / 3600000
+  return hours.toFixed(1)
 }
 
 /** 更新当前日期时间和问候语（凌晨好/早上好/上午好/中午好/下午好/晚上好） */
@@ -590,7 +609,7 @@ async function loadTodayClockList() {
 async function loadUserRule() {
   try {
     ruleLoading.value = true
-    const res = await getUserAttendanceRule()
+    const res = await getUserAttendanceRule(clockType.value)
     userRule.value = res.data || null
     if (userRule.value) {
       console.log('获取考勤规则成功:', userRule.value)
@@ -602,6 +621,11 @@ async function loadUserRule() {
     ruleLoading.value = false
   }
 }
+
+/** 切换坐班/外勤时重新加载对应规则 */
+watch(clockType, () => {
+  loadUserRule()
+})
 
 /** 加载考勤配置（是否允许手动输入地址） */
 async function loadAttendanceConfig() {

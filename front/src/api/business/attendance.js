@@ -76,6 +76,6 @@ export function delAttendanceConfig(configIds) {
 }
 
 /** 获取当前用户的考勤规则（含工作地点坐标） */
-export function getUserAttendanceRule() {
-  return request({ url: '/business/attendance/config/userRule', method: 'get' })
+export function getUserAttendanceRule(clockType = '0') {
+  return request({ url: '/business/attendance/config/userRule', method: 'get', params: { clock_type: clockType } })
 }

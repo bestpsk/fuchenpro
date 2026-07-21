@@ -10,6 +10,12 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="打卡类型" prop="clockType">
+        <el-select v-model="queryParams.clockType" placeholder="打卡类型" clearable style="width: 160px">
+          <el-option label="坐班" value="0" />
+          <el-option label="外勤" value="1" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="规则状态" clearable style="width: 160px">
           <el-option
@@ -41,12 +47,31 @@
 
     <el-table v-loading="loading" :data="ruleList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="规则名称" align="center" prop="ruleName" />
-      <el-table-column label="上班时间" align="center" prop="workStartTime" min-width="100" />
-      <el-table-column label="下班时间" align="center" prop="workEndTime" min-width="100" />
-      <el-table-column label="迟到容忍(分)" align="center" prop="lateThreshold" min-width="120" />
-      <el-table-column label="早退容忍(分)" align="center" prop="earlyLeaveThreshold" min-width="120" />
-      <el-table-column label="允许距离(米)" align="center" prop="allowedDistance" min-width="120" />
+      <el-table-column label="规则名称" align="center" prop="ruleName" min-width="120" />
+      <el-table-column label="打卡类型" align="center" min-width="90">
+        <template #default="scope">
+          <el-tag :type="scope.row.clockType === '1' ? 'warning' : 'primary'" size="small">
+            {{ scope.row.clockType === '1' ? '外勤' : '坐班' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="工作模式" align="center" min-width="90">
+        <template #default="scope">
+          <el-tag :type="scope.row.workMode === '1' ? 'success' : ''" size="small">
+            {{ scope.row.workMode === '1' ? '弹性打卡' : '固定时间' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="上班时间" align="center" prop="workStartTime" min-width="90" />
+      <el-table-column label="下班时间" align="center" prop="workEndTime" min-width="90" />
+      <el-table-column label="迟到容忍(分)" align="center" prop="lateThreshold" min-width="110" />
+      <el-table-column label="早退容忍(分)" align="center" prop="earlyLeaveThreshold" min-width="110" />
+      <el-table-column label="每日工时" align="center" min-width="90">
+        <template #default="scope">
+          {{ scope.row.workMode === '1' ? scope.row.requiredWorkHours + '小时' : '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="允许距离(米)" align="center" prop="allowedDistance" min-width="110" />
       <el-table-column label="状态" align="center" prop="status" min-width="80">
         <template #default="scope">
           <dict-tag :options="sys_normal_disable" :value="scope.row.status" />
@@ -73,29 +98,48 @@
         <el-form-item label="规则名称" prop="ruleName">
           <el-input v-model="form.ruleName" placeholder="请输入规则名称" />
         </el-form-item>
+        <el-form-item label="打卡类型" prop="clockType">
+          <el-radio-group v-model="form.clockType">
+            <el-radio value="0">坐班</el-radio>
+            <el-radio value="1">外勤</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="工作模式" prop="workMode">
+          <el-radio-group v-model="form.workMode">
+            <el-radio value="0">固定时间</el-radio>
+            <el-radio value="1">弹性打卡</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="form.workMode === '1'" label="每日工时" prop="requiredWorkHours">
+          <el-input-number v-model="form.requiredWorkHours" :min="1" :max="24" :precision="1" :step="0.5" placeholder="小时" style="width: 100%" />
+        </el-form-item>
         <el-form-item label="上班时间" prop="workStartTime">
           <el-time-picker v-model="form.workStartTime" format="HH:mm" value-format="HH:mm:ss" placeholder="选择上班时间" style="width: 100%" />
         </el-form-item>
         <el-form-item label="下班时间" prop="workEndTime">
           <el-time-picker v-model="form.workEndTime" format="HH:mm" value-format="HH:mm:ss" placeholder="选择下班时间" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="迟到容忍" prop="lateThreshold">
-          <el-input-number v-model="form.lateThreshold" :min="0" :max="60" placeholder="分钟" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="早退容忍" prop="earlyLeaveThreshold">
-          <el-input-number v-model="form.earlyLeaveThreshold" :min="0" :max="60" placeholder="分钟" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="考勤地点" prop="workLatitude">
-          <div style="display: flex; gap: 8px; width: 100%;">
-            <el-input v-model="form.workLatitude" placeholder="纬度" style="flex: 1" readonly />
-            <el-input v-model="form.workLongitude" placeholder="经度" style="flex: 1" readonly />
-            <el-button type="primary" icon="Location" @click="openMapPicker">选点</el-button>
-          </div>
-          <div v-if="form.workAddress" class="location-address">{{ form.workAddress }}</div>
-        </el-form-item>
-        <el-form-item label="允许距离(米)" prop="allowedDistance">
-          <el-input-number v-model="form.allowedDistance" :min="0" :max="5000" :step="100" placeholder="允许打卡距离" style="width: 100%" />
-        </el-form-item>
+        <template v-if="form.workMode === '0'">
+          <el-form-item label="迟到容忍" prop="lateThreshold">
+            <el-input-number v-model="form.lateThreshold" :min="0" :max="60" placeholder="分钟" style="width: 100%" />
+          </el-form-item>
+          <el-form-item label="早退容忍" prop="earlyLeaveThreshold">
+            <el-input-number v-model="form.earlyLeaveThreshold" :min="0" :max="60" placeholder="分钟" style="width: 100%" />
+          </el-form-item>
+        </template>
+        <template v-if="form.clockType === '0'">
+          <el-form-item label="考勤地点" prop="workLatitude">
+            <div style="display: flex; gap: 8px; width: 100%;">
+              <el-input v-model="form.workLatitude" placeholder="纬度" style="flex: 1" readonly />
+              <el-input v-model="form.workLongitude" placeholder="经度" style="flex: 1" readonly />
+              <el-button type="primary" icon="Location" @click="openMapPicker">选点</el-button>
+            </div>
+            <div v-if="form.workAddress" class="location-address">{{ form.workAddress }}</div>
+          </el-form-item>
+          <el-form-item label="允许距离(米)" prop="allowedDistance">
+            <el-input-number v-model="form.allowedDistance" :min="0" :max="5000" :step="100" placeholder="允许打卡距离" style="width: 100%" />
+          </el-form-item>
+        </template>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio v-for="dict in sys_normal_disable" :key="dict.value" :value="dict.value">{{ dict.label }}</el-radio>
@@ -120,8 +164,7 @@
 <script setup name="AttendanceRule">
 /**
  * @description 考勤规则页面 - 考勤规则CRUD与地图选点
- * @description 提供考勤规则增删改查，包含上下班时间、迟到/早退阈值、
- * 工作地点（经纬度+地址+允许距离）设置，支持地图选点定位
+ * @description 支持坐班/外勤区分、固定时间/弹性打卡模式
  */
 import { listAttendanceRule, getAttendanceRule, addAttendanceRule, updateAttendanceRule, delAttendanceRule } from "@/api/business/attendance"
 import MapPicker from "@/components/MapPicker/index.vue"
@@ -146,12 +189,13 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     ruleName: undefined,
+    clockType: undefined,
     status: undefined
   },
   rules: {
     ruleName: [{ required: true, message: "规则名称不能为空", trigger: "blur" }],
-    workStartTime: [{ required: true, message: "上班时间不能为空", trigger: "change" }],
-    workEndTime: [{ required: true, message: "下班时间不能为空", trigger: "change" }]
+    clockType: [{ required: true, message: "请选择打卡类型", trigger: "change" }],
+    workMode: [{ required: true, message: "请选择工作模式", trigger: "change" }]
   }
 })
 
@@ -186,6 +230,9 @@ function reset() {
   form.value = {
     ruleId: undefined,
     ruleName: undefined,
+    clockType: "0",
+    workMode: "0",
+    requiredWorkHours: 8.0,
     workStartTime: undefined,
     workEndTime: undefined,
     lateThreshold: 0,

@@ -27,6 +27,14 @@
       <scroll-view scroll-x class="filter-scroll">
         <view class="filter-tags">
           <view
+            v-if="queryParams.clockType !== '' && queryParams.clockType !== undefined"
+            class="filter-tag active"
+            @click="clearFilter('clockType')"
+          >
+            <text>{{ queryParams.clockType === '0' ? '坐班' : '外勤' }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+          <view
             v-if="queryParams.status !== '' && queryParams.status !== undefined"
             class="filter-tag active"
             @click="clearFilter('status')"
@@ -41,6 +49,21 @@
     <u-popup :show="showFilter" mode="top" round="16" @close="toggleFilter">
       <view class="popup-content">
         <view class="popup-title">筛选条件</view>
+        <view class="form-item">
+          <view class="form-label">打卡类型</view>
+          <view class="form-options">
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.clockType === '0' }"
+              @click="queryParams.clockType = queryParams.clockType === '0' ? '' : '0'"
+            >坐班</view>
+            <view
+              class="option-tag"
+              :class="{ active: queryParams.clockType === '1' }"
+              @click="queryParams.clockType = queryParams.clockType === '1' ? '' : '1'"
+            >外勤</view>
+          </view>
+        </view>
         <view class="form-item">
           <view class="form-label">状态</view>
           <view class="form-options">
@@ -87,6 +110,15 @@
             </view>
           </view>
 
+          <view class="card-tags-row">
+            <view class="rule-type-tag" :class="item.clockType === '1' ? 'tag-outside' : 'tag-office'">
+              {{ item.clockType === '1' ? '外勤' : '坐班' }}
+            </view>
+            <view class="rule-mode-tag" :class="item.workMode === '1' ? 'tag-flexible' : 'tag-fixed'">
+              {{ item.workMode === '1' ? '弹性打卡' : '固定时间' }}
+            </view>
+          </view>
+
           <view class="card-body">
             <view class="info-row">
               <view class="info-item">
@@ -94,7 +126,8 @@
                 <text class="value time-text">{{ item.workStartTime || '-' }} - {{ item.workEndTime || '-' }}</text>
               </view>
             </view>
-            <view class="info-row">
+            <!-- 固定时间模式显示迟到/早退容忍 -->
+            <view v-if="item.workMode !== '1'" class="info-row">
               <view class="info-item">
                 <text class="label">迟到容忍</text>
                 <text class="value">{{ item.lateThreshold != null ? item.lateThreshold + ' 分钟' : '-' }}</text>
@@ -104,17 +137,40 @@
                 <text class="value">{{ item.earlyLeaveThreshold != null ? item.earlyLeaveThreshold + ' 分钟' : '-' }}</text>
               </view>
             </view>
-            <view class="info-row">
-              <view class="info-item full">
-                <text class="label">考勤地点</text>
-                <text class="value address-text">{{ item.workAddress || '-' }}</text>
+            <!-- 弹性模式显示每日工时 -->
+            <view v-else class="info-row">
+              <view class="info-item">
+                <text class="label">每日工时</text>
+                <text class="value highlight">{{ item.requiredWorkHours != null ? item.requiredWorkHours + ' 小时' : '-' }}</text>
               </view>
             </view>
-            <view class="info-row">
-              <view class="info-item">
-                <text class="label">允许距离</text>
-                <text class="value highlight">{{ item.allowedDistance != null ? item.allowedDistance + ' 米' : '-' }}</text>
+            <!-- 坐班类型显示考勤地点和允许距离 -->
+            <template v-if="item.clockType !== '1'">
+              <view class="info-row">
+                <view class="info-item full">
+                  <text class="label">考勤地点</text>
+                  <text class="value address-text">{{ item.workAddress || '-' }}</text>
+                </view>
               </view>
+              <view class="info-row">
+                <view class="info-item">
+                  <text class="label">允许距离</text>
+                  <text class="value highlight">{{ item.allowedDistance != null ? item.allowedDistance + ' 米' : '-' }}</text>
+                </view>
+                <view v-if="checkPermi('business:attendance:rule:edit')" class="info-item">
+                  <text class="label">状态</text>
+                  <view class="switch-wrap" @click.stop="toggleStatus(item)">
+                    <u-switch
+                      :modelValue="item.status === '0'"
+                      size="20"
+                      activeColor="#3D6DF7"
+                    ></u-switch>
+                  </view>
+                </view>
+              </view>
+            </template>
+            <!-- 外勤类型只显示状态切换 -->
+            <view v-else class="info-row">
               <view v-if="checkPermi('business:attendance:rule:edit')" class="info-item">
                 <text class="label">状态</text>
                 <view class="switch-wrap" @click.stop="toggleStatus(item)">
@@ -178,6 +234,32 @@
             <input class="form-input" v-model="form.ruleName" placeholder="请输入规则名称" />
           </view>
           <view class="form-item">
+            <text class="form-label"><text class="required">*</text> 打卡类型</text>
+            <view class="radio-group">
+              <view class="radio-item" :class="{ 'radio-active': form.clockType === '0' }" @click="form.clockType = '0'">
+                <text>坐班</text>
+              </view>
+              <view class="radio-item" :class="{ 'radio-active': form.clockType === '1' }" @click="form.clockType = '1'">
+                <text>外勤</text>
+              </view>
+            </view>
+          </view>
+          <view class="form-item">
+            <text class="form-label"><text class="required">*</text> 工作模式</text>
+            <view class="radio-group">
+              <view class="radio-item" :class="{ 'radio-active': form.workMode === '0' }" @click="form.workMode = '0'">
+                <text>固定时间</text>
+              </view>
+              <view class="radio-item" :class="{ 'radio-active': form.workMode === '1' }" @click="form.workMode = '1'">
+                <text>弹性打卡</text>
+              </view>
+            </view>
+          </view>
+          <view v-if="form.workMode === '1'" class="form-item">
+            <text class="form-label">每日工时(小时)</text>
+            <input class="form-input" type="digit" v-model="form.requiredWorkHours" placeholder="请输入每日工时" />
+          </view>
+          <view class="form-item">
             <text class="form-label">上班时间</text>
             <view class="form-picker" @click="showStartTimePicker = true">
               <text :class="{ 'picker-placeholder': !form.workStartTime }">
@@ -195,30 +277,34 @@
               <u-icon name="arrow-right" size="14" color="#86909C" />
             </view>
           </view>
-          <view class="form-item">
-            <text class="form-label">迟到容忍(分钟)</text>
-            <input class="form-input" type="number" v-model="form.lateThreshold" placeholder="请输入迟到容忍分钟数" />
-          </view>
-          <view class="form-item">
-            <text class="form-label">早退容忍(分钟)</text>
-            <input class="form-input" type="number" v-model="form.earlyLeaveThreshold" placeholder="请输入早退容忍分钟数" />
-          </view>
-          <view class="form-item">
-            <text class="form-label">考勤地点</text>
-            <view class="location-row">
-              <input class="form-input location-input" v-model="form.workAddress" placeholder="请选择考勤地点" readonly @click="chooseLocation" />
-              <view class="location-btn" @click="chooseLocation">
-                <u-icon name="map" size="18" color="#3D6DF7"></u-icon>
+          <template v-if="form.workMode === '0'">
+            <view class="form-item">
+              <text class="form-label">迟到容忍(分钟)</text>
+              <input class="form-input" type="number" v-model="form.lateThreshold" placeholder="请输入迟到容忍分钟数" />
+            </view>
+            <view class="form-item">
+              <text class="form-label">早退容忍(分钟)</text>
+              <input class="form-input" type="number" v-model="form.earlyLeaveThreshold" placeholder="请输入早退容忍分钟数" />
+            </view>
+          </template>
+          <template v-if="form.clockType === '0'">
+            <view class="form-item">
+              <text class="form-label">考勤地点</text>
+              <view class="location-row">
+                <input class="form-input location-input" v-model="form.workAddress" placeholder="请选择考勤地点" readonly @click="chooseLocation" />
+                <view class="location-btn" @click="chooseLocation">
+                  <u-icon name="map" size="18" color="#3D6DF7"></u-icon>
+                </view>
+              </view>
+              <view v-if="form.workLongitude || form.workLatitude" class="location-info">
+                <text class="location-text">经度: {{ form.workLongitude }}  纬度: {{ form.workLatitude }}</text>
               </view>
             </view>
-            <view v-if="form.workLongitude || form.workLatitude" class="location-info">
-              <text class="location-text">经度: {{ form.workLongitude }}  纬度: {{ form.workLatitude }}</text>
+            <view class="form-item">
+              <text class="form-label">允许距离(米)</text>
+              <input class="form-input" type="number" v-model="form.allowedDistance" placeholder="请输入允许打卡距离" />
             </view>
-          </view>
-          <view class="form-item">
-            <text class="form-label">允许距离(米)</text>
-            <input class="form-input" type="number" v-model="form.allowedDistance" placeholder="请输入允许打卡距离" />
-          </view>
+          </template>
           <view class="form-item">
             <text class="form-label">状态</text>
             <view class="radio-group">
@@ -294,19 +380,24 @@ let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
 
 const hasActiveFilters = computed(() => {
-  return queryParams.status !== '' && queryParams.status !== undefined
+  return (queryParams.status !== '' && queryParams.status !== undefined) ||
+         (queryParams.clockType !== '' && queryParams.clockType !== undefined)
 })
 
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   ruleName: '',
+  clockType: '',
   status: ''
 })
 
 const form = ref({
   ruleId: undefined,
   ruleName: '',
+  clockType: '0',
+  workMode: '0',
+  requiredWorkHours: 8,
   workStartTime: '',
   workEndTime: '',
   lateThreshold: 0,
@@ -394,6 +485,7 @@ function toggleFilter() {
 }
 
 function resetFilter() {
+  queryParams.clockType = ''
   queryParams.status = ''
 }
 
@@ -411,6 +503,9 @@ function resetForm() {
   form.value = {
     ruleId: undefined,
     ruleName: '',
+    clockType: '0',
+    workMode: '0',
+    requiredWorkHours: 8,
     workStartTime: '',
     workEndTime: '',
     lateThreshold: 0,
@@ -436,6 +531,9 @@ function handleEdit(item) {
     form.value = {
       ruleId: data.ruleId,
       ruleName: data.ruleName || '',
+      clockType: data.clockType ?? '0',
+      workMode: data.workMode ?? '0',
+      requiredWorkHours: data.requiredWorkHours ?? 8,
       workStartTime: data.workStartTime ? data.workStartTime.substring(0, 5) : '',
       workEndTime: data.workEndTime ? data.workEndTime.substring(0, 5) : '',
       lateThreshold: data.lateThreshold ?? 0,
@@ -525,6 +623,9 @@ function submitForm() {
 
   const submitData = {
     ...form.value,
+    clockType: form.value.clockType,
+    workMode: form.value.workMode,
+    requiredWorkHours: form.value.workMode === '1' ? (Number(form.value.requiredWorkHours) || 8) : undefined,
     workStartTime: form.value.workStartTime ? form.value.workStartTime + ':00' : undefined,
     workEndTime: form.value.workEndTime ? form.value.workEndTime + ':00' : undefined,
     lateThreshold: Number(form.value.lateThreshold) || 0,
@@ -785,6 +886,24 @@ page {
     color: #F53F3F;
   }
 }
+
+.card-tags-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.rule-type-tag, .rule-mode-tag {
+  padding: 4rpx 14rpx;
+  border-radius: 6rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.tag-office { background: #E8F0FE; color: #3D6DF7; }
+.tag-outside { background: #FFF7E8; color: #FF9C00; }
+.tag-fixed { background: #F2F3F5; color: #4E5969; }
+.tag-flexible { background: #E8FFEA; color: #00B42A; }
 
 .card-body {
   padding: 20rpx 0;

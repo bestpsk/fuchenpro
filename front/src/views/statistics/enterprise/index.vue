@@ -4,7 +4,16 @@
       <el-tab-pane label="按企业" name="enterprise">
         <el-form :inline="true" :model="enterpriseQuery">
           <el-form-item label="日期范围" required>
-            <el-date-picker v-model="enterpriseDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" />
+            <el-button-group style="margin-right: 12px">
+              <el-button
+                v-for="opt in shortcutOptions"
+                :key="opt.value"
+                size="small"
+                :type="enterpriseShortcut === opt.value ? 'primary' : ''"
+                @click="applyEnterpriseShortcut(opt.value)"
+              >{{ opt.label }}</el-button>
+            </el-button-group>
+            <el-date-picker v-model="enterpriseDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" @change="onEnterpriseDateChange" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getEnterpriseData">查询</el-button>
@@ -47,7 +56,16 @@
       <el-tab-pane label="按门店" name="store">
         <el-form :inline="true" :model="storeQuery">
           <el-form-item label="日期范围" required>
-            <el-date-picker v-model="storeDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" />
+            <el-button-group style="margin-right: 12px">
+              <el-button
+                v-for="opt in shortcutOptions"
+                :key="opt.value"
+                size="small"
+                :type="storeShortcut === opt.value ? 'primary' : ''"
+                @click="applyStoreShortcut(opt.value)"
+              >{{ opt.label }}</el-button>
+            </el-button-group>
+            <el-date-picker v-model="storeDateRange" type="daterange" range-separator="-" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" @change="onStoreDateChange" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" icon="Search" @click="getStoreData">查询</el-button>
@@ -101,11 +119,72 @@ const enterpriseQuery = ref({})
 const enterpriseDateRange = ref([])
 const enterpriseData = ref([])
 const enterpriseLoading = ref(false)
+const enterpriseShortcut = ref('')
 
 const storeQuery = ref({})
 const storeDateRange = ref([])
 const storeData = ref([])
 const storeLoading = ref(false)
+const storeShortcut = ref('')
+
+// 快捷选项
+const shortcutOptions = [
+  { label: '今日', value: 'today' },
+  { label: '本周', value: 'week' },
+  { label: '本月', value: 'month' },
+  { label: '近3月', value: 'quarter' }
+]
+
+// 日期格式化为 YYYY-MM-DD
+function formatDate(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+// 根据快捷类型计算日期范围
+function getShortcutRange(type) {
+  const now = new Date()
+  const end = new Date(now)
+  const start = new Date(now)
+  if (type === 'today') {
+    // [今天, 今天]
+  } else if (type === 'week') {
+    // 本周一到今天（周一为一周开始）
+    const day = now.getDay() || 7
+    start.setDate(now.getDate() - day + 1)
+  } else if (type === 'month') {
+    // 本月1号到今天
+    start.setDate(1)
+  } else if (type === 'quarter') {
+    // 近3月：3个月前的今天到今天
+    start.setMonth(now.getMonth() - 3)
+  }
+  return [formatDate(start), formatDate(end)]
+}
+
+// 应用快捷按钮（企业）
+function applyEnterpriseShortcut(value) {
+  enterpriseShortcut.value = value
+  enterpriseDateRange.value = getShortcutRange(value)
+  getEnterpriseData()
+}
+
+function onEnterpriseDateChange() {
+  enterpriseShortcut.value = ''
+}
+
+// 应用快捷按钮（门店）
+function applyStoreShortcut(value) {
+  storeShortcut.value = value
+  storeDateRange.value = getShortcutRange(value)
+  getStoreData()
+}
+
+function onStoreDateChange() {
+  storeShortcut.value = ''
+}
 
 function getEnterpriseData() {
   if (!enterpriseDateRange.value || enterpriseDateRange.value.length !== 2) {

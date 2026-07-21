@@ -281,8 +281,6 @@ Route::get('/business/attendance/todayRecord', [app\controller\business\BizAtten
 Route::post('/business/attendance/clock', [app\controller\business\BizAttendanceController::class, 'clock']);
 Route::get('/business/attendance/todayClockList', [app\controller\business\BizAttendanceController::class, 'todayClockList']);
 Route::get('/business/attendance/clockList', [app\controller\business\BizAttendanceController::class, 'clockList']);
-Route::post('/business/attendance/clockIn', [app\controller\business\BizAttendanceController::class, 'clockIn']);
-Route::post('/business/attendance/clockOut', [app\controller\business\BizAttendanceController::class, 'clockOut']);
 Route::get('/business/attendance/monthStats', [app\controller\business\BizAttendanceController::class, 'monthStats']);
 Route::get('/business/attendance/record/list', [app\controller\business\BizAttendanceController::class, 'recordList']);
 Route::post('/business/attendance/record/export', [app\controller\business\BizAttendanceController::class, 'exportRecord']);

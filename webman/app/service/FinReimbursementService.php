@@ -43,6 +43,14 @@ class FinReimbursementService
         if (!empty($params['reimbursement_no'])) {
             $query->where('reimbursement_no', 'like', '%' . $params['reimbursement_no'] . '%');
         }
+        // 统一关键字搜索（AppV3 传入 keyword，对单号/申请人做 OR 匹配）
+        if (!empty($params['keyword'])) {
+            $keyword = $params['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('reimbursement_no', 'like', '%' . $keyword . '%')
+                  ->orWhere('applicant_name', 'like', '%' . $keyword . '%');
+            });
+        }
         if (!empty($params['login_user']) && !$params['login_user']->isAdmin()) {
             $visibleUserIds = DataScopeService::getVisibleUserIds($params['login_user']);
             $query->whereIn('applicant_id', $visibleUserIds);
