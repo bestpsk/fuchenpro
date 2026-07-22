@@ -221,11 +221,6 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.dictName = params.keyword
-      params.dictType = params.keyword
-    }
-    delete params.keyword
     if (dateRange.value.length === 2) {
       params.params = { ...params.params, beginTime: dateRange.value[0], endTime: dateRange.value[1] }
     }

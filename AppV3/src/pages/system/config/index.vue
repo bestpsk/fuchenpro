@@ -191,11 +191,6 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.configName = params.keyword
-      params.configKey = params.keyword
-    }
-    delete params.keyword
     const response = await listConfig(params)
     const data = response.data || response
     const list = data.rows || []

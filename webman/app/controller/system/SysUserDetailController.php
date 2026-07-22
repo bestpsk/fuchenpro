@@ -4,6 +4,7 @@ namespace app\controller\system;
 
 use support\Request;
 use app\service\SysUserDetailService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 
 /**
@@ -16,6 +17,9 @@ class SysUserDetailController
     // 根据用户ID获取用户扩展详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:list')) {
+            return AjaxResult::error('没有权限操作');
+        }
         $parts = explode('/', $request->path());
         $userId = intval(end($parts));
         $service = new SysUserDetailService();
@@ -26,6 +30,9 @@ class SysUserDetailController
     // 新增用户扩展详情
     public function add(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:add')) {
+            return AjaxResult::error('没有权限操作');
+        }
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysUserDetailService();
@@ -36,6 +43,9 @@ class SysUserDetailController
     // 修改用户扩展详情
     public function edit(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:user:edit')) {
+            return AjaxResult::error('没有权限操作');
+        }
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysUserDetailService();

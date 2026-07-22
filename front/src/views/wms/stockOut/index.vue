@@ -222,6 +222,11 @@
               <span v-else>{{ scope.row.productName }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="供货商" min-width="100" align="center" header-align="center">
+            <template #default="scope">
+              <span>{{ scope.row.supplierName || '-' }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="单位类型" min-width="90" align="center" header-align="center">
             <template #default="scope">
               <el-select v-if="!isView" v-model="scope.row.unitType" placeholder="选择" @change="onUnitTypeChange(scope.$index)" style="width: 100%">
@@ -733,13 +738,15 @@ function handleConfirmReceipt(row) {
   }).catch(() => {})
 }
 
-function addItem() { form.value.items.push({ productId: undefined, productName: undefined, spec: undefined, unit: undefined, packQty: 1, unitType: '1', _prevUnitType: '1', quantity: 1, salePrice: 0, _mainPrice: 0, salePriceSpec: 0, inventoryQty: undefined, amount: 0, remark: undefined }) }
+function addItem() { form.value.items.push({ productId: undefined, productName: undefined, supplierId: undefined, supplierName: undefined, spec: undefined, unit: undefined, packQty: 1, unitType: '1', _prevUnitType: '1', quantity: 1, salePrice: 0, _mainPrice: 0, salePriceSpec: 0, inventoryQty: undefined, amount: 0, remark: undefined }) }
 function removeItem(index) { form.value.items.splice(index, 1) }
 
 function onProductSelect(index) {
   const product = productOptions.value.find(p => p.productId === form.value.items[index].productId)
   if (product) {
     form.value.items[index].productName = product.productName
+    form.value.items[index].supplierId = product.supplierId
+    form.value.items[index].supplierName = product.supplierName || '未知供货商'
     form.value.items[index].spec = product.spec
     form.value.items[index].unit = product.unit
     form.value.items[index].packQty = product.packQty || 1
@@ -783,6 +790,8 @@ function submitForm() {
         itemId: item.itemId || undefined,
         productId: item.productId,
         productName: item.productName,
+        supplierId: item.supplierId || null,
+        supplierName: item.supplierName || null,
         spec: item.spec || '',
         unit: item.unit || '',
         packQty: item.packQty || 1,

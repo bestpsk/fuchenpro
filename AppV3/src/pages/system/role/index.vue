@@ -6,14 +6,14 @@
         <input
           class="search-input"
           type="text"
-          v-model="queryParams.roleName"
-          placeholder="搜索角色名称"
+          v-model="queryParams.keyword"
+          placeholder="搜索角色名称/权限字符"
           placeholder-class="search-placeholder"
           confirm-type="search"
           @input="onSearchInput"
           @confirm="handleSearch"
         />
-        <view v-if="queryParams.roleName" class="clear-btn" @click="clearKeyword">
+        <view v-if="queryParams.keyword" class="clear-btn" @click="clearKeyword">
           <u-icon name="close-circle-fill" size="14" color="#C9CDD4"></u-icon>
         </view>
         <view class="filter-btn" @click="toggleFilter">
@@ -136,6 +136,10 @@
                 <u-icon name="list" size="14"></u-icon>
                 <text>数据权限</text>
               </view>
+              <view v-if="checkPermi('system:role:edit')" class="action-btn auth" @click.stop="goAuthUser(item)">
+                <u-icon name="account" size="14"></u-icon>
+                <text>分配用户</text>
+              </view>
             </view>
           </view>
         </view>
@@ -185,7 +189,7 @@ const hasActiveFilters = computed(() => {
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  roleName: '',
+  keyword: '',
   status: ''
 })
 
@@ -240,7 +244,7 @@ function onSearchInput() {
 }
 
 function clearKeyword() {
-  queryParams.roleName = ''
+  queryParams.keyword = ''
   handleSearch()
 }
 
@@ -274,6 +278,10 @@ function goAdd() {
 
 function goDataScope(item) {
   uni.navigateTo({ url: `/pages/system/role/dataScope?id=${item.roleId}` })
+}
+
+function goAuthUser(item) {
+  uni.navigateTo({ url: `/pages/system/role/authUser?id=${item.roleId}&name=${encodeURIComponent(item.roleName)}` })
 }
 
 function handleDelete(item) {
@@ -414,6 +422,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &.edit { color: #3D6DF7; background: #E8F0FE; }
   &.delete { color: #F53F3F; background: #FFF1F0; }
   &.scope { color: #FF7D00; background: #FFF7E8; }
+  &.auth { color: #00B42A; background: #E8FFEA; }
 }
 .fab-btn {
   position: fixed; right: 32rpx; bottom: 120rpx; width: 100rpx; height: 100rpx;

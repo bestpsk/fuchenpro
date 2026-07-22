@@ -15,10 +15,6 @@
           <text class="info-value">{{ info.warehouseName }}</text>
         </view>
         <view class="info-row">
-          <text class="info-label">供货商</text>
-          <text class="info-value">{{ info.supplierName || '-' }}</text>
-        </view>
-        <view class="info-row">
           <text class="info-label">操作人</text>
           <text class="info-value">{{ info.operatorName || '-' }}</text>
         </view>
@@ -67,6 +63,12 @@
             <view class="info-right">
               <text class="info-label">数量</text>
               <text class="info-value">{{ item.displayQuantity || 0 }}</text>
+            </view>
+          </view>
+          <view class="info-line" v-if="item.supplierName">
+            <view class="info-left">
+              <text class="info-label">供货商</text>
+              <text class="info-value">{{ item.supplierName }}</text>
             </view>
           </view>
           <view class="info-line">
@@ -146,7 +148,7 @@ function getExpiryClass(expiryDate) {
 }
 
 const canConfirm = computed(() => String(info.value.status) === '0' && checkPermi('wms:stockIn:confirm'))
-const canCancelConfirm = computed(() => String(info.value.status) === '1' && checkPermi('wms:stockIn:edit'))
+const canCancelConfirm = computed(() => String(info.value.status) === '1' && checkPermi('wms:stockIn:confirm'))
 const canEdit = computed(() => String(info.value.status) === '0' && checkPermi('wms:stockIn:edit'))
 const canDelete = computed(() => String(info.value.status) === '0' && checkPermi('wms:stockIn:remove'))
 const showActions = computed(() => canConfirm.value || canCancelConfirm.value || canEdit.value || canDelete.value)

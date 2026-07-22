@@ -128,6 +128,7 @@ Route::delete('/monitor/online', [app\controller\monitor\SysUserOnlineController
 Route::get('/monitor/operlog/list', [app\controller\monitor\SysOperlogController::class, 'list']);
 Route::delete('/monitor/operlog/clean', [app\controller\monitor\SysOperlogController::class, 'clean']);
 Route::delete('/monitor/operlog', [app\controller\monitor\SysOperlogController::class, 'remove']);
+Route::post('/monitor/operlog/export', [app\controller\monitor\SysOperlogController::class, 'export']);
 
 Route::get('/monitor/logininfor/list', [app\controller\monitor\SysLogininforController::class, 'list']);
 Route::get('/monitor/logininfor/unlock/{userName}', [app\controller\monitor\SysLogininforController::class, 'unlock']);
@@ -160,6 +161,7 @@ Route::delete('/monitor/cache/clearCacheAll', [app\controller\monitor\CacheContr
 Route::get('/tool/gen/list', [app\controller\tool\GenController::class, 'list']);
 Route::get('/tool/gen/db/list', [app\controller\tool\GenController::class, 'dbList']);
 Route::post('/tool/gen/importTable', [app\controller\tool\GenController::class, 'importTable']);
+Route::post('/tool/gen/createTable', [app\controller\tool\GenController::class, 'createTable']);
 Route::put('/tool/gen', [app\controller\tool\GenController::class, 'edit']);
 Route::get('/tool/gen/preview/{tableId}', [app\controller\tool\GenController::class, 'preview']);
 Route::get('/tool/gen/synchDb/{tableName}', [app\controller\tool\GenController::class, 'synchDb']);

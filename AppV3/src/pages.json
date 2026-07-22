@@ -102,6 +102,7 @@
     { "path": "pages/system/role/index", "style": { "navigationBarTitleText": "角色管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/system/role/form", "style": { "navigationBarTitleText": "角色信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/system/role/dataScope", "style": { "navigationBarTitleText": "数据权限", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
+    { "path": "pages/system/role/authUser", "style": { "navigationBarTitleText": "分配用户", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/system/dept/index", "style": { "navigationBarTitleText": "部门管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/system/dept/form", "style": { "navigationBarTitleText": "部门信息", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },
     { "path": "pages/system/post/index", "style": { "navigationBarTitleText": "岗位管理", "navigationBarBackgroundColor": "#3D6DF7", "navigationBarTextStyle": "white" } },

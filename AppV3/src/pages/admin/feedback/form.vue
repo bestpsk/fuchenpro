@@ -23,17 +23,20 @@
 
     <view class="form-actions">
       <u-button type="info" plain text="取消" @click="goBack" customStyle="flex:1; height:88rpx; border-radius:44rpx; font-size:30rpx; font-weight:600;"></u-button>
-      <u-button type="primary" text="提交" @click="submitForm" :loading="submitting" customStyle="flex:1; height:88rpx; border-radius:44rpx; font-size:30rpx; font-weight:600;"></u-button>
+      <u-button type="primary" :text="isEdit ? '保存' : '提交'" @click="submitForm" :loading="submitting" customStyle="flex:1; height:88rpx; border-radius:44rpx; font-size:30rpx; font-weight:600;"></u-button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { addFeedback } from '@/api/admin/feedback'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { addFeedback, updateFeedback, getFeedback } from '@/api/admin/feedback'
 import { getDicts } from '@/api/system/dictData'
 
 const submitting = ref(false)
+const mode = ref('add')
+const feedbackId = ref('')
+const isEdit = computed(() => mode.value === 'edit')
 
 const form = reactive({
   title: '',
@@ -53,6 +56,18 @@ async function loadDicts() {
   } catch (e) { console.error('获取反馈类型字典失败:', e) }
 }
 
+async function loadDetail(id) {
+  try {
+    const res = await getFeedback(id)
+    const data = res.data || res
+    form.title = data.title || ''
+    form.feedbackType = String(data.feedbackType ?? '0')
+    form.content = data.content || ''
+  } catch (e) {
+    console.error('加载反馈详情失败:', e)
+  }
+}
+
 function goBack() {
   uni.navigateBack({ fail: () => uni.redirectTo({ url: '/pages/admin/feedback/index' }) })
 }
@@ -62,8 +77,13 @@ async function submitForm() {
   if (!form.content.trim()) { uni.showToast({ title: '请输入反馈内容', icon: 'none' }); return }
   submitting.value = true
   try {
-    await addFeedback(form)
-    uni.showToast({ title: '提交成功', icon: 'success' })
+    if (isEdit.value) {
+      await updateFeedback({ feedbackId: feedbackId.value, ...form })
+      uni.showToast({ title: '保存成功', icon: 'success' })
+    } else {
+      await addFeedback(form)
+      uni.showToast({ title: '提交成功', icon: 'success' })
+    }
     setTimeout(() => goBack(), 1500)
   } catch (e) {
     console.error('提交反馈失败:', e)
@@ -72,7 +92,18 @@ async function submitForm() {
   }
 }
 
-onMounted(() => { loadDicts() })
+onMounted(() => {
+  loadDicts()
+  const pages = getCurrentPages()
+  const page = pages[pages.length - 1]
+  const options = page.options || page.$page?.options || {}
+  if (options.mode === 'edit' && options.id) {
+    mode.value = 'edit'
+    feedbackId.value = options.id
+    uni.setNavigationBarTitle({ title: '编辑反馈' })
+    loadDetail(options.id)
+  }
+})
 </script>
 
 <style lang="scss" scoped>

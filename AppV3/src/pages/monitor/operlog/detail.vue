@@ -29,8 +29,8 @@
           </view>
           <view class="info-row">
             <text class="info-label">执行状态</text>
-            <view class="status-tag" :class="detail.status === 0 ? 'status-success' : 'status-fail'">
-              {{ detail.status === 0 ? '成功' : '失败' }}
+            <view class="status-tag" :class="String(detail.status) === '0' ? 'status-success' : 'status-fail'">
+              {{ String(detail.status) === '0' ? '成功' : '失败' }}
             </view>
           </view>
         </view>
@@ -98,7 +98,7 @@
         </view>
       </view>
 
-      <view v-if="detail.status === 1 && detail.errorMsg" class="detail-card error-card">
+      <view v-if="String(detail.status) === '1' && detail.errorMsg" class="detail-card error-card">
         <view class="card-title">
           <u-icon name="warning" size="16" color="#F53F3F"></u-icon>
           <text>异常信息</text>

@@ -18,6 +18,13 @@ class SysRoleService
     {
         $query = SysRole::where('del_flag', '0');
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('role_name', 'like', $kw)
+                  ->orWhere('role_key', 'like', $kw);
+            });
+        }
         if (!empty($params['role_name'])) {
             $query->where('role_name', 'like', '%' . $params['role_name'] . '%');
         }
@@ -178,6 +185,13 @@ class SysRoleService
             ->where('sys_user_role.role_id', $roleId)
             ->where('sys_user.del_flag', '0');
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('sys_user.user_name', 'like', $kw)
+                  ->orWhere('sys_user.phonenumber', 'like', $kw);
+            });
+        }
         if (!empty($params['user_name'])) {
             $query->where('sys_user.user_name', 'like', '%' . $params['user_name'] . '%');
         }

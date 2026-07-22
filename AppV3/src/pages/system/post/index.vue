@@ -185,11 +185,6 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.postCode = params.keyword
-      params.postName = params.keyword
-    }
-    delete params.keyword
     const response = await listPost(params)
     const data = response.data || response
     const list = data.rows || []

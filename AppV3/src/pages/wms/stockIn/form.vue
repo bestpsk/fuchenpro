@@ -89,6 +89,12 @@
                 </view>
               </view>
             </view>
+            <view class="supplier-row" v-if="item.supplierName">
+              <view class="field-label">供货商</view>
+              <view class="field-input-box readonly">
+                <text class="readonly-text">{{ item.supplierName }}</text>
+              </view>
+            </view>
             <view class="item-row">
               <view class="form-field mini half" @click="openDatePicker(index, 'productionDate')">
                 <view class="field-label">生产日期</view>
@@ -247,6 +253,8 @@ function selectProduct(p) {
   const item = form.items[index]
   item.productId = p.productId
   item.productName = p.productName || ''
+  item.supplierId = p.supplierId || null
+  item.supplierName = p.supplierName || ''
   item.spec = p.spec || ''
   item.unit = p.unit || ''
   item.packQty = p.packQty || 1
@@ -264,6 +272,8 @@ function addItem() {
   form.items.push({
     productId: undefined,
     productName: '',
+    supplierId: null,
+    supplierName: '',
     spec: '',
     unit: '',
     packQty: 1,
@@ -392,6 +402,8 @@ async function loadDetail() {
         itemId: item.itemId,
         productId: item.productId,
         productName: item.productName || '',
+        supplierId: item.supplierId || null,
+        supplierName: item.supplierName || '',
         spec: item.spec || '',
         unit: item.unit || '',
         packQty: packQty,
@@ -440,6 +452,8 @@ async function submitForm() {
           itemId: item.itemId || undefined,
           productId: item.productId,
           productName: item.productName,
+          supplierId: item.supplierId || null,
+          supplierName: item.supplierName || null,
           spec: item.spec || '',
           unit: item.unit || '',
           packQty: packQty,
@@ -539,6 +553,8 @@ page { background-color: #F5F7FA; }
 .form-row { display: flex; gap: 24rpx; }
 .half { flex: 1; min-width: 0; }
 .item-row { display: flex; gap: 16rpx; }
+.supplier-row { margin-bottom: 16rpx; }
+.readonly-text { font-size: 26rpx; color: #1D2129; }
 
 .items-list { display: flex; flex-direction: column; gap: 16rpx; }
 .item-card { background: #F7F8FA; border-radius: 12rpx; padding: 20rpx; }

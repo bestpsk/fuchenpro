@@ -28,14 +28,18 @@ class SysUserDetailService
     public function updateDetail($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
+        $detail = null;
         if (isset($data['detail_id'])) {
-            return SysUserDetail::where('detail_id', $data['detail_id'])->update($data);
-        }
-        if (isset($data['user_id'])) {
+            $detail = SysUserDetail::find($data['detail_id']);
+        } elseif (isset($data['user_id'])) {
             $detail = SysUserDetail::where('user_id', $data['user_id'])->first();
-            if ($detail) {
-                return SysUserDetail::where('user_id', $data['user_id'])->update($data);
-            }
+        }
+        if ($detail) {
+            $detail->fill($data)->save();
+            return true;
+        }
+        // 不存在则新增
+        if (isset($data['user_id'])) {
             return $this->insertDetail($data);
         }
         return false;

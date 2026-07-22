@@ -5,6 +5,7 @@ namespace app\controller\monitor;
 use support\Request;
 use app\service\SysOperLogService;
 use app\service\PermissionService;
+use app\model\SysOperLog;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
 
@@ -33,7 +34,8 @@ class SysOperlogController
         if (PermissionService::lacksPermi($request->loginUser, 'monitor:operlog:remove')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $operIds = explode(',', $request->input('operIds', ''));
+        $operIds = $request->input('operIds', '') ?: $request->input('operId', '');
+        $operIds = explode(',', $operIds);
         $operIds = array_map('intval', array_filter($operIds));
         $service = new SysOperLogService();
         return AjaxResult::toAjax($service->deleteOperLogByIds($operIds) ? 1 : 0);
@@ -48,5 +50,21 @@ class SysOperlogController
         $service = new SysOperLogService();
         $service->cleanOperLog();
         return AjaxResult::success();
+    }
+
+    // 导出操作日志为Excel
+    public function export(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:operlog:export')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $params = convert_to_snake_case($request->all());
+        $params['pageSize'] = 10000;
+        $service = new SysOperLogService();
+        $result = $service->selectOperLogList($params);
+        $list = $result->items();
+
+        $excelUtil = new \app\common\ExcelUtil(SysOperLog::class);
+        return $excelUtil->exportExcel($list, '操作日志');
     }
 }

@@ -45,6 +45,7 @@
       <view class="menu-list">
         <view
           v-for="(item, index) in menuList"
+          v-show="!item.permi || checkPermi(item.permi)"
           :key="'menu-' + index"
           class="menu-item"
           @click="handleMenuClick(item)"
@@ -64,6 +65,7 @@
 import { computed } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { useFullscreen } from '@/utils/fullscreen'
+import { checkPermi } from '@/utils/permission'
 
 const userStore = useUserStore()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
@@ -91,7 +93,9 @@ const menuList = [
   { title: '编辑资料', icon: 'account', path: '/pages/mine/info/edit', iconColor: '#3D6DF7', bgColor: '#EBF0FF' },
   { title: '常见问题', icon: 'question-circle', path: '/pages/mine/help/index', iconColor: '#5B8FF9', bgColor: '#EAF1FF' },
   { title: '关于我们', icon: 'info-circle', path: '/pages/mine/about/index', iconColor: '#2DA8A8', bgColor: '#E6F7F7' },
-  { title: '应用设置', icon: 'setting', path: '/pages/mine/setting/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' }
+  { title: '应用设置', icon: 'setting', path: '/pages/mine/setting/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' },
+  { title: '登录日志', icon: 'file-text', path: '/pages/monitor/logininfor/index', iconColor: '#3D6DF7', bgColor: '#EBF0FF', permi: 'monitor:logininfor:list' },
+  { title: '操作日志', icon: 'edit-pen', path: '/pages/monitor/operlog/index', iconColor: '#5B8FF9', bgColor: '#EAF1FF', permi: 'monitor:operlog:list' }
 ]
 
 function handleToInfo() {

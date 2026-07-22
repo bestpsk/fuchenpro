@@ -275,7 +275,7 @@ import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
 import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
 // ==================== 通用 ====================

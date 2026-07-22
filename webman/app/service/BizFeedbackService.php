@@ -59,10 +59,12 @@ class BizFeedbackService
 
     public function updateFeedback($data)
     {
-        $data['update_time'] = date('Y-m-d H:i:s');
-        return BizFeedback::where('feedback_id', $data['feedback_id'])->update(
-            collect($data)->only(['title', 'content', 'feedback_type', 'status', 'update_by', 'update_time'])->toArray()
-        );
+        $feedback = BizFeedback::find($data['feedback_id']);
+        if (!$feedback) return false;
+        $feedback->fill($data);
+        $feedback->update_by = $data['update_by'] ?? '';
+        $feedback->update_time = date('Y-m-d H:i:s');
+        return $feedback->save();
     }
 
     public function deleteFeedbackByIds($feedbackIds)

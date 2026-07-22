@@ -115,6 +115,22 @@ class GenTableService
         return true;
     }
 
+    /**
+     * 执行建表SQL并返回创建的表名数组
+     * 支持多条 CREATE TABLE 语句
+     */
+    public function createTableBySql($sql)
+    {
+        // 执行建表SQL（支持多条语句）
+        Db::unprepared($sql);
+        // 解析所有 CREATE TABLE 语句中的表名
+        $tableNames = [];
+        if (preg_match_all('/create\s+table\s+(?:if\s+not\s+exists\s+)?`?(\w+)`?/i', $sql, $matches)) {
+            $tableNames = $matches[1];
+        }
+        return $tableNames;
+    }
+
     public function deleteGenTableByIds($tableIds)
     {
         GenTableColumn::whereIn('table_id', $tableIds)->delete();

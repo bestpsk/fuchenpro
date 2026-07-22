@@ -256,11 +256,9 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.userName = params.keyword
-      params.ipaddr = params.keyword
-    }
-    delete params.keyword
+    // keyword 由后端 OR 查询 user_name/ipaddr，无需前端拆分
+    delete params.userName
+    delete params.ipaddr
     const response = await listLogininfor(params)
     const data = response.data || response
     const list = data.rows || []

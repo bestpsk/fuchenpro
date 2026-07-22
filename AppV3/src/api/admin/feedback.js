@@ -17,7 +17,11 @@ export function updateFeedback(data) {
 }
 
 export function delFeedback(feedbackId) {
-  return request({ url: '/admin/feedback', method: 'delete', params: { feedbackId } })
+  return request({ url: '/admin/feedback', method: 'delete', params: { feedbackIds: feedbackId } })
+}
+
+export function handleFeedback(data) {
+  return request({ url: '/admin/feedback/handle', method: 'put', data })
 }
 
 export function replyFeedback(data) {

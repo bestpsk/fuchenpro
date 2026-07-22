@@ -20,7 +20,7 @@
       <view class="form-field" @click="mode !== 'view' && (showCategoryPicker = true)">
         <view class="field-input-box">
           <u-icon name="list" size="18" color="#86909C"></u-icon>
-          <input class="field-input" :value="categoryLabel" placeholder="类别" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
+          <input class="field-input" :value="categoryLabel" placeholder="* 类别" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
           <u-icon v-if="mode !== 'view'" name="arrow-right" size="14" color="#C9CDD4"></u-icon>
         </view>
       </view>
@@ -194,7 +194,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getCardItem, addCardItem, updateCardItem } from '@/api/business/cardItem'
 import { searchProduct } from '@/api/wms/product'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { generateProductCode } from '@/utils/pinyin'
 import { checkPermi } from '@/utils/permission'
 
@@ -431,6 +431,7 @@ async function loadDetail() {
 async function submitForm() {
   if (!form.cardItemName) { uni.showToast({ title: '请输入卡项名称', icon: 'none' }); return }
   if (!form.cardItemCode) { uni.showToast({ title: '请输入卡项编码', icon: 'none' }); return }
+  if (!form.category) { uni.showToast({ title: '请选择类别', icon: 'none' }); return }
   if (!form.defaultQuantity || form.defaultQuantity < 1) { uni.showToast({ title: '默认次数不能小于1', icon: 'none' }); return }
 
   submitting.value = true

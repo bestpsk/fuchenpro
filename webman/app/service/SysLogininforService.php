@@ -14,6 +14,12 @@ class SysLogininforService
     {
         $query = SysLogininfor::query();
 
+        if (!empty($params['keyword'])) {
+            $query->where(function($q) use ($params) {
+                $q->where('user_name', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('ipaddr', 'like', '%' . $params['keyword'] . '%');
+            });
+        }
         if (!empty($params['ipaddr'])) {
             $query->where('ipaddr', 'like', '%' . $params['ipaddr'] . '%');
         }

@@ -16,6 +16,13 @@ class SysConfigService
     {
         $query = SysConfig::query();
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('config_name', 'like', $kw)
+                  ->orWhere('config_key', 'like', $kw);
+            });
+        }
         if (!empty($params['config_name'])) {
             $query->where('config_name', 'like', '%' . $params['config_name'] . '%');
         }

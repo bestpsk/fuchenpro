@@ -83,7 +83,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { getCustomer, addCustomer, updateCustomer } from '@/api/business/customer'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import config from '@/config'
 
 const submitting = ref(false)

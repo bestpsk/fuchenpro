@@ -7,12 +7,57 @@
           <input class="search-input" v-model="queryParams.noticeTitle" placeholder="搜索公告标题" confirm-type="search" @confirm="handleSearch" />
           <u-icon v-if="queryParams.noticeTitle" name="close-circle-fill" size="16" color="#C9CDD4" @click="clearSearch"></u-icon>
         </view>
+        <view class="filter-btn" :class="{ active: hasActiveFilters }" @click="showFilter = true">
+          <u-icon name="list" size="14" :color="hasActiveFilters ? '#3D6DF7' : '#4E5969'"></u-icon>
+          <text>筛选</text>
+        </view>
         <view v-if="noticeList.length > 0" class="mark-all-btn" @click="handleMarkAllRead">
           <u-icon name="checkmark" size="14" color="#3D6DF7"></u-icon>
           <text>全部已读</text>
         </view>
       </view>
     </view>
+
+    <view v-if="hasActiveFilters" class="active-filters">
+      <scroll-view scroll-x class="filter-scroll">
+        <view class="filter-tags">
+          <view v-if="queryParams.noticeType" class="filter-tag active" @click="clearFilter('noticeType')">
+            <text>{{ getNoticeTypeLabel(queryParams.noticeType) }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+          <view v-if="queryParams.createBy" class="filter-tag active" @click="clearFilter('createBy')">
+            <text>{{ queryParams.createBy }}</text>
+            <u-icon name="close" size="12"></u-icon>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <u-popup :show="showFilter" mode="top" round="16" @close="showFilter = false">
+      <view class="popup-content">
+        <view class="popup-title">筛选条件</view>
+        <view class="form-item">
+          <view class="form-label">公告类型</view>
+          <view class="form-options">
+            <view
+              v-for="item in noticeTypeOptions"
+              :key="item.dictValue"
+              class="option-tag"
+              :class="{ active: queryParams.noticeType === item.dictValue }"
+              @click="queryParams.noticeType = queryParams.noticeType === item.dictValue ? '' : item.dictValue"
+            >{{ item.dictLabel }}</view>
+          </view>
+        </view>
+        <view class="form-item">
+          <view class="form-label">操作人员</view>
+          <input class="form-input" v-model="queryParams.createBy" placeholder="请输入操作人员" />
+        </view>
+        <view class="popup-actions">
+          <u-button type="info" plain text="重置" @click="resetFilter"></u-button>
+          <u-button type="primary" text="确定" @click="confirmFilter"></u-button>
+        </view>
+      </view>
+    </u-popup>
 
     <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="noticeList.length > 0" class="card-list">
@@ -61,9 +106,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listNotice, delNotice, updateNotice, markNoticeReadAll } from '@/api/system/notice'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
 const noticeList = ref([])
@@ -71,8 +117,35 @@ const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const scrollHeight = ref(600)
+const showFilter = ref(false)
+const noticeTypeOptions = ref([])
 
-const queryParams = reactive({ pageNum: 1, pageSize: 10, noticeTitle: '' })
+const queryParams = reactive({ pageNum: 1, pageSize: 10, noticeTitle: '', noticeType: '', createBy: '' })
+
+const hasActiveFilters = computed(() => {
+  return !!(queryParams.noticeType || queryParams.createBy)
+})
+
+function getNoticeTypeLabel(value) {
+  const item = noticeTypeOptions.value.find(d => d.dictValue === value)
+  return item ? item.dictLabel : value
+}
+
+function clearFilter(field) {
+  queryParams[field] = ''
+  getList(true)
+}
+
+function resetFilter() {
+  queryParams.noticeType = ''
+  queryParams.createBy = ''
+  getList(true)
+}
+
+function confirmFilter() {
+  showFilter.value = false
+  getList(true)
+}
 
 async function getList(isRefresh = false) {
   if (loading.value) return
@@ -181,8 +254,18 @@ function calcScrollHeight() {
 
 onMounted(() => {
   calcScrollHeight()
+  loadDicts()
   getList(true)
 })
+
+async function loadDicts() {
+  try {
+    const res = await getDicts('sys_notice_type')
+    noticeTypeOptions.value = res.data || []
+  } catch (e) {
+    console.error('获取字典失败:', e)
+  }
+}
 
 onShow(() => {
   getList(true)
@@ -214,9 +297,35 @@ page { background-color: #F5F7FA; }
   height: 36rpx;
   line-height: 36rpx;
 }
-.mark-all-btn { display: flex; align-items: center; gap: 6rpx; padding: 10rpx 20rpx; background: #E8F0FE; border-radius: 28rpx;
+.mark-all-btn { display: flex; align-items: center; gap: 6rpx; padding: 10rpx 20rpx; background: #E8F0FE; border-radius: 28rpx; margin-left: 12rpx;
   text { font-size: 24rpx; color: #3D6DF7; font-weight: 500; }
   &:active { opacity: 0.7; }
+}
+.filter-btn { display: flex; align-items: center; gap: 6rpx; padding: 10rpx 20rpx; background: #F2F3F5; border-radius: 28rpx; flex-shrink: 0;
+  text { font-size: 24rpx; color: #4E5969; }
+  &.active { background: #E8F0FE;
+    text { color: #3D6DF7; }
+  }
+}
+
+.active-filters { padding: 16rpx 30rpx 0; flex-shrink: 0; }
+.filter-scroll { white-space: nowrap; }
+.filter-tags { display: inline-flex; gap: 12rpx; }
+.filter-tag { display: inline-flex; align-items: center; gap: 6rpx; padding: 8rpx 20rpx; background: #E8F0FE; border-radius: 24rpx; flex-shrink: 0;
+  text { font-size: 24rpx; color: #3D6DF7; }
+}
+
+.popup-content { padding: 30rpx; }
+.popup-title { font-size: 32rpx; font-weight: 600; color: #1D2129; margin-bottom: 30rpx; }
+.form-item { margin-bottom: 30rpx; }
+.form-label { font-size: 28rpx; color: #4E5969; margin-bottom: 16rpx; }
+.form-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.option-tag { padding: 12rpx 32rpx; background: #F2F3F5; border-radius: 8rpx; font-size: 26rpx; color: #4E5969;
+  &.active { background: #3D6DF7; color: #fff; }
+}
+.form-input { width: 100%; height: 80rpx; background: #F5F7FA; border-radius: 12rpx; padding: 0 24rpx; font-size: 28rpx; color: #1D2129; box-sizing: border-box; }
+.popup-actions { display: flex; gap: 20rpx; margin-top: 20rpx;
+  .u-button { flex: 1; }
 }
 
 .list-scroll { padding: 20rpx 30rpx; flex: 1; box-sizing: border-box; }

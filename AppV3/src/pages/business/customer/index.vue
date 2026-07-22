@@ -268,7 +268,7 @@
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import config from '@/config'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore, searchStore } from '@/api/business/store'
 import { listCustomer, searchCustomer, delCustomer } from '@/api/business/customer'

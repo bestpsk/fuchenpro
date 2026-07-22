@@ -268,11 +268,6 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.userName = params.keyword
-      params.phonenumber = params.keyword
-    }
-    delete params.keyword
     const response = await listUser(params)
     const data = response.data || response
     const list = data.rows || []

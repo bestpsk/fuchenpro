@@ -167,7 +167,7 @@ import { getSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule
 import { getRestDates } from '@/api/business/employeeConfig'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listUser } from '@/api/system/user'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
 const submitting = ref(false)

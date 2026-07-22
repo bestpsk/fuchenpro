@@ -16,6 +16,19 @@
 
     <view class="reply-form">
       <view class="form-card">
+        <view class="card-title"><text class="required">*</text>处理状态</view>
+        <view class="status-options">
+          <view
+            v-for="item in statusOptions"
+            :key="item.value"
+            class="status-tag"
+            :class="{ active: selectedStatus === item.value }"
+            @click="selectedStatus = item.value"
+          >{{ item.label }}</view>
+        </view>
+      </view>
+
+      <view class="form-card">
         <view class="card-title"><text class="required">*</text>回复内容</view>
         <textarea
           class="form-textarea"
@@ -36,17 +49,29 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getFeedback, replyFeedback } from '@/api/admin/feedback'
+import { getFeedback, handleFeedback } from '@/api/admin/feedback'
+import { getDicts } from '@/api/system/dictData'
 
 const feedbackId = ref('')
 const feedbackDetail = ref({})
 const replyContent = ref('')
+const selectedStatus = ref('')
 const submitting = ref(false)
+const statusOptions = ref([])
+
+async function loadStatusOptions() {
+  try {
+    const res = await getDicts('biz_feedback_status')
+    statusOptions.value = (res.data || []).map(item => ({ label: item.dictLabel, value: item.dictValue }))
+  } catch (e) { console.error('获取状态字典失败:', e) }
+}
 
 async function loadDetail(id) {
   try {
     const res = await getFeedback(id)
     feedbackDetail.value = res.data || {}
+    // 默认设为当前反馈状态
+    selectedStatus.value = String(feedbackDetail.value.status ?? '1')
   } catch (e) {
     console.error('获取反馈详情失败:', e)
   }
@@ -57,13 +82,21 @@ function goBack() {
 }
 
 async function submitReply() {
+  if (!selectedStatus.value) {
+    uni.showToast({ title: '请选择处理状态', icon: 'none' })
+    return
+  }
   if (!replyContent.value.trim()) {
     uni.showToast({ title: '请输入回复内容', icon: 'none' })
     return
   }
   submitting.value = true
   try {
-    await replyFeedback({ feedbackId: feedbackId.value, content: replyContent.value })
+    await handleFeedback({
+      feedbackId: feedbackId.value,
+      status: selectedStatus.value,
+      replyContent: replyContent.value
+    })
     uni.showToast({ title: '回复成功', icon: 'success' })
     setTimeout(() => goBack(), 1500)
   } catch (e) {
@@ -74,6 +107,7 @@ async function submitReply() {
 }
 
 onMounted(() => {
+  loadStatusOptions()
   const pages = getCurrentPages()
   const page = pages[pages.length - 1]
   const options = page.options || page.$page?.options || {}
@@ -96,7 +130,12 @@ page { background-color: #F5F7FA; height: 100%; }
 .info-value { font-size: 28rpx; color: #1D2129; display: block; }
 .content-text { line-height: 1.6; word-break: break-all; }
 
-.form-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; }
+.form-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; margin-bottom: 20rpx; }
+.status-options { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.status-tag { padding: 14rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent; transition: all 0.2s;
+  &.active { background: #e8f0fe; color: #3D6DF7; border-color: #3D6DF7; }
+}
+
 .form-textarea { width: 100%; height: 300rpx; background: #F5F7FA; border-radius: 12rpx; padding: 20rpx 24rpx; font-size: 28rpx; color: #1D2129; box-sizing: border-box; line-height: 1.6; }
 .char-count { display: block; text-align: right; font-size: 24rpx; color: #C9CDD4; margin-top: 8rpx; }
 

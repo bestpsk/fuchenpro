@@ -14,6 +14,15 @@ class SysOperLogService
     {
         $query = SysOperLog::query();
 
+        if (!empty($params['oper_id'])) {
+            $query->where('oper_id', $params['oper_id']);
+        }
+        if (!empty($params['keyword'])) {
+            $query->where(function($q) use ($params) {
+                $q->where('title', 'like', '%' . $params['keyword'] . '%')
+                  ->orWhere('oper_name', 'like', '%' . $params['keyword'] . '%');
+            });
+        }
         if (!empty($params['title'])) {
             $query->where('title', 'like', '%' . $params['title'] . '%');
         }

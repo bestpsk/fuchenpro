@@ -14,6 +14,13 @@ class SysPostService
     {
         $query = SysPost::query();
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('post_code', 'like', $kw)
+                  ->orWhere('post_name', 'like', $kw);
+            });
+        }
         if (!empty($params['post_code'])) {
             $query->where('post_code', 'like', '%' . $params['post_code'] . '%');
         }

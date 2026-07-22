@@ -17,6 +17,13 @@ class SysDictTypeService
     {
         $query = SysDictType::query();
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('dict_name', 'like', $kw)
+                  ->orWhere('dict_type', 'like', $kw);
+            });
+        }
         if (!empty($params['dict_name'])) {
             $query->where('dict_name', 'like', '%' . $params['dict_name'] . '%');
         }

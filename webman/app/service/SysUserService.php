@@ -19,6 +19,14 @@ class SysUserService
     {
         $query = SysUser::with(['dept', 'roles']);
 
+        if (!empty($params['keyword'])) {
+            $kw = '%' . $params['keyword'] . '%';
+            $query->where(function ($q) use ($kw) {
+                $q->where('user_name', 'like', $kw)
+                  ->orWhere('nick_name', 'like', $kw)
+                  ->orWhere('phonenumber', 'like', $kw);
+            });
+        }
         if (!empty($params['user_name'])) {
             $query->where('user_name', 'like', '%' . $params['user_name'] . '%');
         }

@@ -134,7 +134,7 @@
 import { ref, reactive, computed } from 'vue'
 import { listArchive, addArchive, deleteArchive } from '@/api/business/archive'
 import { listEmployeeConfig } from '@/api/business/employeeConfig'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { useUserStore } from '@/store/modules/user'
 import config from '@/config'
 import { checkPermi } from '@/utils/permission'

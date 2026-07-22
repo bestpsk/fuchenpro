@@ -197,7 +197,7 @@
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listCardItem, delCardItem, updateCardItem } from '@/api/business/cardItem'
-import { getDicts } from '@/api/system/dict/data'
+import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
 const cardItemList = ref([])

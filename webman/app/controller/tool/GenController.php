@@ -52,7 +52,7 @@ class GenController
     // 从数据库导入指定表到代码生成器（支持批量导入）
     public function importTable(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:add')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:import')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $tableNames = $request->post('tables', '');
@@ -62,6 +62,29 @@ class GenController
         $service = new GenTableService();
         $service->importGenTable($tableNames);
         return AjaxResult::success();
+    }
+
+    // 通过SQL语句创建表并导入代码生成器
+    public function createTable(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:add')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $sql = $request->post('sql', '');
+        if (empty($sql)) {
+            return AjaxResult::error('SQL内容不能为空');
+        }
+        $service = new GenTableService();
+        try {
+            $tableNames = $service->createTableBySql($sql);
+            if (empty($tableNames)) {
+                return AjaxResult::error('解析表名失败，请检查SQL语句');
+            }
+            $service->importGenTable($tableNames);
+            return AjaxResult::success('创建成功');
+        } catch (\Exception $e) {
+            return AjaxResult::error('创建失败：' . $e->getMessage());
+        }
     }
 
     // 修改代码生成表配置（含表信息和列信息）
@@ -91,6 +114,9 @@ class GenController
     // 预览指定表的生成代码（返回各模板文件的内容）
     public function preview(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:preview')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $tableId = intval(end($parts));
         $service = new GenTableService();
@@ -101,7 +127,7 @@ class GenController
     // 同步数据库表结构到代码生成配置（更新列信息）
     public function synchDb(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:code')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:edit')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $parts = explode('/', $request->path());

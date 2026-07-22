@@ -136,8 +136,8 @@
               <u-icon name="file-text" size="16" color="#3D6DF7"></u-icon>
               <text class="name-text">{{ item.title || '-' }}</text>
             </view>
-            <view class="status-tag" :class="item.status === 0 ? 'status-success' : 'status-fail'">
-              {{ item.status === 0 ? '成功' : '失败' }}
+            <view class="status-tag" :class="String(item.status) === '0' ? 'status-success' : 'status-fail'">
+              {{ String(item.status) === '0' ? '成功' : '失败' }}
             </view>
           </view>
 
@@ -192,11 +192,8 @@
       />
     </scroll-view>
 
-    <view v-if="selectedIds.length > 0 && checkPermi('monitor:operlog:remove')" class="batch-bar">
-      <text class="batch-text">已选 {{ selectedIds.length }} 项</text>
-      <view class="batch-btns">
-        <u-button type="error" size="small" text="删除选中" @click="handleBatchDelete" customStyle="height:64rpx; border-radius:32rpx;"></u-button>
-      </view>
+    <view v-if="checkPermi('monitor:operlog:remove')" class="clean-bar">
+      <u-button type="error" plain text="清空日志" @click="handleClean" customStyle="height:72rpx; border-radius:36rpx;"></u-button>
     </view>
   </view>
 </template>
@@ -214,7 +211,6 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
-const selectedIds = ref([])
 
 let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
@@ -264,11 +260,9 @@ async function getList(isRefresh = false) {
   }
   try {
     const params = { ...queryParams }
-    if (params.keyword) {
-      params.title = params.keyword
-      params.operName = params.keyword
-    }
-    delete params.keyword
+    // keyword 由后端 OR 查询 title/oper_name，无需前端拆分
+    delete params.title
+    delete params.operName
     const response = await listOperlog(params)
     const data = response.data || response
     const list = data.rows || []
@@ -379,19 +373,18 @@ function handleDelete(item) {
   })
 }
 
-function handleBatchDelete() {
+function handleClean() {
   uni.showModal({
     title: '提示',
-    content: `是否确认删除选中的${selectedIds.value.length}条操作日志?`,
+    content: '是否确认清空所有操作日志?',
     success: async (res) => {
       if (res.confirm) {
         try {
-          await delOperlog(selectedIds.value.join(','))
-          selectedIds.value = []
-          uni.showToast({ title: '删除成功', icon: 'success' })
+          await cleanOperlog()
+          uni.showToast({ title: '清空成功', icon: 'success' })
           getList(true)
         } catch (e) {
-          console.error('删除失败:', e)
+          console.error('清空失败:', e)
         }
       }
     }
@@ -505,11 +498,8 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   &.delete { color: #F53F3F; background: #FFF1F0; }
 }
 
-.batch-bar {
-  position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
-  justify-content: space-between; padding: 20rpx 30rpx; background: #fff;
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08); z-index: 100;
+.clean-bar {
+  flex-shrink: 0; padding: 20rpx 30rpx; background: #fff;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
-.batch-text { font-size: 28rpx; color: #1D2129; }
-.batch-btns { display: flex; gap: 16rpx; }
 </style>

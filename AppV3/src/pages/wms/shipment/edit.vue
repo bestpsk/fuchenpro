@@ -124,7 +124,7 @@
                 </view>
               </view>
               <view class="form-field mini half">
-                <view class="field-label">销售单价</view>
+                <view class="field-label">出货单价</view>
                 <view class="field-input-box mini">
                   <input class="field-input" type="digit" v-model="item.salePrice" placeholder="0.00" placeholder-class="field-placeholder" @input="calcItemAmount(index)" />
                 </view>
