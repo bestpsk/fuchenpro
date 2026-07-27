@@ -116,11 +116,11 @@
               </view>
             </view>
             <view class="date-tags-row">
-              <view class="date-tag" v-for="(date, idx) in getDisplayDates(item.scheduleDates)" :key="idx">
-                {{ formatDay(date) }}
+              <view class="date-tag" :class="{'rest': d.type === 'rest', 'leave': d.type === 'leave'}" v-for="(d, idx) in getDisplayDatesWithStatus(item).slice(0, 6)" :key="idx">
+                {{ d.label }}
               </view>
-              <view class="date-tag more" v-if="item.scheduleDates.length > 6">
-                +{{ item.scheduleDates.length - 6 }}
+              <view class="date-tag more" v-if="getDisplayDatesWithStatus(item).length > 6">
+                +{{ getDisplayDatesWithStatus(item).length - 6 }}
               </view>
             </view>
             <view class="info-row" v-if="item.remark">
@@ -172,11 +172,11 @@
                 </view>
               </view>
               <view class="date-tags-row">
-                <view class="date-tag" v-for="(date, dIdx) in item.scheduleDates" :key="dIdx">
-                  {{ formatDay(date) }}
+                <view class="date-tag" :class="{'rest': d.type === 'rest', 'leave': d.type === 'leave'}" v-for="(d, dIdx) in getDisplayDatesWithStatus(item).slice(0, 6)" :key="dIdx">
+                  {{ d.label }}
                 </view>
-                <view class="date-tag more" v-if="item.scheduleDates.length > 6">
-                  +{{ item.scheduleDates.length - 6 }}
+                <view class="date-tag more" v-if="getDisplayDatesWithStatus(item).length > 6">
+                  +{{ getDisplayDatesWithStatus(item).length - 6 }}
                 </view>
               </view>
               <view class="info-row" v-if="item.remark">
@@ -275,6 +275,7 @@ import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
 import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
+import { getLeaveCalendar, getRestCalendar } from '@/api/business/leave'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
@@ -358,6 +359,106 @@ function getStatusName(value) {
 function formatDay(dateStr) {
   if (!dateStr) return ''
   return dateStr.substring(5)
+}
+
+// ==================== 休息日/请假数据（供日历格子标注，与Web端对齐） ====================
+const restDateMap = ref({})
+const leaveDateMap = ref({})
+
+/** 收集当前Tab列表中所有员工的userId（去重） */
+function getCurrentUserIds() {
+  const ids = new Set()
+  if (currentTab.value === 0) {
+    scheduleList.value.forEach(item => {
+      if (item.userId) ids.add(item.userId)
+    })
+  } else if (currentTab.value === 1) {
+    enterpriseScheduleList.value.forEach(group => {
+      (group.schedules || []).forEach(s => {
+        if (s.userId) ids.add(s.userId)
+      })
+    })
+  }
+  return Array.from(ids)
+}
+
+/** 批量加载所有员工的某月休息日，结果存入 restDateMap */
+async function loadRestDateMap() {
+  const userIds = getCurrentUserIds()
+  if (!userIds.length) {
+    restDateMap.value = {}
+    return
+  }
+  try {
+    const res = await getRestCalendar({
+      yearMonth: queryParams.yearMonth,
+      userIds: userIds.join(',')
+    })
+    // 后端返回数组格式 [{userId, restDates}]，转换为 {userId: [dates]} map
+    const arr = res.data || []
+    const map = {}
+    arr.forEach(item => {
+      map[item.userId] = item.restDates || []
+    })
+    restDateMap.value = map
+  } catch (e) {
+    console.error('加载休息日数据失败:', e)
+    restDateMap.value = {}
+  }
+}
+
+/** 批量加载所有员工的某月请假日期，结果存入 leaveDateMap */
+async function loadLeaveDateMap() {
+  const userIds = getCurrentUserIds()
+  if (!userIds.length) {
+    leaveDateMap.value = {}
+    return
+  }
+  try {
+    const res = await getLeaveCalendar({
+      yearMonth: queryParams.yearMonth,
+      userIds: userIds.join(',')
+    })
+    leaveDateMap.value = res.data || {}
+  } catch (e) {
+    console.error('加载请假数据失败:', e)
+    leaveDateMap.value = {}
+  }
+}
+
+/**
+ * 合并行程日期 + 休息日 + 请假日，按日期排序后返回带类型信息的数组
+ * 显示优先级：休息日 > 请假 > 行程
+ * @param {object} item - 行程卡片数据（含 userId, scheduleDates）
+ * @returns {Array<{date, label, type}>} type: 'rest' | 'leave' | 'schedule'
+ */
+function getDisplayDatesWithStatus(item) {
+  const scheduleDates = item.scheduleDates || []
+  const userId = item.userId
+
+  // 无userId或无休息/请假数据时，仅返回行程日期
+  if (!userId || (Object.keys(restDateMap.value).length === 0 && Object.keys(leaveDateMap.value).length === 0)) {
+    return scheduleDates.map(date => ({ date, label: formatDay(date), type: 'schedule' }))
+  }
+
+  const restDates = restDateMap.value[userId] || []
+  const leaves = leaveDateMap.value[userId] || []
+  const leaveDates = leaves.map(l => l.date)
+
+  // 合并所有日期并去重排序
+  const allDatesSet = new Set([...scheduleDates, ...restDates, ...leaveDates])
+  const allDates = Array.from(allDatesSet).sort()
+
+  return allDates.map(date => {
+    if (restDates.includes(date)) {
+      return { date, label: '休息', type: 'rest' }
+    }
+    const leave = leaves.find(l => l.date === date)
+    if (leave) {
+      return { date, label: leave.label || leave.typeName || '请假', type: 'leave' }
+    }
+    return { date, label: formatDay(date), type: 'schedule' }
+  })
 }
 
 // ==================== Tab 0: 员工行程 ====================
@@ -465,6 +566,10 @@ async function getList(isRefresh = false) {
       scheduleList.value = [...scheduleList.value, ...newItems]
       rawLoadedCount.value += list.length
     }
+
+    // 行程列表已更新，加载休息日和请假数据用于日历格子标注（异步，不阻塞加载状态）
+    loadRestDateMap()
+    loadLeaveDateMap()
 
     loadStatus.value = rawLoadedCount.value >= total ? 'nomore' : 'loadmore'
   } catch (e) {
@@ -586,6 +691,10 @@ async function getEnterpriseList() {
         schedules
       }
     })
+
+    // 企业排班列表已更新，加载休息日和请假数据用于日历格子标注（异步，不阻塞加载状态）
+    loadRestDateMap()
+    loadLeaveDateMap()
   } catch (e) {
     console.error('获取企业排班失败:', e)
     enterpriseScheduleList.value = []
@@ -795,6 +904,7 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 
   &.more { background: #E8F0FE; color: #3D6DF7; }
   &.rest { background: #FFF1F0; color: #F53F3F; }
+  &.leave { background: #FFF7E8; color: #FF7D00; }
 }
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20rpx; padding-top: 16rpx; }

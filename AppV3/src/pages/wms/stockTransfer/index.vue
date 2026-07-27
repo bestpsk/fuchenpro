@@ -68,7 +68,7 @@
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
     </scroll-view>
 
-    <view class="fab-btn" @click="goAdd">
+    <view v-if="canAdd" class="fab-btn" @click="goAdd">
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
   </view>
@@ -113,7 +113,8 @@ function formatTime(time) {
   return String(time).substring(0, 16)
 }
 
-function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:stockTransfer:remove') }
+function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:transfer:remove') }
+const canAdd = computed(() => checkPermi('wms:transfer:add'))
 
 function handleWarehouseChange(warehouseId) {
   queryParams.warehouseId = warehouseId

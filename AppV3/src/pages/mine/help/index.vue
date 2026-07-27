@@ -16,11 +16,13 @@
 /**
  * @description 常见问题页 - 帮助中心
  * @description 按分类展示常见问题列表，点击问题跳转详情页查看解答内容
+ * @description 问答数据从 sys_config（app.faq.content）动态加载，获取失败时回退到默认数据
  */
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { getConfigKey } from '@/api/system/config'
 
-/** 问题分类列表，包含标题和子问题（含解答内容） */
-const list = ref([
+/** 默认问题列表（配置获取失败时回退用） */
+const defaultList = [
   {
     title: '赛诺美生问题',
     childList: [
@@ -37,7 +39,24 @@ const list = ref([
       { title: '如何修改登录密码？', content: '请点击[我的] - [应用设置] - [修改密码]即可修改登录密码' }
     ]
   }
-])
+]
+
+/** 问题分类列表，包含标题和子问题（含解答内容） */
+const list = ref(defaultList)
+
+onMounted(async () => {
+  try {
+    const res = await getConfigKey('app.faq.content')
+    if (res.data) {
+      const parsed = JSON.parse(res.data)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        list.value = parsed
+      }
+    }
+  } catch (e) {
+    console.error('获取常见问题配置失败:', e)
+  }
+})
 
 /** 点击问题项，跳转到文本详情页展示问题标题和解答内容 */
 function handleText(item) {

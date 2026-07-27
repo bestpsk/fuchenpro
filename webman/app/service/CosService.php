@@ -190,6 +190,25 @@ class CosService
         return strpos($url, $baseUrl) === 0;
     }
 
+    // 下载COS对象到本地文件，成功返回true
+    public function downloadToFile(string $cosPath, string $localPath): bool
+    {
+        if (!$this->isEnabled()) {
+            return false;
+        }
+        try {
+            $this->client->getObject([
+                'Bucket' => $this->config['bucket'],
+                'Key'    => $cosPath,
+                'SaveAs' => $localPath,
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            \support\Log::error('COS下载到文件失败: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     // 从COS下载文件内容到字符串
     public function getObjectContent(string $cosPath): ?string
     {

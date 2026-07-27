@@ -164,8 +164,6 @@ class BizAttendanceRecordService
 
         $record->update([
             'clock_count' => $clockCount,
-            'first_clock_time' => $firstClock ? $firstClock->clock_time : null,
-            'last_clock_time' => $lastClock ? $lastClock->clock_time : null,
             'clock_in_time' => $firstClock ? $firstClock->clock_time : null,
             'clock_out_time' => $lastClock ? $lastClock->clock_time : null,
             'clock_in_latitude' => $firstClock ? $firstClock->latitude : null,

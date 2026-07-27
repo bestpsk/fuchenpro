@@ -85,8 +85,8 @@ const fullscreenLabel = computed(() => isFullscreen.value ? '退出全屏' : '�
 const actionList = [
   { title: '在线客服', icon: 'chat', path: '', iconColor: '#3D6DF7', bgColor: '#EBF0FF' },
   { title: '问题反馈', icon: 'edit-pen', path: '/pages/admin/feedback/index', iconColor: '#5B8FF9', bgColor: '#EAF1FF' },
-  { title: '专业资料', icon: 'file-text', path: '', iconColor: '#2DA8A8', bgColor: '#E6F7F7' },
-  { title: '企业介绍', icon: 'home', path: '/pages/mine/about/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' }
+  { title: '专业资料', icon: 'file-text', path: '/pages/train/index', iconColor: '#2DA8A8', bgColor: '#E6F7F7' },
+  { title: '企业小报', icon: 'home', path: '/pages/admin/about/index', iconColor: '#6C5CE7', bgColor: '#EDE8FF' }
 ]
 
 const menuList = [

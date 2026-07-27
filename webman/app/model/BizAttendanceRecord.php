@@ -19,7 +19,7 @@ class BizAttendanceRecord extends Model
         'clock_in_latitude', 'clock_in_longitude', 'clock_in_address', 'clock_in_photo',
         'clock_out_latitude', 'clock_out_longitude', 'clock_out_address', 'clock_out_photo',
         'attendance_status', 'clock_type', 'outside_reason', 'rule_id', 'remark',
-        'clock_count', 'first_clock_time', 'last_clock_time',
+        'clock_count',
         'create_by', 'create_time', 'update_by', 'update_time'
     ];
 

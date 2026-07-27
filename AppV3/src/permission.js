@@ -47,7 +47,7 @@ list.forEach(item => {
       }
     },
     fail(err) {
-      console.log(err)
+      console.error(err)
     }
   })
 })

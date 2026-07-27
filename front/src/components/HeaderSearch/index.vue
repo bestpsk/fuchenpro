@@ -228,12 +228,17 @@ function selectActiveResult() {
   }
 }
 
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))
+}
+
 function highlightText(text) {
   if (!text) return ''
-  if (!search.value) return text
+  const escaped = escapeHtml(text)
+  if (!search.value) return escaped
   const keyword = escapeRegExp(search.value)
   const reg = new RegExp(`(${keyword})`, 'gi')
-  return text.replace(reg, '<span class="highlight">$1</span>')
+  return escaped.replace(reg, '<span class="highlight">$1</span>')
 }
 
 function escapeRegExp(str) {

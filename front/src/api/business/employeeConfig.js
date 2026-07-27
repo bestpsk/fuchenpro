@@ -1,6 +1,7 @@
 /**
  * @description 员工配置管理接口 - 员工CRUD与排班配置
- * @description 提供员工配置增删改查、排班可用状态设置、休息日期管理、员工搜索等接口
+ * @description 提供员工配置增删改查、排班可用状态设置、员工搜索等接口
+ * @description 休息日管理已迁移至 api/business/leave.js（getRestCalendar）
  */
 import request from '@/utils/request'
 
@@ -45,24 +46,6 @@ export function updateSchedulable(userId, isSchedulable) {
     url: '/business/employeeConfig/updateSchedulable',
     method: 'put',
     data: { userId, isSchedulable }
-  })
-}
-
-/** 保存员工休息日期列表 */
-export function saveRestDates(userId, restDates) {
-  return request({
-    url: '/business/employeeConfig/saveRestDates',
-    method: 'post',
-    data: { userId, restDates }
-  })
-}
-
-/** 获取员工休息日期列表 */
-export function getRestDates(userId) {
-  return request({
-    url: '/business/employeeConfig/getRestDates',
-    method: 'get',
-    params: { userId }
   })
 }
 

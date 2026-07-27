@@ -33,7 +33,10 @@
           <view class="setting-icon" style="background-color: #EDE8FF">
             <u-icon name="trash" size="18" color="#6C5CE7" />
           </view>
-          <view>清理缓存</view>
+          <view class="menu-item-content">
+            <text>清理缓存</text>
+            <text class="menu-item-desc">{{ cacheSize }}</text>
+          </view>
         </view>
       </view>
       <!-- #ifdef H5 -->
@@ -69,18 +72,32 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/modules/user'
+import { useMenuStore } from '@/store/modules/menu'
 import { getConfigKey, getWelcomeSlogan, setWelcomeSlogan } from '@/api/system/config'
 import { useFullscreen } from '@/utils/fullscreen'
 
 const userStore = useUserStore()
+const menuStore = useMenuStore()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
 const welcomeSlogan = ref(uni.getStorageSync('welcome_slogan') || '开启美好的一天')
 const showSloganPopup = ref(false)
 const sloganInput = ref('')
 
+// 缓存大小
+const cacheSize = ref('')
+
+// 保留的关键 storage key（清理时跳过）
+const KEEP_KEYS = ['App-Token', 'storage_data', 'welcome_slogan', 'currentWarehouseId']
+
 const fullscreenIcon = computed(() => isFullscreen.value ? 'list' : 'grid')
 const fullscreenDesc = computed(() => isFullscreen.value ? '已开启' : '未开启')
+
+// 页面显示时刷新缓存大小
+onShow(() => {
+  refreshCacheSize()
+})
 
 loadSlogan()
 
@@ -123,7 +140,54 @@ function handleToUpgrade() {
 }
 
 function handleCleanTmp() {
-  uni.showToast({ title: '模块建设中~', icon: 'none' })
+  uni.showModal({
+    title: '清理缓存',
+    content: `当前缓存 ${cacheSize.value}，清理后不会影响登录状态，但会清除菜单缓存等数据，确定清理？`,
+    confirmColor: '#3D6DF7',
+    success: function (res) {
+      if (res.confirm) {
+        cleanCache()
+      }
+    }
+  })
+}
+
+// 格式化缓存大小
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + 'B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB'
+  return (bytes / 1024 / 1024).toFixed(2) + 'MB'
+}
+
+// 刷新缓存大小
+function refreshCacheSize() {
+  try {
+    const info = uni.getStorageInfoSync()
+    cacheSize.value = formatSize(info.currentSize * 1024)
+  } catch (e) {
+    cacheSize.value = ''
+  }
+}
+
+// 清理缓存：保留登录态、用户数据、问候语、仓库选择
+function cleanCache() {
+  try {
+    const info = uni.getStorageInfoSync()
+    const keys = info.keys || []
+    let cleaned = 0
+    keys.forEach(key => {
+      if (KEEP_KEYS.indexOf(key) === -1) {
+        uni.removeStorageSync(key)
+        cleaned++
+      }
+    })
+    // 重置菜单 store 的内存状态，使其重新拉取
+    menuStore.$reset && menuStore.$reset()
+    refreshCacheSize()
+    uni.showToast({ title: `已清理 ${cleaned} 项缓存`, icon: 'success' })
+  } catch (e) {
+    uni.showToast({ title: '清理失败', icon: 'none' })
+  }
 }
 
 function handleFullscreen() {

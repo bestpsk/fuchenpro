@@ -18,6 +18,9 @@
   "dependencies": {
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@element-plus/icons-vue": "2.3.2",
+    "@vue-office/docx": "^1.6.0",
+    "@vue-office/excel": "^1.6.0",
+    "@vue-office/pdf": "^1.6.0",
     "@vueup/vue-quill": "1.2.0",
     "@vueuse/core": "14.1.0",
     "axios": "1.13.2",
@@ -33,8 +36,10 @@
     "nprogress": "0.2.0",
     "pinia": "3.0.4",
     "pinyin-pro": "^3.28.1",
+    "pptx-viewer": "^0.2.2",
     "vue": "3.5.26",
     "vue-cropper": "1.1.1",
+    "vue-demi": "^0.14.10",
     "vue-router": "4.6.4",
     "vuedraggable": "4.1.0"
   },

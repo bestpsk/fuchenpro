@@ -121,6 +121,24 @@ class GenTableService
      */
     public function createTableBySql($sql)
     {
+        // 安全加固：仅允许 CREATE TABLE 语句，禁止 DROP/DELETE/UPDATE 等破坏性操作
+        if (!preg_match('/^\s*CREATE\s+TABLE/i', trim($sql))) {
+            throw new \Exception('仅允许执行 CREATE TABLE 语句');
+        }
+        $dangerousPatterns = [
+            '/DROP\s+(TABLE|DATABASE)/i',
+            '/DELETE\s+FROM/i',
+            '/TRUNCATE/i',
+            '/ALTER\s+TABLE.*\bDROP\b/i',
+            '/LOAD_FILE\s*\(/i',
+            '/INTO\s+OUTFILE/i',
+            '/INTO\s+DUMPFILE/i',
+        ];
+        foreach ($dangerousPatterns as $pattern) {
+            if (preg_match($pattern, $sql)) {
+                throw new \Exception('SQL包含不允许的危险操作');
+            }
+        }
         // 执行建表SQL（支持多条语句）
         Db::unprepared($sql);
         // 解析所有 CREATE TABLE 语句中的表名

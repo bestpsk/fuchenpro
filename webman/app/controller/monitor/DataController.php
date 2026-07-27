@@ -5,11 +5,15 @@ namespace app\controller\monitor;
 use support\Request;
 use support\Db;
 use app\common\AjaxResult;
+use app\service\PermissionService;
 
 class DataController
 {
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:server:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         return AjaxResult::success('', [
             'data' => [
                 'pool' => $this->getPoolInfo(),

@@ -63,8 +63,11 @@ class BizOperationRecordController
     }
 
     // 获取操作记录详情，包含同一批次的所有操作项目及关联的企业/门店名称
-    public function getInfo($id)
+    public function getInfo(Request $request, $id)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:operationList')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new BizOperationRecordService();
         $result = $service->getRecordDetailById(intval($id));
         if (!$result) {

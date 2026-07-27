@@ -38,11 +38,13 @@
           v-for="(item, index) in calendarDays"
           :key="index"
           class="calendar-day"
-          :class="{ 'day-empty': !item.day, 'day-today': item.isToday, 'day-selected': selectedDate === item.date }"
+          :class="{ 'day-empty': !item.day, 'day-today': item.isToday, 'day-selected': selectedDate === item.date, 'day-rest': item.day && item.isRest && !item.isHoliday, 'day-holiday': item.day && item.isHoliday }"
           @click="item.day && selectDay(item)"
         >
           <text v-if="item.day" class="day-number">{{ item.day }}</text>
-          <view v-if="item.day && item.status !== undefined" class="day-dot" :class="'dot-' + item.statusColor"></view>
+          <view v-if="item.day && item.isHoliday" class="day-badge badge-holiday">假</view>
+          <view v-else-if="item.day && item.isRest" class="day-badge badge-rest">休</view>
+          <view v-else-if="item.day && item.status !== undefined" class="day-dot" :class="'dot-' + item.statusColor"></view>
         </view>
       </view>
     </view>
@@ -110,6 +112,7 @@
  */
 import { ref, computed, onMounted } from 'vue'
 import { getRecordList, getMonthStats, getClockListByRecordId } from '@/api/attendance'
+import { getMyRestCalendar } from '@/api/business/leave'
 import { useUserStore } from '@/store/modules/user'
 
 const userStore = useUserStore()
@@ -121,6 +124,8 @@ const stats = ref({ normal: 0, late: 0, early: 0, late_and_early: 0, absent: 0 }
 const recordMap = ref({})
 const clockListMap = ref({})
 const selectedDate = ref(null)
+const restDates = ref([])
+const holidays = ref([])
 
 /** 当前月份展示文本，如"2026年5月" */
 const currentMonth = computed(() => `${currentYear.value}年${currentMonthNum.value}月`)
@@ -135,7 +140,7 @@ const filteredRecordList = computed(() => {
 
 /**
  * 生成日历网格数据，包含月份第一天偏移的空白格、
- * 每日的考勤状态颜色标记和今日高亮
+ * 每日的考勤状态颜色标记和今日高亮，以及休息日/假期标记
  */
 const calendarDays = computed(() => {
   const firstDay = new Date(currentYear.value, currentMonthNum.value - 1, 1).getDay()
@@ -151,11 +156,15 @@ const calendarDays = computed(() => {
     const dateStr = `${currentYear.value}-${String(currentMonthNum.value).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     const record = recordMap.value[dateStr]
     const isToday = today.getFullYear() === currentYear.value && today.getMonth() + 1 === currentMonthNum.value && today.getDate() === d
+    const isRest = restDates.value.includes(dateStr)
+    const isHoliday = holidays.value.some(h => dateStr >= h.startDate && dateStr <= h.endDate)
 
     days.push({
       day: d,
       date: dateStr,
       isToday,
+      isRest,
+      isHoliday,
       status: record ? record.attendanceStatus : undefined,
       statusColor: record ? getStatusColor(record.attendanceStatus) : undefined
     })
@@ -164,15 +173,15 @@ const calendarDays = computed(() => {
   return days
 })
 
-/** 考勤状态编码映射为中文（0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤/5-迟到+缺勤/6-早退+缺勤） */
+/** 考勤状态编码映射为中文（0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤） */
 function getStatusText(status) {
-  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤', '5': '迟到+缺勤', '6': '早退+缺勤' }
+  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
   return map[status] || '--'
 }
 
 /** 考勤状态映射为样式类名（normal/late/early/late-early/absent） */
 function getStatusColor(status) {
-  const map = { '0': 'normal', '1': 'late', '2': 'early', '3': 'late-early', '4': 'absent', '5': 'absent', '6': 'absent' }
+  const map = { '0': 'normal', '1': 'late', '2': 'early', '3': 'late-early', '4': 'absent' }
   return map[status] || ''
 }
 
@@ -283,7 +292,7 @@ function selectDay(item) {
 }
 
 /**
- * 加载月度考勤统计数据和记录列表，
+ * 加载月度考勤统计数据、记录列表以及休息日/假期数据，
  * 同时为每条记录加载打卡明细（上下班时间、地址等），
  * 构建日期→记录的映射供日历视图使用
  */
@@ -292,52 +301,51 @@ async function loadData() {
   const startDate = `${month}-01`
   const endDate = `${month}-${new Date(currentYear.value, currentMonthNum.value, 0).getDate()}`
 
-  try {
-    const [statsRes, listRes] = await Promise.all([
-      getMonthStats({ month }),
-      getRecordList({ startDate, endDate, pageSize: 50 })
-    ])
+  // 并行加载考勤数据与休息日/假期数据，互不阻塞
+  const statsPromise = Promise.all([
+    getMonthStats({ month }),
+    getRecordList({ startDate, endDate, pageSize: 50 })
+  ])
+  const restPromise = loadRestAndHoliday(month)
 
-    console.log('[Record] Stats API返回:', statsRes)
-    console.log('[Record] statsRes.data:', statsRes.data)
+  try {
+    const [statsRes, listRes] = await statsPromise
 
     const rows = listRes.rows || []
     recordList.value = rows
 
     // 基于记录列表统计考勤数据
-    // status: '0'=正常, '1'=迟到, '2'=早退, '3'=迟到+早退, '4'=缺卡, '5'=迟到+缺勤, '6'=早退+缺勤
+    // status: '0'=正常, '1'=迟到, '2'=早退, '3'=迟到+早退, '4'=缺勤
     // 迟到+早退(status '3')同时计入迟到和早退
-    // 迟到+缺勤(status '5')同时计入迟到和缺勤
-    // 早退+缺勤(status '6')同时计入早退和缺勤
+    // 注意：休息日/假期当天无打卡记录不算缺勤，下方统计仅针对已有记录
     const computedStats = { normal: 0, late: 0, early: 0, absent: 0 }
     for (const item of rows) {
       const status = String(item.attendanceStatus)
       if (status === '0') {
         computedStats.normal++
       }
-      // 迟到: status 1=迟到, 3=迟到+早退, 5=迟到+缺勤
-      if (status === '1' || status === '3' || status === '5') {
+      // 迟到: status 1=迟到, 3=迟到+早退
+      if (status === '1' || status === '3') {
         computedStats.late++
       }
-      // 早退: status 2=早退, 3=迟到+早退, 6=早退+缺勤
-      if (status === '2' || status === '3' || status === '6') {
+      // 早退: status 2=早退, 3=迟到+早退
+      if (status === '2' || status === '3') {
         computedStats.early++
       }
-      // 缺勤: status 4=缺卡, 5=迟到+缺勤, 6=早退+缺勤
-      if (status === '4' || status === '5' || status === '6') {
+      // 缺勤: status 4=缺勤
+      if (status === '4') {
         computedStats.absent++
       }
     }
     stats.value = computedStats
-    console.log('[Record] 统计数据赋值:', stats.value)
 
     const map = {}
     const clockMap = {}
-    
+
     for (const item of rows) {
       if (item.attendanceDate) {
         map[item.attendanceDate] = item
-        
+
         if (item.recordId) {
           try {
             const clockRes = await getClockListByRecordId(item.recordId)
@@ -349,11 +357,29 @@ async function loadData() {
         }
       }
     }
-    
+
     recordMap.value = map
     clockListMap.value = clockMap
   } catch (e) {
     console.error('加载记录失败', e)
+  }
+
+  await restPromise
+}
+
+/**
+ * 加载当前员工某月的休息日列表和法定假期列表
+ * 失败时静默降级，不影响考勤数据展示
+ */
+async function loadRestAndHoliday(yearMonth) {
+  try {
+    const res = await getMyRestCalendar({ yearMonth })
+    restDates.value = res.data?.restDates || []
+    holidays.value = res.data?.holidays || []
+  } catch (e) {
+    console.warn('加载休息日和假期失败', e)
+    restDates.value = []
+    holidays.value = []
   }
 }
 
@@ -494,6 +520,16 @@ page {
   }
 }
 
+.day-rest {
+  .day-number {
+    color: #86909C;
+  }
+}
+
+.day-holiday .day-number {
+  color: #f5222d;
+}
+
 .day-dot {
   width: 10rpx;
   height: 10rpx;
@@ -504,6 +540,28 @@ page {
   &.dot-early { background: #fa8c16; }
   &.dot-late-early { background: #722ed1; }
   &.dot-absent { background: #f5222d; }
+}
+
+.day-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  font-size: 18rpx;
+  font-weight: 700;
+  line-height: 1;
+
+  &.badge-rest {
+    background: rgba(134, 144, 156, 0.15);
+    color: #86909C;
+  }
+
+  &.badge-holiday {
+    background: rgba(245, 34, 45, 0.12);
+    color: #f5222d;
+  }
 }
 
 .record-list {

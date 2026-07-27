@@ -18,12 +18,17 @@ use app\common\Constants;
  */
 class AuthMiddleware implements MiddlewareInterface
 {
-    // 不需要认证的白名单路径
+    // 不需要认证的白名单路径（精确匹配）
     protected $whitelist = [
         '/login',
         '/register',
         '/captchaImage',
         '/logout',
+    ];
+
+    // 不需要认证的路径前缀（动态路径参数场景，如会话ID即凭证的文件流接口）
+    protected $whitelistPrefix = [
+        '/train/studyLog/file/',  // DRM文件流接口，会话ID本身即为临时凭证
     ];
 
     // 处理请求：白名单和公共接口直接放行，其他请求校验JWT令牌并自动续期
@@ -33,6 +38,13 @@ class AuthMiddleware implements MiddlewareInterface
 
         if (in_array($path, $this->whitelist)) {
             return $handler($request);
+        }
+
+        // 前缀匹配白名单（用于动态路径参数的免认证接口）
+        foreach ($this->whitelistPrefix as $prefix) {
+            if (strpos($path, $prefix) === 0) {
+                return $handler($request);
+            }
         }
 
         // 安全加固：/common/ 路径不再免登录，上传/下载接口均需认证

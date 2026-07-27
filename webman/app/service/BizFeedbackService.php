@@ -39,14 +39,17 @@ class BizFeedbackService
     {
         $feedback = BizFeedback::find($feedbackId);
         if ($feedback) {
-            $user = SysUser::where('user_name', $feedback->create_by)->first();
-            $feedback->create_nick_name = $user ? $user->nick_name : $feedback->create_by;
+            // 批量查询反馈和所有回复的用户昵称，避免N+1查询
+            $userNames = collect([$feedback->create_by]);
             $feedback->replies = BizFeedbackReply::where('feedback_id', $feedbackId)
-                ->orderBy('reply_id', 'asc')->get()->map(function ($reply) {
-                    $replyUser = SysUser::where('user_name', $reply->create_by)->first();
-                    $reply->create_nick_name = $replyUser ? $replyUser->nick_name : $reply->create_by;
-                    return $reply;
-                });
+                ->orderBy('reply_id', 'asc')->get();
+            $userNames = $userNames->merge($feedback->replies->pluck('create_by'))->filter()->unique()->values()->all();
+            $userMap = SysUser::whereIn('user_name', $userNames)->pluck('nick_name', 'user_name');
+
+            $feedback->create_nick_name = $userMap[$feedback->create_by] ?? $feedback->create_by;
+            $feedback->replies->each(function ($reply) use ($userMap) {
+                $reply->create_nick_name = $userMap[$reply->create_by] ?? $reply->create_by;
+            });
         }
         return $feedback;
     }
@@ -81,11 +84,14 @@ class BizFeedbackService
 
     public function selectReplyList($feedbackId)
     {
-        return BizFeedbackReply::where('feedback_id', $feedbackId)
-            ->orderBy('reply_id', 'asc')->get()->map(function ($reply) {
-                $user = SysUser::where('user_name', $reply->create_by)->first();
-                $reply->create_nick_name = $user ? $user->nick_name : $reply->create_by;
-                return $reply;
-            });
+        $replies = BizFeedbackReply::where('feedback_id', $feedbackId)
+            ->orderBy('reply_id', 'asc')->get();
+        // 批量查询用户昵称，避免N+1查询
+        $userNames = $replies->pluck('create_by')->filter()->unique()->values()->all();
+        $userMap = SysUser::whereIn('user_name', $userNames)->pluck('nick_name', 'user_name');
+        return $replies->map(function ($reply) use ($userMap) {
+            $reply->create_nick_name = $userMap[$reply->create_by] ?? $reply->create_by;
+            return $reply;
+        });
     }
 }

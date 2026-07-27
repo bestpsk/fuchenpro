@@ -30,6 +30,9 @@ class SysConfigController
     // 根据ID获取参数配置详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:config:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $configId = intval(end($parts));
         $service = new SysConfigService();

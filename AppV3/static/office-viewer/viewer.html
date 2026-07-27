@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Office 文档预览</title>
+  <!--
+    本地 Office 文档预览页
+    所有依赖均已本地化（同目录下），支持私有化部署，无需外网
+    脚本加载顺序：vue → vue-demi → @vue-office 系列
+    PPT 类型由服务端转 PDF，复用 PDF 渲染组件
+  -->
+  <link rel="stylesheet" href="./docx.css">
+  <link rel="stylesheet" href="./excel.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #f5f7fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      overflow: hidden;
+    }
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Vue mount 前隐藏未解析的 Mustache 插值，防止闪烁红色 {{ loadingText }} / {{ error }} */
+    [v-cloak] {
+      display: none !important;
+    }
+    .loading-box, .error-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #8693ec;
+      gap: 12px;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #3D6DF7;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box { color: #f53f3f; }
+    .file-area {
+      flex: 1;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pdf-container, .docx-container, .excel-container {
+      min-height: 100%;
+    }
+    .image-view {
+      display: flex;
+      justify-content: center;
+      padding: 8px;
+    }
+    .image-view img {
+      max-width: 100%;
+      height: auto;
+    }
+    /* 横屏模式：虚拟横屏画布 */
+    .file-area.landscape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .file-area .landscape-content {
+      width: 100%;
+      height: 100%;
+    }
+
+    .file-area.landscape .landscape-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100vh;
+      height: 100vw;
+      transform: translate(-50%, -50%) rotate(90deg);
+      transform-origin: center center;
+      overflow: auto;
+      background: #f5f7fa;
+    }
+    /* 横屏切换按钮 */
+    .landscape-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: rgba(16, 185, 129, 0.9);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <div v-if="loading" class="loading-box">
+      <div class="spinner"></div>
+      <div>{{ loadingText }}</div>
+    </div>
+    <div v-else-if="error" class="error-box">
+      <div style="font-size: 36px;">!</div>
+      <div>{{ error }}</div>
+    </div>
+    <div v-else class="file-area" :class="{ landscape: isLandscape }">
+      <div class="landscape-content">
+      <!-- PDF（含 PPT，服务端已转 PDF） -->
+      <component
+        v-if="fileType === 'pdf'"
+        :key="'pdf-' + renderKey"
+        :is="VueOfficePdf"
+        :src="arrayBuffer"
+        class="pdf-container"
+      ></component>
+      <!-- Word -->
+      <component
+        v-else-if="fileType === 'word'"
+        :key="'docx-' + renderKey"
+        :is="VueOfficeDocx"
+        :src="arrayBuffer"
+        class="docx-container"
+      ></component>
+      <!-- Excel -->
+      <component
+        v-else-if="fileType === 'excel'"
+        :key="'excel-' + renderKey"
+        :is="VueOfficeExcel"
+        :src="arrayBuffer"
+        class="excel-container"
+      ></component>
+      <!-- 图片 -->
+      <div v-else-if="fileType === 'image'" :key="'image-' + renderKey" class="image-view">
+        <img :src="fileUrl" />
+      </div>
+    </div>
+  </div>
+    <!-- 横竖屏切换按钮 -->
+    <div v-if="!loading && !error" class="landscape-toggle" @click="toggleLandscape">
+      {{ isLandscape ? '竖屏' : '横屏' }}
+    </div>
+  </div>
+
+  <!-- Vue 3 (must load first, sets window.Vue) -->
+  <script src="./vue.global.prod.js"></script>
+  <!-- vue-demi (depends on Vue, sets window.VueDemi) -->
+  <script src="./vue-demi.iife.min.js"></script>
+  <!-- @vue-office 系列 (depend on Vue + VueDemi) -->
+  <!-- 注：UMD 全局名为 window["vue-office-pdf"] 等，不是 VueOfficePdf -->
+  <script src="./pdf.umd.js"></script>
+  <script src="./docx.umd.js"></script>
+  <script src="./excel.umd.js"></script>
+
+  <script>
+    const { createApp, ref, onMounted } = Vue
+
+    // ===== IndexedDB 文件缓存（避免重复下载） =====
+    const DB_NAME = 'train_material_cache'
+    const DB_VERSION = 1
+    const STORE_NAME = 'materials'
+    const MAX_CACHE_SIZE = 100 * 1024 * 1024 // 100MB
+    const MAX_FILE_SIZE = 50 * 1024 * 1024   // 单文件上限 50MB
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION)
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'key' })
+            store.createIndex('timestamp', 'timestamp', { unique: false })
+          }
+        }
+        req.onsuccess = () => resolve(req.result)
+        req.onerror = () => reject(req.error)
+      })
+    }
+
+    async function getCachedFile(key) {
+      try {
+        const db = await openDB()
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readonly')
+          const store = tx.objectStore(STORE_NAME)
+          const req = store.get(key)
+          req.onsuccess = () => resolve(req.result || null)
+          req.onerror = () => resolve(null)
+        })
+      } catch (e) {
+        console.warn('[viewer] getCachedFile error:', e)
+        return null
+      }
+    }
+
+    async function getTotalSize(db) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly')
+        const store = tx.objectStore(STORE_NAME)
+        const req = store.getAll()
+        req.onsuccess = () => {
+          const total = (req.result || []).reduce((sum, r) => sum + (r.size || 0), 0)
+          resolve(total)
+        }
+        req.onerror = () => resolve(0)
+      })
+    }
+
+    async function evictIfNeeded(db, incomingSize) {
+      const total = await getTotalSize(db)
+      if (total + incomingSize <= MAX_CACHE_SIZE) return
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite')
+        const store = tx.objectStore(STORE_NAME)
+        const idx = store.index('timestamp')
+        const req = idx.openCursor()
+        let freed = 0
+        const need = total + incomingSize - MAX_CACHE_SIZE
+        req.onsuccess = (e) => {
+          const cursor = e.target.result
+          if (cursor && freed < need) {
+            freed += (cursor.value.size || 0)
+            cursor.delete()
+            cursor.continue()
+          }
+        }
+        tx.oncomplete = () => resolve()
+        tx.onerror = () => resolve()
+      })
+    }
+
+    async function setCachedFile(key, materialId, arrayBuffer) {
+      try {
+        const size = arrayBuffer.byteLength
+        if (size > MAX_FILE_SIZE) return // 超大文件不缓存
+        const db = await openDB()
+        await evictIfNeeded(db, size)
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite')
+          const store = tx.objectStore(STORE_NAME)
+          store.put({ key, materialId, arrayBuffer, size, timestamp: Date.now() })
+          tx.oncomplete = () => resolve()
+          tx.onerror = () => resolve()
+        })
+      } catch (e) {
+        console.warn('[viewer] setCachedFile error:', e)
+      }
+    }
+    // ===== 缓存工具结束 =====
+
+    // 启动诊断：检查全局变量是否就位
+    console.log('[viewer] globals check:', {
+      Vue: typeof window.Vue,
+      VueDemi: typeof window.VueDemi,
+      'vue-office-pdf': typeof window["vue-office-pdf"],
+      'vue-office-docx': typeof window["vue-office-docx"],
+      'vue-office-excel': typeof window["vue-office-excel"]
+    })
+
+    const app = createApp({
+      setup() {
+        const loading = ref(true)
+        const error = ref('')
+        const loadingText = ref('正在加载文件...')
+        const fileType = ref('')
+        const fileUrl = ref('')
+        const arrayBuffer = ref(null)
+        const VueOfficePdf = ref(window["vue-office-pdf"] || null)
+        const VueOfficeDocx = ref(window["vue-office-docx"] || null)
+        const VueOfficeExcel = ref(window["vue-office-excel"] || null)
+        const isLandscape = ref(false)
+        const renderKey = ref('portrait')
+
+        function toggleLandscape() {
+          isLandscape.value = !isLandscape.value
+          renderKey.value = isLandscape.value ? 'landscape' : 'portrait'
+        }
+
+        // 从URL参数获取文件URL和类型
+        function getUrlParam(name) {
+          const match = window.location.search.match(new RegExp('[?&]' + name + '=([^&]+)'))
+          return match ? decodeURIComponent(match[1]) : ''
+        }
+
+        async function loadFile() {
+          const url = getUrlParam('file')
+          const type = getUrlParam('type')
+
+          if (!url) {
+            error.value = '文件地址为空'
+            loading.value = false
+            return
+          }
+
+          if (!type) {
+            error.value = '文件类型未指定'
+            loading.value = false
+            return
+          }
+
+          // 类型映射：PPT 映射到 pdf（服务端已转 PDF）
+          const typeMap = {
+            '1': 'image', '2': 'pdf', '3': 'pdf',
+            '4': 'word', '5': 'text', '6': 'excel'
+          }
+          fileType.value = typeMap[type] || ''
+
+          if (!fileType.value) {
+            error.value = '不支持的文件类型: ' + type
+            loading.value = false
+            return
+          }
+
+          try {
+            // 图片：直接用 URL（浏览器HTTP缓存已处理）
+            if (fileType.value === 'image') {
+              fileUrl.value = url
+              loading.value = false
+              return
+            }
+
+            // 构造缓存键：materialId + updateTime（材料更新后自动失效）
+            const mid = getUrlParam('mid')
+            const ut = getUrlParam('ut')
+            const cacheKey = mid ? `train_${mid}_${ut}` : ''
+
+            // 先查 IndexedDB 缓存
+            if (cacheKey) {
+              loadingText.value = '正在读取缓存...'
+              const cached = await getCachedFile(cacheKey)
+              if (cached && cached.arrayBuffer) {
+                console.log('[viewer] cache hit:', cacheKey, 'size:', cached.arrayBuffer.byteLength)
+                arrayBuffer.value = cached.arrayBuffer
+                loading.value = false
+                return
+              }
+            }
+
+            // 缓存未命中：fetch 下载（失败自动重试1次）
+            const MAX_RETRIES = 1
+            let fetchError = null
+
+            for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+              try {
+                if (attempt > 0) {
+                  loadingText.value = '正在重试加载...'
+                  await new Promise(r => setTimeout(r, 1000))
+                } else {
+                  loadingText.value = '正在下载文件...'
+                }
+
+                console.log('[viewer] fetching (attempt ' + (attempt + 1) + '):', url)
+                const response = await fetch(url)
+                console.log('[viewer] response:', response.status, response.ok, response.headers.get('content-type'))
+
+                if (!response.ok) {
+                  const ct = response.headers.get('content-type') || ''
+                  if (ct.indexOf('application/json') >= 0) {
+                    try {
+                      const errJson = await response.json()
+                      throw new Error('HTTP ' + response.status + ': ' + (errJson.msg || errJson.message || '后端错误'))
+                    } catch (e2) {
+                      throw new Error('HTTP ' + response.status + ': ' + (e2.message || '后端错误'))
+                    }
+                  }
+                  throw new Error('HTTP ' + response.status + ' 文件加载失败')
+                }
+
+                arrayBuffer.value = await response.arrayBuffer()
+                console.log('[viewer] arrayBuffer size:', arrayBuffer.value && arrayBuffer.value.byteLength)
+
+                // 写入缓存（静默失败，不影响主流程）
+                if (cacheKey && arrayBuffer.value) {
+                  try {
+                    await setCachedFile(cacheKey, mid, arrayBuffer.value)
+                    console.log('[viewer] cached:', cacheKey)
+                  } catch (cacheErr) {
+                    console.warn('[viewer] 缓存写入失败:', cacheErr)
+                  }
+                }
+                loading.value = false
+                fetchError = null
+                break  // 成功，退出重试循环
+              } catch (e) {
+                fetchError = e
+                console.error('[viewer] 加载失败 (attempt ' + (attempt + 1) + '):', e, 'url:', url)
+              }
+            }
+
+            if (fetchError) {
+              error.value = '加载失败: ' + (fetchError.message || fetchError)
+              loading.value = false
+            }
+          } catch (e) {
+            console.error('[viewer] loadFile 外层异常:', e)
+            error.value = '加载失败: ' + (e.message || e)
+            loading.value = false
+          }
+        }
+
+        onMounted(() => {
+          loadFile()
+        })
+
+        return {
+          loading, error, loadingText, fileType, fileUrl, arrayBuffer,
+          VueOfficePdf, VueOfficeDocx, VueOfficeExcel,
+          isLandscape, toggleLandscape, renderKey
+        }
+      }
+    })
+
+    app.mount('#app')
+  </script>
+</body>
+</html>

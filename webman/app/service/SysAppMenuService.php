@@ -23,6 +23,10 @@ class SysAppMenuService
         '调拨'        => 'list',
         'allocation'  => 'list',
         'transfer'    => 'list',
+        'book'        => 'file-text',
+        'book-fill'   => 'file-text-fill',
+        'bar-chart'   => 'column-line',
+        'chart'       => 'column-line',
     ];
 
     // 校验并修正图标名称

@@ -85,11 +85,15 @@ class BizScheduleController
         if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:add')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $data = convert_to_snake_case($request->post());
-        $data['create_by'] = $request->loginUser->user->user_name ?? '';
-        $service = new BizScheduleService();
-        $result = $service->insertSchedule($data);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $data = convert_to_snake_case($request->post());
+            $data['create_by'] = $request->loginUser->user->user_name ?? '';
+            $service = new BizScheduleService();
+            $result = $service->insertSchedule($data);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error('新增行程失败：' . $e->getMessage());
+        }
     }
 
     // 批量新增行程
@@ -98,20 +102,24 @@ class BizScheduleController
         if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:add')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $dataList = $request->post();
-        $service = new BizScheduleService();
-        
-        $insertData = [];
-        $createBy = $request->loginUser->user->user_name ?? '';
-        
-        foreach ($dataList as $item) {
-            $item = convert_to_snake_case($item);
-            $item['create_by'] = $createBy;
-            $insertData[] = $item;
+        try {
+            $dataList = $request->post();
+            $service = new BizScheduleService();
+
+            $insertData = [];
+            $createBy = $request->loginUser->user->user_name ?? '';
+
+            foreach ($dataList as $item) {
+                $item = convert_to_snake_case($item);
+                $item['create_by'] = $createBy;
+                $insertData[] = $item;
+            }
+
+            $result = $service->insertScheduleBatch($insertData);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error('批量新增行程失败：' . $e->getMessage());
         }
-        
-        $result = $service->insertScheduleBatch($insertData);
-        return AjaxResult::toAjax($result ? 1 : 0);
     }
 
     // 修改行程信息
@@ -137,19 +145,23 @@ class BizScheduleController
         if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:remove')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $scheduleIds = $request->input('scheduleIds', '');
-        if (!is_array($scheduleIds)) {
-            $scheduleIds = explode(',', $scheduleIds);
+        try {
+            $scheduleIds = $request->input('scheduleIds', '');
+            if (!is_array($scheduleIds)) {
+                $scheduleIds = explode(',', $scheduleIds);
+            }
+            $scheduleIds = array_map('intval', array_filter($scheduleIds));
+
+            if (empty($scheduleIds)) {
+                return AjaxResult::error('请选择要删除的行程');
+            }
+
+            $service = new BizScheduleService();
+            $result = $service->deleteScheduleByIds($scheduleIds);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error('删除行程失败：' . $e->getMessage());
         }
-        $scheduleIds = array_map('intval', array_filter($scheduleIds));
-        
-        if (empty($scheduleIds)) {
-            return AjaxResult::error('请选择要删除的行程');
-        }
-        
-        $service = new BizScheduleService();
-        $result = $service->deleteScheduleByIds($scheduleIds);
-        return AjaxResult::toAjax($result ? 1 : 0);
     }
 
     // 导出行程数据
@@ -158,13 +170,17 @@ class BizScheduleController
         if (PermissionService::lacksPermi($request->loginUser, 'business:schedule:export')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $params = convert_to_snake_case($request->all());
-        $params['login_user'] = $request->loginUser;
-        $params['pageSize'] = 10000;
-        $service = new BizScheduleService();
-        $result = $service->selectScheduleList($params);
-        $list = $result->items();
-        $excelUtil = new ExcelUtil(BizSchedule::class);
-        return $excelUtil->exportExcel($list, '行程数据');
+        try {
+            $params = convert_to_snake_case($request->all());
+            $params['login_user'] = $request->loginUser;
+            $params['pageSize'] = 10000;
+            $service = new BizScheduleService();
+            $result = $service->selectScheduleList($params);
+            $list = $result->items();
+            $excelUtil = new ExcelUtil(BizSchedule::class);
+            return $excelUtil->exportExcel($list, '行程数据');
+        } catch (\Throwable $e) {
+            return AjaxResult::error('导出行程数据失败：' . $e->getMessage());
+        }
     }
 }

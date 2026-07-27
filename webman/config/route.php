@@ -115,6 +115,12 @@ Route::put('/system/notice', [app\controller\system\SysNoticeController::class, 
 Route::delete('/system/notice', [app\controller\system\SysNoticeController::class, 'remove']);
 Route::get('/system/notice/{noticeId}', [app\controller\system\SysNoticeController::class, 'getInfo']);
 
+Route::get('/admin/about/list', [app\controller\admin\BizAboutController::class, 'list']);
+Route::post('/admin/about', [app\controller\admin\BizAboutController::class, 'add']);
+Route::put('/admin/about', [app\controller\admin\BizAboutController::class, 'edit']);
+Route::delete('/admin/about', [app\controller\admin\BizAboutController::class, 'remove']);
+Route::get('/admin/about/{aboutId}', [app\controller\admin\BizAboutController::class, 'getInfo']);
+
 Route::get('/system/banner/list', [app\controller\system\SysBannerController::class, 'list']);
 Route::get('/system/banner/{bannerId}', [app\controller\system\SysBannerController::class, 'getInfo']);
 Route::post('/system/banner', [app\controller\system\SysBannerController::class, 'add']);
@@ -274,8 +280,6 @@ Route::get('/business/employeeConfig/search', [app\controller\business\BizEmploy
 Route::post('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'add']);
 Route::put('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'edit']);
 Route::put('/business/employeeConfig/updateSchedulable', [app\controller\business\BizEmployeeConfigController::class, 'updateSchedulable']);
-Route::post('/business/employeeConfig/saveRestDates', [app\controller\business\BizEmployeeConfigController::class, 'saveRestDates']);
-Route::get('/business/employeeConfig/getRestDates', [app\controller\business\BizEmployeeConfigController::class, 'getRestDates']);
 Route::delete('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'remove']);
 Route::get('/business/employeeConfig/{configId}', [app\controller\business\BizEmployeeConfigController::class, 'getInfo']);
 
@@ -458,6 +462,87 @@ Route::get('/finance/reimbursement/report/byDept', [app\controller\finance\FinRe
 Route::get('/finance/reimbursement/report/byUser', [app\controller\finance\FinReimbursementController::class, 'reportByUser']);
 Route::get('/finance/reimbursement/report/byExpenseType', [app\controller\finance\FinReimbursementController::class, 'reportByExpenseType']);
 Route::post('/finance/reimbursement/export', [app\controller\finance\FinReimbursementController::class, 'export']);
+
+// =============================================
+// 培训管理模块路由
+// =============================================
+
+// 学习材料管理
+Route::get('/train/material/list', [app\controller\train\BizTrainMaterialController::class, 'list']);
+Route::post('/train/material', [app\controller\train\BizTrainMaterialController::class, 'add']);
+Route::put('/train/material', [app\controller\train\BizTrainMaterialController::class, 'edit']);
+Route::delete('/train/material', [app\controller\train\BizTrainMaterialController::class, 'remove']);
+Route::get('/train/material/{materialId}', [app\controller\train\BizTrainMaterialController::class, 'getInfo']);
+Route::post('/train/material/export', [app\controller\train\BizTrainMaterialController::class, 'export']);
+// 下载材料原始文件（PPT 等），需登录并带 train:material:query 权限
+Route::get('/train/material/download/{materialId}', [app\controller\train\BizTrainMaterialController::class, 'download']);
+
+// 学习日志与会话管理
+Route::get('/train/studyLog/list', [app\controller\train\BizTrainStudyLogController::class, 'list']);
+Route::get('/train/studyLog/myList', [app\controller\train\BizTrainStudyLogController::class, 'myList']);
+Route::get('/train/studyLog/materialInfo/{materialId}', [app\controller\train\BizTrainStudyLogController::class, 'getMaterialInfo']);
+Route::post('/train/studyLog/start', [app\controller\train\BizTrainStudyLogController::class, 'start']);
+Route::post('/train/studyLog/heartbeat', [app\controller\train\BizTrainStudyLogController::class, 'heartbeat']);
+Route::post('/train/studyLog/end', [app\controller\train\BizTrainStudyLogController::class, 'end']);
+Route::get('/train/studyLog/materialUrl/{sessionId}', [app\controller\train\BizTrainStudyLogController::class, 'getMaterialUrl']);
+// 文件流接口（DRM 临时授权，无需 Authorization 头，会话本身即为凭证）
+Route::get('/train/studyLog/file/{sessionId}', [app\controller\train\BizTrainStudyLogController::class, 'file']);
+
+// 学习统计
+Route::get('/train/stats/list', [app\controller\train\BizTrainStatsController::class, 'list']);
+Route::get('/train/stats/summary', [app\controller\train\BizTrainStatsController::class, 'summary']);
+Route::post('/train/stats/export', [app\controller\train\BizTrainStatsController::class, 'export']);
+
+// 材料授权管理
+Route::get('/train/material/auth/{materialId}', [app\controller\train\BizTrainMaterialAuthController::class, 'getAuth']);
+Route::post('/train/material/auth', [app\controller\train\BizTrainMaterialAuthController::class, 'saveAuth']);
+
+// =============================================
+// 休假管理模块路由
+// =============================================
+
+// 休假类型
+Route::get('/business/leave/type/list', [app\controller\business\BizLeaveTypeController::class, 'list']);
+Route::get('/business/leave/type/listAll', [app\controller\business\BizLeaveTypeController::class, 'listAll']);
+Route::post('/business/leave/type', [app\controller\business\BizLeaveTypeController::class, 'add']);
+Route::put('/business/leave/type', [app\controller\business\BizLeaveTypeController::class, 'edit']);
+Route::delete('/business/leave/type', [app\controller\business\BizLeaveTypeController::class, 'remove']);
+Route::get('/business/leave/type/{typeId}', [app\controller\business\BizLeaveTypeController::class, 'getInfo']);
+
+// 休息日方案（方案模式）
+Route::get('/business/leave/restPlan/list', [app\controller\business\BizRestPlanController::class, 'list']);
+Route::get('/business/leave/restPlan/restCalendar', [app\controller\business\BizRestPlanController::class, 'restCalendar']);
+Route::get('/business/leave/restPlan/myRestCalendar', [app\controller\business\BizRestPlanController::class, 'myRestCalendar']);
+Route::get('/business/leave/restPlan/myRestCalendarDetailed', [app\controller\business\BizRestPlanController::class, 'myRestCalendarDetailed']);
+Route::get('/business/leave/restPlan/myPlan', [app\controller\business\BizRestPlanController::class, 'myPlan']);
+Route::get('/business/leave/restPlan/deptTreeWithUsers', [app\controller\business\BizRestPlanController::class, 'deptTreeWithUsers']);
+Route::get('/business/leave/restPlan/deptUsers/{deptId}', [app\controller\business\BizRestPlanController::class, 'deptUsers']);
+Route::post('/business/leave/restPlan', [app\controller\business\BizRestPlanController::class, 'add']);
+Route::put('/business/leave/restPlan', [app\controller\business\BizRestPlanController::class, 'edit']);
+Route::delete('/business/leave/restPlan', [app\controller\business\BizRestPlanController::class, 'remove']);
+Route::get('/business/leave/restPlan/{planId}', [app\controller\business\BizRestPlanController::class, 'getInfo']);
+
+// 请假管理
+Route::get('/business/leave/list', [app\controller\business\BizLeaveController::class, 'list']);
+Route::post('/business/leave', [app\controller\business\BizLeaveController::class, 'add']);
+Route::put('/business/leave/approve', [app\controller\business\BizLeaveController::class, 'approve']);
+Route::put('/business/leave/reject', [app\controller\business\BizLeaveController::class, 'reject']);
+Route::put('/business/leave/cancel', [app\controller\business\BizLeaveController::class, 'cancel']);
+Route::delete('/business/leave', [app\controller\business\BizLeaveController::class, 'remove']);
+Route::get('/business/leave/calendar', [app\controller\business\BizLeaveController::class, 'calendar']);
+Route::get('/business/leave/{leaveId}', [app\controller\business\BizLeaveController::class, 'getInfo']);
+
+// 假期日历
+Route::get('/business/leave/holiday/list', [app\controller\business\BizHolidayController::class, 'list']);
+Route::post('/business/leave/holiday', [app\controller\business\BizHolidayController::class, 'add']);
+Route::put('/business/leave/holiday', [app\controller\business\BizHolidayController::class, 'edit']);
+Route::delete('/business/leave/holiday', [app\controller\business\BizHolidayController::class, 'remove']);
+Route::get('/business/leave/holiday/{holidayId}', [app\controller\business\BizHolidayController::class, 'getInfo']);
+
+// 考勤统计
+Route::get('/business/attendance/stats', [app\controller\business\BizAttendanceStatsController::class, 'list']);
+Route::get('/business/attendance/stats/calendar', [app\controller\business\BizAttendanceStatsController::class, 'calendar']);
+Route::post('/business/attendance/stats/export', [app\controller\business\BizAttendanceStatsController::class, 'export']);
 
 Route::any('/{path:.+}', function ($request, $path) {
     return json(['code' => 404, 'msg' => '接口不存在']);

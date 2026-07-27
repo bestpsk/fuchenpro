@@ -326,8 +326,6 @@ function calendarFormatter(day) {
 
 /** 日历多选确认，将选中的日期排序后更新到表单，并设置起止日期 */
 function onMultiDateConfirm(e) {
-  console.log('[Calendar] 多选结果:', e)
-
   if (Array.isArray(e) && e.length > 0) {
     form.selectedDates = [...e].sort()
 
@@ -335,8 +333,6 @@ function onMultiDateConfirm(e) {
       form.startDate = form.selectedDates[0]
       form.endDate = form.selectedDates[form.selectedDates.length - 1]
     }
-
-    console.log('[Calendar] 最终选中日期:', form.selectedDates)
   } else {
     console.warn('[Calendar] 未选择任何日期或格式异常:', e)
   }

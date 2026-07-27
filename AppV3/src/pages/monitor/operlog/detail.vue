@@ -109,6 +109,7 @@
       </view>
     </view>
 
+    <u-empty v-else-if="!hasPermission" mode="permission" icon="lock" text="没有权限访问操作日志" :marginTop="120"></u-empty>
     <u-empty v-else-if="!loading" mode="data" text="日志不存在" :marginTop="100"></u-empty>
   </view>
 </template>
@@ -117,10 +118,12 @@
 import { ref, onMounted } from 'vue'
 import { listOperlog } from '@/api/monitor/operlog'
 import { getDicts } from '@/api/system/dictData'
+import { checkPermi } from '@/utils/permission'
 
 const detail = ref(null)
 const loading = ref(false)
 const operTypeOptions = ref([])
+const hasPermission = checkPermi('monitor:operlog:list')
 
 async function loadDicts() {
   try {
@@ -161,6 +164,7 @@ async function loadDetail(operId) {
 }
 
 onMounted(() => {
+  if (!hasPermission) return
   loadDicts()
   const pages = getCurrentPages()
   const page = pages[pages.length - 1]

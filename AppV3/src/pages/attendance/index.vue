@@ -148,20 +148,20 @@
       
       <view class="timeline" v-if="false">
         <view class="timeline-item" :class="{ 'timeline-first': !todayRecord.clockInTime, 'timeline-last': todayRecord.clockOutTime }">
-          <view class="timeline-dot" :class="{ 'dot-done': todayRecord.clockInTime, 'dot-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5' }">
+          <view class="timeline-dot" :class="{ 'dot-done': todayRecord.clockInTime, 'dot-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' }">
             <u-icon v-if="todayRecord.clockInTime" name="checkmark" size="10" color="#fff" />
           </view>
           <view class="timeline-content">
             <text class="timeline-time">{{ formatTime(todayRecord.clockInTime) }}</text>
             <text class="timeline-label">上班打卡</text>
-            <view v-if="todayRecord.clockInTime" class="timeline-status" :class="{ 'status-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5' }">
-              <text>{{ (todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '5') ? '迟到' : '正常' }}</text>
+            <view v-if="todayRecord.clockInTime" class="timeline-status" :class="{ 'status-late': todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3' }">
+              <text>{{ (todayRecord.attendanceStatus === '1' || todayRecord.attendanceStatus === '3') ? '迟到' : '正常' }}</text>
             </view>
           </view>
         </view>
         <view class="timeline-line" v-if="!todayRecord.clockOutTime || !todayRecord.clockInTime"></view>
         <view class="timeline-item timeline-last" v-if="todayRecord.clockOutTime">
-          <view class="timeline-dot" :class="{ 'dot-done': true, 'dot-early': todayRecord.attendanceStatus === '2' || todayRecord.attendanceStatus === '3' || todayRecord.attendanceStatus === '6' }">
+          <view class="timeline-dot" :class="{ 'dot-done': true, 'dot-early': todayRecord.attendanceStatus === '2' || todayRecord.attendanceStatus === '3' }">
             <u-icon name="checkmark" size="10" color="#fff" />
           </view>
           <view class="timeline-content">
@@ -190,9 +190,16 @@
       </view>
     </view>
 
-    <view class="footer-link" @click="goToRecord">
-      <text class="footer-text">查看打卡记录</text>
-      <u-icon name="arrow-right" size="14" color="#86909C" />
+    <view class="footer-links">
+      <view class="footer-link" @click="goToRecord">
+        <text class="footer-text">查看打卡记录</text>
+        <u-icon name="arrow-right" size="14" color="#86909C" />
+      </view>
+      <view class="footer-divider"></view>
+      <view class="footer-link" @click="goToMyRest">
+        <text class="footer-text">我的休息日</text>
+        <u-icon name="arrow-right" size="14" color="#86909C" />
+      </view>
     </view>
   </view>
 </template>
@@ -295,13 +302,13 @@ const clockBtnClass = computed(() => {
 /** 考勤状态标签：0-正常/1-迟到/2-早退/3-迟到+早退/4-缺勤 */
 const statusLabel = computed(() => {
   if (!todayRecord.value) return ''
-  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤', '5': '迟到+缺勤', '6': '早退+缺勤' }
+  const map = { '0': '正常', '1': '迟到', '2': '早退', '3': '迟到+早退', '4': '缺勤' }
   return map[todayRecord.value.attendanceStatus] || ''
 })
 
 const statusClass = computed(() => {
   if (!todayRecord.value) return ''
-  const map = { '0': 'tag-normal', '1': 'tag-late', '2': 'tag-early', '3': 'tag-danger', '4': 'tag-danger', '5': 'tag-danger', '6': 'tag-danger' }
+  const map = { '0': 'tag-normal', '1': 'tag-late', '2': 'tag-early', '3': 'tag-danger', '4': 'tag-danger' }
   return map[todayRecord.value.attendanceStatus] || ''
 })
 
@@ -611,9 +618,6 @@ async function loadUserRule() {
     ruleLoading.value = true
     const res = await getUserAttendanceRule(clockType.value)
     userRule.value = res.data || null
-    if (userRule.value) {
-      console.log('获取考勤规则成功:', userRule.value)
-    }
   } catch (e) {
     console.error('获取考勤规则失败', e)
     userRule.value = null
@@ -714,13 +718,7 @@ async function handleClock() {
     uni.hideLoading()
 
     uni.vibrateShort({
-      type: 'medium',
-      success: () => {
-        console.log('震动反馈成功')
-      },
-      fail: () => {
-        console.log('设备不支持震动')
-      }
+      type: 'medium'
     })
 
     uni.showToast({
@@ -760,6 +758,10 @@ async function handleClock() {
 
 function goToRecord() {
   uni.navigateTo({ url: '/pages/attendance/record' })
+}
+
+function goToMyRest() {
+  uni.navigateTo({ url: '/pages/business/leave/myRest' })
 }
 
 function getClockTagText(index) {
@@ -1725,13 +1727,13 @@ page {
   font-weight: 500;
 }
 
-.footer-link {
+.footer-links {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
   padding: 32rpx 0;
   position: relative;
+  gap: 48rpx;
 
   &::before {
     content: '';
@@ -1739,10 +1741,23 @@ page {
     top: 12rpx;
     left: 50%;
     transform: translateX(-50%);
-    width: 120rpx;
+    width: 240rpx;
     height: 1rpx;
     background: linear-gradient(90deg, transparent, #E5E6EB, transparent);
   }
+}
+
+.footer-link {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  position: relative;
+}
+
+.footer-divider {
+  width: 1rpx;
+  height: 24rpx;
+  background: #E5E6EB;
 }
 
 .footer-text {

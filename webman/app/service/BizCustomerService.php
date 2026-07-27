@@ -31,19 +31,25 @@ class BizCustomerService
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('customer_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
-        // 为每个客户计算满意度和成交额
+        // 批量查询成交额和满意度，避免N+1查询
+        $customerIds = $result->getCollection()->pluck('customer_id')->all();
+
+        $dealAmounts = BizSalesOrder::whereIn('customer_id', $customerIds)
+            ->whereIn('order_status', ['1', '2'])
+            ->selectRaw('customer_id, SUM(deal_amount) as total')
+            ->groupBy('customer_id')
+            ->pluck('total', 'customer_id');
+
+        $satisfactions = BizOperationRecord::whereIn('customer_id', $customerIds)
+            ->whereNotNull('satisfaction')
+            ->selectRaw('customer_id, AVG(satisfaction) as avg_sat')
+            ->groupBy('customer_id')
+            ->pluck('avg_sat', 'customer_id');
+
         foreach ($result as $customer) {
-            $customerId = $customer->customer_id;
-
-            $dealAmount = BizSalesOrder::where('customer_id', $customerId)
-                ->whereIn('order_status', ['1', '2'])
-                ->sum('deal_amount');
-            $customer->deal_amount = round(floatval($dealAmount), 2);
-
-            $avgSatisfaction = BizOperationRecord::where('customer_id', $customerId)
-                ->whereNotNull('satisfaction')
-                ->avg('satisfaction');
-            $customer->avg_satisfaction = $avgSatisfaction ? round(floatval($avgSatisfaction), 1) : null;
+            $customer->deal_amount = round(floatval($dealAmounts[$customer->customer_id] ?? 0), 2);
+            $sat = $satisfactions[$customer->customer_id] ?? null;
+            $customer->avg_satisfaction = $sat ? round(floatval($sat), 1) : null;
         }
 
         return $result;
@@ -69,41 +75,72 @@ class BizCustomerService
         }
         $customers = $query->where('status', '0')->orderBy('customer_name', 'asc')->limit(100)->get();
 
+        // 批量查询所有关联数据，避免N+1查询
+        $customerIds = $customers->pluck('customer_id')->all();
+
+        // 1. 批量查成交状态和金额
+        $dealMap = BizSalesOrder::whereIn('customer_id', $customerIds)
+            ->whereIn('order_status', ['1', '2'])
+            ->selectRaw('customer_id, SUM(deal_amount) as total, COUNT(*) as cnt')
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
+
+        // 2. 批量查有效套餐
+        $packageMap = BizCustomerPackage::whereIn('customer_id', $customerIds)
+            ->whereIn('status', ['1', '2'])
+            ->selectRaw('customer_id, GROUP_CONCAT(package_id) as package_ids')
+            ->groupBy('customer_id')
+            ->pluck('package_ids', 'customer_id');
+
+        // 3. 批量查套餐剩余数量
+        $allPackageIds = $packageMap->flatMap(function ($ids) {
+            return explode(',', $ids);
+        })->unique()->values()->all();
+        $packagesWithRemaining = BizPackageItem::whereIn('package_id', $allPackageIds)
+            ->where('remaining_quantity', '>', 0)
+            ->pluck('package_id')
+            ->unique()
+            ->toArray();
+
+        // 4. 批量查消费和满意度
+        $consumeMap = BizOperationRecord::whereIn('customer_id', $customerIds)
+            ->selectRaw('customer_id, SUM(consume_amount) as total, AVG(satisfaction) as avg_sat')
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
+
         $result = [];
         foreach ($customers as $customer) {
             $customerId = $customer->customer_id;
 
-            $customerHasDeal = BizSalesOrder::where('customer_id', $customerId)
-                ->whereIn('order_status', ['1', '2'])->exists();
+            $dealInfo = $dealMap->get($customerId);
+            $customerHasDeal = $dealInfo && $dealInfo->cnt > 0;
             $customer->has_deal = $customerHasDeal;
 
-            $dealAmount = BizSalesOrder::where('customer_id', $customerId)
-                ->whereIn('order_status', ['1', '2'])
-                ->sum('deal_amount');
-            $customer->deal_amount = round(floatval($dealAmount), 2);
+            $customer->deal_amount = round(floatval($dealInfo->total ?? 0), 2);
 
-            $dealPackageIds = BizCustomerPackage::where('customer_id', $customerId)
-                ->whereIn('status', ['1', '2'])
-                ->pluck('package_id')
-                ->toArray();
+            $packageIdsStr = $packageMap->get($customerId);
+            $dealPackageIds = $packageIdsStr ? explode(',', $packageIdsStr) : [];
 
             if (!empty($dealPackageIds)) {
-                $allUsedUp = BizPackageItem::whereIn('package_id', $dealPackageIds)
-                    ->where('remaining_quantity', '>', 0)
-                    ->doesntExist();
+                $allUsedUp = true;
+                foreach ($dealPackageIds as $pid) {
+                    if (in_array($pid, $packagesWithRemaining)) {
+                        $allUsedUp = false;
+                        break;
+                    }
+                }
                 $customer->all_exhausted = $allUsedUp;
             } else {
                 $customer->all_exhausted = false;
             }
 
-            $totalConsumed = BizOperationRecord::where('customer_id', $customerId)
-                ->sum('consume_amount');
-            $customer->total_consumed = round(floatval($totalConsumed), 2);
+            $consumeInfo = $consumeMap->get($customerId);
+            $customer->total_consumed = round(floatval($consumeInfo->total ?? 0), 2);
 
-            $avgSatisfaction = BizOperationRecord::where('customer_id', $customerId)
-                ->whereNotNull('satisfaction')
-                ->avg('satisfaction');
-            $customer->avg_satisfaction = $avgSatisfaction ? round(floatval($avgSatisfaction), 1) : null;
+            $sat = $consumeInfo->avg_sat ?? null;
+            $customer->avg_satisfaction = $sat ? round(floatval($sat), 1) : null;
 
             if ($hasDeal !== null && $hasDeal !== '') {
                 $dealFilter = $hasDeal === '1' ? true : false;

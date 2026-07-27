@@ -109,12 +109,13 @@
       </view>
     </u-popup>
 
-    <u-picker :show="showEnterprisePicker" :columns="enterprisePickerColumns" keyName="enterpriseName" @confirm="onEnterprisePickerConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
-    <u-picker :show="showStorePicker" :columns="storePickerColumns" keyName="storeName" @confirm="onStorePickerConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
-    <u-picker :show="showEmployeePicker" :columns="employeePickerColumns" keyName="nickName" @confirm="onEmployeePickerConfirm" @cancel="showEmployeePicker = false" @close="showEmployeePicker = false"></u-picker>
-
-    <u-datetime-picker :show="showStartDatePicker" mode="date" :value="queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()" @confirm="onStartDateConfirm" @cancel="showStartDatePicker = false" @close="showStartDatePicker = false"></u-datetime-picker>
-    <u-datetime-picker :show="showEndDatePicker" mode="date" :value="queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()" @confirm="onEndDateConfirm" @cancel="showEndDatePicker = false" @close="showEndDatePicker = false"></u-datetime-picker>
+    <view class="picker-placeholder">
+      <u-picker :show="showEnterprisePicker" :columns="enterprisePickerColumns" keyName="enterpriseName" @confirm="onEnterprisePickerConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
+      <u-picker :show="showStorePicker" :columns="storePickerColumns" keyName="storeName" @confirm="onStorePickerConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
+      <u-picker :show="showEmployeePicker" :columns="employeePickerColumns" keyName="nickName" @confirm="onEmployeePickerConfirm" @cancel="showEmployeePicker = false" @close="showEmployeePicker = false"></u-picker>
+      <u-datetime-picker :show="showStartDatePicker" mode="date" :value="queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()" @confirm="onStartDateConfirm" @cancel="showStartDatePicker = false" @close="showStartDatePicker = false"></u-datetime-picker>
+      <u-datetime-picker :show="showEndDatePicker" mode="date" :value="queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()" @confirm="onEndDateConfirm" @cancel="showEndDatePicker = false" @close="showEndDatePicker = false"></u-datetime-picker>
+    </view>
 
     <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="orderList.length > 0" class="card-list">
@@ -491,4 +492,5 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
     &.amount { color: #FF6B35; font-weight: 600; font-size: 30rpx; }
   }
 }
+.picker-placeholder { position: fixed; height: 0; overflow: hidden; }
 </style>

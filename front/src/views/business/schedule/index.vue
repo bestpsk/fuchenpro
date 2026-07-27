@@ -63,12 +63,14 @@
               <div
                 v-for="day in daysInMonth"
                 :key="'d-' + rowIndex + '-' + day"
-                :class="['day-cell', { selected: isSelectedDay(rowIndex, day), 'rest-day': isRestDayForUser(row.userId, day) }]"
+                :class="['day-cell', { selected: isSelectedDay(rowIndex, day), 'rest-day': isRestDayForUser(row.userId, day), 'leave-day': isLeaveDayForUser(row.userId, day) }]"
+                :style="getLeaveInfo(row.userId, day) ? { background: getLeaveInfo(row.userId, day).color + '22' } : {}"
                 :data-day="day"
                 @mouseenter="handleCellEnter(rowIndex, day)"
                 @click.stop="handleCellClick(row, day)"
               >
                 <span v-if="isRestDayForUser(row.userId, day)" class="rest-label">休息</span>
+                <span v-else-if="getLeaveInfo(row.userId, day)" class="leave-label" :style="{ color: getLeaveInfo(row.userId, day).color }">{{ getLeaveInfo(row.userId, day).label }}</span>
               </div>
               <template v-for="(merged, mIdx) in getMergedSchedules(row)" :key="'m-' + rowIndex + '-' + merged.startDay">
                 <div
@@ -218,46 +220,80 @@
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="员工配置" name="employeeConfig">
-        <el-form :model="configQueryParams" ref="configQueryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="员工姓名" prop="userName">
-            <el-input v-model="configQueryParams.userName" placeholder="请输入员工姓名" clearable style="width: 160px" @keyup.enter="queryConfig" />
-          </el-form-item>
-          <el-form-item label="部门" prop="deptName">
-            <el-input v-model="configQueryParams.deptName" placeholder="请输入部门名称" clearable style="width: 160px" @keyup.enter="queryConfig" />
-          </el-form-item>
-          <el-form-item label="是否可排班" prop="isSchedulable">
-            <el-select v-model="configQueryParams.isSchedulable" placeholder="是否可排班" clearable style="width: 120px">
-              <el-option label="是" value="1" />
-              <el-option label="否" value="0" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="Search" @click="queryConfig">搜索</el-button>
-            <el-button icon="Refresh" @click="resetConfigQuery">重置</el-button>
-          </el-form-item>
-        </el-form>
-        <el-table :data="employeeConfigList" border v-loading="configLoading">
-          <el-table-column label="员工姓名" prop="userName" min-width="110" />
-          <el-table-column label="职位" prop="postName" min-width="120" />
-          <el-table-column label="部门" prop="deptName" min-width="150" show-overflow-tooltip />
-          <el-table-column label="休息日" min-width="180">
-            <template #default="scope">
-              <el-tag v-for="(date, idx) in (scope.row.restDates || [])" :key="idx" size="small" type="danger" class="mx-1">{{ date.slice(5) }}</el-tag>
-              <span v-if="!scope.row.restDates?.length" style="color: #c0c4cc">未配置</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="是否可排班" min-width="110" align="center">
-            <template #default="scope">
-              <el-switch v-model="scope.row.isSchedulable" active-value="1" inactive-value="0" @change="handleSchedulableChange(scope.row)" v-hasPermi="['business:employeeConfig:edit']" />
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="130" align="center" fixed="right">
-            <template #default="scope">
-              <el-button link type="primary" @click="handleRestDateConfig(scope.row)" v-hasPermi="['business:employeeConfig:edit']">配置休息日期</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+      <!-- Tab 3: 排班设置（左部门树 + 右员工列表，借鉴用户管理布局） -->
+      <el-tab-pane label="排班设置" name="config">
+        <div v-show="activeTab === 'config'" class="tree-sidebar-manage-wrap config-layout">
+          <tree-panel
+            title="组织机构"
+            :tree-data="deptOptions"
+            search-placeholder="请输入部门名称"
+            storage-key="schedule-config-dept-sidebar"
+            :defaultExpandAll="true"
+            @node-click="handleDeptNodeClick"
+            @refresh="getDeptTree"
+            ref="deptTreeRef"
+          />
+          <div class="tree-sidebar-content">
+            <div class="content-inner">
+              <el-form :model="configQueryParams" ref="configQueryRef" :inline="true" v-show="showSearch" label-width="80px">
+                <el-form-item label="员工姓名" prop="userName">
+                  <el-input v-model="configQueryParams.userName" placeholder="请输入员工姓名" clearable style="width: 180px" @keyup.enter="queryConfig" />
+                </el-form-item>
+                <el-form-item label="排班显示" prop="isSchedulable">
+                  <el-select v-model="configQueryParams.isSchedulable" placeholder="全部" clearable style="width: 120px">
+                    <el-option label="显示" value="1" />
+                    <el-option label="隐藏" value="0" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" icon="Search" @click="queryConfig">搜索</el-button>
+                  <el-button icon="Refresh" @click="resetConfigQuery">重置</el-button>
+                </el-form-item>
+              </el-form>
+
+              <el-row :gutter="10" class="mb8">
+                <right-toolbar v-model:showSearch="showSearch" @queryTable="queryConfig"></right-toolbar>
+              </el-row>
+
+              <el-alert
+                title="只有在下方启用为'显示'状态的员工，才会出现在'员工行程'和'企业排班'tab 的日历格子中"
+                type="info"
+                :closable="false"
+                show-icon
+                style="margin-bottom: 12px"
+              />
+
+              <el-table v-loading="configLoading" :data="employeeConfigList" border>
+                <el-table-column label="员工姓名" align="center" prop="userName" min-width="100">
+                  <template #default="scope">{{ scope.row.nickName || scope.row.userName }}</template>
+                </el-table-column>
+                <el-table-column label="部门" align="center" prop="deptName" min-width="120" show-overflow-tooltip />
+                <el-table-column label="岗位" align="center" prop="postName" min-width="100" />
+                <el-table-column label="手机号" align="center" prop="phonenumber" min-width="120" />
+                <el-table-column label="排班显示" align="center" prop="isSchedulable" min-width="140">
+                  <template #default="scope">
+                    <el-switch
+                      v-model="scope.row.isSchedulable"
+                      active-value="1"
+                      inactive-value="0"
+                      active-text="显示"
+                      inactive-text="隐藏"
+                      @change="handleSchedulableChange(scope.row)"
+                    />
+                  </template>
+                </el-table-column>
+              </el-table>
+
+              <pagination
+                v-show="configTotal > 0"
+                :total="configTotal"
+                v-model:page="configQueryParams.pageNum"
+                v-model:limit="configQueryParams.pageSize"
+                @pagination="queryConfig"
+              />
+            </div>
+          </div>
+        </div>
       </el-tab-pane>
     </el-tabs>
 
@@ -358,37 +394,21 @@
       </template>
     </el-dialog>
 
-    <!-- 配置休息日期对话框 -->
-    <el-dialog title="配置休息日期" v-model="restDateOpen" width="550px" append-to-body>
-      <el-alert title="点击日期可选择/取消休息日，支持多选。休息日在日历中将以标记显示" type="info" :closable="false" show-icon style="margin-bottom: 16px" />
-      <el-calendar v-model="restDateValue">
-        <template #date-cell="{ data }">
-          <div class="rest-date-cell" @click="toggleRestDate(data.day)">
-            <span class="date-num">{{ data.day.split('-')[2] }}</span>
-            <span v-if="isRestDate(data.day)" class="rest-dot"></span>
-          </div>
-        </template>
-      </el-calendar>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="saveRestDatesAction">保存</el-button>
-          <el-button @click="restDateOpen = false">取消</el-button>
-        </div>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup name="Schedule">
 /**
- * @description 行程管理页面 - 员工下店排班/甘特图/拖拽排班/休息日配置
+ * @description 行程管理页面 - 员工下店排班/甘特图/拖拽排班/排班设置
  * @description 提供按月查看员工/企业排班甘特图、拖拽选择日期批量添加行程、
- * 行程编辑/删除、员工排班配置（是否可排班/休息日设置）等功能
+ * 行程编辑/删除、排班设置（员工是否在行程格子中显示）等功能
  */
 import { listSchedule, getSchedule, getEmployeeSchedule, getEnterpriseSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from "@/api/business/schedule"
-import { listUser } from "@/api/system/user"
+import { listUser, deptTreeSelect } from "@/api/system/user"
 import { listEnterprise, searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
-import { listEmployeeConfig, updateSchedulable, saveRestDates as saveRestDatesApi, getRestDates } from "@/api/business/employeeConfig"
+import { listEmployeeConfig, updateSchedulable } from "@/api/business/employeeConfig"
+import { getLeaveCalendar, getRestCalendar } from "@/api/business/leave"
+import TreePanel from "@/components/TreePanel"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable, biz_schedule_purpose, biz_schedule_status } = useDict("sys_normal_disable", "biz_schedule_purpose", "biz_schedule_status")
@@ -398,8 +418,8 @@ const scheduleData = ref([])
 const processedScheduleList = ref([])
 const open = ref(false)
 const detailOpen = ref(false)
-const restDateOpen = ref(false)
 const configLoading = ref(false)
+const configTotal = ref(0)
 const searchLoading = ref(false)
 const showSearch = ref(true)
 const title = ref("")
@@ -411,15 +431,14 @@ const filteredEnterpriseList = ref([])
 const employeeConfigList = ref([])
 const scheduleListData = ref([])
 const restDateMap = ref({})
+const leaveDateMap = ref({})
 const currentSchedule = ref({})
-const tempRestDates = ref([])
+const deptOptions = ref(undefined)
 
 const isDragging = ref(false)
 const dragStartInfo = ref(null)
 const dragEndInfo = ref(null)
 const selectedDays = ref(new Set())
-const restDateValue = ref(new Date())
-const currentConfigRow = ref({})
 const bookedDates = ref([])
 
 // 禁用已安排日期（同员工同企业，排除当前行程自身日期）
@@ -453,7 +472,7 @@ const data = reactive({
     pageNum: 1,
     pageSize: 50,
     userName: undefined,
-    deptName: undefined,
+    deptId: undefined,
     isSchedulable: undefined
   },
   rules: {
@@ -478,8 +497,10 @@ function getList() {
     getEmployeeSchedule(params).then(response => {
       scheduleData.value = response.data || []
       getScheduleList(params)
+      // 必须在 scheduleData 填充后再加载休息日和请假数据，否则 userIds 为空
+      loadRestDateMap()
+      loadLeaveDateMap()
     })
-    loadRestDateMap()
   } else if (activeTab.value === 'enterprise') {
     getEnterpriseSchedule(params).then(response => {
       scheduleData.value = response.data || []
@@ -592,8 +613,11 @@ function searchEnterprise(query) {
 }
 
 function handleTabChange() {
-  getList()
-  if (activeTab.value === 'employeeConfig') queryConfig()
+  if (activeTab.value === 'config') {
+    queryConfig()
+  } else {
+    getList()
+  }
 }
 
 function handleQuery() { getList() }
@@ -628,7 +652,7 @@ function handleRowMouseDown(event, row, rowIndex) {
   if (!cell) return
 
   const day = parseInt(cell.getAttribute('data-day'))
-  if (activeTab.value === 'employee' && isRestDayForUser(row.userId, day)) return
+  if (activeTab.value === 'employee' && isUnavailableDay(row.userId, day)) return
   const schedule = getScheduleOfDay(row.schedules, day)
   if (!canSelectCell(schedule)) return
 
@@ -648,7 +672,7 @@ function handleCellEnter(rowIndex, day) {
 
   selectedDays.value.clear()
   for (let d = startDay; d <= endDay; d++) {
-    if (activeTab.value === 'employee' && isRestDayForUser(dragStartInfo.value.row.userId, d)) {
+    if (activeTab.value === 'employee' && isUnavailableDay(dragStartInfo.value.row.userId, d)) {
       selectedDays.value.clear()
       return
     }
@@ -940,12 +964,29 @@ function getScheduleTooltip(schedule) {
 
 function queryConfig() {
   configLoading.value = true
-  listEmployeeConfig(configQueryParams.value).then(response => { employeeConfigList.value = response.rows || []; configLoading.value = false }).catch(() => { configLoading.value = false })
+  listEmployeeConfig(configQueryParams.value).then(response => {
+    employeeConfigList.value = response.rows || []
+    configTotal.value = response.total || 0
+    configLoading.value = false
+  }).catch(() => { configLoading.value = false })
 }
 
 function resetConfigQuery() {
   proxy.resetForm("configQueryRef")
-  configQueryParams.value = { pageNum: 1, pageSize: 50, userName: undefined, deptName: undefined, isSchedulable: undefined }
+  configQueryParams.value = { pageNum: 1, pageSize: 50, userName: undefined, deptId: undefined, isSchedulable: undefined }
+  queryConfig()
+}
+
+/** 查询部门下拉树结构 */
+function getDeptTree() {
+  deptTreeSelect().then(response => {
+    deptOptions.value = response.data
+  })
+}
+
+/** 部门树节点单击事件 */
+function handleDeptNodeClick(data) {
+  configQueryParams.value.deptId = data.id
   queryConfig()
 }
 
@@ -956,44 +997,27 @@ async function handleSchedulableChange(row) {
   } catch (error) { row.isSchedulable = row.isSchedulable === '1' ? '0' : '1'; proxy.$modal.msgError("更新失败") }
 }
 
-function handleRestDateConfig(row) {
-  currentConfigRow.value = row
-  tempRestDates.value = []
-  restDateValue.value = new Date()
-  restDateOpen.value = true
-  getRestDates(row.userId).then(response => { tempRestDates.value = response.data || [] })
-}
-
-function isRestDate(dateStr) {
-  return tempRestDates.value.includes(dateStr)
-}
-
-function toggleRestDate(dateStr) {
-  const idx = tempRestDates.value.indexOf(dateStr)
-  idx > -1 ? tempRestDates.value.splice(idx, 1) : tempRestDates.value.push(dateStr)
-}
-
-async function saveRestDatesAction() {
-  try {
-    await saveRestDatesApi(currentConfigRow.value.userId, tempRestDates.value)
-    proxy.$modal.msgSuccess("保存成功")
-    restDateOpen.value = false
-  } catch (error) { proxy.$modal.msgError("保存失败") }
-}
-
 async function loadRestDateMap() {
   try {
-    const res = await listEmployeeConfig({ pageNum: 1, pageSize: 1000 })
-    const rows = res.rows || []
+    const userIds = scheduleData.value.map(r => r.userId).filter(Boolean)
+    if (!userIds.length) {
+      restDateMap.value = {}
+      return
+    }
+    const res = await getRestCalendar({
+      yearMonth: queryParams.value.yearMonth,
+      userIds: userIds.join(',')
+    })
+    // 后端返回数组格式 [{userId, restDates}]，转换为 {userId: [dates]} map
+    const arr = res.data || []
     const map = {}
-    rows.forEach(row => {
-      if (row.restDates?.length && row.userId) {
-        map[row.userId] = row.restDates
-      }
+    arr.forEach(item => {
+      map[item.userId] = item.restDates || []
     })
     restDateMap.value = map
   } catch (e) {
     console.error('加载休息日数据失败:', e)
+    restDateMap.value = {}
   }
 }
 
@@ -1003,6 +1027,37 @@ function isRestDayForUser(userId, day) {
   if (!dates || !Array.isArray(dates)) return false
   const [y, m] = queryParams.value.yearMonth.split('-')
   return dates.includes(`${y}-${m}-${String(day).padStart(2, '0')}`)
+}
+
+async function loadLeaveDateMap() {
+  try {
+    const userIds = scheduleData.value.map(r => r.userId).filter(Boolean)
+    if (!userIds.length) {
+      leaveDateMap.value = {}
+      return
+    }
+    const res = await getLeaveCalendar({ yearMonth: queryParams.value.yearMonth, userIds: userIds.join(',') })
+    leaveDateMap.value = res.data || {}
+  } catch (e) {
+    console.error('加载请假数据失败:', e)
+  }
+}
+
+function getLeaveInfo(userId, day) {
+  if (!userId || !day) return null
+  const leaves = leaveDateMap.value[userId]
+  if (!leaves || !Array.isArray(leaves)) return null
+  const [y, m] = queryParams.value.yearMonth.split('-')
+  const dateStr = `${y}-${m}-${String(day).padStart(2, '0')}`
+  return leaves.find(l => l.date === dateStr) || null
+}
+
+function isLeaveDayForUser(userId, day) {
+  return getLeaveInfo(userId, day) !== null
+}
+
+function isUnavailableDay(userId, day) {
+  return isRestDayForUser(userId, day) || isLeaveDayForUser(userId, day)
 }
 
 function handleMouseUp() {
@@ -1018,6 +1073,7 @@ onMounted(() => {
   getList()
   getUserList()
   getEnterpriseList()
+  getDeptTree()
   tableHeight.value = window.innerHeight - 320
 
   document.addEventListener('mouseup', handleMouseUp)
@@ -1137,7 +1193,7 @@ onBeforeUnmount(() => {
   align-self: stretch;
 }
 
-.day-cell:hover:not(.selected):not(.rest-day) {
+.day-cell:hover:not(.selected):not(.rest-day):not(.leave-day) {
   background-color: #e6f7ff;
   box-shadow: inset 0 0 0 1px #91d5ff;
 }
@@ -1178,6 +1234,31 @@ onBeforeUnmount(() => {
   font-weight: 600;
   background: rgba(245, 108, 108, 0.08);
   border: 1px solid rgba(245, 108, 108, 0.25);
+  border-radius: 3px;
+  padding: 1px 5px;
+  line-height: 16px;
+}
+
+.day-cell.leave-day {
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leave-label {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 3px;
   padding: 1px 5px;
   line-height: 16px;
@@ -1256,46 +1337,10 @@ onBeforeUnmount(() => {
   font-weight: 500;
 }
 
-/* 休息日期 - 精致圆点标记风格 */
-.rest-date-cell {
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-}
-.rest-date-cell:hover {
-  background-color: var(--el-color-primary-light-9);
-}
-.rest-date-cell .date-num {
-  font-size: 13px;
-  color: #303133;
-  line-height: 24px;
-  transition: all 0.2s ease;
-}
-.rest-date-cell:hover .date-num {
-  color: #1890ff;
-  font-weight: 500;
-}
+/* 休息日期 - 精致圆点标记样式已随死代码删除 */
 
-/* 选中状态 - 底部精致圆点 */
-.rest-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ff4d4f 100%);
-  box-shadow: 0 1px 3px rgba(255, 77, 79, 0.35);
-  margin-top: 2px;
-  animation: dot-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes dot-pop {
-  0% { transform: scale(0); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+/* 排班设置 tab 样式 - 左树右表布局 */
+.config-layout.tree-sidebar-manage-wrap {
+  min-height: calc(100vh - 220px);
 }
 </style>

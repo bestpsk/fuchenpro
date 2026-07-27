@@ -104,6 +104,9 @@ class CacheController
     // 获取所有缓存键名列表（按命名空间前缀分组）
     public function getNames(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $redis = Redis::connection();
         $keys = $redis->keys('*');
         $names = [];
@@ -131,6 +134,9 @@ class CacheController
     // 根据缓存命名空间前缀获取该命名空间下的所有键名
     public function getKeys(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $cacheName = end($parts);
         $redis = Redis::connection();

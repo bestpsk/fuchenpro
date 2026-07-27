@@ -86,6 +86,7 @@ import { ref, computed } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { getStockTransfer, confirmStockTransfer, cancelConfirmStockTransfer, delStockTransfer } from '@/api/wms/stockTransfer'
 import { getDicts } from '@/api/system/dictData'
+import { checkPermi } from '@/utils/permission'
 
 const info = ref({})
 const transferItems = ref([])
@@ -127,9 +128,9 @@ function formatTime(time) {
   return String(time).substring(0, 16)
 }
 
-const canConfirm = computed(() => String(info.value.status) === '0')
-const canCancelConfirm = computed(() => String(info.value.status) === '1')
-const canDelete = computed(() => String(info.value.status) === '0')
+const canConfirm = computed(() => String(info.value.status) === '0' && checkPermi('wms:transfer:confirm'))
+const canCancelConfirm = computed(() => String(info.value.status) === '1' && checkPermi('wms:transfer:confirm'))
+const canDelete = computed(() => String(info.value.status) === '0' && checkPermi('wms:transfer:remove'))
 const showActions = computed(() => canConfirm.value || canCancelConfirm.value || canDelete.value)
 
 async function loadDetail() {

@@ -7,7 +7,8 @@ use app\service\DataScopeService;
 use support\Db;
 
 /**
- * 员工配置服务层，处理员工工作配置的增删改查、排班状态和休息日期管理
+ * 员工配置服务层，处理员工排班配置的增删改查、排班可用状态和员工搜索
+ * 休息日管理已迁移至 BizRestPlanService（biz_rest_plan_* 表）
  */
 class BizEmployeeConfigService
 {
@@ -23,7 +24,7 @@ class BizEmployeeConfigService
             ->where('su.status', '0')
             ->select(
                 'su.user_id', 'su.user_name', 'su.nick_name', 'su.phonenumber',
-                'ec.config_id', 'ec.is_schedulable', 'ec.rest_dates', 'ec.status as config_status',
+                'ec.config_id', 'ec.is_schedulable', 'ec.status as config_status',
                 'p.post_id', 'p.post_name',
                 'd.dept_id', 'd.dept_name'
             );
@@ -33,6 +34,9 @@ class BizEmployeeConfigService
         }
         if (!empty($params['dept_name'])) {
             $query->where('d.dept_name', 'like', '%' . $params['dept_name'] . '%');
+        }
+        if (!empty($params['dept_id'])) {
+            $query->where('su.dept_id', $params['dept_id']);
         }
         if (isset($params['is_schedulable'])) {
             $query->where('ec.is_schedulable', $params['is_schedulable']);
@@ -48,21 +52,6 @@ class BizEmployeeConfigService
         $result = $query->orderBy('su.user_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
         foreach ($result->items() as $item) {
-            if (empty($item->post_name)) {
-                $postInfo = Db::table('sys_user_post as up')
-                    ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
-                    ->where('up.user_id', $item->user_id)
-                    ->first();
-                if ($postInfo) {
-                    $item->post_id = $postInfo->post_id;
-                    $item->post_name = $postInfo->post_name;
-                }
-            }
-            if ($item->rest_dates) {
-                $item->rest_dates = json_decode($item->rest_dates, true) ?: [];
-            } else {
-                $item->rest_dates = [];
-            }
             // 仅当 is_schedulable 字段为 NULL 或空字符串时才兜底为 '1'，不能使用 empty() 因为 empty('0') 为 true
             if ($item->is_schedulable === null || $item->is_schedulable === '') {
                 $item->is_schedulable = '1';
@@ -128,40 +117,6 @@ class BizEmployeeConfigService
             'dept_id' => $user->dept_id,
             'dept_name' => $deptInfo ? $deptInfo->dept_name : null,
             'is_schedulable' => $isSchedulable,
-            'rest_dates' => json_encode([]),
-            'status' => '0',
-            'create_time' => date('Y-m-d H:i:s'),
-        ]) ? true : false;
-    }
-
-    public function updateRestDates($userId, $restDates)
-    {
-        $config = BizEmployeeConfig::where('user_id', $userId)->first();
-        if ($config) {
-            return BizEmployeeConfig::where('user_id', $userId)->update([
-                'rest_dates' => json_encode($restDates, JSON_UNESCAPED_UNICODE),
-                'update_time' => date('Y-m-d H:i:s')
-            ]);
-        }
-
-        $user = Db::table('sys_user')->where('user_id', $userId)->first();
-        if (!$user) return false;
-
-        $postInfo = Db::table('sys_user_post as up')
-            ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
-            ->where('up.user_id', $userId)->first();
-
-        $deptInfo = Db::table('sys_dept')->where('dept_id', $user->dept_id)->first();
-
-        return BizEmployeeConfig::create([
-            'user_id' => $userId,
-            'user_name' => $user->nick_name ?: $user->user_name,
-            'post_id' => $postInfo ? $postInfo->post_id : null,
-            'post_name' => $postInfo ? $postInfo->post_name : null,
-            'dept_id' => $user->dept_id,
-            'dept_name' => $deptInfo ? $deptInfo->dept_name : null,
-            'is_schedulable' => '1',
-            'rest_dates' => json_encode($restDates, JSON_UNESCAPED_UNICODE),
             'status' => '0',
             'create_time' => date('Y-m-d H:i:s'),
         ]) ? true : false;
@@ -172,21 +127,6 @@ class BizEmployeeConfigService
     public function deleteConfigByIds($configIds)
     {
         return BizEmployeeConfig::whereIn('config_id', $configIds)->delete();
-    }
-
-    public function getRestDatesByUserId($userId)
-    {
-        $config = $this->selectConfigByUserId($userId);
-        if ($config && $config->rest_dates) {
-            return json_decode($config->rest_dates, true) ?: [];
-        }
-        return [];
-    }
-
-    public function isRestDate($userId, $date)
-    {
-        $restDates = $this->getRestDatesByUserId($userId);
-        return in_array($date, $restDates);
     }
 
     public function searchEmployee($keyword = '', $params = [])

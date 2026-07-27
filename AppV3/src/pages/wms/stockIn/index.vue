@@ -172,7 +172,7 @@ function getExpiryText(expiryDate) {
 }
 
 function canConfirm(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:confirm') }
-function canCancelConfirm(item) { return String(item.status) === '1' && checkPermi('wms:stockIn:edit') }
+function canCancelConfirm(item) { return String(item.status) === '1' && checkPermi('wms:stockIn:confirm') }
 function canEdit(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:edit') }
 function canDelete(item) { return String(item.status) === '0' && checkPermi('wms:stockIn:remove') }
 function hasActions(item) { return canConfirm(item) || canCancelConfirm(item) || canEdit(item) || canDelete(item) }

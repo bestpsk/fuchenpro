@@ -33,7 +33,7 @@
       <el-table-column label="ID" align="center" prop="bannerId" min-width="80" />
       <el-table-column label="图片" align="center" prop="image" min-width="120">
         <template #default="scope">
-          <image-preview :src="scope.row.image" :width="80" :height="45" />
+          <image-preview :src="scope.row.image" :width="80" :height="34" />
         </template>
       </el-table-column>
       <el-table-column label="标题" align="center" prop="title" :show-overflow-tooltip="true" />
@@ -103,10 +103,10 @@
           :img="cropOptions.img"
           :info="true"
           :autoCrop="true"
-          :autoCropWidth="480"
+          :autoCropWidth="630"
           :autoCropHeight="270"
           :fixed="true"
-          :fixedNumber="[16, 9]"
+          :fixedNumber="[21, 9]"
           :fixedBox="false"
           :outputType="'jpeg'"
           :full="false"
@@ -350,7 +350,7 @@ getList()
 
 .banner-preview {
   position: relative;
-  width: 240px;
+  width: 315px;
   height: 135px;
   border-radius: 8px;
   overflow: hidden;

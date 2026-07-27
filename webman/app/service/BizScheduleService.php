@@ -5,6 +5,7 @@ namespace app\service;
 use app\model\BizSchedule;
 use app\model\SysUser;
 use app\model\BizEnterprise;
+use app\model\BizEmployeeConfig;
 use app\service\DataScopeService;
 use support\Db;
 
@@ -196,16 +197,35 @@ class BizScheduleService
     {
         $startDate = $params['start_date'] ?? date('Y-m-01');
         $endDate = $params['end_date'] ?? date('Y-m-t');
-        
+
         $userQuery = SysUser::query();
         if (!empty($params['user_name'])) {
             $userQuery->where('user_name', 'like', '%' . $params['user_name'] . '%');
         }
         $userQuery->where('status', '0')->where('del_flag', '0');
+
+        // 仅显示在"排班设置"中启用为可排班（is_schedulable=1）的员工
+        $schedulableUserIds = BizEmployeeConfig::where('is_schedulable', '1')->pluck('user_id')->toArray();
+        if (!empty($schedulableUserIds)) {
+            $userQuery->whereIn('user_id', $schedulableUserIds);
+        } else {
+            // 白名单模式下没有可排班员工时返回空列表
+            return [];
+        }
+
         DataScopeService::applyUserScope($userQuery, $params['login_user'], 'user_id');
-        
+
         $users = $userQuery->get();
-        
+
+        // 批量查询岗位信息，避免N+1查询
+        $userIds = $users->pluck('user_id')->all();
+        $postInfos = Db::table('sys_user_post as up')
+            ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
+            ->whereIn('up.user_id', $userIds)
+            ->select('up.user_id', 'p.post_name')
+            ->get()
+            ->keyBy('user_id');
+
         $scheduleQuery = BizSchedule::query();
         $scheduleQuery->whereBetween('schedule_date', [$startDate, $endDate]);
         if (!empty($params['enterprise_name'])) {
@@ -231,11 +251,8 @@ class BizScheduleService
                 $scheduleMap[$day][] = $schedule;
             }
             
-            $postInfo = Db::table('sys_user_post as up')
-                ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
-                ->where('up.user_id', $user->user_id)
-                ->first();
-            
+            $postInfo = $postInfos->get($user->user_id);
+
             $result[] = [
                 'user_id' => $user->user_id,
                 'user_name' => $user->nick_name ?? $user->user_name,
@@ -321,10 +338,21 @@ class BizScheduleService
         }
         DataScopeService::applyUserScope($scheduleQuery, $params['login_user'], 'user_id');
 
+        // 仅显示在"排班设置"中启用为可排班（is_schedulable=1）的员工的排班记录
+        $schedulableUserIds = BizEmployeeConfig::where('is_schedulable', '1')->pluck('user_id')->toArray();
+        if (!empty($schedulableUserIds)) {
+            $scheduleQuery->whereIn('user_id', $schedulableUserIds);
+        } else {
+            return [];
+        }
+
         $schedules = $scheduleQuery->get();
 
+        // 批量查询用户名，避免N+1查询
+        $userIds = $schedules->pluck('user_id')->unique()->filter()->values()->all();
+        $users = SysUser::whereIn('user_id', $userIds)->where('del_flag', '0')->get()->keyBy('user_id');
         foreach ($schedules as $schedule) {
-            $user = SysUser::find($schedule->user_id);
+            $user = $users->get($schedule->user_id);
             if ($user) {
                 $schedule->user_name = $user->nick_name ?? $user->user_name;
             }

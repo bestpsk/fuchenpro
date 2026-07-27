@@ -28,7 +28,7 @@ class AjaxResult
                     $result['data'] = $data;
                 }
             } elseif (is_object($data)) {
-                $result['data'] = self::convertToCamelCase($data->toArray());
+                $result['data'] = self::convertToCamelCase($data);
             } else {
                 $result['data'] = $data;
             }
@@ -61,7 +61,7 @@ class AjaxResult
                     $result['data'] = $data;
                 }
             } elseif (is_object($data)) {
-                $result['data'] = self::convertToCamelCase($data->toArray());
+                $result['data'] = self::convertToCamelCase($data);
             } else {
                 $result['data'] = $data;
             }

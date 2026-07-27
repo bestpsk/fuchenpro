@@ -38,7 +38,6 @@ service.interceptors.request.use(config => {
   if (getToken() && !isToken) {
     // 在Authorization头中注入Bearer Token，后端通过此字段验证用户身份
     config.headers['Authorization'] = 'Bearer ' + getToken()
-    if (import.meta.env.DEV) console.log('[request]', config.url, 'Token:', getToken()?.substring(0, 30) + '...')
   }
   // GET请求：将params对象序列化为URL查询字符串，避免参数丢失
   if ((config.method === 'get' || config.method === 'delete') && config.params) {
@@ -81,7 +80,7 @@ service.interceptors.request.use(config => {
   }
   return config
 }, error => {
-    console.log(error)
+    console.error(error)
     return Promise.reject(error)
 })
 
@@ -89,7 +88,7 @@ service.interceptors.request.use(config => {
 service.interceptors.response.use(res => {
     const code = res.data.code || 200
     const msg = errorCode[code] || res.data.msg || errorCode['default']
-    console.log('[response]', res.config.url, 'code:', code, 'data:', JSON.stringify(res.data).substring(0, 200))
+    if (import.meta.env.DEV) console.log('[response]', res.config.url, 'code:', code, 'data:', JSON.stringify(res.data).substring(0, 200))
     // 文件下载响应（Blob/ArrayBuffer）直接返回原始数据，不做业务码判断
     if (res.request.responseType ===  'blob' || res.request.responseType ===  'arraybuffer') {
       return res.data
@@ -125,7 +124,7 @@ service.interceptors.response.use(res => {
     }
   },
   error => {
-    console.log('err' + error)
+    console.error('err' + error)
     // 网络异常错误信息汉化处理
     let { message } = error
     if (message == "Network Error") {

@@ -103,20 +103,8 @@
       </view>
     </u-popup>
 
-    <u-datetime-picker
-      :show="showStartDatePicker"
-      mode="date"
-      @confirm="onStartDateConfirm"
-      @cancel="showStartDatePicker = false"
-    ></u-datetime-picker>
-    <u-datetime-picker
-      :show="showEndDatePicker"
-      mode="date"
-      @confirm="onEndDateConfirm"
-      @cancel="showEndDatePicker = false"
-    ></u-datetime-picker>
-
     <scroll-view
+      v-if="hasPermission"
       scroll-y
       class="list-scroll"
       @scrolltolower="loadMore"
@@ -191,9 +179,31 @@
         :marginTop="20"
       />
     </scroll-view>
+    <u-empty
+      v-else
+      mode="permission"
+      icon="lock"
+      text="没有权限访问操作日志"
+      :marginTop="120"
+    ></u-empty>
 
-    <view v-if="checkPermi('monitor:operlog:remove')" class="clean-bar">
+    <view v-if="hasPermission && checkPermi('monitor:operlog:remove')" class="clean-bar">
       <u-button type="error" plain text="清空日志" @click="handleClean" customStyle="height:72rpx; border-radius:36rpx;"></u-button>
+    </view>
+
+    <view class="picker-placeholder">
+      <u-datetime-picker
+        :show="showStartDatePicker"
+        mode="date"
+        @confirm="onStartDateConfirm"
+        @cancel="showStartDatePicker = false"
+      ></u-datetime-picker>
+      <u-datetime-picker
+        :show="showEndDatePicker"
+        mode="date"
+        @confirm="onEndDateConfirm"
+        @cancel="showEndDatePicker = false"
+      ></u-datetime-picker>
     </view>
   </view>
 </template>
@@ -211,6 +221,7 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
+const hasPermission = checkPermi('monitor:operlog:list')
 
 let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
@@ -397,6 +408,7 @@ function formatTime(time) {
 }
 
 onMounted(() => {
+  if (!hasPermission) return
   loadDicts()
   getList(true)
 })
@@ -502,4 +514,5 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   flex-shrink: 0; padding: 20rpx 30rpx; background: #fff;
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
 }
+.picker-placeholder { position: fixed; height: 0; overflow: hidden; }
 </style>

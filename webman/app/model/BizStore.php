@@ -16,7 +16,7 @@ class BizStore extends Model
     protected $fillable = [
         'enterprise_id', 'enterprise_name', 'store_name', 'manager_name', 'phone',
         'wechat', 'address', 'business_hours', 'annual_performance', 'regular_customers',
-        'creator_name', 'server_user_id', 'server_user_name',
+        'server_user_id', 'server_user_name',
         'status', 'remark', 'create_by', 'create_time', 'update_by', 'update_time'
     ];
 
@@ -33,9 +33,8 @@ class BizStore extends Model
             'annual_performance' => ['name' => '年业绩', 'cellType' => 'numeric', 'sort' => 8],
             'regular_customers' => ['name' => '常来顾客数', 'cellType' => 'numeric', 'sort' => 9],
             'server_user_name' => ['name' => '服务员工', 'sort' => 10],
-            'creator_name' => ['name' => '创建人', 'sort' => 11],
-            'status' => ['name' => '状态', 'dictType' => 'sys_normal_disable', 'sort' => 12],
-            'create_time' => ['name' => '创建时间', 'dateFormat' => 'Y-m-d H:i:s', 'sort' => 13],
+            'status' => ['name' => '状态', 'dictType' => 'sys_normal_disable', 'sort' => 11],
+            'create_time' => ['name' => '创建时间', 'dateFormat' => 'Y-m-d H:i:s', 'sort' => 12],
         ];
     }
 }
