@@ -13,6 +13,7 @@ class BizStockTransfer extends Model
     protected $fillable = [
         'transfer_id', 'transfer_no', 'from_warehouse_id', 'from_warehouse_name',
         'to_warehouse_id', 'to_warehouse_name', 'total_quantity', 'transfer_date',
+        'operator_id', 'operator_name',
         'status', 'remark', 'create_by', 'create_time', 'update_by', 'update_time'
     ];
 

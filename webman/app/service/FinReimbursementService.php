@@ -5,6 +5,8 @@ namespace app\service;
 use app\model\FinReimbursement;
 use app\model\FinReimbursementItem;
 use app\service\DataScopeService;
+use support\Db;
+use support\Redis;
 
 /**
  * 报销服务层，处理报销单的增删改查、审核流程和统计报表
@@ -69,73 +71,70 @@ class FinReimbursementService
         return FinReimbursement::with(['items', 'applicant', 'dept'])->find($id);
     }
 
-    // 生成报销单号
+    // 生成报销单号（Redis原子递增，防止并发重复）
     public function generateReimbursementNo()
     {
         $today = date('Ymd');
-        $last = FinReimbursement::where('reimbursement_no', 'like', 'BX' . $today . '%')
-            ->orderBy('reimbursement_id', 'desc')
-            ->first();
-
-        if ($last) {
-            $lastSeq = intval(substr($last->reimbursement_no, -4));
-            $seq = $lastSeq + 1;
-        } else {
-            $seq = 1;
-        }
-
+        $key = 'reimbursement_no:' . $today;
+        $seq = Redis::incr($key);
+        Redis::expire($key, 86400);
         return 'BX' . $today . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
     // 新增报销单
     public function insertReimbursement($data)
     {
-        $data['reimbursement_no'] = $this->generateReimbursementNo();
-        $data['status'] = '0';
-        $data['create_time'] = date('Y-m-d H:i:s');
+        return Db::transaction(function () use ($data) {
+            $data['reimbursement_no'] = $this->generateReimbursementNo();
+            $data['status'] = '0';
+            $data['create_time'] = date('Y-m-d H:i:s');
 
-        $items = $data['items'] ?? [];
-        unset($data['items']);
+            $items = $data['items'] ?? [];
+            unset($data['items']);
 
-        $reimbursement = FinReimbursement::create($data);
+            $reimbursement = FinReimbursement::create($data);
 
-        if (!empty($items)) {
-            $this->syncItems($reimbursement->reimbursement_id, $items);
-        }
+            if (!empty($items)) {
+                $this->syncItems($reimbursement->reimbursement_id, $items);
+            }
 
-        return $reimbursement;
+            return $reimbursement;
+        });
     }
 
     // 更新报销单
     public function updateReimbursement($data)
     {
-        $reimbursement = FinReimbursement::find($data['reimbursement_id']);
-        if (!$reimbursement) {
-            return false;
-        }
+        return Db::transaction(function () use ($data) {
+            $reimbursement = FinReimbursement::find($data['reimbursement_id']);
+            if (!$reimbursement) {
+                return false;
+            }
 
-        if ($reimbursement->status !== '0') {
-            return false;
-        }
+            if ($reimbursement->status !== '0') {
+                return false;
+            }
 
-        $items = $data['items'] ?? [];
-        unset($data['items']);
+            $items = $data['items'] ?? [];
+            unset($data['items']);
 
-        $data['update_time'] = date('Y-m-d H:i:s');
+            $data['update_time'] = date('Y-m-d H:i:s');
 
-        $fillable = [
-            'apply_date', 'category', 'income_amount', 'expense_amount', 'expense_type',
-            'voucher_images', 'remark', 'update_by', 'update_time'
-        ];
-        $updateData = array_intersect_key($data, array_flip($fillable));
+            $fillable = [
+                'apply_date', 'category', 'income_amount', 'expense_amount', 'expense_type',
+                'voucher_images', 'remark', 'update_by', 'update_time'
+            ];
+            $updateData = array_intersect_key($data, array_flip($fillable));
 
-        $result = FinReimbursement::where('reimbursement_id', $data['reimbursement_id'])->update($updateData);
+            $reimbursement->fill($updateData);
+            $result = $reimbursement->save();
 
-        if (!empty($items)) {
-            $this->syncItems($data['reimbursement_id'], $items);
-        }
+            if (!empty($items)) {
+                $this->syncItems($data['reimbursement_id'], $items);
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     // 同步报销明细
@@ -152,14 +151,16 @@ class FinReimbursementService
     // 批量删除报销单
     public function deleteReimbursementByIds($ids)
     {
-        foreach ($ids as $id) {
-            $reimbursement = FinReimbursement::find($id);
-            if ($reimbursement && $reimbursement->status !== '0') {
-                return false;
+        return Db::transaction(function () use ($ids) {
+            foreach ($ids as $id) {
+                $reimbursement = FinReimbursement::find($id);
+                if ($reimbursement && $reimbursement->status !== '0') {
+                    return false;
+                }
             }
-        }
-        FinReimbursementItem::whereIn('reimbursement_id', $ids)->delete();
-        return FinReimbursement::whereIn('reimbursement_id', $ids)->delete();
+            FinReimbursementItem::whereIn('reimbursement_id', $ids)->delete();
+            return FinReimbursement::whereIn('reimbursement_id', $ids)->delete();
+        });
     }
 
     // 审核报销单
@@ -171,15 +172,14 @@ class FinReimbursementService
         }
 
         $passed = $data['passed'] ?? true;
-        $updateData = [
+        $reimbursement->fill([
             'audit_by' => $data['audit_by'] ?? '',
             'audit_time' => date('Y-m-d H:i:s'),
             'audit_remark' => $data['audit_remark'] ?? '',
             'status' => $passed ? '1' : '2',
             'update_time' => date('Y-m-d H:i:s')
-        ];
-
-        return FinReimbursement::where('reimbursement_id', $data['reimbursement_id'])->update($updateData);
+        ]);
+        return $reimbursement->save();
     }
 
     // 确认支付
@@ -190,14 +190,13 @@ class FinReimbursementService
             return false;
         }
 
-        $updateData = [
+        $reimbursement->fill([
             'pay_by' => $data['pay_by'] ?? '',
             'pay_time' => date('Y-m-d H:i:s'),
             'status' => '3',
             'update_time' => date('Y-m-d H:i:s')
-        ];
-
-        return FinReimbursement::where('reimbursement_id', $data['reimbursement_id'])->update($updateData);
+        ]);
+        return $reimbursement->save();
     }
 
     // 按月统计报销金额
@@ -209,7 +208,7 @@ class FinReimbursementService
             SUM(expense_amount) as total_expense,
             SUM(income_amount) as total_income,
             COUNT(*) as count
-        ")->whereIn('status', ['0', '1', '3']);
+        ")->whereIn('status', ['1', '3']);
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
@@ -233,7 +232,7 @@ class FinReimbursementService
             category,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")->whereIn('status', ['0', '1', '3']);
+        ")->whereIn('status', ['1', '3']);
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
@@ -255,7 +254,7 @@ class FinReimbursementService
             dept_name,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")->whereIn('status', ['0', '1', '3'])->whereNotNull('dept_id');
+        ")->whereIn('status', ['1', '3'])->whereNotNull('dept_id');
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
@@ -277,7 +276,7 @@ class FinReimbursementService
             applicant_name,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")->whereIn('status', ['0', '1', '3']);
+        ")->whereIn('status', ['1', '3']);
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);
@@ -298,7 +297,7 @@ class FinReimbursementService
             expense_type,
             SUM(expense_amount) as total_expense,
             COUNT(*) as count
-        ")->whereIn('status', ['0', '1', '3']);
+        ")->whereIn('status', ['1', '3']);
 
         if (!empty($params['apply_date_start']) && !empty($params['apply_date_end'])) {
             $query->whereBetween('apply_date', [$params['apply_date_start'], $params['apply_date_end']]);

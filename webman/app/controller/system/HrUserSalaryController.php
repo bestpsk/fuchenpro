@@ -43,7 +43,7 @@ class HrUserSalaryController
     // 根据ID获取薪资记录详情
     public function getInfo(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'system:userSalary:query')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:userSalary:list')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $parts = explode('/', $request->path());

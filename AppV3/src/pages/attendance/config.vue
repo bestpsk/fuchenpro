@@ -482,7 +482,7 @@ page { background-color: #F5F7FA; }
 }
 
 .tab-active {
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
   box-shadow: 0 4rpx 12rpx rgba(61, 109, 247, 0.25);
 }
 

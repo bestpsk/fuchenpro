@@ -23,11 +23,4 @@ webman/.env
 webman/.env.*
 
 # 根目录临时文件（防止误提交）
-参考.txt
-记录.txt
-软件使用说明书.md
-plan.md
 fuchen.sql
-ementController.php
-inessBizCustomerController.php
-erviceBizCustomerService.php

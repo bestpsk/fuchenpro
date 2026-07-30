@@ -27,6 +27,7 @@ function serveOfficeViewer() {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [uni(), serveOfficeViewer()],
   transpileDependencies: ['uview-plus'],
   esbuild: {

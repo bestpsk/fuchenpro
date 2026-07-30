@@ -849,7 +849,7 @@ page {
   align-items: center;
   gap: 10rpx;
   padding: 56rpx 24rpx 40rpx;
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
   margin: -24rpx -24rpx 28rpx;
   border-radius: 0 0 36rpx 36rpx;
   position: relative;
@@ -911,7 +911,7 @@ page {
 }
 
 .tab-active {
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
   box-shadow: 0 4rpx 12rpx rgba(61, 109, 247, 0.25);
 }
 
@@ -1181,7 +1181,7 @@ page {
 }
 
 .fail-btn-primary {
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
   color: #fff;
   box-shadow: 0 4rpx 16rpx rgba(61, 109, 247, 0.3);
 }

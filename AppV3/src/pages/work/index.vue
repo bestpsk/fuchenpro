@@ -86,9 +86,9 @@ onShow(() => {
 })
 
 const defaultBanners = [
-  { image: '/static/images/banner/banner01.jpg', title: '', linkUrl: '' },
-  { image: '/static/images/banner/banner02.jpg', title: '', linkUrl: '' },
-  { image: '/static/images/banner/banner03.jpg', title: '', linkUrl: '' }
+  { image: import.meta.env.BASE_URL + 'static/images/banner/banner01.jpg', title: '', linkUrl: '' },
+  { image: import.meta.env.BASE_URL + 'static/images/banner/banner02.jpg', title: '', linkUrl: '' },
+  { image: import.meta.env.BASE_URL + 'static/images/banner/banner03.jpg', title: '', linkUrl: '' }
 ]
 
 const bannerList = ref([])

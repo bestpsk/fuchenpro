@@ -43,37 +43,8 @@ class BizTrainStatsService
             $query->whereIn('l.user_id', $visibleUserIds);
         }
 
-        // 筛选：日期范围
-        if (!empty($params['start_date']) && !empty($params['end_date'])) {
-            $query->whereBetween('l.start_time', [$params['start_date'] . ' 00:00:00', $params['end_date'] . ' 23:59:59']);
-        } elseif (!empty($params['start_date'])) {
-            $query->where('l.start_time', '>=', $params['start_date'] . ' 00:00:00');
-        } elseif (!empty($params['end_date'])) {
-            $query->where('l.start_time', '<=', $params['end_date'] . ' 23:59:59');
-        }
-
-        // 筛选：材料ID
-        if (!empty($params['material_id'])) {
-            $query->where('l.material_id', $params['material_id']);
-        }
-
-        // 筛选：用户ID
-        if (!empty($params['user_id'])) {
-            $query->where('l.user_id', $params['user_id']);
-        }
-
-        // 筛选：用户姓名
-        if (!empty($params['user_name'])) {
-            $query->where(function ($q) use ($params) {
-                $q->where('u.nick_name', 'like', '%' . $params['user_name'] . '%')
-                  ->orWhere('u.user_name', 'like', '%' . $params['user_name'] . '%');
-            });
-        }
-
-        // 筛选：材料标题
-        if (!empty($params['material_title'])) {
-            $query->where('m.title', 'like', '%' . $params['material_title'] . '%');
-        }
+        // 筛选条件（日期范围、材料ID、用户ID、用户姓名、材料标题）
+        $this->applyStatsFilters($query, $params);
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
@@ -100,6 +71,38 @@ class BizTrainStatsService
         return $result[0]->cnt ?? 0;
     }
 
+    // 应用统计查询的公共筛选条件（日期范围、材料ID、用户ID、用户姓名、材料标题）
+    // 查询需使用别名：l=biz_train_study_log, u=sys_user, m=biz_train_material
+    private function applyStatsFilters($query, $params)
+    {
+        if (!empty($params['start_date']) && !empty($params['end_date'])) {
+            $query->whereBetween('l.start_time', [$params['start_date'] . ' 00:00:00', $params['end_date'] . ' 23:59:59']);
+        } elseif (!empty($params['start_date'])) {
+            $query->where('l.start_time', '>=', $params['start_date'] . ' 00:00:00');
+        } elseif (!empty($params['end_date'])) {
+            $query->where('l.start_time', '<=', $params['end_date'] . ' 23:59:59');
+        }
+
+        if (!empty($params['material_id'])) {
+            $query->where('l.material_id', $params['material_id']);
+        }
+
+        if (!empty($params['user_id'])) {
+            $query->where('l.user_id', $params['user_id']);
+        }
+
+        if (!empty($params['user_name'])) {
+            $query->where(function ($q) use ($params) {
+                $q->where('u.nick_name', 'like', '%' . $params['user_name'] . '%')
+                  ->orWhere('u.user_name', 'like', '%' . $params['user_name'] . '%');
+            });
+        }
+
+        if (!empty($params['material_title'])) {
+            $query->where('m.title', 'like', '%' . $params['material_title'] . '%');
+        }
+    }
+
     // 汇总数据
     // $loginUser 非null时按数据权限过滤
     public function getStatsSummary($params = [], $loginUser = null)
@@ -116,28 +119,8 @@ class BizTrainStatsService
             $query->whereIn('l.user_id', $visibleUserIds);
         }
 
-        if (!empty($params['start_date']) && !empty($params['end_date'])) {
-            $query->whereBetween('l.start_time', [$params['start_date'] . ' 00:00:00', $params['end_date'] . ' 23:59:59']);
-        } elseif (!empty($params['start_date'])) {
-            $query->where('l.start_time', '>=', $params['start_date'] . ' 00:00:00');
-        } elseif (!empty($params['end_date'])) {
-            $query->where('l.start_time', '<=', $params['end_date'] . ' 23:59:59');
-        }
-        if (!empty($params['material_id'])) {
-            $query->where('l.material_id', $params['material_id']);
-        }
-        if (!empty($params['user_id'])) {
-            $query->where('l.user_id', $params['user_id']);
-        }
-        if (!empty($params['user_name'])) {
-            $query->where(function ($q) use ($params) {
-                $q->where('u.nick_name', 'like', '%' . $params['user_name'] . '%')
-                  ->orWhere('u.user_name', 'like', '%' . $params['user_name'] . '%');
-            });
-        }
-        if (!empty($params['material_title'])) {
-            $query->where('m.title', 'like', '%' . $params['material_title'] . '%');
-        }
+        // 筛选条件（日期范围、材料ID、用户ID、用户姓名、材料标题）
+        $this->applyStatsFilters($query, $params);
 
         $result = $query->selectRaw(
             'SUM(l.valid_duration) as total_duration, COUNT(*) as total_count, COUNT(DISTINCT l.user_id) as user_count, COUNT(DISTINCT l.material_id) as material_count'

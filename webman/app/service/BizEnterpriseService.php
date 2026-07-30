@@ -100,8 +100,12 @@ class BizEnterpriseService
         if (!empty($data['enterprise_name']) && empty($data['pinyin'])) {
             $data['pinyin'] = $this->getPinyin($data['enterprise_name']);
         }
-        $updateData = array_intersect_key($data, array_flip((new BizEnterprise())->getFillable()));
-        return BizEnterprise::where('enterprise_id', $data['enterprise_id'])->update($updateData);
+        $enterprise = BizEnterprise::find($data['enterprise_id']);
+        if (!$enterprise) {
+            throw new \Exception('企业不存在');
+        }
+        $enterprise->fill($data)->save();
+        return true;
     }
 
     public function selectEnterpriseForSearch($keyword, $loginUser = null)
@@ -173,10 +177,25 @@ class BizEnterpriseService
         return '';
     }
 
-    // 批量删除企业，同时删除关联门店、方案、客户
+    // 批量删除企业，删除前检查关联数据
 
     public function deleteEnterpriseByIds($enterpriseIds)
     {
+        // 检查关联门店
+        $storeCount = \app\model\BizStore::whereIn('enterprise_id', $enterpriseIds)->count();
+        if ($storeCount > 0) {
+            throw new \Exception('存在关联门店，无法删除');
+        }
+        // 检查关联客户
+        $customerCount = \app\model\BizCustomer::whereIn('enterprise_id', $enterpriseIds)->count();
+        if ($customerCount > 0) {
+            throw new \Exception('存在关联客户，无法删除');
+        }
+        // 检查关联计划
+        $planCount = BizPlan::whereIn('enterprise_id', $enterpriseIds)->count();
+        if ($planCount > 0) {
+            throw new \Exception('存在关联计划，无法删除');
+        }
         return BizEnterprise::whereIn('enterprise_id', $enterpriseIds)->delete();
     }
 

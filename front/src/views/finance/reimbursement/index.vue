@@ -60,9 +60,8 @@
       </el-table-column>
       <el-table-column label="状态" align="center" prop="status" min-width="100">
         <template #default="scope">
-          <el-tag :type="getStatusType(scope.row.status)">
-            {{ getStatusLabel(scope.row.status) }}
-          </el-tag>
+          <dict-tag v-if="fin_reimbursement_status?.length" :options="fin_reimbursement_status" :value="scope.row.status" />
+          <el-tag v-else :type="getStatusType(scope.row.status)">{{ getStatusLabel(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="280" fixed="right">

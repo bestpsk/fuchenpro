@@ -33,7 +33,7 @@ class BizLeaveTypeController
             $service = new BizLeaveTypeService();
             $result = $service->selectAllEnabled();
             return AjaxResult::success($result);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // 表不存在或查询异常时，返回空数组而非报错
             return AjaxResult::success([]);
         }
@@ -41,6 +41,9 @@ class BizLeaveTypeController
 
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:leave:type:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $typeId = intval(end($parts));
         $service = new BizLeaveTypeService();
@@ -60,7 +63,7 @@ class BizLeaveTypeController
             $service = new BizLeaveTypeService();
             $result = $service->insert($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -76,7 +79,7 @@ class BizLeaveTypeController
             $service = new BizLeaveTypeService();
             $result = $service->update($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

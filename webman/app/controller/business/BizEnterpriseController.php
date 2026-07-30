@@ -82,9 +82,13 @@ class BizEnterpriseController
         }
         $enterpriseIds = explode(',', $request->input('enterpriseIds', ''));
         $enterpriseIds = array_map('intval', array_filter($enterpriseIds));
-        $service = new BizEnterpriseService();
-        $result = $service->deleteEnterpriseByIds($enterpriseIds);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $service = new BizEnterpriseService();
+            $result = $service->deleteEnterpriseByIds($enterpriseIds);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 变更企业状态（启用/停用）

@@ -28,6 +28,9 @@ class BizLeaveController
 
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:leave:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $leaveId = intval(end($parts));
         $service = new BizLeaveService();
@@ -51,7 +54,7 @@ class BizLeaveController
             $service = new BizLeaveService();
             $result = $service->insert($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -72,7 +75,7 @@ class BizLeaveController
             $service = new BizLeaveService();
             $service->approve($leaveId, $loginUser->user->user_id, $loginUser->user->nick_name ?? $loginUser->user->user_name, $remark);
             return AjaxResult::success('审核通过');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -93,7 +96,7 @@ class BizLeaveController
             $service = new BizLeaveService();
             $service->reject($leaveId, $loginUser->user->user_id, $loginUser->user->nick_name ?? $loginUser->user->user_name, $remark);
             return AjaxResult::success('已驳回');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -110,7 +113,7 @@ class BizLeaveController
             $service = new BizLeaveService();
             $service->cancel($leaveId, $loginUser->user->user_id);
             return AjaxResult::success('已撤销');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

@@ -138,6 +138,7 @@
       :defaultDate="form.selectedDates"
       :maxDate="maxDate"
       :minDate="minDate"
+      :monthNum="monthNum"
       :formatter="calendarFormatter"
       :color="'#3D6DF7'"
       @confirm="onMultiDateConfirm"
@@ -194,8 +195,10 @@ const bookedDates = ref([])
 const originalDates = ref([])
 const restDates = ref([])
 
-const minDate = ref(Number(new Date()))
+const minDate = ref(Number(new Date(new Date().setFullYear(new Date().getFullYear() - 2))))
 const maxDate = ref(Number(new Date(new Date().setFullYear(new Date().getFullYear() + 1))))
+// 生成足够月份覆盖 minDate ~ maxDate，让 u-calendar 能滚动到当前月/已选日期月
+const monthNum = ref(48)
 
 const form = reactive({
   scheduleId: undefined,

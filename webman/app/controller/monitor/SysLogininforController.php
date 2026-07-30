@@ -71,7 +71,7 @@ class SysLogininforController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = $request->all();
-        $params['pageSize'] = 10000;
+        $params['pageSize'] = 5000;
         $service = new SysLogininforService();
         $result = $service->selectLogininforList($params);
         $list = $result->items();

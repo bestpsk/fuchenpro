@@ -40,6 +40,16 @@ return [
         'handler' => app\process\BackupScheduler::class,
         'count' => 1,
     ],
+    // Train study session timeout cleaner
+    'studySessionCleaner' => [
+        'handler' => app\process\StudySessionCleaner::class,
+        'count' => 1,
+    ],
+    // Attendance auto-generate absent records
+    'attendanceAutoGenerator' => [
+        'handler' => app\process\AttendanceAutoGenerator::class,
+        'count' => 1,
+    ],
     // File update detection and automatic reload
     'monitor' => [
         'handler' => app\process\Monitor::class,

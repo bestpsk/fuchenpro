@@ -19,6 +19,11 @@ class BizScheduleService
     {
         $query = BizSchedule::query();
 
+        // 排除软删除员工的行程
+        $query->whereIn('user_id', function($q) {
+            $q->select('user_id')->from('sys_user')->where('del_flag', '0');
+        });
+
         if (!empty($params['user_id'])) {
             $query->where('user_id', $params['user_id']);
         }
@@ -89,6 +94,11 @@ class BizScheduleService
     {
         $query = BizSchedule::query();
 
+        // 排除软删除员工的行程
+        $query->whereIn('user_id', function($q) {
+            $q->select('user_id')->from('sys_user')->where('del_flag', '0');
+        });
+
         if (!empty($params['start_date']) && !empty($params['end_date'])) {
             $query->whereBetween('schedule_date', [$params['start_date'], $params['end_date']]);
         }
@@ -110,6 +120,11 @@ class BizScheduleService
     public function selectScheduleDates($params)
     {
         $query = BizSchedule::query();
+
+        // 排除软删除员工的行程
+        $query->whereIn('user_id', function($q) {
+            $q->select('user_id')->from('sys_user')->where('del_flag', '0');
+        });
 
         if (!empty($params['user_id'])) {
             $query->where('user_id', $params['user_id']);

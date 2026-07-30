@@ -33,14 +33,14 @@
       <view v-if="mode === 'add'" class="form-field">
         <view class="field-input-box">
           <u-icon name="account" size="18" color="#86909C"></u-icon>
-          <input class="field-input" type="text" v-model="form.userName" placeholder="* 用户名称" placeholder-class="field-placeholder" maxlength="30" />
+          <input class="field-input" type="text" v-model="form.userName" placeholder="* 登录名称" placeholder-class="field-placeholder" maxlength="30" />
         </view>
       </view>
 
       <view v-if="mode === 'add'" class="form-field">
         <view class="field-input-box">
           <u-icon name="lock" size="18" color="#86909C"></u-icon>
-          <input class="field-input" type="text" v-model="form.password" placeholder="* 用户密码" placeholder-class="field-placeholder" password maxlength="20" />
+          <input class="field-input" type="text" v-model="form.password" placeholder="* 登录密码" placeholder-class="field-placeholder" password maxlength="20" />
         </view>
       </view>
 
@@ -364,8 +364,8 @@ async function submitForm() {
   if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { uni.showToast({ title: '邮箱格式不正确', icon: 'none' }); return }
 
   if (mode.value === 'add') {
-    if (!form.userName) { uni.showToast({ title: '请输入用户名称', icon: 'none' }); return }
-    if (!form.password) { uni.showToast({ title: '请输入用户密码', icon: 'none' }); return }
+    if (!form.userName) { uni.showToast({ title: '请输入登录名称', icon: 'none' }); return }
+    if (!form.password) { uni.showToast({ title: '请输入登录密码', icon: 'none' }); return }
   }
 
   submitting.value = true

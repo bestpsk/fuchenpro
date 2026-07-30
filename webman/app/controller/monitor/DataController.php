@@ -11,7 +11,7 @@ class DataController
 {
     public function getInfo(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'monitor:server:list')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:data:list')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         return AjaxResult::success('', [
@@ -38,14 +38,14 @@ class DataController
 
     private function getStatusValue(string $name)
     {
-        $result = $this->queryOne("SHOW STATUS LIKE '{$name}'");
-        return isset($result['Value']) ? $result['Value'] : 0;
+        $result = Db::select("SHOW STATUS LIKE ?", [$name]);
+        return !empty($result) ? (((array)$result[0])['Value'] ?? 0) : 0;
     }
 
     private function getVariablesValue(string $name)
     {
-        $result = $this->queryOne("SHOW VARIABLES LIKE '{$name}'");
-        return isset($result['Value']) ? $result['Value'] : '';
+        $result = Db::select("SHOW VARIABLES LIKE ?", [$name]);
+        return !empty($result) ? (((array)$result[0])['Value'] ?? '') : '';
     }
 
     private function getPoolInfo()

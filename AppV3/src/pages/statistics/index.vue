@@ -289,6 +289,47 @@
         </view>
       </view>
 
+      <view v-if="currentTab === 3" class="overview-section">
+        <view class="stat-cards-grid">
+          <view class="stat-card red-card" @click="goToCustomerList">
+            <text class="sc-label">应收账款</text>
+            <text class="sc-value">{{ overviewData.receivableAmount }}</text>
+            <text class="sc-sub">点击查看详情</text>
+          </view>
+          <view class="stat-card orange-card" @click="goToChurnList">
+            <text class="sc-label">流失预警</text>
+            <text class="sc-value">{{ overviewData.churnCount }}</text>
+            <text class="sc-sub">90天未下单客户</text>
+          </view>
+          <view class="stat-card orange-card" @click="goToInventoryWarning">
+            <text class="sc-label">库存预警</text>
+            <text class="sc-value">{{ overviewData.inventoryWarningCount }}</text>
+            <text class="sc-sub">低于安全库存</text>
+          </view>
+        </view>
+
+        <view class="section-block">
+          <view class="block-header">
+            <text class="block-title">销售排行 TOP3</text>
+          </view>
+          <view class="detail-list">
+            <view v-for="item in overviewData.salesTop3" :key="item.rank" class="detail-item">
+              <view class="detail-left">
+                <text class="rank-badge" :class="'rank-' + item.rank">{{ item.rank }}</text>
+                <text class="detail-name">{{ item.productName }}</text>
+              </view>
+              <view class="detail-right">
+                <text class="detail-qty">{{ item.qty }}件</text>
+                <text class="detail-amount">{{ item.amount }}</text>
+              </view>
+            </view>
+            <view v-if="overviewData.salesTop3.length === 0" class="empty-block">
+              <text class="empty-text">暂无销售数据</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <view class="bottom-spacer"></view>
     </scroll-view>
   </view>
@@ -296,7 +337,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { getTodayStats, getEnterpriseStats } from '@/api/home'
+import { getTodayStats, getEnterpriseStats, getStatsOverview } from '@/api/home'
 import { stockInSummary, stockOutSummary, inventoryTurnover } from '@/api/wms/report'
 import { getMonthStats } from '@/api/attendance'
 
@@ -304,7 +345,8 @@ const currentTab = ref(0)
 const tabs = [
   { label: '业务统计' },
   { label: '仓储统计' },
-  { label: '考勤统计' }
+  { label: '考勤统计' },
+  { label: '经营概览' }
 ]
 
 const bizStats = reactive({
@@ -426,6 +468,7 @@ function switchTab(idx) {
   currentTab.value = idx
   if (idx === 1 && stockInData.value.length === 0) loadWmsData()
   if (idx === 2 && attendStats.normal === 0 && attendStats.late === 0) loadAttendData()
+  if (idx === 3 && !overviewLoaded.value) loadOverviewData()
 }
 
 function selectBizTime(value) {
@@ -641,6 +684,46 @@ function changeMonth(delta) {
   loadAttendData()
 }
 
+// 经营概览数据
+const overviewData = reactive({
+  receivableAmount: '¥0',
+  churnCount: 0,
+  inventoryWarningCount: 0,
+  salesTop3: []
+})
+const overviewLoaded = ref(false)
+
+async function loadOverviewData() {
+  try {
+    const res = await getStatsOverview()
+    const data = res.data || res || {}
+    overviewData.receivableAmount = formatAmount(data.receivable_amount || 0)
+    overviewData.churnCount = data.churn_count || 0
+    overviewData.inventoryWarningCount = data.inventory_warning_count || 0
+    overviewData.salesTop3 = (data.sales_top3 || []).map((item, idx) => ({
+      rank: idx + 1,
+      productName: item.product_name || '-',
+      amount: formatAmount(item.total_amount || 0),
+      qty: item.total_qty || 0
+    }))
+    overviewLoaded.value = true
+  } catch (e) {
+    console.error('加载经营概览失败:', e)
+  }
+}
+
+function goToCustomerList() {
+  uni.navigateTo({ url: '/pages/business/customer/index' })
+}
+
+function goToChurnList() {
+  uni.navigateTo({ url: '/pages/business/customer/index?filter=churn' })
+}
+
+function goToInventoryWarning() {
+  uni.navigateTo({ url: '/pages/wms/stock/index' })
+}
+
 function formatAmount(value) {
   const num = Number(value) || 0
   return '¥' + Math.round(num)
@@ -821,11 +904,21 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   background: #F7F8FA;
   border-radius: 12rpx;
 }
-.detail-left { flex: 1; }
+.detail-left { flex: 1; display: flex; align-items: center; gap: 12rpx; }
 .detail-name { font-size: 26rpx; color: #1D2129; font-weight: 500; }
 .detail-right { display: flex; align-items: center; gap: 20rpx; }
 .detail-qty { font-size: 24rpx; color: #4E5969; }
 .detail-amount { font-size: 26rpx; color: #3D6DF7; font-weight: 600; }
+
+.rank-badge {
+  width: 36rpx; height: 36rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22rpx; font-weight: 700; color: #fff;
+  background: #C9CDD4;
+  &.rank-1 { background: #F53F3F; }
+  &.rank-2 { background: #FF7D00; }
+  &.rank-3 { background: #FFB400; }
+}
 
 .turnover-item { flex-direction: column; gap: 12rpx; }
 .turnover-row { display: flex; gap: 0; width: 100%; }

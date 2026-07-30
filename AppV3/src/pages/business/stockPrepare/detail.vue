@@ -568,9 +568,9 @@ async function submitStockOut() {
   const items = stockOutItems.value
     .filter(item => item.outQuantity > 0)
     .map(item => ({
-      item_id: item.itemId,           // 备货明细ID
-      unit_type: item.unitType,       // 单位类型
-      original_quantity: item.outQuantity  // 原始数量
+      itemId: item.itemId,           // 备货明细ID
+      unitType: item.unitType,       // 单位类型
+      originalQuantity: item.outQuantity  // 原始数量
     }))
 
   if (items.length === 0) {

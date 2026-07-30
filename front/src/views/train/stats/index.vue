@@ -76,7 +76,7 @@
 </template>
 
 <script setup name="TrainStats">
-import { listStudyStats, getStudyStatsSummary, exportStudyStats } from "@/api/train/stats"
+import { listStudyStats, getStudyStatsSummary } from "@/api/train/stats"
 
 const { proxy } = getCurrentInstance()
 

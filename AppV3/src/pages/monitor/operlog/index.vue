@@ -87,11 +87,11 @@
         <view class="form-item">
           <view class="form-label">操作日期</view>
           <view class="date-range">
-            <view class="date-input" @click="showStartDatePicker = true">
+            <view class="date-input" @click="openStartDatePicker()">
               <text :class="{ 'date-placeholder': !queryParams.beginTime }">{{ queryParams.beginTime || '开始日期' }}</text>
             </view>
             <text class="date-separator">~</text>
-            <view class="date-input" @click="showEndDatePicker = true">
+            <view class="date-input" @click="openEndDatePicker()">
               <text :class="{ 'date-placeholder': !queryParams.endTime }">{{ queryParams.endTime || '结束日期' }}</text>
             </view>
           </view>
@@ -195,12 +195,14 @@
       <u-datetime-picker
         :show="showStartDatePicker"
         mode="date"
+        v-model="startDatePickerModel"
         @confirm="onStartDateConfirm"
         @cancel="showStartDatePicker = false"
       ></u-datetime-picker>
       <u-datetime-picker
         :show="showEndDatePicker"
         mode="date"
+        v-model="endDatePickerModel"
         @confirm="onEndDateConfirm"
         @cancel="showEndDatePicker = false"
       ></u-datetime-picker>
@@ -221,6 +223,18 @@ const loadStatus = ref('loadmore')
 const showFilter = ref(false)
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
+const startDatePickerModel = ref(Date.now())
+const endDatePickerModel = ref(Date.now())
+
+function openStartDatePicker() {
+  startDatePickerModel.value = queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()
+  showStartDatePicker.value = true
+}
+
+function openEndDatePicker() {
+  endDatePickerModel.value = queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()
+  showEndDatePicker.value = true
+}
 const hasPermission = checkPermi('monitor:operlog:list')
 
 let searchTimer = null

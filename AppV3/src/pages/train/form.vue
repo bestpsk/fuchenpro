@@ -271,7 +271,7 @@ async function handleUploadFile(filePath) {
   try {
     const res = await upload({ url: '/common/upload', filePath, name: 'file' })
     if (res.code === 200) {
-      form.fileUrl = res.fileName || res.url || ''
+      form.fileUrl = res.url || res.fileName || ''
       form.fileSize = res.fileSize || 0
       uni.showToast({ title: '上传成功', icon: 'success' })
     } else {
@@ -298,7 +298,7 @@ async function handleUploadCover(filePath) {
   try {
     const res = await upload({ url: '/common/upload', filePath, name: 'file' })
     if (res.code === 200) {
-      form.coverUrl = res.fileName || res.url || ''
+      form.coverUrl = res.url || res.fileName || ''
       uni.showToast({ title: '上传成功', icon: 'success' })
     } else {
       uni.showToast({ title: res.msg || '上传失败', icon: 'none' })

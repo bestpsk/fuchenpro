@@ -59,7 +59,7 @@ class SysOperlogController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->all());
-        $params['pageSize'] = 10000;
+        $params['pageSize'] = 5000;
         $service = new SysOperLogService();
         $result = $service->selectOperLogList($params);
         $list = $result->items();

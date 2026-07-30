@@ -33,7 +33,7 @@ export function getLeave(id) {
 
 /**
  * 新增请假申请
- * @param {object} data - 请假数据 { leaveType, typeName, startDate, endDate, startTimeSegment, endTimeSegment, leaveDays, reason }
+ * @param {object} data - 请假数据 { leaveType, typeName, startDate, endDate, startTimeType, endTimeType, leaveDays, reason }
  * @returns {Promise<void>}
  */
 // 新增请假

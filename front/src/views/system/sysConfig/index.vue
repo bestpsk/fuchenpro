@@ -119,7 +119,7 @@
                </el-form-item>
 
                <el-form-item>
-                  <el-button type="primary" @click="saveSystemConfig">保 存</el-button>
+                  <el-button type="primary" @click="saveSystemConfig" v-hasPermi="['system:config:edit']">保 存</el-button>
                </el-form-item>
             </el-form>
          </el-tab-pane>
@@ -156,7 +156,7 @@
                </el-form-item>
 
                <el-form-item>
-                  <el-button type="primary" @click="saveBizConfig">保 存</el-button>
+                  <el-button type="primary" @click="saveBizConfig" v-hasPermi="['system:config:edit']">保 存</el-button>
                </el-form-item>
             </el-form>
          </el-tab-pane>
@@ -212,7 +212,7 @@
                </div>
 
                <el-form-item style="margin-top: 24px">
-                  <el-button type="primary" @click="saveAppConfig">保 存</el-button>
+                  <el-button type="primary" @click="saveAppConfig" v-hasPermi="['system:config:edit']">保 存</el-button>
                </el-form-item>
             </el-form>
 

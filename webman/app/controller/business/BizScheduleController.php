@@ -134,7 +134,7 @@ class BizScheduleController
             $service = new BizScheduleService();
             $result = $service->updateSchedule($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('修改行程失败，请稍后重试');
         }
     }

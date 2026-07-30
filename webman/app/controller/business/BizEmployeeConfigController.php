@@ -107,6 +107,79 @@ class BizEmployeeConfigController
         return AjaxResult::toAjax($result ? 1 : 0);
     }
 
+    // 保存员工休息日期
+    public function saveRestDates(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:employeeConfig:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $userId = $request->post('userId');
+        $restDates = $request->post('restDates', []);
+        if (!is_array($restDates)) {
+            $restDates = json_decode($restDates, true) ?: [];
+        }
+        $service = new BizEmployeeConfigService();
+        $result = $service->saveRestDates($userId, $restDates);
+        return AjaxResult::toAjax($result ? 1 : 0);
+    }
+
+    // 获取员工休息日期
+    public function getRestDates(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:employeeConfig:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $userId = $request->input('userId');
+        $service = new BizEmployeeConfigService();
+        $dates = $service->getRestDates($userId);
+        return AjaxResult::success($dates);
+    }
+
+    // 获取员工某月所有休息相关日期（含轮休、请假、自定义、法定假日），带类型信息
+    public function getAllRestDates(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:employeeConfig:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $userId = $request->input('userId');
+        $yearMonth = $request->input('yearMonth', date('Y-m'));
+        $service = new BizEmployeeConfigService();
+        $data = $service->getAllRestDates($userId, $yearMonth);
+        return AjaxResult::success($data);
+    }
+
+    // 获取员工全部休息日（不限月份，2年前~1年后），供配置弹窗跨月查看和回显
+    public function getAllRestDatesAll(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:employeeConfig:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $userId = $request->input('userId');
+        if (!$userId) {
+            return AjaxResult::error('userId不能为空');
+        }
+        $service = new BizEmployeeConfigService();
+        $data = $service->getAllRestDatesAll($userId);
+        return json(['code' => 200, 'msg' => '操作成功', 'data' => $data]);
+    }
+
+    // 批量获取多员工某月所有休息日期（带类型信息，供行程格子批量显示）
+    public function getAllRestDatesBatch(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:employeeConfig:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $userIdsParam = $request->input('userIds', '');
+        $yearMonth = $request->input('yearMonth', date('Y-m'));
+        if (empty($userIdsParam)) {
+            return AjaxResult::success([]);
+        }
+        $userIds = array_map('intval', explode(',', $userIdsParam));
+        $service = new BizEmployeeConfigService();
+        $data = $service->getAllRestDatesBatch($userIds, $yearMonth);
+        return json(['code' => 200, 'msg' => '操作成功', 'data' => $data]);
+    }
+
     // 模糊搜索员工，用于下拉选择框
     public function search(Request $request)
     {

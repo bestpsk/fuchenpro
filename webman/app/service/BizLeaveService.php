@@ -108,28 +108,28 @@ class BizLeaveService
         $endDate = strtotime($data['end_date']);
         $days = ($endDate - $startDate) / 86400 + 1;
 
-        // 处理半天
+        // 字典: 0=全天, 1=上午, 2=下午
         $startTimeType = $data['start_time_type'] ?? '0';
         $endTimeType = $data['end_time_type'] ?? '0';
 
         if ($days == 1) {
             // 同一天
-            if ($startTimeType == '1' && $endTimeType == '2') {
-                // 上午到下午 = 半天
-                return 0.5;
-            } elseif ($startTimeType == '2' && $endTimeType == '1') {
-                return 0.5;
+            if ($startTimeType == '0' || $endTimeType == '0') {
+                return 1.0;  // 任一时段为全天，算1天
             }
-            return 1.0;
+            if ($startTimeType == $endTimeType) {
+                return 0.5;  // 同为上午或同为下午，算0.5天
+            }
+            return 1.0;  // 上午到下午，算1天
         }
 
-        // 跨天：第一天可能半天，最后一天可能半天
+        // 跨天：第一天下午开始扣0.5天，最后一天上午结束扣0.5天
         $totalDays = $days;
-        if ($startTimeType == '1') {
-            $totalDays -= 0.5; // 第一天上午开始
+        if ($startTimeType == '2') {
+            $totalDays -= 0.5;  // 第一天下午开始
         }
-        if ($endTimeType == '2') {
-            $totalDays -= 0.5; // 最后一天下午结束
+        if ($endTimeType == '1') {
+            $totalDays -= 0.5;  // 最后一天上午结束
         }
         return $totalDays;
     }
@@ -169,8 +169,8 @@ class BizLeaveService
             // 根据休假类型决定是否需要审批
             if ($leaveType->need_approval == 0) {
                 $data['status'] = '1';
-                $data['approver_id'] = $data['user_id'];
-                $data['approver_name'] = $data['user_name'];
+                $data['approver_id'] = null;
+                $data['approver_name'] = '系统自动';
                 $data['approve_time'] = date('Y-m-d H:i:s');
                 $data['approve_remark'] = '免审批类型，自动通过';
             } else {
@@ -178,12 +178,28 @@ class BizLeaveService
             }
             $data['create_time'] = date('Y-m-d H:i:s');
             try {
-                return BizLeave::create($data);
-            } catch (\Exception $e) {
+                $needApproval = $leaveType->need_approval == 0;
+                // 免审批类型：create + generateLeaveRestDates 在同一事务中
+                // 需审批类型：仅 create，审批通过后再生成休息日
+                if ($needApproval) {
+                    $leave = Db::transaction(function () use ($data) {
+                        $leave = BizLeave::create($data);
+                        $restDayService = new BizRestDayService();
+                        $restDayService->generateLeaveRestDates($leave->leave_id);
+                        return $leave;
+                    });
+                } else {
+                    $leave = BizLeave::create($data);
+                }
+                return $leave;
+            } catch (\Throwable $e) {
                 if ($i === $maxRetries - 1) {
                     throw $e;
                 }
-                // 唯一键冲突，重试生成新单号
+                // 仅唯一键冲突才重试，其他异常（如冲突检查失败）直接抛出
+                if (strpos($e->getMessage(), 'Duplicate') === false) {
+                    throw $e;
+                }
                 continue;
             }
         }
@@ -202,12 +218,19 @@ class BizLeaveService
             throw new \Exception('该请假单不在待审核状态');
         }
 
-        $leave->status = '1';
-        $leave->approver_id = $approverId;
-        $leave->approver_name = $approverName;
-        $leave->approve_time = date('Y-m-d H:i:s');
-        $leave->approve_remark = $remark;
-        $leave->save();
+        Db::transaction(function () use ($leave, $leaveId, $approverId, $approverName, $remark) {
+            $leave->status = '1';
+            $leave->approver_id = $approverId;
+            $leave->approver_name = $approverName;
+            $leave->approve_time = date('Y-m-d H:i:s');
+            $leave->approve_remark = $remark;
+            $leave->save();
+
+            // 审批通过 → 自动生成 biz_rest_day 记录（source='leave'）
+            $restDayService = new BizRestDayService();
+            $restDayService->generateLeaveRestDates($leaveId);
+        });
+
         return true;
     }
 
@@ -234,7 +257,7 @@ class BizLeaveService
     }
 
     /**
-     * 撤销请假单（仅待审核状态可撤销）
+     * 撤销请假单（待审核或已通过状态可撤销）
      */
     public function cancel($leaveId, $userId)
     {
@@ -245,8 +268,14 @@ class BizLeaveService
         if ($leave->user_id != $userId) {
             throw new \Exception('只能撤销自己的请假单');
         }
-        if ($leave->status != '0') {
-            throw new \Exception('只能撤销待审核的请假单');
+        if (!in_array($leave->status, ['0', '1'])) {
+            throw new \Exception('只能撤销待审核或已通过的请假单');
+        }
+
+        // 如果是已通过的请假单，需要删除对应的 biz_rest_day 记录
+        if ($leave->status == '1') {
+            $restDayService = new BizRestDayService();
+            $restDayService->removeLeaveRestDates($leaveId);
         }
 
         $leave->status = '3';
@@ -255,10 +284,15 @@ class BizLeaveService
     }
 
     /**
-     * 删除请假单
+     * 删除请假单（同时删除关联的 biz_rest_day 记录）
      */
     public function deleteByIds($leaveIds)
     {
+        // 删除关联的休息日记录
+        $restDayService = new BizRestDayService();
+        foreach ($leaveIds as $leaveId) {
+            $restDayService->removeLeaveRestDates($leaveId);
+        }
         return BizLeave::whereIn('leave_id', $leaveIds)->delete();
     }
 

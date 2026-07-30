@@ -171,26 +171,12 @@ class BizStockOutService
 
     public function generateStockOutNo()
     {
-        $prefix = 'CK' . date('Ymd');
-        $key = 'stock_out_no:' . date('Ymd');
-        $seq = \support\Redis::incr($key);
-        \support\Redis::expire($key, 86400);
-        $stockOutNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-
-        // 数据库兜底：如果序号已存在，从数据库最大序号继续
-        $exists = BizStockOut::where('stock_out_no', $stockOutNo)->exists();
-        if ($exists) {
-            $last = BizStockOut::where('stock_out_no', 'like', $prefix . '%')
-                ->orderBy('stock_out_id', 'desc')->first();
-            if ($last) {
-                $lastSeq = intval(substr($last->stock_out_no, -3));
-                $seq = $lastSeq + 1;
-                \support\Redis::set($key, $seq);
-                \support\Redis::expire($key, 86400);
-            }
-            $stockOutNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-        }
-        return $stockOutNo;
+        return BizWmsHelper::generateDocNo(
+            'CK' . date('Ymd'),
+            'stock_out_no:' . date('Ymd'),
+            BizStockOut::class,
+            'stock_out_no'
+        );
     }
 
     // 新增出库单，生成出库编号并扣减库存
@@ -206,19 +192,7 @@ class BizStockOutService
         $totalQuantity = 0;
         $totalAmount = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-            
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-                if (isset($item['_main_price']) && $item['_main_price'] > 0) {
-                    $item['sale_price'] = bcdiv($item['_main_price'], $packQty, 4);
-                }
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-            
+            BizWmsHelper::convertUnitQuantity($item, 'sale_price');
             $item['amount'] = bcmul($item['quantity'] ?? 0, $item['sale_price'] ?? 0, 2);
             $totalQuantity += intval($item['quantity'] ?? 0);
             $totalAmount = bcadd($totalAmount, $item['amount'], 2);
@@ -246,7 +220,7 @@ class BizStockOutService
         if (!$stockOut) {
             return false;
         }
-        if ($stockOut->status === '1') {
+        if ($stockOut->status !== '0') {
             return false;
         }
         $items = $data['items'] ?? [];
@@ -255,19 +229,7 @@ class BizStockOutService
         $totalQuantity = 0;
         $totalAmount = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-            
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-                if (isset($item['_main_price']) && $item['_main_price'] > 0) {
-                    $item['sale_price'] = bcdiv($item['_main_price'], $packQty, 4);
-                }
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-            
+            BizWmsHelper::convertUnitQuantity($item, 'sale_price');
             $item['amount'] = bcmul($item['quantity'] ?? 0, $item['sale_price'] ?? 0, 2);
             $totalQuantity += intval($item['quantity'] ?? 0);
             $totalAmount = bcadd($totalAmount, $item['amount'], 2);
@@ -294,11 +256,31 @@ class BizStockOutService
     {
         foreach ($stockOutIds as $id) {
             $stockOut = BizStockOut::find($id);
-            if ($stockOut && $stockOut->status === '1') {
+            if ($stockOut && $stockOut->status !== '0') {
                 return false;
             }
         }
         return Db::transaction(function () use ($stockOutIds) {
+            // 回退备货明细已出数量（创建出库单时已增加，删除时需回退）
+            $stockOuts = BizStockOut::whereIn('stock_out_id', $stockOutIds)->get();
+            foreach ($stockOuts as $stockOut) {
+                if ($stockOut->prepare_id) {
+                    $items = BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->get();
+                    foreach ($items as $item) {
+                        $prepareItem = \app\model\BizStockPrepareItem::where('prepare_id', $stockOut->prepare_id)
+                            ->where('product_id', $item->product_id)
+                            ->first();
+                        if ($prepareItem) {
+                            $qty = intval($item->quantity);
+                            $itemAmount = bcmul($qty, floatval($prepareItem->sale_price), 2);
+                            \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->decrement('shipped_quantity', $qty);
+                            \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->increment('remaining_quantity', $qty);
+                            \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->decrement('shipped_amount', $itemAmount);
+                            \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->increment('remaining_amount', $itemAmount);
+                        }
+                    }
+                }
+            }
             BizStockOutItem::whereIn('stock_out_id', $stockOutIds)->delete();
             return BizStockOut::whereIn('stock_out_id', $stockOutIds)->delete();
         });
@@ -363,6 +345,9 @@ class BizStockOutService
                         $remainingToShip -= $shipFromBatch;
                     }
                     // 批次总量不够时仅记录日志，不阻断出库（库存可能通过直接调整等方式增加，无批次记录）
+                    if ($remainingToShip > 0) {
+                        \support\Log::warning("出库批次库存不足，产品ID:{$item->product_id}，仓库ID:{$warehouseId}，缺口:{$remainingToShip}");
+                    }
 
                     // 扣减库存总数量
                     BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->decrement('quantity', $itemQuantity, [
@@ -382,7 +367,7 @@ class BizStockOutService
                     ]);
 
                     $updatedInventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->first();
-                    if ($updatedInventory->quantity < 0) {
+                    if ($updatedInventory && $updatedInventory->quantity < 0) {
                         $product = BizProduct::find($item->product_id);
                         $productName = $product ? $product->product_name : $item->product_name;
                         throw new \Exception("货品【{$productName}】扣减后库存为负数，请检查库存数据");
@@ -396,13 +381,10 @@ class BizStockOutService
 
                 // 确认出库时更新方案明细剩余数量（从发货/确认收货移至此处，避免遗漏）
                 if ($stockOut->plan_id) {
-                    \support\Log::info("confirmStockOut: calling updatePlanShippedAmount, stock_out_id={$stockOutId}, plan_id={$stockOut->plan_id}");
                     $this->updatePlanShippedAmount($stockOut);
-                } else {
-                    \support\Log::info("confirmStockOut: no plan_id, skip updatePlanShippedAmount, stock_out_id={$stockOutId}");
                 }
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '出库确认成功'];
@@ -463,6 +445,47 @@ class BizStockOutService
                 ]);
             }
 
+            // 回退方案已出数量（与 confirmStockOut 中的 updatePlanShippedAmount 反向操作）
+            if ($stockOut->plan_id) {
+                $planId = $stockOut->plan_id;
+                $totalAmount = floatval($stockOut->total_amount);
+                $plan = \app\model\BizPlan::find($planId);
+                if ($plan) {
+                    \app\model\BizPlan::where('plan_id', $planId)->decrement('shipped_amount', $totalAmount);
+                    \app\model\BizPlan::where('plan_id', $planId)->increment('remaining_amount', $totalAmount);
+                    // 如果方案之前因剩余为0被标记为已完成(3)，恢复为审核通过(2)
+                    $plan->refresh();
+                    if ($plan->audit_status === '3' && bccomp($plan->remaining_amount, 0, 2) > 0) {
+                        \app\model\BizPlan::where('plan_id', $planId)->update(['audit_status' => '2']);
+                    }
+                }
+                // 回退方案明细已出数量
+                foreach ($items as $item) {
+                    if ($item->plan_item_id) {
+                        $qty = intval($item->quantity);
+                        \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->decrement('shipped_quantity', $qty);
+                        \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->increment('remaining_quantity', $qty);
+                    }
+                }
+            }
+
+            // 回退备货明细已出数量（与 createStockOutFromPrepare 中的操作反向）
+            if ($stockOut->prepare_id) {
+                foreach ($items as $item) {
+                    $prepareItem = \app\model\BizStockPrepareItem::where('prepare_id', $stockOut->prepare_id)
+                        ->where('product_id', $item->product_id)
+                        ->first();
+                    if ($prepareItem) {
+                        $qty = intval($item->quantity);
+                        $itemAmount = bcmul($qty, floatval($prepareItem->sale_price), 2);
+                        \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->decrement('shipped_quantity', $qty);
+                        \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->increment('remaining_quantity', $qty);
+                        \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->decrement('shipped_amount', $itemAmount);
+                        \app\model\BizStockPrepareItem::where('item_id', $prepareItem->item_id)->increment('remaining_amount', $itemAmount);
+                    }
+                }
+            }
+
             BizStockOut::where('stock_out_id', $stockOutId)->update([
                 'status' => '0',
                 'ship_status' => '0',
@@ -502,34 +525,41 @@ class BizStockOutService
             $updateData['shipment_date'] = date('Y-m-d H:i:s');
         }
 
-        Db::transaction(function () use ($stockOutId, $stockOut, $updateData, $shipType) {
-            BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
+        try {
+            Db::transaction(function () use ($stockOutId, $stockOut, $updateData, $shipType) {
+                BizStockOut::where('stock_out_id', $stockOutId)->update($updateData);
 
-            // 发货时更新备货主表（实际出库）
-            if ($stockOut->prepare_id) {
-                $prepare = \app\model\BizStockPrepare::find($stockOut->prepare_id);
-                if ($prepare) {
-                    $shipQty = intval($stockOut->total_quantity);
-                    $shipAmount = floatval($stockOut->total_amount);
-                    $newShipped = intval($prepare->shipped_quantity) + $shipQty;
-                    $newRemaining = intval($prepare->remaining_quantity) - $shipQty;
-                    $newShippedAmount = bcadd(floatval($prepare->shipped_amount), $shipAmount, 2);
-                    $newRemainingAmount = bcsub(floatval($prepare->remaining_amount), $shipAmount, 2);
-                    $newStatus = $newRemaining <= 0 ? '2' : '1';
+                // 发货时更新备货主表（实际出库）
+                if ($stockOut->prepare_id) {
+                    $prepare = \app\model\BizStockPrepare::find($stockOut->prepare_id);
+                    if ($prepare) {
+                        $shipQty = intval($stockOut->total_quantity);
+                        $shipAmount = floatval($stockOut->total_amount);
+                        $newShipped = intval($prepare->shipped_quantity) + $shipQty;
+                        $newRemaining = intval($prepare->remaining_quantity) - $shipQty;
+                        if ($newRemaining < 0) {
+                            throw new \Exception('备货单剩余数量不足，无法发货');
+                        }
+                        $newShippedAmount = bcadd(floatval($prepare->shipped_amount), $shipAmount, 2);
+                        $newRemainingAmount = bcsub(floatval($prepare->remaining_amount), $shipAmount, 2);
+                        $newStatus = $newRemaining <= 0 ? '2' : '1';
 
-                    \app\model\BizStockPrepare::where('prepare_id', $prepare->prepare_id)->update([
-                        'shipped_quantity' => $newShipped,
-                        'remaining_quantity' => $newRemaining,
-                        'shipped_amount' => $newShippedAmount,
-                        'remaining_amount' => $newRemainingAmount,
-                        'status' => $newStatus,
-                        'update_time' => date('Y-m-d H:i:s'),
-                    ]);
+                        \app\model\BizStockPrepare::where('prepare_id', $prepare->prepare_id)->update([
+                            'shipped_quantity' => $newShipped,
+                            'remaining_quantity' => $newRemaining,
+                            'shipped_amount' => $newShippedAmount,
+                            'remaining_amount' => $newRemainingAmount,
+                            'status' => $newStatus,
+                            'update_time' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
                 }
-            }
 
-            // 方案明细已在确认出库时更新，此处不再重复扣减
-        });
+                // 方案明细已在确认出库时更新，此处不再重复扣减
+            });
+        } catch (\Throwable $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
+        }
 
         return ['success' => true, 'msg' => '发货成功'];
     }
@@ -566,15 +596,12 @@ class BizStockOutService
         $planId = $stockOut->plan_id;
         $totalAmount = floatval($stockOut->total_amount);
 
-        \support\Log::info("updatePlanShippedAmount called, stock_out_id={$stockOut->stock_out_id}, plan_id={$planId}, total_amount={$totalAmount}");
-
         // 更新方案主表：shipped_amount++，remaining_amount--
         $plan = \app\model\BizPlan::find($planId);
         if ($plan) {
             \app\model\BizPlan::where('plan_id', $planId)->increment('shipped_amount', $totalAmount);
             \app\model\BizPlan::where('plan_id', $planId)->decrement('remaining_amount', $totalAmount);
             $plan->refresh();
-            \support\Log::info("Plan updated, plan_id={$planId}, shipped_amount={$plan->shipped_amount}, remaining_amount={$plan->remaining_amount}");
             if (bccomp($plan->remaining_amount, 0, 2) <= 0) {
                 \app\model\BizPlan::where('plan_id', $planId)->update([
                     'remaining_amount' => 0,
@@ -582,22 +609,15 @@ class BizStockOutService
                     'update_time' => date('Y-m-d H:i:s')
                 ]);
             }
-        } else {
-            \support\Log::warning("updatePlanShippedAmount: plan not found, plan_id={$planId}");
         }
 
         // 更新方案明细：shipped_quantity++，remaining_quantity--
         $items = BizStockOutItem::where('stock_out_id', $stockOut->stock_out_id)->get();
-        \support\Log::info("updatePlanShippedAmount: found " . count($items) . " stock out items");
         foreach ($items as $item) {
             if ($item->plan_item_id) {
                 $qty = intval($item->quantity);
                 \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->increment('shipped_quantity', $qty);
                 \app\model\BizPlanItem::where('item_id', $item->plan_item_id)->decrement('remaining_quantity', $qty);
-                $updatedPlanItem = \app\model\BizPlanItem::find($item->plan_item_id);
-                \support\Log::info("PlanItem updated, item_id={$item->plan_item_id}, qty={$qty}, shipped={$updatedPlanItem->shipped_quantity}, remaining={$updatedPlanItem->remaining_quantity}");
-            } else {
-                \support\Log::warning("updatePlanShippedAmount: stock_out_item_id={$item->item_id} has empty plan_item_id, product={$item->product_name}");
             }
         }
     }

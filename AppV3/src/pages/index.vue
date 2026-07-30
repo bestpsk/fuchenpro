@@ -28,6 +28,7 @@
  * @description 展示通知栏、统计卡片、最近订单列表，支持下拉刷新获取最新数据
  */
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import HeaderNav from '@/components/home/HeaderNav.vue'
 import NoticeBar from '@/components/home/NoticeBar.vue'
 import StatisticsCard from '@/components/home/StatisticsCard.vue'
@@ -42,10 +43,20 @@ const combinedStats = ref([])
 const orderList = ref([])
 const headerNavRef = ref(null)
 const noticeBarRef = ref(null)
+const isFirstShow = ref(true)
 
 const userStore = useUserStore()
 
 onMounted(() => {
+  loadHomeData()
+})
+
+// 页面重新显示时刷新数据（从子页面返回首页时数据同步）
+onShow(() => {
+  if (isFirstShow.value) {
+    isFirstShow.value = false
+    return
+  }
   loadHomeData()
 })
 

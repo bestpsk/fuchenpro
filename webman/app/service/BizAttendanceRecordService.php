@@ -79,6 +79,11 @@ class BizAttendanceRecordService
             $configService = new BizAttendanceConfigService();
             $rule = $configService->getUserRuleByClockType($userId, $clockType);
 
+            // 坐班打卡必须有考勤规则，外勤打卡允许无规则
+            if ($clockType === '0' && !$rule) {
+                return ['error' => '未配置考勤规则，请联系管理员'];
+            }
+
             if ($clockType === '0' && $rule) {
                 if ($rule->work_latitude && $rule->work_longitude && !empty($data['latitude']) && !empty($data['longitude'])) {
                     $distance = $this->calculateDistance(
@@ -109,18 +114,28 @@ class BizAttendanceRecordService
                 ->first();
 
             if (!$record) {
-                $record = BizAttendanceRecord::create([
-                    'user_id' => $userId,
-                    'user_name' => $userName,
-                    'attendance_date' => $today,
-                    'clock_count' => 0,
-                    'attendance_status' => '0',
-                    'clock_type' => $clockType,
-                    'rule_id' => $rule ? $rule->rule_id : null,
-                    'outside_reason' => $outsideReason,
-                    'create_by' => $userName,
-                    'create_time' => $now,
-                ]);
+                try {
+                    $record = BizAttendanceRecord::create([
+                        'user_id' => $userId,
+                        'user_name' => $userName,
+                        'attendance_date' => $today,
+                        'clock_count' => 0,
+                        'attendance_status' => '0',
+                        'clock_type' => $clockType,
+                        'rule_id' => $rule ? $rule->rule_id : null,
+                        'outside_reason' => $outsideReason,
+                        'create_by' => $userName,
+                        'create_time' => $now,
+                    ]);
+                } catch (\Throwable $e) {
+                    // 并发时唯一键冲突，重新查询已创建的记录
+                    $record = BizAttendanceRecord::where('user_id', $userId)
+                        ->where('attendance_date', $today)
+                        ->first();
+                    if (!$record) {
+                        throw $e;
+                    }
+                }
             }
 
             $clockData = [
@@ -162,7 +177,7 @@ class BizAttendanceRecordService
 
         $attendanceStatus = $this->calculateAttendanceStatus($firstClock, $lastClock, $record->user_id);
 
-        $record->update([
+        $updateData = [
             'clock_count' => $clockCount,
             'clock_in_time' => $firstClock ? $firstClock->clock_time : null,
             'clock_out_time' => $lastClock ? $lastClock->clock_time : null,
@@ -175,11 +190,15 @@ class BizAttendanceRecordService
             'clock_out_address' => $lastClock ? $lastClock->address : '',
             'clock_out_photo' => $lastClock ? $lastClock->photo : '',
             'attendance_status' => $attendanceStatus,
-            'clock_type' => $clockType,
             'rule_id' => $rule ? $rule->rule_id : ($record->rule_id ?? null),
             'outside_reason' => $firstClock ? ($firstClock->outside_reason ?? '') : '',
             'update_time' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        // clock_type 仅首次打卡时设置，避免后续打卡覆盖记录类型（先坐班后外勤应保留坐班类型）
+        if ($clockCount <= 1) {
+            $updateData['clock_type'] = $clockType;
+        }
+        $record->update($updateData);
     }
 
     private function calculateAttendanceStatus($firstClock, $lastClock, $userId)
@@ -213,10 +232,14 @@ class BizAttendanceRecordService
         }
 
         // 固定时间模式：迟到/早退判断
+        if (!$firstClock) {
+            return '4'; // 缺勤：完全无打卡记录
+        }
+
         $isLate = false;
         $isEarly = false;
 
-        if ($firstClock) {
+        if ($firstClock && $rule->work_start_time) {
             $firstTime = date('H:i:s', strtotime($firstClock->clock_time));
             $workStartTime = $rule->work_start_time;
             $lateThreshold = $rule->late_threshold;
@@ -226,7 +249,7 @@ class BizAttendanceRecordService
             }
         }
 
-        if ($lastClock && $firstClock && $lastClock->clock_id !== $firstClock->clock_id) {
+        if ($lastClock && $firstClock && $lastClock->clock_id !== $firstClock->clock_id && $rule->work_end_time) {
             $lastTime = date('H:i:s', strtotime($lastClock->clock_time));
             $workEndTime = $rule->work_end_time;
             $earlyThreshold = $rule->early_leave_threshold;
@@ -273,6 +296,9 @@ class BizAttendanceRecordService
             'early' => 0,
             'late_and_early' => 0,
             'absent' => 0,
+            'rest_days' => 0,
+            'leave_days' => 0,
+            'holiday_days' => 0,
             'total' => $records->count()
         ];
 
@@ -285,6 +311,15 @@ class BizAttendanceRecordService
                 case '4': $stats['absent']++; break;
             }
         }
+
+        // 补充查询请假/休息/法定假日天数（考勤记录不含这些状态）
+        $statsService = new \app\service\BizAttendanceStatsService();
+        $stats['rest_days'] = $statsService->getRestDaysCount([$userId], $startDate, $endDate)[$userId] ?? 0;
+        $stats['leave_days'] = $statsService->getLeaveDaysCount([$userId], $startDate, $endDate)[$userId] ?? 0;
+        $stats['holiday_days'] = $statsService->getHolidayDaysCount($startDate, $endDate);
+        // 应出勤 = 正常+迟到+早退+迟到早退+缺勤+请假
+        $stats['should_attend'] = $stats['normal'] + $stats['late'] + $stats['early']
+                                + $stats['late_and_early'] + $stats['absent'] + $stats['leave_days'];
 
         return $stats;
     }

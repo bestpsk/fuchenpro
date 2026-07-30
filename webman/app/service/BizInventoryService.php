@@ -57,6 +57,10 @@ class BizInventoryService
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('inventory_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
+        // 批量查询仓库信息，避免N+1查询
+        $warehouseIds = $result->pluck('warehouse_id')->filter()->unique()->toArray();
+        $warehouses = BizWarehouse::whereIn('warehouse_id', $warehouseIds)->get()->keyBy('warehouse_id');
+
         // Flatten product and warehouse fields to top level
         foreach ($result->items() as $item) {
             $product = $item->product;
@@ -69,7 +73,7 @@ class BizInventoryService
             $item->spec = $product ? $product->spec : '';
             $item->pack_qty = $product ? $product->pack_qty : 1;
 
-            $warehouse = BizWarehouse::find($item->warehouse_id);
+            $warehouse = $warehouses->get($item->warehouse_id);
             $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
 
             // Hide the nested product relation to avoid data duplication

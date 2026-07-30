@@ -165,9 +165,9 @@ const showEndSegmentPicker = ref(false)
 const typeColumns = ref([])
 
 const segmentOptions = [
-  { label: '全天', value: '1' },
-  { label: '上午', value: '2' },
-  { label: '下午', value: '3' }
+  { label: '全天', value: '0' },
+  { label: '上午', value: '1' },
+  { label: '下午', value: '2' }
 ]
 
 const form = reactive({
@@ -276,24 +276,20 @@ function calcLeaveDays() {
     return
   }
   const diffDays = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1
-  const startHalf = form.startTimeSegment !== '1' // 上午/下午为半天
-  const endHalf = form.endTimeSegment !== '1'
   // 同一天：根据时段计算
   let days = diffDays
   if (diffDays === 1) {
-    if (form.startTimeSegment === '1' && form.endTimeSegment === '1') {
-      days = 1
-    } else if (form.startTimeSegment === '1' || form.endTimeSegment === '1') {
-      days = 1
+    if (form.startTimeSegment === '0' || form.endTimeSegment === '0') {
+      days = 1  // 任一时段为全天，算1天
     } else if (form.startTimeSegment === form.endTimeSegment) {
-      days = 0.5
+      days = 0.5  // 同为上午或同为下午，算0.5天
     } else {
-      days = 1
+      days = 1  // 上午到下午，算1天
     }
   } else {
-    // 跨天：首尾按半天扣除
-    if (startHalf) days -= 0.5
-    if (endHalf) days -= 0.5
+    // 跨天：第一天下午开始扣0.5天，最后一天上午结束扣0.5天（与后端一致）
+    if (form.startTimeSegment === '2') days -= 0.5  // 第一天下午开始
+    if (form.endTimeSegment === '1') days -= 0.5    // 最后一天上午结束
   }
   form.leaveDays = days > 0 ? days : 0
 }
@@ -317,8 +313,8 @@ async function submitForm() {
       typeName: form.typeName,
       startDate: form.startDate,
       endDate: form.endDate,
-      startTimeSegment: form.startTimeSegment,
-      endTimeSegment: form.endTimeSegment,
+      startTimeType: form.startTimeSegment,
+      endTimeType: form.endTimeSegment,
       leaveDays: form.leaveDays,
       reason: form.reason
     })

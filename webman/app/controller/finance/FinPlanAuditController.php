@@ -27,18 +27,12 @@ class FinPlanAuditController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $params = convert_to_snake_case($request->all());
+        // 启用审核状态优先级排序（待审核→已驳回→已审核→已完成→草稿）
+        $params['audit_priority_sort'] = true;
 
         $result = $this->service->selectPlanList($params);
 
-        $items = $result->items();
-        usort($items, function ($a, $b) {
-            $priority = ['1' => 0, '4' => 1, '2' => 2, '3' => 3, '0' => 4];
-            $aPriority = $priority[$a->audit_status] ?? 5;
-            $bPriority = $priority[$b->audit_status] ?? 5;
-            return $aPriority - $bPriority;
-        });
-
-        return TableDataInfo::result($items, $result->total());
+        return TableDataInfo::result($result->items(), $result->total());
     }
 
     // 查询方案详情
@@ -48,6 +42,7 @@ class FinPlanAuditController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $result = $this->service->selectPlanById($id);
+        if (!$result) return AjaxResult::error('数据不存在');
         return AjaxResult::success('', $result);
     }
 

@@ -56,10 +56,12 @@ class BizProductService
 
     public function selectProductById($productId, $loginUser = null)
     {
-        $product = BizProduct::find($productId);
+        $product = BizProduct::with('supplier')->find($productId);
         if (!$product) {
             return null;
         }
+        // 附加供货商名称
+        $product->supplier_name = $product->supplier ? $product->supplier->supplier_name : null;
         // 货品属于公共数据，不受数据权限约束
         // if (!empty($loginUser) && !$loginUser->isAdmin()) {
         //     $visibleUserIds = DataScopeService::getVisibleUserIds($loginUser);

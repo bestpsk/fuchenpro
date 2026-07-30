@@ -419,7 +419,7 @@
         </el-descriptions-item>
         <el-descriptions-item label="合同文件">
           <template v-if="detailForm.contractFiles">
-            <el-image v-for="(url, idx) in detailForm.contractFiles.split(',')" :key="idx" :src="baseUrl + url" :preview-src-list="detailForm.contractFiles.split(',').map(u => baseUrl + u)" :initial-index="idx" fit="cover" style="width: 60px; height: 60px; border-radius: 6px; border: 1px solid #ebeef5; margin-right: 8px" />
+            <el-image v-for="(url, idx) in detailForm.contractFiles.split(',')" :key="idx" :src="getContractImageUrl(url)" :preview-src-list="detailForm.contractFiles.split(',').map(getContractImageUrl)" :initial-index="idx" fit="cover" style="width: 60px; height: 60px; border-radius: 6px; border: 1px solid #ebeef5; margin-right: 8px" />
           </template>
           <span v-else>-</span>
         </el-descriptions-item>
@@ -649,6 +649,15 @@ function handleViewPlans(row) {
     planList.value = res.rows
     planListLoading.value = false
   })
+}
+
+function getContractImageUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  if (!url.startsWith('/profile/upload/')) {
+    url = '/profile/upload/' + url
+  }
+  return baseUrl + url
 }
 
 function handleViewDetail(row) {

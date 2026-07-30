@@ -60,16 +60,29 @@ class PptToPdfService
     private function runConversion(string $pptPath, string $outDir): void
     {
         $soffice = $this->getSofficePath();
+
+        // 指定 LibreOffice 用户配置目录（固定路径，确保字体缓存可写且一致）
+        $userInstallation = 'file:///tmp/libreoffice_user';
+
         $cmd = escapeshellarg($soffice)
-             . ' --headless --norestore --convert-to pdf --outdir '
-             . escapeshellarg($outDir) . ' ' . escapeshellarg($pptPath);
+             . ' --headless --norestore --convert-to pdf'
+             . ' -env:UserInstallation=' . escapeshellarg($userInstallation)
+             . ' --outdir ' . escapeshellarg($outDir) . ' ' . escapeshellarg($pptPath);
 
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ];
-        $proc = proc_open($cmd, $descriptors, $pipes);
+
+        // 传递环境变量：HOME（LibreOffice 配置目录）、LANG/LC_ALL（中文字体渲染）
+        $env = array_merge(getenv(), [
+            'HOME' => '/tmp',
+            'LANG' => 'zh_CN.UTF-8',
+            'LC_ALL' => 'zh_CN.UTF-8',
+        ]);
+
+        $proc = proc_open($cmd, $descriptors, $pipes, null, $env);
         if (!is_resource($proc)) {
             throw new \Exception('无法启动 LibreOffice 进程');
         }
@@ -80,6 +93,7 @@ class PptToPdfService
         fclose($pipes[2]);
         $code = proc_close($proc);
         if ($code !== 0) {
+            error_log('[PPT->PDF] LibreOffice 退出码 ' . $code . ' stderr: ' . $stderr . ' stdout: ' . $stdout);
             throw new \Exception('LibreOffice 退出码 ' . $code . ': ' . trim($stderr . ' ' . $stdout));
         }
     }

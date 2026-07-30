@@ -11,9 +11,10 @@ import constant from '@/utils/constant'
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { isHttp, isEmpty } from '@/utils/validate'
+import { useMenuStore } from '@/store/modules/menu'
 
 const baseUrl = config.baseUrl
-const defaultAvatar = '/static/images/profile.jpg'
+const defaultAvatar = import.meta.env.BASE_URL + 'static/images/profile.jpg'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -113,7 +114,6 @@ export const useUserStore = defineStore('user', {
       this.permissions = []
       removeToken()
       storage.clean()
-      const { useMenuStore } = await import('./menu')
       useMenuStore().clearCache()
     }
   }

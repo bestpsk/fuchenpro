@@ -17,6 +17,7 @@ class BizTrainMaterialService
 
         // 授权过滤：非管理员只能看到被授权的材料
         if ($userId !== null) {
+            $query->where('status', '0');
             $authService = new \app\service\BizTrainMaterialAuthService();
             $materialIds = $authService->getAuthorizedMaterialIds($userId);
             if ($materialIds !== null) {

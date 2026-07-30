@@ -143,6 +143,10 @@ function loadMore() {
 }
 
 function onPullDownRefresh() {
+  if (loading.value) {
+    refreshing.value = false
+    return
+  }
   refreshing.value = true
   getList(true)
 }

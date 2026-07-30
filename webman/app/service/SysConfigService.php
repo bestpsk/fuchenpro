@@ -49,16 +49,25 @@ class SysConfigService
 
     public static function selectConfigByKey($configKey)
     {
-        $redis = Redis::connection();
         $cacheKey = Constants::SYS_CONFIG_KEY . $configKey;
-        $cached = $redis->get($cacheKey);
-        if ($cached !== null && $cached !== false) {
-            return $cached;
+        try {
+            $redis = Redis::connection();
+            $cached = $redis->get($cacheKey);
+            if ($cached !== null && $cached !== false) {
+                return $cached;
+            }
+        } catch (\Throwable $e) {
+            // Redis故障时降级为直接查询数据库
         }
 
         $config = SysConfig::where('config_key', $configKey)->first();
         if ($config) {
-            $redis->set($cacheKey, $config->config_value);
+            try {
+                $redis = Redis::connection();
+                $redis->set($cacheKey, $config->config_value);
+            } catch (\Throwable $e) {
+                // 缓存写入失败不影响业务
+            }
             return $config->config_value;
         }
         return null;
@@ -71,8 +80,12 @@ class SysConfigService
         $data['create_time'] = date('Y-m-d H:i:s');
         $result = SysConfig::create($data);
         if (!empty($data['config_key'])) {
-            $redis = Redis::connection();
-            $redis->set(Constants::SYS_CONFIG_KEY . $data['config_key'], $data['config_value']);
+            try {
+                $redis = Redis::connection();
+                $redis->set(Constants::SYS_CONFIG_KEY . $data['config_key'], $data['config_value']);
+            } catch (\Throwable $e) {
+                // 缓存写入失败不影响数据完整性
+            }
         }
         return $result;
     }
@@ -84,8 +97,12 @@ class SysConfigService
         $data['update_time'] = date('Y-m-d H:i:s');
         $result = SysConfig::where('config_id', $data['config_id'])->update($data);
         if (!empty($data['config_key'])) {
-            $redis = Redis::connection();
-            $redis->set(Constants::SYS_CONFIG_KEY . $data['config_key'], $data['config_value'] ?? '');
+            try {
+                $redis = Redis::connection();
+                $redis->set(Constants::SYS_CONFIG_KEY . $data['config_key'], $data['config_value'] ?? '');
+            } catch (\Throwable $e) {
+                // 缓存写入失败不影响数据完整性
+            }
         }
         return $result;
     }
@@ -95,23 +112,31 @@ class SysConfigService
     public static function deleteConfigByIds($configIds)
     {
         $configs = SysConfig::whereIn('config_id', $configIds)->get();
-        $redis = Redis::connection();
-        foreach ($configs as $config) {
-            $redis->del(Constants::SYS_CONFIG_KEY . $config->config_key);
+        try {
+            $redis = Redis::connection();
+            foreach ($configs as $config) {
+                $redis->del(Constants::SYS_CONFIG_KEY . $config->config_key);
+            }
+        } catch (\Throwable $e) {
+            // 缓存删除失败不影响数据完整性
         }
         return SysConfig::whereIn('config_id', $configIds)->delete();
     }
 
     public static function resetConfigCache()
     {
-        $redis = Redis::connection();
-        $keys = $redis->keys(Constants::SYS_CONFIG_KEY . '*');
-        foreach ($keys as $key) {
-            $redis->del($key);
-        }
-        $configs = SysConfig::all();
-        foreach ($configs as $config) {
-            $redis->set(Constants::SYS_CONFIG_KEY . $config->config_key, $config->config_value);
+        try {
+            $redis = Redis::connection();
+            $keys = $redis->keys(Constants::SYS_CONFIG_KEY . '*');
+            foreach ($keys as $key) {
+                $redis->del($key);
+            }
+            $configs = SysConfig::all();
+            foreach ($configs as $config) {
+                $redis->set(Constants::SYS_CONFIG_KEY . $config->config_key, $config->config_value);
+            }
+        } catch (\Throwable $e) {
+            // Redis故障时静默失败，后续访问会逐个重建缓存
         }
     }
 
@@ -143,8 +168,12 @@ class SysConfigService
                 'create_time' => date('Y-m-d H:i:s'),
             ]);
         }
-        $redis = Redis::connection();
-        $redis->set(Constants::SYS_CONFIG_KEY . $configKey, $configValue);
+        try {
+            $redis = Redis::connection();
+            $redis->set(Constants::SYS_CONFIG_KEY . $configKey, $configValue);
+        } catch (\Throwable $e) {
+            // 缓存写入失败不影响数据完整性
+        }
     }
 
     // 查询验证码是否启用

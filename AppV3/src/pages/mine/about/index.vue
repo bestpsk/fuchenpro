@@ -2,7 +2,7 @@
   <view class="about-container">
     <view class="header-section uni-text-center">
       <view class="logo-wrap">
-        <image class="logo-img" src="/static/logo.png" mode="aspectFit" />
+        <image class="logo-img" :src="logoUrl" mode="aspectFit" />
       </view>
       <view class="app-name">{{ appName }}</view>
       <view class="app-slogan">企业数字化管理平台</view>
@@ -51,6 +51,9 @@
  */
 import { ref, onMounted } from 'vue'
 import { getConfigKey } from '@/api/system/config'
+
+/** Logo 图片路径，根据 H5 部署子目录自动拼接 */
+const logoUrl = import.meta.env.BASE_URL + 'static/logo.png'
 
 /** 公司网站地址，从全局配置获取 */
 const url = ref(getApp().globalData.config.appInfo.site_url)

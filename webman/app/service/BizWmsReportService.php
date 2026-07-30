@@ -170,31 +170,50 @@ class BizWmsReportService
             ->get();
         $startDate = $params['start_date'] ?? date('Y-m-01');
         $endDate = $params['end_date'] ?? date('Y-m-d');
-        foreach ($products as $product) {
-            $stockInQty = BizStockInItem::query()
+
+        // 批量查询入库汇总（按product_id分组），避免N+1查询
+        $productIds = $products->pluck('product_id')->toArray();
+        $stockInMap = [];
+        $stockOutMap = [];
+        if (!empty($productIds)) {
+            $stockInQuery = BizStockInItem::query()
                 ->join('biz_stock_in', 'biz_stock_in_item.stock_in_id', '=', 'biz_stock_in.stock_in_id')
                 ->where('biz_stock_in.status', '1')
-                ->where('biz_stock_in_item.product_id', $product->product_id)
+                ->whereIn('biz_stock_in_item.product_id', $productIds)
                 ->whereBetween('biz_stock_in.stock_in_date', [$startDate, $endDate]);
             if (!empty($params['warehouse_id'])) {
-                $stockInQty->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
+                $stockInQuery->where('biz_stock_in.warehouse_id', $params['warehouse_id']);
             }
-            $stockInQty = $stockInQty->sum('biz_stock_in_item.quantity');
-            $stockOutQty = BizStockOutItem::query()
+            $stockInMap = $stockInQuery
+                ->selectRaw('biz_stock_in_item.product_id, SUM(biz_stock_in_item.quantity) as total_qty')
+                ->groupBy('biz_stock_in_item.product_id')
+                ->pluck('total_qty', 'product_id')
+                ->toArray();
+
+            $stockOutQuery = BizStockOutItem::query()
                 ->join('biz_stock_out', 'biz_stock_out_item.stock_out_id', '=', 'biz_stock_out.stock_out_id')
                 ->whereIn('biz_stock_out.status', ['1', '2', '3'])
-                ->where('biz_stock_out_item.product_id', $product->product_id)
+                ->whereIn('biz_stock_out_item.product_id', $productIds)
                 ->whereBetween('biz_stock_out.stock_out_date', [$startDate, $endDate]);
             if (!empty($params['warehouse_id'])) {
-                $stockOutQty->where(function($q) use ($params) {
+                $stockOutQuery->where(function($q) use ($params) {
                     $q->where('biz_stock_out.warehouse_id', $params['warehouse_id'])
                       ->orWhereNull('biz_stock_out.warehouse_id');
                 });
             }
-            $stockOutQty = $stockOutQty->sum('biz_stock_out_item.quantity');
-            $product->period_in_quantity = intval($stockInQty);
-            $product->period_out_quantity = intval($stockOutQty);
-            $product->begin_quantity = intval($product->current_quantity) - intval($stockInQty) + intval($stockOutQty);
+            $stockOutMap = $stockOutQuery
+                ->selectRaw('biz_stock_out_item.product_id, SUM(biz_stock_out_item.quantity) as total_qty')
+                ->groupBy('biz_stock_out_item.product_id')
+                ->pluck('total_qty', 'product_id')
+                ->toArray();
+        }
+
+        foreach ($products as $product) {
+            $stockInQty = intval($stockInMap[$product->product_id] ?? 0);
+            $stockOutQty = intval($stockOutMap[$product->product_id] ?? 0);
+            $product->period_in_quantity = $stockInQty;
+            $product->period_out_quantity = $stockOutQty;
+            $product->begin_quantity = intval($product->current_quantity) - $stockInQty + $stockOutQty;
             $product->end_quantity = intval($product->current_quantity);
         }
         return $products;

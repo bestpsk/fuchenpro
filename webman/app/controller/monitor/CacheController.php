@@ -26,46 +26,9 @@ class CacheController
         $rawInfo = $redis->info();
         $info = $this->flattenInfo($rawInfo);
         $dbSize = $redis->dbsize();
-        
-        $commandStats = [];
-        foreach ($rawInfo as $key => $value) {
-            if (str_starts_with($key, 'cmdstat_')) {
-                $cmd = str_replace('cmdstat_', '', $key);
-                if (is_string($value)) {
-                    $parts = explode(',', $value);
-                    $calls = 0;
-                    foreach ($parts as $part) {
-                        if (str_starts_with(trim($part), 'calls=')) {
-                            $calls = intval(str_replace('calls=', '', trim($part)));
-                        }
-                    }
-                    $commandStats[] = ['name' => $cmd, 'value' => $calls];
-                } elseif (is_array($value) && isset($value['calls'])) {
-                    $commandStats[] = ['name' => $cmd, 'value' => intval($value['calls'])];
-                }
-            }
-            
-            if (is_array($value)) {
-                foreach ($value as $subKey => $subValue) {
-                    if (str_starts_with($subKey, 'cmdstat_')) {
-                        $cmd = str_replace('cmdstat_', '', $subKey);
-                        if (is_string($subValue)) {
-                            $parts = explode(',', $subValue);
-                            $calls = 0;
-                            foreach ($parts as $part) {
-                                if (str_starts_with(trim($part), 'calls=')) {
-                                    $calls = intval(str_replace('calls=', '', trim($part)));
-                                }
-                            }
-                            $commandStats[] = ['name' => $cmd, 'value' => $calls];
-                        } elseif (is_array($subValue) && isset($subValue['calls'])) {
-                            $commandStats[] = ['name' => $cmd, 'value' => intval($subValue['calls'])];
-                        }
-                    }
-                }
-            }
-        }
-        
+
+        $commandStats = $this->parseCommandStats($rawInfo);
+
         return AjaxResult::success('', [
             'data' => [
                 'info' => $info,
@@ -73,6 +36,49 @@ class CacheController
                 'commandStats' => $commandStats,
             ]
         ]);
+    }
+
+    /**
+     * 解析Redis命令统计信息
+     * 支持phpredis两种返回格式：扁平数组（cmdstat_xxx 在顶层）或嵌套数组（按 Section 分组）
+     */
+    private function parseCommandStats(array $rawInfo): array
+    {
+        $commandStats = [];
+        foreach ($rawInfo as $key => $value) {
+            // 顶层 cmdstat_ 键（phpredis 默认 info() 返回格式）
+            if (str_starts_with($key, 'cmdstat_')) {
+                $this->addCommandStat($commandStats, $key, $value);
+                continue;
+            }
+            // 嵌套分组下的 cmdstat_ 键（info('all') 等带 Section 的返回格式）
+            if (is_array($value)) {
+                foreach ($value as $subKey => $subValue) {
+                    if (str_starts_with($subKey, 'cmdstat_')) {
+                        $this->addCommandStat($commandStats, $subKey, $subValue);
+                    }
+                }
+            }
+        }
+        return $commandStats;
+    }
+
+    // 将单个 cmdstat_ 条目解析为 {name, value} 结构
+    private function addCommandStat(array &$commandStats, string $cmdstatKey, $value): void
+    {
+        $cmd = str_replace('cmdstat_', '', $cmdstatKey);
+        $calls = 0;
+        if (is_string($value)) {
+            foreach (explode(',', $value) as $part) {
+                if (str_starts_with(trim($part), 'calls=')) {
+                    $calls = intval(str_replace('calls=', '', trim($part)));
+                    break;
+                }
+            }
+        } elseif (is_array($value) && isset($value['calls'])) {
+            $calls = intval($value['calls']);
+        }
+        $commandStats[] = ['name' => $cmd, 'value' => $calls];
     }
 
     // 将嵌套的Redis info数据展平为一维关联数组
@@ -107,8 +113,7 @@ class CacheController
         if (PermissionService::lacksPermi($request->loginUser, 'monitor:cache:list')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $redis = Redis::connection();
-        $keys = $redis->keys('*');
+        $keys = $this->scanKeys('*');
         $names = [];
         foreach ($keys as $key) {
             $parts = explode(':', $key);
@@ -139,8 +144,8 @@ class CacheController
         }
         $parts = explode('/', $request->path());
         $cacheName = end($parts);
-        $redis = Redis::connection();
-        $keys = $redis->keys($cacheName . '*');
+        // 使用冒号分隔符精确匹配命名空间下的键，避免 foo:bar* 误匹配 foo:barbaz
+        $keys = $this->scanKeys($cacheName . ':*');
         return AjaxResult::success('', [
             'data' => $keys
         ]);
@@ -158,9 +163,6 @@ class CacheController
         $redis = Redis::connection();
         $fullKey = $cacheName . ':' . $cacheKey;
         $value = $redis->get($fullKey);
-        if ($value === null) {
-            $value = $redis->get($cacheKey);
-        }
         return AjaxResult::success('', [
             'data' => [
                 'cacheName' => $cacheName,
@@ -177,8 +179,8 @@ class CacheController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $cacheName = $request->input('cacheName', '');
+        $keys = $this->scanKeys($cacheName . ':*');
         $redis = Redis::connection();
-        $keys = $redis->keys($cacheName . '*');
         foreach ($keys as $key) {
             $redis->del($key);
         }
@@ -206,5 +208,30 @@ class CacheController
         $redis = Redis::connection();
         $redis->flushdb();
         return AjaxResult::success();
+    }
+
+    /**
+     * 使用SCAN迭代器安全获取匹配pattern的键（替代阻塞的KEYS命令）
+     * SCAN是O(N)但非阻塞，每次只返回一小批结果，适合生产环境
+     */
+    private function scanKeys(string $pattern): array
+    {
+        $redis = Redis::connection();
+        $keys = [];
+        $iterator = null;
+        do {
+            // rawCommand 调用 SCAN，返回 [iterator, keys[]]
+            $result = $redis->rawCommand('SCAN', $iterator, 'MATCH', $pattern, 'COUNT', 1000);
+            if ($result === false) {
+                break;
+            }
+            $iterator = $result[0];
+            if (!empty($result[1])) {
+                foreach ($result[1] as $key) {
+                    $keys[] = $key;
+                }
+            }
+        } while ($iterator !== 0 && $iterator !== '0');
+        return $keys;
     }
 }

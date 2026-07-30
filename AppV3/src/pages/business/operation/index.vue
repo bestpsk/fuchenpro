@@ -54,6 +54,7 @@
  * @description 展示操作记录列表，支持关键词搜索（客户名/操作类型）、分页加载、下拉刷新
  */
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listOperation, delOperation } from '@/api/business/operationRecord'
 import { checkPermi } from '@/utils/permission'
 
@@ -114,6 +115,10 @@ async function deleteOperation(item) {
 }
 
 onMounted(() => { getList(true) })
+
+onShow(() => {
+  getList(true)
+})
 </script>
 
 <style lang="scss" scoped>

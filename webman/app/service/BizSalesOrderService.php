@@ -244,7 +244,12 @@ class BizSalesOrderService
                 }
             }
 
-            $result = BizSalesOrder::where('order_id', $data['order_id'])->update($data);
+            $order = BizSalesOrder::find($data['order_id']);
+            if (!$order) {
+                throw new \Exception('订单不存在');
+            }
+            $order->fill($data)->save();
+            $result = true;
 
             if (!empty($items)) {
                 BizOrderItem::where('order_id', $data['order_id'])->delete();
@@ -253,6 +258,9 @@ class BizSalesOrderService
                     $item['create_time'] = date('Y-m-d H:i:s');
                     BizOrderItem::create($item);
                 }
+
+                // 同步更新客户套餐和套餐项（Bug-3 修复：避免订单编辑后套餐数据不一致）
+                $this->syncPackageFromOrder($order->fresh(), $items);
             }
 
             return $result;
@@ -317,6 +325,7 @@ class BizSalesOrderService
             $order = BizSalesOrder::where('order_id', $orderId)->lockForUpdate()->first();
             if (!$order) return false;
             if ($order->enterprise_audit_status !== '1') return false;
+            if ($order->finance_audit_status !== '0') return false;
             $result = BizSalesOrder::where('order_id', $orderId)->update([
                 'finance_audit_status' => '1',
                 'finance_audit_by' => $auditBy,
@@ -330,16 +339,36 @@ class BizSalesOrderService
 
     public function cancelOrder($orderId)
     {
-        $order = BizSalesOrder::find($orderId);
-        if (!$order) return false;
-        // 财务已审核不可取消
-        if ($order->finance_audit_status === '1') return false;
-        // 已取消的订单不可重复取消
-        if ($order->order_status === '4') return false;
-        return BizSalesOrder::where('order_id', $orderId)->update([
-            'order_status' => '4',
-            'update_time' => date('Y-m-d H:i:s')
-        ]);
+        return Db::transaction(function () use ($orderId) {
+            $order = BizSalesOrder::find($orderId);
+            if (!$order) return false;
+            // 财务已审核不可取消
+            if ($order->finance_audit_status === '1') return false;
+            // 已取消的订单不可重复取消
+            if ($order->order_status === '4') return false;
+
+            // 取消订单
+            BizSalesOrder::where('order_id', $orderId)->update([
+                'order_status' => '4',
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+
+            // 级联清理：将关联的客户套餐置为已取消（status='3'）
+            // 注意：已被消耗的套餐项（used_quantity>0）不回滚，避免影响已发生的操作记录
+            BizCustomerPackage::where('order_id', $orderId)
+                ->where('status', '1')
+                ->update([
+                    'status' => '3',
+                    'update_time' => date('Y-m-d H:i:s')
+                ]);
+
+            // 级联清理：删除开单时生成的客户档案（source_type='0' 开单来源）
+            BizCustomerArchive::where('source_type', '0')
+                ->where('source_id', $orderId)
+                ->delete();
+
+            return true;
+        });
     }
 
     public function generatePackage($order, $items)
@@ -422,5 +451,67 @@ class BizSalesOrderService
         }
 
         return $packageNo;
+    }
+
+    /**
+     * 订单编辑后同步更新客户套餐和套餐项
+     * 注意：若套餐已有消耗（used_quantity>0）则禁止编辑，避免数据不一致
+     */
+    private function syncPackageFromOrder($order, $items)
+    {
+        $package = BizCustomerPackage::where('order_id', $order->order_id)->first();
+        if (!$package) {
+            // 没有关联套餐（可能订单创建时未生成），调用 generatePackage 创建
+            $this->generatePackage($order, $items);
+            return;
+        }
+
+        // 已取消的套餐不处理
+        if ($package->status === '3') {
+            return;
+        }
+
+        // 检查套餐是否已被消耗，已消耗则禁止编辑
+        $hasConsumed = BizPackageItem::where('package_id', $package->package_id)
+            ->where('used_quantity', '>', 0)
+            ->exists();
+        if ($hasConsumed) {
+            throw new \Exception('套餐已被消耗，不可修改订单品项');
+        }
+
+        // 删除旧的套餐项
+        BizPackageItem::where('package_id', $package->package_id)->delete();
+
+        // 重新生成套餐项
+        $paidAmount = 0;
+        foreach ($items as $item) {
+            $quantity = intval($item['quantity'] ?? 1);
+            $dealPrice = floatval($item['deal_amount'] ?? 0);
+            $itemPaidAmount = floatval($item['paid_amount'] ?? 0);
+            $itemOwedAmount = floatval($item['owed_amount'] ?? ($dealPrice - $itemPaidAmount));
+            $unitPrice = floatval($item['unit_price'] ?? ($quantity > 0 ? round($dealPrice / $quantity, 2) : 0));
+            BizPackageItem::create([
+                'package_id' => $package->package_id,
+                'card_item_id' => $item['card_item_id'] ?? null,
+                'product_name' => $item['product_name'] ?? '',
+                'unit_price' => $unitPrice,
+                'plan_price' => floatval($item['plan_price'] ?? $dealPrice),
+                'deal_price' => $dealPrice,
+                'paid_amount' => $itemPaidAmount,
+                'owed_amount' => $itemOwedAmount,
+                'total_quantity' => $quantity,
+                'used_quantity' => 0,
+                'remaining_quantity' => $quantity,
+                'remark' => $item['remark'] ?? null
+            ]);
+            $paidAmount += $itemPaidAmount;
+        }
+
+        // 更新套餐总额
+        $package->total_amount = $order->deal_amount;
+        $package->paid_amount = $paidAmount;
+        $package->owed_amount = floatval($order->deal_amount) - $paidAmount;
+        $package->update_time = date('Y-m-d H:i:s');
+        $package->save();
     }
 }

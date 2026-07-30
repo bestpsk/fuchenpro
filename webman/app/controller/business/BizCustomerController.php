@@ -93,9 +93,13 @@ class BizCustomerController
             $customerIds = explode(',', $customerIds);
         }
         $customerIds = array_map('intval', array_filter($customerIds));
-        $service = new BizCustomerService();
-        $result = $service->deleteCustomerByIds($customerIds);
-        return AjaxResult::toAjax($result ? 1 : 0);
+        try {
+            $service = new BizCustomerService();
+            $result = $service->deleteCustomerByIds($customerIds);
+            return AjaxResult::toAjax($result ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     public function avatar(Request $request)

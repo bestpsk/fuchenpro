@@ -117,6 +117,12 @@ class SysRoleService
         return SysRole::whereIn('role_id', $roleIds)->update(['del_flag' => '2']);
     }
 
+    // 统计角色关联的用户数量（删除前校验用）
+    public function countUsersByRoleIds($roleIds)
+    {
+        return SysUserRole::whereIn('role_id', $roleIds)->count();
+    }
+
     public function authDataScope($roleId, $dataScope, $deptIds = [])
     {
         SysRole::where('role_id', $roleId)->update([

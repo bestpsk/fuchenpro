@@ -81,26 +81,12 @@ class BizStockCheckService
 
     public function generateStockCheckNo()
     {
-        $prefix = 'PD' . date('Ymd');
-        $key = 'stock_check_no:' . date('Ymd');
-        $seq = \support\Redis::incr($key);
-        \support\Redis::expire($key, 86400);
-        $stockCheckNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-
-        // 数据库兜底：如果序号已存在，从数据库最大序号继续
-        $exists = BizStockCheck::where('stock_check_no', $stockCheckNo)->exists();
-        if ($exists) {
-            $last = BizStockCheck::where('stock_check_no', 'like', $prefix . '%')
-                ->orderBy('stock_check_id', 'desc')->first();
-            if ($last) {
-                $lastSeq = intval(substr($last->stock_check_no, -3));
-                $seq = $lastSeq + 1;
-                \support\Redis::set($key, $seq);
-                \support\Redis::expire($key, 86400);
-            }
-            $stockCheckNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-        }
-        return $stockCheckNo;
+        return BizWmsHelper::generateDocNo(
+            'PD' . date('Ymd'),
+            'stock_check_no:' . date('Ymd'),
+            BizStockCheck::class,
+            'stock_check_no'
+        );
     }
 
     // 新增盘点单，生成盘点编号并创建明细
@@ -178,8 +164,11 @@ class BizStockCheckService
         unset($item);
         $data['total_quantity'] = $totalQuantity;
         $data['total_diff_quantity'] = $totalDiffQuantity;
-        Db::transaction(function () use ($stockCheckId, $data, $items) {
-            BizStockCheck::where('stock_check_id', $stockCheckId)->update($data);
+        // 按 fillable 过滤，移除 login_user 等非数据库字段，避免触发 SQL 错误
+        $fillable = (new BizStockCheck())->getFillable();
+        $filteredData = array_intersect_key($data, array_flip($fillable));
+        Db::transaction(function () use ($stockCheckId, $filteredData, $items) {
+            BizStockCheck::where('stock_check_id', $stockCheckId)->update($filteredData);
             BizStockCheckItem::where('stock_check_id', $stockCheckId)->delete();
             foreach ($items as $item) {
                 $item['stock_check_id'] = $stockCheckId;
@@ -258,14 +247,38 @@ class BizStockCheckService
                         BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->decrement('quantity', $absDiff, [
                             'update_time' => date('Y-m-d H:i:s'),
                         ]);
+
+                        // 盘亏时按FIFO原则扣减批次shipped_quantity（与出库逻辑一致）
+                        $batches = \app\model\BizStockInItem::where('product_id', $item->product_id)
+                            ->where('warehouse_id', $warehouseId)
+                            ->whereRaw('quantity > shipped_quantity')
+                            ->orderBy('expiry_date', 'asc')
+                            ->orderBy('item_id', 'asc')
+                            ->lockForUpdate()
+                            ->get();
+                        $remainingToShip = $absDiff;
+                        foreach ($batches as $batch) {
+                            if ($remainingToShip <= 0) break;
+                            $batchRemaining = $batch->quantity - $batch->shipped_quantity;
+                            $shipFromBatch = min($batchRemaining, $remainingToShip);
+                            $batch->shipped_quantity += $shipFromBatch;
+                            $batch->save();
+                            $remainingToShip -= $shipFromBatch;
+                        }
+                        if ($remainingToShip > 0) {
+                            \support\Log::warning("盘点批次库存不足，产品ID:{$item->product_id}，仓库ID:{$warehouseId}，缺口:{$remainingToShip}");
+                        }
                     }
+
+                    // 更新最早有效期
+                    BizWmsHelper::updateEarliestExpiry($item->product_id, $warehouseId);
                 }
                 BizStockCheck::where('stock_check_id', $stockCheckId)->update([
                     'status' => '1',
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '盘点确认成功'];
@@ -275,9 +288,13 @@ class BizStockCheckService
     {
         $warehouseId = $params['warehouse_id'] ?? 1;
         $products = BizProduct::where('status', '0')->get();
+        // 批量查询该仓库所有库存，避免 N+1 查询
+        $inventoryMap = BizInventory::where('warehouse_id', $warehouseId)
+            ->get()
+            ->keyBy('product_id');
         $items = [];
         foreach ($products as $product) {
-            $inventory = BizInventory::where('product_id', $product->product_id)->where('warehouse_id', $warehouseId)->first();
+            $inventory = $inventoryMap->get($product->product_id);
             $items[] = [
                 'product_id' => $product->product_id,
                 'product_name' => $product->product_name,

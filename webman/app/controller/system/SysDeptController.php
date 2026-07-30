@@ -81,6 +81,9 @@ class SysDeptController
     // 批量更新部门排序
     public function updateSort(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'system:dept:edit')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $data = convert_to_snake_case($request->post());
         if (!empty($data['depts'])) {
             foreach ($data['depts'] as $dept) {

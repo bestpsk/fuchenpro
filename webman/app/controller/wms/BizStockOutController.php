@@ -60,7 +60,8 @@ class BizStockOutController
             $service = new BizStockOutService();
             $result = $service->insertStockOut($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('出库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -131,7 +132,8 @@ class BizStockOutController
             $result = $service->cancelConfirmStockOut($id, $params);
             if (!$result['success']) return AjaxResult::error($result['msg']);
             return AjaxResult::success($result['msg']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('出库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -164,7 +166,8 @@ class BizStockOutController
             $result = $service->confirmReceipt($id, $params);
             if (!$result['success']) return AjaxResult::error($result['msg']);
             return AjaxResult::success($result['msg']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('出库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -178,10 +181,18 @@ class BizStockOutController
         $params['pageSize'] = 10000;
         $result = $service->selectStockOutList($params);
         $list = $result->items();
-        // 关联查询warehouse_name
+        // 批量查询warehouse_name（避免N+1查询）
+        $warehouseIds = [];
         foreach ($list as $item) {
             if (!empty($item->warehouse_id)) {
-                $warehouse = \app\model\BizWarehouse::find($item->warehouse_id);
+                $warehouseIds[] = $item->warehouse_id;
+            }
+        }
+        $warehouseIds = array_values(array_unique($warehouseIds));
+        $warehouses = \app\model\BizWarehouse::whereIn('warehouse_id', $warehouseIds)->get()->keyBy('warehouse_id');
+        foreach ($list as $item) {
+            if (!empty($item->warehouse_id)) {
+                $warehouse = $warehouses->get($item->warehouse_id);
                 $item->warehouse_name = $warehouse ? $warehouse->warehouse_name : '';
             } else {
                 $item->warehouse_name = '';

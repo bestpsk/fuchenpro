@@ -400,10 +400,9 @@ function handleAuth(row) {
   })
   // 加载授权配置
   getMaterialAuth(row.materialId).then(res => {
-    const config = res.data || {}
-    authForm.value.authType = config.auth_type || 'all'
-    authForm.value.userIds = (config.user_ids || []).map(Number)
-    authForm.value.deptIds = (config.dept_ids || []).map(Number)
+    authForm.value.authType = res.authType || 'all'
+    authForm.value.userIds = (res.userIds || []).map(Number)
+    authForm.value.deptIds = (res.deptIds || []).map(Number)
   })
 }
 

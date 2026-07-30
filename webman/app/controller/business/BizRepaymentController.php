@@ -19,6 +19,9 @@ class BizRepaymentController
     // 分页查询还款记录列表
     public function list(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repayment')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $service = new BizRepaymentService();
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
@@ -29,6 +32,9 @@ class BizRepaymentController
     // 根据ID获取还款记录详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repayment')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $repaymentId = intval(end($parts));
         $service = new BizRepaymentService();
@@ -42,6 +48,9 @@ class BizRepaymentController
     // 查询指定客户的欠款套餐列表（用于还款时选择套餐）
     public function owedPackages(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:sales:repayment')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $customerId = $request->get('customerId') ?? $request->get('customer_id');
         if (!$customerId) {
             return AjaxResult::error('客户ID不能为空');
@@ -80,7 +89,7 @@ class BizRepaymentController
         try {
             $result = $service->insertRepayment($data, $autoAudit);
             return AjaxResult::success($result);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('添加还款记录失败，请稍后重试');
         }
     }
@@ -104,7 +113,7 @@ class BizRepaymentController
             } else {
                 return AjaxResult::error('审核失败，该记录可能已被审核或不存在');
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('审核失败，请稍后重试');
         }
     }

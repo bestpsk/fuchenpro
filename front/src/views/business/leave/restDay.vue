@@ -4,12 +4,6 @@
       <el-form-item label="方案名称" prop="planName">
         <el-input v-model="queryParams.planName" placeholder="请输入方案名称" clearable style="width: 200px" @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="配置类型" prop="configType">
-        <el-select v-model="queryParams.configType" placeholder="全部" clearable style="width: 140px">
-          <el-option label="按周配置" value="0" />
-          <el-option label="按日期配置" value="1" />
-        </el-select>
-      </el-form-item>
       <el-form-item label="状态" prop="status">
         <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 120px">
           <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
@@ -34,7 +28,6 @@
     <el-table v-loading="loading" :data="restPlanList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="方案名称" align="left" prop="planName" min-width="160" show-overflow-tooltip />
-      <el-table-column label="配置类型" align="center" prop="configTypeLabel" min-width="100" />
       <el-table-column label="关联员工" align="center" min-width="240">
         <template #default="scope">
           <span v-if="scope.row.employeeCount > 0">
@@ -67,13 +60,6 @@
           <el-input v-model="form.planName" placeholder="如：销售部休息日配置" maxlength="100" show-word-limit style="width: 100%" />
         </el-form-item>
 
-        <el-form-item label="配置模式" prop="configType">
-          <el-radio-group v-model="form.configType" :disabled="isEdit">
-            <el-radio value="0">按周配置</el-radio>
-            <el-radio value="1">按日期配置</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
         <!-- 员工选择 -->
         <el-form-item label="关联员工" prop="userIds">
           <div class="employee-picker">
@@ -98,28 +84,9 @@
         </el-form-item>
 
         <!-- 按周配置 -->
-        <template v-if="form.configType === '0'">
-          <el-form-item v-for="day in weekDays" :key="day.prop" :label="day.label">
-            <el-switch v-model="form[day.prop]" active-value="1" inactive-value="0" active-text="休息" inactive-text="上班" />
-          </el-form-item>
-        </template>
-
-        <!-- 按日期配置 -->
-        <template v-else>
-          <el-form-item label="休息日期" prop="dates">
-            <el-date-picker
-              v-model="form.dates"
-              type="dates"
-              value-format="YYYY-MM-DD"
-              placeholder="选择休息日期（可多选）"
-              style="width: 100%"
-              :disabled="isEdit"
-            />
-          </el-form-item>
-          <el-form-item label="事由" prop="reason">
-            <el-input v-model="form.reason" type="textarea" :rows="3" placeholder="请输入事由" maxlength="200" show-word-limit />
-          </el-form-item>
-        </template>
+        <el-form-item v-for="day in weekDays" :key="day.prop" :label="day.label">
+          <el-switch v-model="form[day.prop]" active-value="1" inactive-value="0" active-text="休息" inactive-text="上班" />
+        </el-form-item>
 
         <el-form-item label="生效日期" prop="effectiveDate">
           <el-date-picker v-model="form.effectiveDate" type="date" value-format="YYYY-MM-DD" placeholder="选择生效日期" style="width: 100%" />
@@ -143,7 +110,6 @@
     <el-dialog title="方案详情" v-model="viewOpen" width="780px" append-to-body>
       <el-descriptions :column="2" border>
         <el-descriptions-item label="方案名称">{{ viewForm.planName }}</el-descriptions-item>
-        <el-descriptions-item label="配置类型">{{ viewForm.configType === '0' ? '按周配置' : '按日期配置' }}</el-descriptions-item>
         <el-descriptions-item label="生效日期">{{ viewForm.effectiveDate }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <dict-tag :options="sys_normal_disable" :value="viewForm.status" />
@@ -156,18 +122,10 @@
           </div>
           <span v-else class="no-employee">未关联员工</span>
         </el-descriptions-item>
-        <el-descriptions-item v-if="viewForm.configType === '0'" label="按周配置" :span="2">
+        <el-descriptions-item label="按周配置" :span="2">
           <el-tag v-for="day in weekDays" :key="day.prop" :type="viewForm[day.prop] === '1' ? 'info' : 'success'" class="mx-1 my-1" size="small">
             {{ day.label }}{{ viewForm[day.prop] === '1' ? '休息' : '上班' }}
           </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item v-else label="休息日期" :span="2">
-          <div v-if="viewForm.dates && viewForm.dates.length">
-            <el-tag v-for="d in viewForm.dates" :key="d.restDate" class="mx-1 my-1" size="small" type="info">
-              {{ d.restDate }}<span v-if="d.reason">（{{ d.reason }}）</span>
-            </el-tag>
-          </div>
-          <span v-else class="no-employee">无</span>
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
@@ -195,7 +153,6 @@ const single = ref(true)
 const multiple = ref(true)
 const total = ref(0)
 const title = ref("")
-const isEdit = ref(false)
 const selectedEmployees = ref([])
 
 const weekDays = [
@@ -215,14 +172,11 @@ const data = reactive({
     pageNum: 1,
     pageSize: 10,
     planName: undefined,
-    configType: undefined,
     status: undefined
   },
   rules: {
     planName: [{ required: true, message: "请输入方案名称", trigger: "blur" }],
-    configType: [{ required: true, message: "请选择配置模式", trigger: "change" }],
     userIds: [{ required: true, type: 'array', message: "请选择员工", trigger: "change" }],
-    dates: [{ required: true, type: 'array', message: "请选择休息日期", trigger: "change" }],
     effectiveDate: [{ required: true, message: "生效日期不能为空", trigger: "change" }]
   }
 })
@@ -251,12 +205,9 @@ function reset() {
   form.value = {
     planId: undefined,
     planName: '',
-    configType: '0',
     userIds: [],
     monday: '0', tuesday: '0', wednesday: '0', thursday: '0', friday: '0',
     saturday: '1', sunday: '1',
-    dates: [],
-    reason: '',
     effectiveDate: proxy.parseTime(new Date(), '{y}-{m}-{d}'),
     status: '0'
   }
@@ -266,26 +217,21 @@ function reset() {
 
 function handleAdd() {
   reset()
-  isEdit.value = false
   open.value = true
   title.value = "新增休息日方案"
 }
 
 function handleUpdate(row) {
   reset()
-  isEdit.value = true
   const planId = row.planId || ids.value[0]
   getRestPlan(planId).then(response => {
     const data = response.data
     form.value = {
       planId: data.planId,
       planName: data.planName,
-      configType: data.configType,
       userIds: (data.employees || []).map(e => e.userId),
       monday: data.monday, tuesday: data.tuesday, wednesday: data.wednesday,
       thursday: data.thursday, friday: data.friday, saturday: data.saturday, sunday: data.sunday,
-      dates: (data.dates || []).map(d => d.restDate),
-      reason: (data.dates && data.dates[0]) ? (data.dates[0].reason || '') : '',
       effectiveDate: data.effectiveDate,
       status: data.status
     }

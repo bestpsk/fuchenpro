@@ -24,12 +24,17 @@ class AuthMiddleware implements MiddlewareInterface
         '/register',
         '/captchaImage',
         '/logout',
+        '/train/studyLog/end',  // 学习结束接口，会话ID本身即为凭证，支持 sendBeacon 无 Token 调用
     ];
 
     // 不需要认证的路径前缀（动态路径参数场景，如会话ID即凭证的文件流接口）
     protected $whitelistPrefix = [
         '/train/studyLog/file/',  // DRM文件流接口，会话ID本身即为临时凭证
     ];
+
+    // /profile/upload/ 路径下允许匿名访问的图片扩展名（<img>标签无法携带Authorization头）
+    // 非图片文件（如.pdf/.doc/.sql等）需认证后访问，防止敏感文档未授权泄露
+    protected $publicImageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico'];
 
     // 处理请求：白名单和公共接口直接放行，其他请求校验JWT令牌并自动续期
     public function process(Request $request, callable $handler): Response
@@ -43,6 +48,14 @@ class AuthMiddleware implements MiddlewareInterface
         // 前缀匹配白名单（用于动态路径参数的免认证接口）
         foreach ($this->whitelistPrefix as $prefix) {
             if (strpos($path, $prefix) === 0) {
+                return $handler($request);
+            }
+        }
+
+        // /profile/upload/ 路径仅允许图片文件匿名访问，非图片文件需认证
+        if (strpos($path, '/profile/upload/') === 0) {
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            if (in_array($extension, $this->publicImageExtensions)) {
                 return $handler($request);
             }
         }

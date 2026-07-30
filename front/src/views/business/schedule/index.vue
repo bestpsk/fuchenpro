@@ -64,13 +64,13 @@
                 v-for="day in daysInMonth"
                 :key="'d-' + rowIndex + '-' + day"
                 :class="['day-cell', { selected: isSelectedDay(rowIndex, day), 'rest-day': isRestDayForUser(row.userId, day), 'leave-day': isLeaveDayForUser(row.userId, day) }]"
-                :style="getLeaveInfo(row.userId, day) ? { background: getLeaveInfo(row.userId, day).color + '22' } : {}"
+                :style="getRestInfo(row.userId, day) ? { background: getRestInfo(row.userId, day).color + '22' } : (getLeaveInfo(row.userId, day) ? { background: getLeaveInfo(row.userId, day).color + '22' } : {})"
                 :data-day="day"
                 @mouseenter="handleCellEnter(rowIndex, day)"
                 @click.stop="handleCellClick(row, day)"
               >
-                <span v-if="isRestDayForUser(row.userId, day)" class="rest-label">休息</span>
-                <span v-else-if="getLeaveInfo(row.userId, day)" class="leave-label" :style="{ color: getLeaveInfo(row.userId, day).color }">{{ getLeaveInfo(row.userId, day).label }}</span>
+                <span v-if="getRestInfo(row.userId, day)" class="rest-label" :style="{ color: getRestInfo(row.userId, day).color, background: getRestInfo(row.userId, day).color + '1A', border: '1px solid ' + getRestInfo(row.userId, day).color + '40' }">{{ getRestInfo(row.userId, day).typeName }}</span>
+                <span v-else-if="getLeaveInfo(row.userId, day)" class="leave-label" :style="{ color: getLeaveInfo(row.userId, day).color, background: getLeaveInfo(row.userId, day).color + '1A', border: '1px solid ' + getLeaveInfo(row.userId, day).color + '40' }">{{ getLeaveInfo(row.userId, day).label }}</span>
               </div>
               <template v-for="(merged, mIdx) in getMergedSchedules(row)" :key="'m-' + rowIndex + '-' + merged.startDay">
                 <div
@@ -282,6 +282,19 @@
                     />
                   </template>
                 </el-table-column>
+                <el-table-column label="休息日" align="center" min-width="200">
+                  <template #default="scope">
+                    <div v-if="scope.row.restDates && scope.row.restDates.length > 0">
+                      <el-tag v-for="(d, idx) in scope.row.restDates" :key="idx" size="small" type="info" style="margin: 2px">{{ typeof d === 'string' ? d.substring(5) : d.date.substring(5) }}</el-tag>
+                    </div>
+                    <span v-else style="color: #999">未配置</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" align="center" min-width="100" v-hasPermi="['business:employeeConfig:edit']">
+                  <template #default="scope">
+                    <el-button link type="primary" @click="openRestDateDialog(scope.row)">配置休息日</el-button>
+                  </template>
+                </el-table-column>
               </el-table>
 
               <pagination
@@ -394,6 +407,95 @@
       </template>
     </el-dialog>
 
+    <!-- 休息日配置对话框（增强版：休假类型选择器+日历标注） -->
+    <el-dialog title="配置休息日" v-model="restDateOpen" width="640px" append-to-body @open="onRestDialogOpen">
+      <div style="margin-bottom: 16px">
+        <span style="color: #666">员工：</span>
+        <span style="font-weight: bold">{{ restDateUserName }}</span>
+      </div>
+
+      <!-- 休假类型选择器 -->
+      <div style="margin-bottom: 16px">
+        <div style="font-size: 14px; color: #333; margin-bottom: 8px">
+          <el-icon style="vertical-align: -2px; color: #3D6DF7"><Calendar /></el-icon>
+          休息日类型
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <el-tag
+            v-for="t in leaveTypes"
+            :key="t.typeId"
+            :type="String(selectedTypeId) === String(t.typeId) ? 'primary' : 'info'"
+            :effect="String(selectedTypeId) === String(t.typeId) ? 'dark' : 'plain'"
+            style="cursor: pointer"
+            @click="onTypeSelect(t.typeId, t.typeName)"
+          >{{ t.typeName }}</el-tag>
+          <span v-if="leaveTypes.length === 0" style="color: #909399; font-size: 12px">暂无休假类型，请到休假管理-休假类型添加</span>
+        </div>
+      </div>
+
+      <!-- 图例 -->
+      <div v-if="allRestTypeList.length > 0" class="rest-type-legend">
+        <div v-for="t in allRestTypeList" :key="t.type" class="rest-type-legend-item">
+          <span class="rest-type-legend-dot"></span>
+          <span class="rest-type-legend-text">{{ t.name }} {{ t.count }}天</span>
+        </div>
+      </div>
+
+      <!-- 月份导航 -->
+      <div class="rest-cal-month-bar">
+        <el-button link icon="ArrowLeft" @click="changeRestMonth(-1)"></el-button>
+        <span class="rest-cal-month-text">{{ restCalendarMonth }}</span>
+        <el-button link icon="ArrowRight" @click="changeRestMonth(1)"></el-button>
+      </div>
+
+      <!-- 自定义日历网格 -->
+      <div class="rest-calendar-grid">
+        <div class="rest-cal-weekday" v-for="w in weekdays" :key="w">{{ w }}</div>
+        <div
+          v-for="cell in calendarCells"
+          :key="cell.key"
+          class="rest-cal-cell"
+          :class="{
+            'rest-cal-empty': !cell.date,
+            'rest-cal-selected': cell.selected,
+            'rest-cal-rotated': cell.restType && cell.restType !== 'custom',
+          }"
+          @click="onCellClick(cell)"
+        >
+          <template v-if="cell.date">
+            <span class="rest-cal-day">{{ cell.day }}</span>
+            <span v-if="cell.restType" class="rest-cal-tag">
+              {{ cell.restTypeName }}
+            </span>
+          </template>
+        </div>
+      </div>
+
+      <!-- 已选日期列表 -->
+      <div style="margin-top: 16px">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+          <span style="font-size: 14px; color: #333">已选休息日（{{ customDateList.length }}天）</span>
+          <span style="font-size: 12px; color: #999">点击日历格子选择/取消日期</span>
+        </div>
+        <div v-if="customDateList.length > 0" style="display: flex; flex-wrap: wrap; gap: 6px">
+          <el-tag
+            v-for="item in customDateList"
+            :key="item.date"
+            size="small"
+            closable
+            @close="removeCustomDate(item.date)"
+            style="margin: 2px"
+          >{{ item.date.substring(5) }} <span style="color: #3D6DF7; margin-left: 4px">{{ item.typeName }}</span></el-tag>
+        </div>
+        <el-empty v-else description="点击日历选择休息日" :image-size="40" style="padding: 10px 0" />
+      </div>
+
+      <template #footer>
+        <el-button @click="restDateOpen = false">取 消</el-button>
+        <el-button type="primary" :loading="restSaving" @click="submitRestDates">确 定</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -406,8 +508,8 @@
 import { listSchedule, getSchedule, getEmployeeSchedule, getEnterpriseSchedule, addSchedule, addScheduleBatch, updateSchedule, delSchedule, getScheduleDates } from "@/api/business/schedule"
 import { listUser, deptTreeSelect } from "@/api/system/user"
 import { listEnterprise, searchEnterprise as searchEnterpriseApi } from "@/api/business/enterprise"
-import { listEmployeeConfig, updateSchedulable } from "@/api/business/employeeConfig"
-import { getLeaveCalendar, getRestCalendar } from "@/api/business/leave"
+import { listEmployeeConfig, updateSchedulable, saveRestDates, getAllRestDatesAll, getAllRestDatesBatch } from "@/api/business/employeeConfig"
+import { getLeaveCalendar, listAllLeaveType } from "@/api/business/leave"
 import TreePanel from "@/components/TreePanel"
 
 const { proxy } = getCurrentInstance()
@@ -997,6 +1099,186 @@ async function handleSchedulableChange(row) {
   } catch (error) { row.isSchedulable = row.isSchedulable === '1' ? '0' : '1'; proxy.$modal.msgError("更新失败") }
 }
 
+// ==================== 休息日配置（增强版：休假类型选择器+日历标注） ====================
+const restDateOpen = ref(false)
+const restDateUserId = ref(null)
+const restDateUserName = ref('')
+const restSaving = ref(false)
+
+// 休假类型列表
+const leaveTypes = ref([])
+// 当前选择的休假类型
+const selectedTypeId = ref(null)
+const selectedTypeName = ref('')
+// 所有休息日数据（含轮休/请假/自定义/法定假日），用于日历标注
+const allRestDateMap = ref({})
+const allRestTypeList = ref([])
+// 自定义休息日 map: {dateStr: {date, typeId, typeName}}
+const customDateMap = ref({})
+
+const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+
+// 当前日历月份
+const restCalendarMonth = ref('')
+
+// 已选自定义休息日列表（排序后展示）
+const customDateList = computed(() => {
+  return Object.values(customDateMap.value).sort((a, b) => a.date.localeCompare(b.date))
+})
+
+// 日历网格单元格
+const calendarCells = computed(() => {
+  const [year, month] = restCalendarMonth.value.split('-').map(Number)
+  const firstDay = new Date(year, month - 1, 1)
+  const lastDay = new Date(year, month, 0)
+  const firstDayWeek = firstDay.getDay()
+  const daysInMonth = lastDay.getDate()
+
+  const cells = []
+  // 前置空格
+  for (let i = 0; i < firstDayWeek; i++) {
+    cells.push({ key: `empty-${i}`, date: null, day: '', selected: false })
+  }
+  // 日期格子
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const restInfo = allRestDateMap.value[dateStr]
+    const isCustomSelected = !!customDateMap.value[dateStr]
+    cells.push({
+      key: dateStr,
+      date: dateStr,
+      day,
+      selected: isCustomSelected,
+      restType: restInfo?.type || '',
+      restTypeName: restInfo?.typeName || '',
+      restColor: restInfo?.color || ''
+    })
+  }
+  return cells
+})
+
+/** 打开休息日配置弹窗 */
+function openRestDateDialog(row) {
+  restDateUserId.value = row.userId
+  restDateUserName.value = row.nickName || row.userName
+  selectedTypeId.value = null
+  selectedTypeName.value = ''
+  allRestDateMap.value = {}
+  allRestTypeList.value = []
+  customDateMap.value = {}
+  leaveTypes.value = []
+  restCalendarMonth.value = queryParams.value.yearMonth
+  restDateOpen.value = true
+}
+
+/** 切换日历月份（上一月/下一月），customDateMap 和 allRestDateMap 已含全部数据无需重新请求 */
+function changeRestMonth(delta) {
+  const [y, m] = restCalendarMonth.value.split('-').map(Number)
+  const d = new Date(y, m - 1 + delta, 1)
+  restCalendarMonth.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** 弹窗打开后加载数据（使用全量接口，支持跨月查看和已存日期回显） */
+async function onRestDialogOpen() {
+  const userId = restDateUserId.value
+  if (!userId) return
+  try {
+    const [typeRes, allRes] = await Promise.all([
+      listAllLeaveType(),
+      getAllRestDatesAll(userId)
+    ])
+    leaveTypes.value = (typeRes.data || []).filter(t => t.status === '0' || t.status === 0 || t.status === undefined)
+
+    const allData = allRes.data || {}
+    const dates = allData.dates || []
+    const map = {}
+    dates.forEach(item => { map[item.date] = item })
+    allRestDateMap.value = map
+    allRestTypeList.value = allData.typeList || []
+
+    // 提取已有自定义休息日（type === 'custom'）
+    const customMap = {}
+    dates.forEach(item => {
+      if (item.type === 'custom') {
+        customMap[item.date] = {
+          date: item.date,
+          typeId: item.typeId ?? null,
+          typeName: item.typeName || ''
+        }
+      }
+    })
+    customDateMap.value = customMap
+  } catch (e) {
+    console.error('加载休息日数据失败:', e)
+  }
+}
+
+/** 选择休假类型 */
+function onTypeSelect(typeId, typeName) {
+  selectedTypeId.value = typeId
+  selectedTypeName.value = typeName
+}
+
+/** 点击日历单元格选择/取消日期 */
+function onCellClick(cell) {
+  if (!cell.date) return
+  const restInfo = allRestDateMap.value[cell.date]
+  // 已有轮休/请假/假日的日期不允许选择（仅标注参考）
+  if (restInfo && restInfo.type !== 'custom') return
+
+  const newMap = { ...customDateMap.value }
+  if (newMap[cell.date]) {
+    delete newMap[cell.date]
+  } else {
+    if (!selectedTypeId.value) {
+      proxy.$modal.msgWarning('请先选择休息日类型')
+      return
+    }
+    newMap[cell.date] = {
+      date: cell.date,
+      typeId: selectedTypeId.value,
+      typeName: selectedTypeName.value
+    }
+  }
+  customDateMap.value = newMap
+}
+
+/** 移除单个自定义休息日 */
+function removeCustomDate(date) {
+  const newMap = { ...customDateMap.value }
+  delete newMap[date]
+  customDateMap.value = newMap
+}
+
+/** 保存休息日配置 */
+async function submitRestDates() {
+  // 验证：每个日期必须有类型
+  const restDates = Object.values(customDateMap.value)
+  if (restDates.length > 0) {
+    const noType = restDates.find(item => !item.typeId)
+    if (noType) {
+      proxy.$modal.msgError('日期 ' + noType.date + ' 未选择休息日类型，请重新选择')
+      return
+    }
+  }
+  restSaving.value = true
+  try {
+    const submitData = restDates.map(item => ({
+      date: item.date,
+      typeId: item.typeId,
+      typeName: item.typeName
+    }))
+    await saveRestDates(restDateUserId.value, submitData)
+    proxy.$modal.msgSuccess("保存成功")
+    restDateOpen.value = false
+    queryConfig()
+  } catch (e) {
+    proxy.$modal.msgError(e.message || "保存失败")
+  } finally {
+    restSaving.value = false
+  }
+}
+
 async function loadRestDateMap() {
   try {
     const userIds = scheduleData.value.map(r => r.userId).filter(Boolean)
@@ -1004,15 +1286,16 @@ async function loadRestDateMap() {
       restDateMap.value = {}
       return
     }
-    const res = await getRestCalendar({
-      yearMonth: queryParams.value.yearMonth,
-      userIds: userIds.join(',')
-    })
-    // 后端返回数组格式 [{userId, restDates}]，转换为 {userId: [dates]} map
+    // 使用批量API获取所有休息日（含轮休/请假/自定义/法定假日），带类型信息
+    const res = await getAllRestDatesBatch(userIds, queryParams.value.yearMonth)
     const arr = res.data || []
     const map = {}
     arr.forEach(item => {
-      map[item.userId] = item.restDates || []
+      const userMap = {}
+      ;(item.dates || []).forEach(d => {
+        userMap[d.date] = d
+      })
+      map[item.userId] = userMap
     })
     restDateMap.value = map
   } catch (e) {
@@ -1023,10 +1306,20 @@ async function loadRestDateMap() {
 
 function isRestDayForUser(userId, day) {
   if (!userId || !day) return false
-  const dates = restDateMap.value[userId]
-  if (!dates || !Array.isArray(dates)) return false
+  const userMap = restDateMap.value[userId]
+  if (!userMap) return false
   const [y, m] = queryParams.value.yearMonth.split('-')
-  return dates.includes(`${y}-${m}-${String(day).padStart(2, '0')}`)
+  const dateStr = `${y}-${m}-${String(day).padStart(2, '0')}`
+  return !!userMap[dateStr]
+}
+
+function getRestInfo(userId, day) {
+  if (!userId || !day) return null
+  const userMap = restDateMap.value[userId]
+  if (!userMap) return null
+  const [y, m] = queryParams.value.yearMonth.split('-')
+  const dateStr = `${y}-${m}-${String(day).padStart(2, '0')}`
+  return userMap[dateStr] || null
 }
 
 async function loadLeaveDateMap() {
@@ -1212,8 +1505,6 @@ onBeforeUnmount(() => {
 }
 
 .day-cell.rest-day {
-  background: linear-gradient(135deg, var(--el-color-danger-light-9, #fff0f0) 0%, var(--el-color-danger-light-8, #ffe8e8) 100%);
-  border-color: var(--el-color-danger-light-5, #fbc4c4);
   cursor: not-allowed;
   display: flex;
   align-items: center;
@@ -1230,10 +1521,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  color: #F56C6C;
   font-weight: 600;
-  background: rgba(245, 108, 108, 0.08);
-  border: 1px solid rgba(245, 108, 108, 0.25);
   border-radius: 3px;
   padding: 1px 5px;
   line-height: 16px;
@@ -1257,8 +1545,6 @@ onBeforeUnmount(() => {
   justify-content: center;
   font-size: 11px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 3px;
   padding: 1px 5px;
   line-height: 16px;
@@ -1342,5 +1628,106 @@ onBeforeUnmount(() => {
 /* 排班设置 tab 样式 - 左树右表布局 */
 .config-layout.tree-sidebar-manage-wrap {
   min-height: calc(100vh - 220px);
+}
+
+/* 休息日配置弹窗 - 自定义日历网格 */
+.rest-cal-month-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.rest-cal-month-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  min-width: 90px;
+  text-align: center;
+}
+.rest-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 8px;
+}
+.rest-cal-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #909399;
+  padding: 6px 0;
+}
+.rest-cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  background: #fff;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rest-cal-cell:hover {
+  border-color: #c0c4cc;
+}
+.rest-cal-empty {
+  background: transparent;
+  cursor: default;
+  pointer-events: none;
+}
+.rest-cal-empty:hover {
+  border-color: transparent;
+}
+.rest-cal-selected {
+  background: #3D6DF7;
+  border-color: #3D6DF7;
+  .rest-cal-day { color: #fff; font-weight: 600; }
+  .rest-cal-tag { color: rgba(255,255,255,0.9) !important; }
+}
+.rest-cal-rotated {
+  background: #fdf6ec;
+  cursor: default;
+  &:hover { border-color: transparent; }
+}
+.rest-cal-day {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+.rest-cal-tag {
+  font-size: 10px;
+  color: #3D6DF7;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.rest-type-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.rest-type-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rest-type-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3D6DF7;
+}
+.rest-type-legend-text {
+  font-size: 12px;
+  color: #666;
 }
 </style>

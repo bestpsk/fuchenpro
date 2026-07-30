@@ -110,12 +110,12 @@ class BizRepaymentService
             try {
                 $archiveService = new BizCustomerArchiveService();
                 $archiveService->insertArchiveFromRepayment($repayment);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \support\Log::error('写入还款档案失败: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             }
 
             return $repayment;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Db::rollBack();
             throw $e;
         }
@@ -172,8 +172,16 @@ class BizRepaymentService
 
     public function updateRepayment($data)
     {
+        $repayment = BizRepaymentRecord::find($data['repayment_id']);
+        if (!$repayment) {
+            throw new \Exception('还款记录不存在');
+        }
+        if ($repayment->status !== '0') {
+            throw new \Exception('只有待审核状态的还款记录才能修改');
+        }
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizRepaymentRecord::where('repayment_id', $data['repayment_id'])->update($data);
+        $repayment->fill($data)->save();
+        return true;
     }
 
     // 审核还款记录
@@ -202,7 +210,7 @@ class BizRepaymentService
 
             Db::commit();
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Db::rollBack();
             throw $e;
         }
@@ -210,31 +218,28 @@ class BizRepaymentService
 
     public function cancelRepayment($repaymentId)
     {
-        $repayment = BizRepaymentRecord::find($repaymentId);
-        if (!$repayment) {
-            return false;
-        }
-        
-        if ($repayment->status !== '0') {
-            return false;
-        }
-        
         Db::beginTransaction();
         try {
+            $repayment = BizRepaymentRecord::where('repayment_id', $repaymentId)->lockForUpdate()->first();
+            if (!$repayment || $repayment->status !== '0') {
+                Db::rollBack();
+                return false;
+            }
+
             $repayment->status = '2';
             $repayment->update_time = date('Y-m-d H:i:s');
             $repayment->save();
-            
+
             if ($repayment->repayment_order_id) {
                 BizSalesOrder::where('order_id', $repayment->repayment_order_id)->update([
                     'order_status' => '4',
                     'update_time' => date('Y-m-d H:i:s')
                 ]);
             }
-            
+
             Db::commit();
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Db::rollBack();
             throw $e;
         }

@@ -84,7 +84,7 @@ class BizStockPrepareController
         try {
             $result = $service->createFromOrder($orderId, $request->loginUser);
             return AjaxResult::success($result);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -132,7 +132,7 @@ class BizStockPrepareController
         try {
             $result = $service->createFromPlan($planId, $items, $request->loginUser);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

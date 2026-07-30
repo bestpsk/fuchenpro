@@ -122,26 +122,12 @@ class BizStockInService
 
     public function generateStockInNo()
     {
-        $prefix = 'RK' . date('Ymd');
-        $key = 'stock_in_no:' . date('Ymd');
-        $seq = \support\Redis::incr($key);
-        \support\Redis::expire($key, 86400);
-        $stockInNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-
-        // 数据库兜底：如果序号已存在，从数据库最大序号继续
-        $exists = BizStockIn::where('stock_in_no', $stockInNo)->exists();
-        if ($exists) {
-            $last = BizStockIn::where('stock_in_no', 'like', $prefix . '%')
-                ->orderBy('stock_in_id', 'desc')->first();
-            if ($last) {
-                $lastSeq = intval(substr($last->stock_in_no, -3));
-                $seq = $lastSeq + 1;
-                \support\Redis::set($key, $seq);
-                \support\Redis::expire($key, 86400);
-            }
-            $stockInNo = $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
-        }
-        return $stockInNo;
+        return BizWmsHelper::generateDocNo(
+            'RK' . date('Ymd'),
+            'stock_in_no:' . date('Ymd'),
+            BizStockIn::class,
+            'stock_in_no'
+        );
     }
 
     // 新增入库单，生成入库编号并创建明细
@@ -156,19 +142,7 @@ class BizStockInService
         $totalQuantity = 0;
         $totalAmount = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-            
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-                if (isset($item['_main_price']) && $item['_main_price'] > 0) {
-                    $item['purchase_price'] = bcdiv($item['_main_price'], $packQty, 4);
-                }
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-            
+            BizWmsHelper::convertUnitQuantity($item, 'purchase_price');
             $item['amount'] = bcmul($item['quantity'] ?? 0, $item['purchase_price'] ?? 0, 2);
             $totalQuantity += intval($item['quantity'] ?? 0);
             $totalAmount = bcadd($totalAmount, $item['amount'], 2);
@@ -206,19 +180,7 @@ class BizStockInService
         $totalQuantity = 0;
         $totalAmount = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-            
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-                if (isset($item['_main_price']) && $item['_main_price'] > 0) {
-                    $item['purchase_price'] = bcdiv($item['_main_price'], $packQty, 4);
-                }
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-            
+            BizWmsHelper::convertUnitQuantity($item, 'purchase_price');
             $item['amount'] = bcmul($item['quantity'] ?? 0, $item['purchase_price'] ?? 0, 2);
             $totalQuantity += intval($item['quantity'] ?? 0);
             $totalAmount = bcadd($totalAmount, $item['amount'], 2);
@@ -274,50 +236,54 @@ class BizStockInService
         if (empty($warehouseId)) {
             return ['success' => false, 'msg' => '入库单未指定仓库'];
         }
-        Db::transaction(function () use ($stockInId, $stockIn, $items, $warehouseId) {
-            foreach ($items as $item) {
-                // 自动计算有效期：如果 expiry_date 为空但有 production_date 和 shelf_life_days
-                if (empty($item->expiry_date) && !empty($item->production_date)) {
-                    $product = BizProduct::find($item->product_id);
-                    if ($product && !empty($product->shelf_life_days)) {
-                        $item->expiry_date = date('Y-m-d', strtotime($item->production_date . " +{$product->shelf_life_days} days"));
-                        $item->save();
+        try {
+            Db::transaction(function () use ($stockInId, $stockIn, $items, $warehouseId) {
+                foreach ($items as $item) {
+                    // 自动计算有效期：如果 expiry_date 为空但有 production_date 和 shelf_life_days
+                    if (empty($item->expiry_date) && !empty($item->production_date)) {
+                        $product = BizProduct::find($item->product_id);
+                        if ($product && !empty($product->shelf_life_days)) {
+                            $item->expiry_date = date('Y-m-d', strtotime($item->production_date . " +{$product->shelf_life_days} days"));
+                            $item->save();
+                        }
                     }
-                }
 
-                $actualQty = intval($item->quantity);
-                $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
-                if (!$inventory) {
-                    $product = BizProduct::find($item->product_id);
-                    $inventory = BizInventory::create([
-                        'product_id' => $item->product_id,
-                        'warehouse_id' => $warehouseId,
-                        'quantity' => 0,
-                        'warn_qty' => $product ? ($product->warn_qty ?? 0) : 0,
-                        'create_time' => date('Y-m-d H:i:s'),
-                    ]);
-                }
-                $inventory->quantity = intval($inventory->quantity) + $actualQty;
-                $inventory->last_stock_in_time = date('Y-m-d H:i:s');
-                $inventory->update_time = date('Y-m-d H:i:s');
+                    $actualQty = intval($item->quantity);
+                    $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
+                    if (!$inventory) {
+                        $product = BizProduct::find($item->product_id);
+                        $inventory = BizInventory::create([
+                            'product_id' => $item->product_id,
+                            'warehouse_id' => $warehouseId,
+                            'quantity' => 0,
+                            'warn_qty' => $product ? ($product->warn_qty ?? 0) : 0,
+                            'create_time' => date('Y-m-d H:i:s'),
+                        ]);
+                    }
+                    $inventory->quantity = intval($inventory->quantity) + $actualQty;
+                    $inventory->last_stock_in_time = date('Y-m-d H:i:s');
+                    $inventory->update_time = date('Y-m-d H:i:s');
 
-                // 更新最早有效期
-                $earliestExpiry = BizStockInItem::where('product_id', $item->product_id)
-                    ->where('warehouse_id', $warehouseId)
-                    ->whereRaw('quantity > shipped_quantity')
-                    ->whereNotNull('expiry_date')
-                    ->min('expiry_date');
-                if ($earliestExpiry) {
-                    $inventory->earliest_expiry = $earliestExpiry;
-                }
+                    // 更新最早有效期
+                    $earliestExpiry = BizStockInItem::where('product_id', $item->product_id)
+                        ->where('warehouse_id', $warehouseId)
+                        ->whereRaw('quantity > shipped_quantity')
+                        ->whereNotNull('expiry_date')
+                        ->min('expiry_date');
+                    if ($earliestExpiry) {
+                        $inventory->earliest_expiry = $earliestExpiry;
+                    }
 
-                $inventory->save();
-            }
-            BizStockIn::where('stock_in_id', $stockInId)->update([
-                'status' => '1',
-                'update_time' => date('Y-m-d H:i:s'),
-            ]);
-        });
+                    $inventory->save();
+                }
+                BizStockIn::where('stock_in_id', $stockInId)->update([
+                    'status' => '1',
+                    'update_time' => date('Y-m-d H:i:s'),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            return ['success' => false, 'msg' => $e->getMessage()];
+        }
         return ['success' => true, 'msg' => '入库确认成功'];
     }
 
@@ -340,6 +306,12 @@ class BizStockInService
                 }
                 foreach ($items as $item) {
                     $actualQty = intval($item->quantity);
+                    // 校验该入库批次是否已被出库消耗，避免取消后导致 shipped_quantity 残留与实际库存不符
+                    if (intval($item->shipped_quantity) > 0) {
+                        $product = BizProduct::find($item->product_id);
+                        $productName = $product ? $product->product_name : $item->product_id;
+                        throw new \Exception("货品【{$productName}】已出库 {$item->shipped_quantity} 件，无法取消入库确认");
+                    }
                     $inventory = BizInventory::where('product_id', $item->product_id)->where('warehouse_id', $warehouseId)->lockForUpdate()->first();
                     if (!$inventory || $inventory->quantity < $actualQty) {
                         $product = BizProduct::find($item->product_id);
@@ -357,7 +329,7 @@ class BizStockInService
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
 

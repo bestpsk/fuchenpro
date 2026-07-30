@@ -5,7 +5,7 @@
       <template #header>
         <div class="card-header">
           <span>备份配置</span>
-          <el-button type="primary" size="small" @click="saveConfig">保存配置</el-button>
+          <el-button type="primary" size="small" @click="saveConfig" v-hasPermi="['system:backup:add']">保存配置</el-button>
         </div>
       </template>
       <el-form :inline="true" :model="configForm" label-width="120px">

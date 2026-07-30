@@ -44,7 +44,7 @@
 </template>
 
 <script setup name="TrainStudyPreview">
-import { ref, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueOfficePdf from '@vue-office/pdf'
 import VueOfficeDocx from '@vue-office/docx'
@@ -244,6 +244,23 @@ async function handleEndStudy() {
 
 onMounted(() => {
   loadMaterial()
+})
+
+// 监听路由参数变化（组件复用时 onMounted 不触发，需手动监听）
+watch(() => route.query.materialId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    // 重置状态
+    material.value = null
+    arrayBuffer.value = null
+    textContent.value = ''
+    fileUrl.value = ''
+    sessionId.value = ''
+    hasEnded = false
+    elapsedSeconds.value = 0
+    loading.value = true
+    stopTimer()
+    loadMaterial()
+  }
 })
 
 // 兜底：组件卸载时结束学习

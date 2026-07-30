@@ -713,12 +713,12 @@ function parseImages(jsonStr) {
 function submitShip() {
   shipFormRef.value.validate(valid => {
     if (valid) {
-      const data = { ship_type: shipForm.value.shipType }
+      const data = { shipType: shipForm.value.shipType }
       if (shipForm.value.shipType === '2') {
-        data.logistics_company = shipForm.value.logisticsCompany
-        data.logistics_no = shipForm.value.logisticsNo
+        data.logisticsCompany = shipForm.value.logisticsCompany
+        data.logisticsNo = shipForm.value.logisticsNo
       }
-      if (shipForm.value.shipmentImages) data.shipment_images = shipForm.value.shipmentImages
+      if (shipForm.value.shipmentImages) data.shipmentImages = shipForm.value.shipmentImages
       if (shipForm.value.remark) data.remark = shipForm.value.remark
       shipStockOut(currentShipRow.value.stockOutId, data).then(() => {
         proxy.$modal.msgSuccess('发货成功')

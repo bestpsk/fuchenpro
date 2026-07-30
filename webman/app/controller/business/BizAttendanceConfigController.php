@@ -117,7 +117,7 @@ class BizAttendanceConfigController
     // 获取当前登录用户的考勤规则（根据用户关联的配置计算）
     public function getUserRule(Request $request)
     {
-        $userId = $request->loginUser->userId;
+        $userId = $request->loginUser->user->user_id;
         $clockType = $request->input('clock_type', '0');
         $rule = $this->configService->getUserRuleByClockType($userId, $clockType);
         return AjaxResult::success($rule);

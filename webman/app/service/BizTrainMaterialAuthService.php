@@ -122,11 +122,13 @@ class BizTrainMaterialAuthService
 
         $authorizedIds = array_unique(array_merge($userAuthMaterialIds, $deptAuthMaterialIds));
 
-        // 无限制的材料 + 被授权的材料
+        // 无限制的材料 + 被授权的材料（用闭包包裹 OR 条件，确保 del_flag 和 status 对两个分支都生效）
         $allMaterialIds = BizTrainMaterial::where('del_flag', '0')
             ->where('status', '0')
-            ->whereNotIn('material_id', $restrictedMaterialIds)
-            ->orWhereIn('material_id', $authorizedIds)
+            ->where(function ($q) use ($restrictedMaterialIds, $authorizedIds) {
+                $q->whereNotIn('material_id', $restrictedMaterialIds)
+                  ->orWhereIn('material_id', $authorizedIds);
+            })
             ->pluck('material_id')
             ->toArray();
 

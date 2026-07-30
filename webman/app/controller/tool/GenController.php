@@ -30,7 +30,7 @@ class GenController
     // 根据ID获取代码生成表详情（含列配置）
     public function getInfo(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:list')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'tool:gen:query')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $parts = explode('/', $request->path());

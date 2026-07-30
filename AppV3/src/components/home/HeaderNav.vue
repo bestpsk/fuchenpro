@@ -59,7 +59,7 @@ const welcomeSlogan = ref('开启美好的一天')
 
 /** 用户信息：头像（默认占位图）、昵称（默认"用户"）、角色 */
 const userInfo = computed(() => ({
-  avatar: userStore.getAvatar || '/static/images/profile.jpg',
+  avatar: userStore.getAvatar || (import.meta.env.BASE_URL + 'static/images/profile.jpg'),
   name: userStore.getNickName || userStore.getName || '用户',
   role: [userStore.getDeptName, userStore.getPostName].filter(Boolean).join('·') || '美容顾问'
 }))

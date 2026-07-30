@@ -160,8 +160,17 @@ class BizTrainStudyLogService
             $log->fill($update)->save();
         }
 
-        // 续期临时URL
-        $this->setTempUrl($sessionId, $this->getTempUrl($sessionId));
+        // 续期临时URL：若 Redis Key 已过期（用户离开>10分钟），从材料记录重建
+        $url = $this->getTempUrl($sessionId);
+        if (!$url) {
+            $material = BizTrainMaterial::find($log->material_id);
+            if ($material) {
+                $url = $this->buildFileUrl($material->file_url);
+            }
+        }
+        if ($url) {
+            $this->setTempUrl($sessionId, $url);
+        }
         return true;
     }
 
@@ -178,10 +187,11 @@ class BizTrainStudyLogService
         $maxDuration = $now - $start; // 不超过实际跨度
         $validDuration = max(0, min(intval($validDuration), $maxDuration));
 
-        $log->end_time = date('Y-m-d H:i:s', $now);
-        $log->valid_duration = $validDuration;
-        $log->status = '1';
-        $log->save();
+        $log->fill([
+            'end_time' => date('Y-m-d H:i:s', $now),
+            'valid_duration' => $validDuration,
+            'status' => '1',
+        ])->save();
 
         // 清理临时URL
         RedisService::delete(self::TEMP_URL_PREFIX . $sessionId);

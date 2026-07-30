@@ -98,6 +98,11 @@ class SysRoleController
             return AjaxResult::error('不允许删除超级管理员角色');
         }
         $service = new SysRoleService();
+        // 删除前检查是否有用户关联该角色
+        $userCount = $service->countUsersByRoleIds($roleIds);
+        if ($userCount > 0) {
+            return AjaxResult::error('该角色已分配给 ' . $userCount . ' 个用户，请先取消用户授权后再删除');
+        }
         $result = $service->deleteRoleByIds($roleIds);
         return AjaxResult::toAjax($result ? 1 : 0);
     }

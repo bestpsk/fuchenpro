@@ -169,13 +169,21 @@ class BizCustomerService
     public function updateCustomer($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        $updateData = array_intersect_key($data, array_flip((new BizCustomer())->getFillable()));
-        return BizCustomer::where('customer_id', $data['customer_id'])->update($updateData);
+        $customer = BizCustomer::find($data['customer_id']);
+        if (!$customer) {
+            throw new \Exception('客户不存在');
+        }
+        $customer->fill($data)->save();
+        return true;
     }
 
-    // 根据ID批量删除客户
+    // 根据ID批量删除客户，删除前检查关联订单
     public function deleteCustomerByIds($customerIds)
     {
+        $orderCount = BizSalesOrder::whereIn('customer_id', $customerIds)->count();
+        if ($orderCount > 0) {
+            throw new \Exception('存在关联订单，无法删除');
+        }
         return BizCustomer::whereIn('customer_id', $customerIds)->delete();
     }
 }

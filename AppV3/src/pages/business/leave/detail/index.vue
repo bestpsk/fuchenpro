@@ -36,11 +36,11 @@
         <view class="info-card">
           <view class="info-row">
             <text class="label">开始日期</text>
-            <text class="value">{{ leave.startDate }} {{ getSegmentName(leave.startTimeSegment) }}</text>
+            <text class="value">{{ leave.startDate }} {{ getSegmentName(leave.startTimeType) }}</text>
           </view>
           <view class="info-row">
             <text class="label">结束日期</text>
-            <text class="value">{{ leave.endDate }} {{ getSegmentName(leave.endTimeSegment) }}</text>
+            <text class="value">{{ leave.endDate }} {{ getSegmentName(leave.endTimeType) }}</text>
           </view>
           <view class="info-row">
             <text class="label">请假天数</text>
@@ -169,7 +169,7 @@ const statusMap = {
   '3': { name: '已撤销', class: 'status-warning' }
 }
 
-const segmentMap = { '1': '全天', '2': '上午', '3': '下午' }
+const segmentMap = { '0': '全天', '1': '上午', '2': '下午' }
 
 function getStatusName(value) {
   return statusMap[String(value)] ? statusMap[String(value)].name : '-'

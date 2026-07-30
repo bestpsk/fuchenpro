@@ -2,7 +2,7 @@
   <div>
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['system:userSalary:add']">新增</el-button>
       </el-col>
     </el-row>
 
@@ -41,8 +41,8 @@
       </el-table-column>
       <el-table-column label="操作" align="center" min-width="150">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleEdit(scope.row)">修改</el-button>
-          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button link type="primary" icon="Edit" @click="handleEdit(scope.row)" v-hasPermi="['system:userSalary:edit']">修改</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['system:userSalary:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>

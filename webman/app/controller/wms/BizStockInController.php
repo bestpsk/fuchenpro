@@ -60,7 +60,8 @@ class BizStockInController
             $service = new BizStockInService();
             $result = $service->insertStockIn($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('入库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -82,7 +83,8 @@ class BizStockInController
             $result = $service->updateStockIn($data);
             if (!$result) return AjaxResult::error('修改失败，入库单不存在或已确认');
             return AjaxResult::success();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('入库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -119,7 +121,8 @@ class BizStockInController
             $result = $service->confirmStockIn($id, $params);
             if (!$result['success']) return AjaxResult::error($result['msg']);
             return AjaxResult::success($result['msg']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('入库操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }

@@ -75,7 +75,8 @@ class BizSupplierController
             $service = new BizSupplierService();
             $result = $service->updateSupplier($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \support\Log::error('供应商操作失败: ' . $e->getMessage());
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }

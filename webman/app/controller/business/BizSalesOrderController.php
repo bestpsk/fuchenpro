@@ -55,7 +55,7 @@ class BizSalesOrderController
             $service = new BizSalesOrderService();
             $result = $service->insertOrder($data, $items);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('销售开单失败', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
@@ -82,7 +82,7 @@ class BizSalesOrderController
             $service = new BizSalesOrderService();
             $result = $service->updateOrder($data, $items);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }
@@ -116,7 +116,7 @@ class BizSalesOrderController
             $service = new BizSalesOrderService();
             $result = $service->enterpriseAudit($orderId, $auditBy, $action);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

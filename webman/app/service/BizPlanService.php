@@ -62,6 +62,17 @@ class BizPlanService
 
         $pageNum = intval($params['page_num'] ?? 1);
         $pageSize = intval($params['page_size'] ?? 10);
+
+        // 方案审核场景：按审核状态优先级排序（待审核→已驳回→已审核→已完成→草稿）
+        if (!empty($params['audit_priority_sort'])) {
+            $query->orderByRaw("CASE audit_status
+                WHEN '1' THEN 0
+                WHEN '4' THEN 1
+                WHEN '2' THEN 2
+                WHEN '3' THEN 3
+                WHEN '0' THEN 4
+                ELSE 5 END");
+        }
         $result = $query->orderBy('plan_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
         
         foreach ($result as $plan) {
@@ -142,9 +153,13 @@ class BizPlanService
                 'remaining_amount', 'effective_date', 'expiry_date',
                 'status', 'remark', 'update_by', 'update_time'
             ];
-            $updateData = array_intersect_key($data, array_flip($fillable));
 
-            $result = BizPlan::where('plan_id', $data['plan_id'])->update($updateData);
+            $plan = BizPlan::find($data['plan_id']);
+            if (!$plan) {
+                throw new \Exception('计划不存在');
+            }
+            $plan->fill(array_intersect_key($data, array_flip($fillable)))->save();
+            $result = true;
 
             if (!empty($items)) {
                 $this->syncPlanItems($data['plan_id'], $items);
@@ -217,25 +232,21 @@ class BizPlanService
         $passed = $data['passed'] ?? true;
         $auditRemark = $data['audit_remark'] ?? '';
 
-        $plan = BizPlan::find($planId);
-        if (!$plan || $plan->audit_status !== '1') {
-            return false;
-        }
+        return Db::transaction(function () use ($planId, $passed, $auditRemark, $data) {
+            $plan = BizPlan::where('plan_id', $planId)->lockForUpdate()->first();
+            if (!$plan || $plan->audit_status !== '1') {
+                return false;
+            }
 
-        $updateData = [
-            'audit_by' => $data['audit_by'] ?? '',
-            'audit_time' => date('Y-m-d H:i:s'),
-            'audit_remark' => $auditRemark,
-            'update_time' => date('Y-m-d H:i:s')
-        ];
-
-        if ($passed) {
-            $updateData['audit_status'] = '2';
-        } else {
-            $updateData['audit_status'] = '4';
-        }
-
-        return BizPlan::where('plan_id', $planId)->update($updateData);
+            $plan->fill([
+                'audit_by' => $data['audit_by'] ?? '',
+                'audit_time' => date('Y-m-d H:i:s'),
+                'audit_remark' => $auditRemark,
+                'audit_status' => $passed ? '2' : '4',
+                'update_time' => date('Y-m-d H:i:s')
+            ]);
+            return $plan->save();
+        });
     }
 
     // 修改方案状态

@@ -3,9 +3,7 @@
 namespace app\service;
 
 use app\model\BizAttendanceRecord;
-use app\model\BizRestPlan;
-use app\model\BizRestPlanEmployee;
-use app\model\BizRestPlanDate;
+use app\model\BizRestDay;
 use app\model\BizLeave;
 use app\model\BizHoliday;
 use app\model\SysUser;
@@ -76,9 +74,6 @@ class BizAttendanceStatsService
             Db::raw("SUM(CASE WHEN r.attendance_status = '2' THEN 1 ELSE 0 END) as early_leave_days"),
             Db::raw("SUM(CASE WHEN r.attendance_status = '3' THEN 1 ELSE 0 END) as late_early_days"),
             Db::raw("SUM(CASE WHEN r.attendance_status = '4' THEN 1 ELSE 0 END) as absent_days"),
-            Db::raw("SUM(CASE WHEN r.attendance_status = '5' THEN 1 ELSE 0 END) as holiday_days"),
-            Db::raw("SUM(CASE WHEN r.attendance_status = '6' THEN 1 ELSE 0 END) as rest_days"),
-            Db::raw("SUM(CASE WHEN r.attendance_status = '7' THEN 1 ELSE 0 END) as leave_days"),
             Db::raw('COUNT(*) as total_records')
         );
 
@@ -86,6 +81,12 @@ class BizAttendanceStatsService
         $query->orderBy('d.dept_name', 'asc')->orderBy('user_name', 'asc');
 
         $list = $query->get();
+
+        // 补充查询：休息日/请假/法定假日天数（考勤记录不含这些状态，从 biz_rest_day/biz_leave/biz_holiday 补充）
+        $userIds = $list->pluck('user_id')->toArray();
+        $restDaysMap = $this->getRestDaysCount($userIds, $dateStart, $dateEnd);
+        $leaveDaysMap = $this->getLeaveDaysCount($userIds, $dateStart, $dateEnd);
+        $holidayDays = $this->getHolidayDaysCount($dateStart, $dateEnd);
 
         // 计算出勤率和汇总
         $result = [];
@@ -97,6 +98,11 @@ class BizAttendanceStatsService
 
         foreach ($list as $item) {
             $item = (array) $item;
+            $userId = $item['user_id'];
+            // 补充休息日、请假、法定假日天数
+            $item['rest_days'] = $restDaysMap[$userId] ?? 0;
+            $item['leave_days'] = $leaveDaysMap[$userId] ?? 0;
+            $item['holiday_days'] = $holidayDays;
             // 应出勤 = 正常+迟到+早退+迟到早退+缺勤+请假（不含休息日和公共假期）
             $shouldAttend = $item['normal_days'] + $item['late_days'] + $item['early_leave_days']
                           + $item['late_early_days'] + $item['absent_days'] + $item['leave_days'];
@@ -125,6 +131,83 @@ class BizAttendanceStatsService
             'list' => $result,
             'totals' => $totals,
         ];
+    }
+
+    /**
+     * 批量查询员工在日期范围内的休息日天数（custom + plan 来源，不含请假和法定假日）
+     */
+    public function getRestDaysCount($userIds, $dateStart, $dateEnd)
+    {
+        if (empty($userIds)) return [];
+        $rows = BizRestDay::whereIn('user_id', $userIds)
+            ->whereBetween('rest_date', [$dateStart, $dateEnd])
+            ->whereIn('source_type', ['custom', 'plan'])
+            ->selectRaw('user_id, COUNT(*) as cnt')
+            ->groupBy('user_id')
+            ->get();
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row->user_id] = $row->cnt;
+        }
+        return $map;
+    }
+
+    /**
+     * 批量查询员工在日期范围内的已通过请假天数
+     * 注意：不使用 SUM(leave_days)，因为 leave_days 是整个请假单总天数，
+     * 跨月请假时需按查询范围裁剪计算实际天数
+     */
+    public function getLeaveDaysCount($userIds, $dateStart, $dateEnd)
+    {
+        if (empty($userIds)) return [];
+        $leaves = BizLeave::whereIn('user_id', $userIds)
+            ->where('status', '1') // 已通过
+            ->where(function ($q) use ($dateStart, $dateEnd) {
+                $q->whereBetween('start_date', [$dateStart, $dateEnd])
+                  ->orWhereBetween('end_date', [$dateStart, $dateEnd])
+                  ->orWhere(function ($q2) use ($dateStart, $dateEnd) {
+                      $q2->where('start_date', '<=', $dateStart)
+                         ->where('end_date', '>=', $dateEnd);
+                  });
+            })
+            ->get();
+        $map = [];
+        foreach ($leaves as $leave) {
+            // 计算请假在查询范围内的实际天数（跨月请假裁剪）
+            $start = max(strtotime($leave->start_date), strtotime($dateStart));
+            $end = min(strtotime($leave->end_date), strtotime($dateEnd));
+            if ($end >= $start) {
+                $days = (int) (($end - $start) / 86400) + 1;
+                $map[$leave->user_id] = ($map[$leave->user_id] ?? 0) + $days;
+            }
+        }
+        return $map;
+    }
+
+    /**
+     * 查询日期范围内的法定假日总天数（影响全员）
+     */
+    public function getHolidayDaysCount($dateStart, $dateEnd)
+    {
+        $holidays = BizHoliday::where('status', '0')
+            ->where(function ($q) use ($dateStart, $dateEnd) {
+                $q->whereBetween('start_date', [$dateStart, $dateEnd])
+                  ->orWhereBetween('end_date', [$dateStart, $dateEnd])
+                  ->orWhere(function ($q2) use ($dateStart, $dateEnd) {
+                      $q2->where('start_date', '<=', $dateStart)
+                         ->where('end_date', '>=', $dateEnd);
+                  });
+            })
+            ->get();
+        $totalDays = 0;
+        foreach ($holidays as $holiday) {
+            $start = max(strtotime($holiday->start_date), strtotime($dateStart));
+            $end = min(strtotime($holiday->end_date), strtotime($dateEnd));
+            if ($end >= $start) {
+                $totalDays += (int) (($end - $start) / 86400) + 1;
+            }
+        }
+        return $totalDays;
     }
 
     /**
@@ -322,98 +405,38 @@ class BizAttendanceStatsService
     }
 
     /**
-     * 批量获取员工某月休息日（基于 restPlan 方案）
+     * 批量获取员工某月休息日（custom + plan 来源 + 按周方案）
+     * 注意：leave 来源的休息日由调用方单独查询 BizLeave 处理（优先级高于休息日）
      */
     protected function batchGetRestDates($userIds, $yearMonth, $dateStart, $dateEnd)
     {
         $result = array_fill_keys($userIds, []);
 
-        $planIds = BizRestPlanEmployee::whereIn('user_id', $userIds)->pluck('plan_id')->unique()->toArray();
-        if (empty($planIds)) {
-            // 无方案：未配置则不显示休息日
-            return $result;
-        }
-
-        $plans = BizRestPlan::whereIn('plan_id', $planIds)
-            ->where('status', '0')
-            ->where('effective_date', '<=', $dateEnd)
-            ->orderBy('effective_date', 'desc')
-            ->get()
-            ->keyBy('plan_id');
-
-        // 员工-方案映射（合并所有有效方案，避免只显示最新方案）
-        $employeeRows = BizRestPlanEmployee::whereIn('user_id', $userIds)->get();
-        $userPlansMap = [];
-        foreach ($userIds as $uid) {
-            $userPlanIds = $employeeRows->where('user_id', $uid)->pluck('plan_id')->toArray();
-            $effectivePlans = [];
-            foreach ($userPlanIds as $pid) {
-                $plan = $plans->get($pid);
-                if ($plan) {
-                    $effectivePlans[] = $plan;
-                }
-            }
-            $userPlansMap[$uid] = $effectivePlans;
-        }
-
-        // 批量查询日期配置
-        $allDatePlans = BizRestPlanDate::whereIn('plan_id', $planIds)
+        // 1. 查询 biz_rest_day 中 custom + plan 来源的休息日
+        $restDays = BizRestDay::whereIn('user_id', $userIds)
+            ->whereIn('source_type', ['custom', 'plan'])
             ->whereBetween('rest_date', [$dateStart, $dateEnd])
-            ->get()
-            ->groupBy('plan_id');
+            ->get();
+        foreach ($restDays as $rd) {
+            if (!in_array($rd->rest_date, $result[$rd->user_id] ?? [])) {
+                $result[$rd->user_id][] = $rd->rest_date;
+            }
+        }
 
-        $dayMap = [
-            1 => 'monday', 2 => 'tuesday', 3 => 'wednesday',
-            4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'
-        ];
-        $daysInMonth = date('t', strtotime($dateStart));
-
-        foreach ($userIds as $uid) {
-            $restDates = [];
-            $userPlans = $userPlansMap[$uid] ?? [];
-            if (empty($userPlans)) {
-                // 未配置方案则不显示休息日
-                $restDates = [];
-            } else {
-                // 合并所有有效方案的休息日
-                foreach ($userPlans as $plan) {
-                    if ($plan->config_type === '0') {
-                        // 按周配置：合并
-                        for ($day = 1; $day <= $daysInMonth; $day++) {
-                            $dateStr = sprintf('%s-%02d', $yearMonth, $day);
-                            $weekday = date('N', strtotime($dateStr));
-                            $field = $dayMap[$weekday] ?? 'sunday';
-                            if ($plan->$field === '1' && !in_array($dateStr, $restDates)) {
-                                $restDates[] = $dateStr;
-                            }
-                        }
-                    } else {
-                        // 按日期配置：合并
-                        $planDates = $allDatePlans->get($plan->plan_id, collect());
-                        foreach ($planDates as $row) {
-                            if (!in_array($row->rest_date, $restDates)) {
-                                $restDates[] = $row->rest_date;
-                            }
-                        }
-                    }
+        // 2. 查询按周方案动态生成的休息日（未配置方案的员工不返回默认周末）
+        $restPlanService = new BizRestPlanService();
+        $weeklyResult = $restPlanService->getRestDatesByMonth($userIds, $yearMonth, false);
+        foreach ($weeklyResult as $item) {
+            $uid = $item['userId'] ?? null;
+            if (!$uid) continue;
+            foreach ($item['restDates'] ?? [] as $date) {
+                if (!in_array($date, $result[$uid] ?? [])) {
+                    $result[$uid][] = $date;
                 }
             }
-            $result[$uid] = $restDates;
         }
-        return $result;
-    }
 
-    protected function getDefaultWeekendDates($yearMonth)
-    {
-        $daysInMonth = date('t', strtotime($yearMonth . '-01'));
-        $restDates = [];
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $dateStr = sprintf('%s-%02d', $yearMonth, $day);
-            if (date('N', strtotime($dateStr)) >= 6) {
-                $restDates[] = $dateStr;
-            }
-        }
-        return $restDates;
+        return $result;
     }
 
     protected function emptySummary()

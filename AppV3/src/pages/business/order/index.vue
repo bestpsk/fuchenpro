@@ -80,7 +80,7 @@
         </view>
         <view class="form-item">
           <view class="form-label">开始日期</view>
-          <view class="form-select" @click="showStartDatePicker = true">
+          <view class="form-select" @click="openStartDatePicker()">
             <text :class="queryParams.beginTime ? 'selected-text' : 'placeholder-text'">
               {{ queryParams.beginTime || '请选择开始日期' }}
             </text>
@@ -89,7 +89,7 @@
         </view>
         <view class="form-item">
           <view class="form-label">结束日期</view>
-          <view class="form-select" @click="showEndDatePicker = true">
+          <view class="form-select" @click="openEndDatePicker()">
             <text :class="queryParams.endTime ? 'selected-text' : 'placeholder-text'">
               {{ queryParams.endTime || '请选择结束日期' }}
             </text>
@@ -113,8 +113,8 @@
       <u-picker :show="showEnterprisePicker" :columns="enterprisePickerColumns" keyName="enterpriseName" @confirm="onEnterprisePickerConfirm" @cancel="showEnterprisePicker = false" @close="showEnterprisePicker = false"></u-picker>
       <u-picker :show="showStorePicker" :columns="storePickerColumns" keyName="storeName" @confirm="onStorePickerConfirm" @cancel="showStorePicker = false" @close="showStorePicker = false"></u-picker>
       <u-picker :show="showEmployeePicker" :columns="employeePickerColumns" keyName="nickName" @confirm="onEmployeePickerConfirm" @cancel="showEmployeePicker = false" @close="showEmployeePicker = false"></u-picker>
-      <u-datetime-picker :show="showStartDatePicker" mode="date" :value="queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()" @confirm="onStartDateConfirm" @cancel="showStartDatePicker = false" @close="showStartDatePicker = false"></u-datetime-picker>
-      <u-datetime-picker :show="showEndDatePicker" mode="date" :value="queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()" @confirm="onEndDateConfirm" @cancel="showEndDatePicker = false" @close="showEndDatePicker = false"></u-datetime-picker>
+      <u-datetime-picker :show="showStartDatePicker" mode="date" v-model="startDatePickerModel" @confirm="onStartDateConfirm" @cancel="showStartDatePicker = false" @close="showStartDatePicker = false"></u-datetime-picker>
+      <u-datetime-picker :show="showEndDatePicker" mode="date" v-model="endDatePickerModel" @confirm="onEndDateConfirm" @cancel="showEndDatePicker = false" @close="showEndDatePicker = false"></u-datetime-picker>
     </view>
 
     <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
@@ -155,6 +155,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listSalesOrder, cancelOrder as cancelOrderApi } from '@/api/business/salesOrder'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
@@ -200,6 +201,18 @@ const sourceTypeOptions = ref([
 
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
+const startDatePickerModel = ref(Date.now())
+const endDatePickerModel = ref(Date.now())
+
+function openStartDatePicker() {
+  startDatePickerModel.value = queryParams.beginTime ? new Date(queryParams.beginTime).getTime() : Date.now()
+  showStartDatePicker.value = true
+}
+
+function openEndDatePicker() {
+  endDatePickerModel.value = queryParams.endTime ? new Date(queryParams.endTime).getTime() : Date.now()
+  showEndDatePicker.value = true
+}
 
 function getSourceTypeName(value) {
   const item = sourceTypeOptions.value.find(t => t.value === String(value))
@@ -424,6 +437,10 @@ async function cancelOrder(item) {
 }
 
 onMounted(() => { dictStore.loadDict('biz_source_type'); loadEnterpriseOptions(); loadStoreOptions(); loadEmployeeOptions(); getList(true) })
+
+onShow(() => {
+  getList(true)
+})
 </script>
 
 <style lang="scss" scoped>

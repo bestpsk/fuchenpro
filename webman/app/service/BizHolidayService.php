@@ -102,6 +102,7 @@ class BizHolidayService
 
     public function insert($data)
     {
+        $this->checkDateOverlap($data['start_date'], $data['end_date']);
         $data['year'] = $data['year'] ?? date('Y', strtotime($data['start_date']));
         $data['create_time'] = date('Y-m-d H:i:s');
         return BizHoliday::create($data);
@@ -116,9 +117,32 @@ class BizHolidayService
         if (!$holiday) {
             throw new \Exception('假期不存在');
         }
+        $this->checkDateOverlap($data['start_date'] ?? $holiday->start_date, $data['end_date'] ?? $holiday->end_date, $data['holiday_id']);
         unset($data['holiday_id']);
         $holiday->fill($data)->save();
         return true;
+    }
+
+    /**
+     * 检查假期日期范围是否与已有假期重叠
+     */
+    private function checkDateOverlap($startDate, $endDate, $excludeId = null)
+    {
+        $query = BizHoliday::where('status', '0')
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('start_date', [$startDate, $endDate])
+                  ->orWhereBetween('end_date', [$startDate, $endDate])
+                  ->orWhere(function ($q2) use ($startDate, $endDate) {
+                      $q2->where('start_date', '<=', $startDate)
+                         ->where('end_date', '>=', $endDate);
+                  });
+            });
+        if ($excludeId) {
+            $query->where('holiday_id', '!=', $excludeId);
+        }
+        if ($query->exists()) {
+            throw new \Exception('假期日期范围与已有假期重叠');
+        }
     }
 
     public function deleteByIds($holidayIds)

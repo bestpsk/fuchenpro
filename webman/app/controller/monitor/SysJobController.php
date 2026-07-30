@@ -5,8 +5,10 @@ namespace app\controller\monitor;
 use support\Request;
 use app\service\SysJobService;
 use app\service\PermissionService;
+use app\model\SysJob;
 use app\common\AjaxResult;
 use app\common\TableDataInfo;
+use app\common\ExcelUtil;
 
 /**
  * 定时任务管理控制器
@@ -30,6 +32,9 @@ class SysJobController
     // 根据ID获取定时任务详情
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $jobId = intval(end($parts));
         $service = new SysJobService();
@@ -47,7 +52,11 @@ class SysJobController
         $data = convert_to_snake_case($request->post());
         $data['create_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysJobService();
-        return AjaxResult::toAjax($service->insertJob($data) ? 1 : 0);
+        try {
+            return AjaxResult::toAjax($service->insertJob($data) ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 修改定时任务
@@ -59,7 +68,11 @@ class SysJobController
         $data = convert_to_snake_case($request->post());
         $data['update_by'] = $request->loginUser->user->user_name ?? '';
         $service = new SysJobService();
-        return AjaxResult::toAjax($service->updateJob($data) ? 1 : 0);
+        try {
+            return AjaxResult::toAjax($service->updateJob($data) ? 1 : 0);
+        } catch (\Throwable $e) {
+            return AjaxResult::error($e->getMessage());
+        }
     }
 
     // 批量删除定时任务
@@ -98,5 +111,21 @@ class SysJobController
         if (!$job) return AjaxResult::error('任务不存在');
         $service->run($job);
         return AjaxResult::success();
+    }
+
+    // 导出定时任务为Excel
+    public function export(Request $request)
+    {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:job:export')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
+        $params = convert_to_snake_case($request->all());
+        $params['page_size'] = 10000;
+        $service = new SysJobService();
+        $result = $service->selectJobList($params);
+        $list = $result->items();
+
+        $excelUtil = new ExcelUtil(SysJob::class);
+        return $excelUtil->exportExcel($list, '定时任务');
     }
 }

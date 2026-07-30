@@ -4,6 +4,7 @@ namespace app\controller\statistics;
 
 use support\Request;
 use app\service\PerformanceStatsService;
+use app\service\PermissionService;
 use app\common\AjaxResult;
 use app\common\ExcelUtil;
 
@@ -17,6 +18,9 @@ class PerformanceStatsController
     // 按部门统计业绩
     public function deptPerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -31,6 +35,9 @@ class PerformanceStatsController
     // 按个人统计业绩
     public function userPerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -45,6 +52,9 @@ class PerformanceStatsController
     // 按企业统计业绩
     public function enterprisePerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -59,6 +69,9 @@ class PerformanceStatsController
     // 按门店统计业绩
     public function storePerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -73,6 +86,9 @@ class PerformanceStatsController
     // 导出部门业绩
     public function exportDeptPerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -102,6 +118,9 @@ class PerformanceStatsController
     // 导出个人业绩
     public function exportUserPerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -132,6 +151,9 @@ class PerformanceStatsController
     // 导出企业业绩
     public function exportEnterprisePerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
@@ -161,6 +183,9 @@ class PerformanceStatsController
     // 导出门店业绩
     public function exportStorePerformance(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'statistics:performance:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 

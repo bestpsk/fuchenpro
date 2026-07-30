@@ -29,7 +29,7 @@ class SysUserOnlineController
     // 强制下线指定用户（删除其Redis登录令牌）
     public function forceLogout(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'monitor:online:remove')) {
+        if (PermissionService::lacksPermi($request->loginUser, 'monitor:online:forceLogout')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $tokenId = $request->input('tokenId', '');

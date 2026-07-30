@@ -14,7 +14,7 @@ class BizWarehouse extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'warehouse_id', 'warehouse_name', 'warehouse_code', 'address',
+        'warehouse_name', 'warehouse_code', 'address',
         'contact_person', 'contact_phone', 'status', 'remark',
         'create_by', 'create_time', 'update_by', 'update_time'
     ];

@@ -120,6 +120,10 @@ watch(() => props.modelValue, val => {
     // 然后将数组转为对象数组
     fileList.value = list.map(item => {
       if (typeof item === "string") {
+        // 兼容旧数据：只包含日期路径的文件名（如 20260728/xxx.jpg）
+        if (!item.startsWith('/') && !isExternal(item)) {
+          item = '/profile/upload/' + item
+        }
         if (item.indexOf(baseUrl) === -1 && !isExternal(item)) {
           item = { name: baseUrl + item, url: baseUrl + item }
         } else {

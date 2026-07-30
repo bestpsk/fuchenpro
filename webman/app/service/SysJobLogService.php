@@ -39,10 +39,10 @@ class SysJobLogService
         return SysJobLog::whereIn('job_log_id', $jobLogIds)->delete();
     }
 
-    // 清空定时任务日志
+    // 清空定时任务日志（使用delete代替truncate，保留自增ID便于审计追溯）
 
     public function cleanJobLog()
     {
-        return SysJobLog::truncate();
+        return SysJobLog::query()->delete();
     }
 }

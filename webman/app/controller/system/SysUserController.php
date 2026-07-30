@@ -203,6 +203,9 @@ class SysUserController
         if (empty($userId) || empty($password)) {
             return AjaxResult::error('参数错误');
         }
+        if (intval($userId) === 1) {
+            return AjaxResult::error('不允许修改超级管理员密码');
+        }
         $service = new SysUserService();
         $result = $service->resetPwd($userId, $password);
         return AjaxResult::toAjax($result ? 1 : 0);
@@ -216,6 +219,9 @@ class SysUserController
         }
         $userId = $request->post('userId');
         $status = $request->post('status');
+        if (intval($userId) === 1) {
+            return AjaxResult::error('不允许修改超级管理员状态');
+        }
         $service = new SysUserService();
         $result = $service->changeStatus($userId, $status);
         return AjaxResult::toAjax($result ? 1 : 0);

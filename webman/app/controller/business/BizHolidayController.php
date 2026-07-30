@@ -26,6 +26,9 @@ class BizHolidayController
 
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:leave:holiday:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $holidayId = intval(end($parts));
         $service = new BizHolidayService();
@@ -45,7 +48,7 @@ class BizHolidayController
             $service = new BizHolidayService();
             $result = $service->insert($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -61,7 +64,7 @@ class BizHolidayController
             $service = new BizHolidayService();
             $result = $service->update($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

@@ -51,7 +51,7 @@ class BizTrainStudyLogController
                 return AjaxResult::error('材料不存在或已下架');
             }
             return AjaxResult::success($material);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -69,7 +69,7 @@ class BizTrainStudyLogController
             $service = new BizTrainStudyLogService();
             $result = $service->startStudy($userId, $materialId);
             return AjaxResult::success($result);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -86,7 +86,7 @@ class BizTrainStudyLogController
             $service = new BizTrainStudyLogService();
             $service->heartbeat($sessionId, $data);
             return AjaxResult::success('心跳成功');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -114,7 +114,7 @@ class BizTrainStudyLogController
             $service = new BizTrainStudyLogService();
             $service->endStudy($sessionId, $validDuration);
             return AjaxResult::success('结束学习成功');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -131,7 +131,7 @@ class BizTrainStudyLogController
             $service = new BizTrainStudyLogService();
             $url = $service->getMaterialUrl($sessionId);
             return AjaxResult::success('', ['url' => $url]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -167,7 +167,7 @@ class BizTrainStudyLogController
                 'Pragma'               => 'no-cache',
                 'X-Content-Type-Options' => 'nosniff',
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }

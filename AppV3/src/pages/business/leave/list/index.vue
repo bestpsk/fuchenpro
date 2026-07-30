@@ -50,7 +50,7 @@
             <view class="info-row">
               <view class="info-item">
                 <u-icon name="calendar" size="14" color="#86909C"></u-icon>
-                <text class="info-text">{{ item.startDate }} {{ getSegmentShort(item.startTimeSegment) }} 至 {{ item.endDate }} {{ getSegmentShort(item.endTimeSegment) }}</text>
+                <text class="info-text">{{ item.startDate }} {{ getSegmentShort(item.startTimeType) }} 至 {{ item.endDate }} {{ getSegmentShort(item.endTimeType) }}</text>
               </view>
             </view>
             <view class="info-row" v-if="item.reason">
@@ -123,7 +123,7 @@ const statusMap = {
   '3': { name: '已撤销', class: 'status-warning' }
 }
 
-const segmentMap = { '1': '全天', '2': '上午', '3': '下午' }
+const segmentMap = { '0': '全天', '1': '上午', '2': '下午' }
 
 function getStatusName(value) {
   return statusMap[String(value)] ? statusMap[String(value)].name : '-'

@@ -122,7 +122,7 @@ class BizOperationRecordService
 
             try {
                 $this->createOperationOrder($record, $data);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \support\Log::error('创建操作订单失败: ' . $e->getMessage(), [
                     'record_id' => $record->record_id ?? 'unknown',
                     'file' => $e->getFile(),
@@ -139,7 +139,7 @@ class BizOperationRecordService
                         'customer_id' => $record->customer_id ?? 'NULL'
                     ]);
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \support\Log::error('写入操作档案失败: ' . $e->getMessage(), [
                     'record_id' => $record->record_id ?? 'unknown',
                     'file' => $e->getFile(),

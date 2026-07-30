@@ -7,6 +7,9 @@
   export default {
     onLaunch() {
       this.initApp()
+      // #ifdef H5
+      this.injectIconFont()
+      // #endif
     },
     methods: {
       initApp() {
@@ -25,6 +28,12 @@
         if (!getToken()) {
           uni.reLaunch({ url: '/pages/login' })
         }
+      },
+      /** 动态注入 uview-plus 图标字体，使用 import.meta.env.BASE_URL 适配任意子目录部署 */
+      injectIconFont() {
+        const style = document.createElement('style')
+        style.textContent = `@font-face{font-family:'uicon-iconfont';src:url('${import.meta.env.BASE_URL}static/uview-plus/uicon-iconfont.ttf') format('truetype');font-weight:normal;font-style:normal;font-display:block;}`
+        document.head.appendChild(style)
       }
     },
     globalData: {
@@ -38,14 +47,7 @@
   @import 'uview-plus/theme.scss';
   @import 'uview-plus/index.scss';
 
-  /* uview-plus 图标字体 */
-  @font-face {
-    font-family: 'uicon-iconfont';
-    src: url('/static/uview-plus/uicon-iconfont.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: block;
-  }
+  /* uview-plus 图标字体通过 JS 动态注入（见 injectIconFont），适配子目录部署 */
 
   /* H5 端 uni-editor 默认 display:inline 会导致高度不生效，统一为 block */
   uni-editor {

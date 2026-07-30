@@ -62,7 +62,12 @@ class BizWarehouseService
     public function updateWarehouse($warehouseId, $data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizWarehouse::where('warehouse_id', $warehouseId)->update($data);
+        $warehouse = BizWarehouse::find($warehouseId);
+        if (!$warehouse) {
+            throw new \Exception('仓库不存在');
+        }
+        $warehouse->fill($data)->save();
+        return true;
     }
 
     // 批量删除仓库，删除前检查是否有关联库存

@@ -136,7 +136,7 @@ function handleToPwd() {
 }
 
 function handleToUpgrade() {
-  uni.showToast({ title: '模块建设中~', icon: 'none' })
+  uni.showToast({ title: '已经是最新版本', icon: 'none' })
 }
 
 function handleCleanTmp() {

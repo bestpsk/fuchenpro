@@ -104,7 +104,7 @@
 </template>
 
 <script setup name="Feedback">
-import { listFeedback, getFeedback, delFeedback, handleFeedback, listReply } from "@/api/admin/feedback"
+import { listFeedback, getFeedback, delFeedback, handleFeedback } from "@/api/admin/feedback"
 
 const { proxy } = getCurrentInstance()
 const { biz_feedback_type, biz_feedback_status } = proxy.useDict("biz_feedback_type", "biz_feedback_status")

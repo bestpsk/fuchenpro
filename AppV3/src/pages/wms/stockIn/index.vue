@@ -239,12 +239,12 @@ function handleConfirm(item) {
 function handleCancelConfirm(item) {
   uni.showModal({
     title: '提示',
-    content: '确认取消入库？取消后将恢复库存',
+    content: '确认取消入库？取消后将扣减已入库的库存数量',
     success: (res) => {
       if (res.confirm) {
         cancelConfirmStockIn(item.stockInId).then(() => {
           uni.showToast({ title: '取消确认成功', icon: 'success' })
-          getList()
+          getList(true)
         })
       }
     }

@@ -40,18 +40,12 @@ const loadingText = ref('正在加载学习材料...')
 const sessionId = ref('')
 const elapsedSeconds = ref(0)
 const switchCount = ref(0)
+const pauseCount = ref(0)
 
 let heartbeatTimer = null
 let elapsedTimer = null
 let isPaused = false
 let hasEnded = false
-
-function formatDuration(seconds) {
-  if (!seconds) return '0秒'
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return m > 0 ? `${m}分${s}秒` : `${s}秒`
-}
 
 onLoad((options) => {
   materialId.value = parseInt(options.materialId) || 0
@@ -80,7 +74,14 @@ async function initStudy() {
     const fileStreamUrl = `${BASE_URL}/train/studyLog/file/${sessionId.value}`
     // 传递 materialId 和 updateTime 用于 viewer.html 的 IndexedDB 缓存键
     const updateTime = material.value.updateTime || ''
-    viewerUrl.value = `/static/office-viewer/viewer.html?type=${fileType}&file=${encodeURIComponent(fileStreamUrl)}&mid=${materialId.value}&ut=${encodeURIComponent(updateTime)}`
+    // 构建 viewer.html 基础路径（H5端使用绝对路径确保 web-view iframe 正确加载）
+    let viewerBase = 'static/office-viewer/viewer.html'
+    // #ifdef H5
+    const pathName = window.location.pathname
+    const basePrefix = pathName.endsWith('/') ? pathName : pathName + '/'
+    viewerBase = window.location.origin + basePrefix + 'static/office-viewer/viewer.html'
+    // #endif
+    viewerUrl.value = `${viewerBase}?type=${fileType}&file=${encodeURIComponent(fileStreamUrl)}&mid=${materialId.value}&ut=${encodeURIComponent(updateTime)}`
 
     // 启动心跳与计时
     startTimers()
@@ -132,42 +133,44 @@ onHide(() => {
   if (isPaused) return
   isPaused = true
   switchCount.value++
-  // 上报切屏
+  pauseCount.value++
+  // 上报切屏与暂停
   if (sessionId.value) {
-    heartbeat(sessionId.value, { switchCount: 1, pauseCount: 0 }).catch(() => {})
+    heartbeat(sessionId.value, { switchCount: 1, pauseCount: 1 }).catch(() => {})
   }
 })
-
-async function handleEndStudy() {
-  if (hasEnded) return
-  hasEnded = true
-  stopTimers()
-  if (sessionId.value) {
-    try {
-      await endStudy(sessionId.value, elapsedSeconds.value)
-      uni.showToast({ title: '学习已结束', icon: 'success' })
-    } catch (e) {
-      console.error('结束学习失败:', e)
-    }
-  }
-  setTimeout(() => uni.navigateBack(), 1000)
-}
 
 // web-view 消息回调（预留，可扩展 PPT 翻页事件等）
 function onWebViewMessage(e) {
 }
 
-// 页面卸载时可靠发送结束学习请求
+// 页面卸载时可靠发送结束学习请求（多端兼容）
 onUnload(() => {
   stopTimers()
   if (!hasEnded && sessionId.value) {
-    // 使用 sendBeacon 保证请求发出（不受页面卸载影响）
-    const BEACON_URL = `${BASE_URL}/train/studyLog/end`
-    const payload = JSON.stringify({
-      sessionId: sessionId.value,
-      validDuration: elapsedSeconds.value
-    })
-    const sent = navigator.sendBeacon(BEACON_URL, payload)
+    hasEnded = true
+    // #ifdef H5
+    // H5 端优先用 sendBeacon（不受页面卸载影响）
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      const BEACON_URL = `${BASE_URL}/train/studyLog/end`
+      const payload = JSON.stringify({
+        sessionId: sessionId.value,
+        validDuration: elapsedSeconds.value
+      })
+      try { navigator.sendBeacon(BEACON_URL, payload) } catch (e) {}
+      return
+    }
+    // #endif
+    // 非 H5 或 H5 无 sendBeacon 时，用同步 request 兜底
+    try {
+      const token = uni.getStorageSync('App-Token') || ''
+      uni.request({
+        url: `${BASE_URL}/train/studyLog/end`,
+        method: 'POST',
+        data: { sessionId: sessionId.value, validDuration: elapsedSeconds.value },
+        header: { 'Content-Type': 'application/json', 'Authorization': token ? ('Bearer ' + token) : '' }
+      })
+    } catch (e) {}
   }
 })
 

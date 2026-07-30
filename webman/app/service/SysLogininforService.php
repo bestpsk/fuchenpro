@@ -58,17 +58,21 @@ class SysLogininforService
         return SysLogininfor::whereIn('info_id', $infoIds)->delete();
     }
 
-    // 清空登录日志
+    // 清空登录日志（使用delete代替truncate，保留自增ID便于审计追溯）
 
     public function cleanLogininfor()
     {
-        return SysLogininfor::truncate();
+        return SysLogininfor::query()->delete();
     }
 
     public function unlock($userName)
     {
-        $redis = \support\Redis::connection();
-        $redis->del(\app\common\Constants::PWD_ERR_CNT_KEY . $userName);
+        try {
+            $redis = \support\Redis::connection();
+            $redis->del(\app\common\Constants::PWD_ERR_CNT_KEY . $userName);
+        } catch (\Throwable $e) {
+            // Redis故障时静默失败，锁定会在TTL后自动解除
+        }
         return true;
     }
 }

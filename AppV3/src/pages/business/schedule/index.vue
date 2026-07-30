@@ -227,7 +227,7 @@
               <view class="info-item full">
                 <text class="label">休息日</text>
                 <view class="rest-dates-wrap" v-if="item.restDates && item.restDates.length > 0">
-                  <view class="date-tag rest" v-for="(date, idx) in item.restDates" :key="idx">{{ formatDay(date) }}</view>
+                  <view class="date-tag rest" v-for="(d, idx) in item.restDates" :key="idx">{{ formatDay(typeof d === 'string' ? d : d.date) }}</view>
                 </view>
                 <text class="value remark-text" v-else>未配置</text>
               </view>
@@ -252,14 +252,78 @@
       <u-icon name="plus" size="24" color="#fff"></u-icon>
     </view>
 
-    <!-- 休息日期配置日历 -->
+    <!-- 休息日期配置弹窗 -->
+    <u-popup :show="showRestDateConfig" mode="bottom" round="16" @close="showRestDateConfig = false">
+      <view class="rest-config-popup">
+        <view class="rest-config-header">
+          <text class="rest-config-title">配置休息日</text>
+          <view class="rest-config-close" @click="showRestDateConfig = false"><u-icon name="close" size="20" color="#86909C"></u-icon></view>
+        </view>
+        <view class="rest-config-body">
+          <view class="rest-config-user">
+            <text class="rest-config-label">员工：</text>
+            <text class="rest-config-name">{{ currentConfigUser.userName || '-' }}</text>
+          </view>
+
+          <!-- 休假类型选择器 -->
+          <view class="rest-type-section">
+            <view class="rest-type-label"><u-icon name="tags" size="14" color="#3D6DF7"></u-icon><text>休息日类型</text></view>
+            <scroll-view scroll-x class="rest-type-scroll">
+              <view class="rest-type-tags">
+                <view v-for="t in leaveTypes" :key="t.typeId" class="rest-type-tag" :class="{ active: String(selectedTypeId) === String(t.typeId) }" @click="onTypeSelect(t.typeId, t.typeName)">
+                  {{ t.typeName }}
+                </view>
+                <view v-if="leaveTypes.length === 0" class="rest-type-empty">暂无休假类型，请到休假管理添加</view>
+              </view>
+            </scroll-view>
+          </view>
+
+          <!-- 图例（展示所有休息日类型及数量） -->
+          <view class="rest-legend" v-if="allRestTypeList.length > 0">
+            <view class="rest-legend-item" v-for="t in allRestTypeList" :key="t.type">
+              <view class="rest-legend-dot" :style="{ background: t.color }"></view>
+              <text class="rest-legend-text">{{ t.name }} {{ t.count }}天</text>
+            </view>
+          </view>
+
+          <!-- 已选自定义休息日列表 -->
+          <view class="rest-selected-section">
+            <view class="rest-selected-header">
+              <text class="rest-selected-title">已选休息日（{{ customDateList.length }}天）</text>
+              <view class="rest-add-btn" @click="openCalendarPicker"><u-icon name="plus" size="12" color="#fff"></u-icon><text>选择日期</text></view>
+            </view>
+            <view class="rest-selected-empty" v-if="customDateList.length === 0" @click="openCalendarPicker">
+              <u-icon name="calendar" size="32" color="#C9CDD4"></u-icon>
+              <text class="rest-empty-text">点击选择休息日期</text>
+            </view>
+            <view class="rest-selected-list" v-else>
+              <view class="rest-selected-chip" v-for="item in customDateList" :key="item.date">
+                <text class="chip-date">{{ item.date.substring(5) }}</text>
+                <text class="chip-type">{{ item.typeName }}</text>
+                <view class="chip-remove" @click="removeCustomDate(item.date)"><u-icon name="close" size="12" color="#86909C"></u-icon></view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="rest-config-footer">
+          <u-button type="info" plain text="取消" @click="showRestDateConfig = false"></u-button>
+          <u-button type="primary" text="保存" :loading="restSaving" @click="saveRestDateConfig"></u-button>
+        </view>
+      </view>
+    </u-popup>
+
+    <!-- 休息日期选择日历（带类型标注） -->
     <u-calendar
-      :show="showRestDateCalendar"
+      :show="showRestCalendar"
       mode="multiple"
-      :defaultDate="tempRestDates"
+      :defaultDate="calendarDefaultDates"
+      :maxDate="calendarMaxDate"
+      :minDate="calendarMinDate"
+      :monthNum="48"
+      :formatter="restDateFormatter"
       :color="'#3D6DF7'"
-      @confirm="onRestDateConfirm"
-      @close="showRestDateCalendar = false"
+      @confirm="onCalendarConfirm"
+      @close="showRestCalendar = false"
     ></u-calendar>
   </view>
 </template>
@@ -274,8 +338,8 @@
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { listSchedule, delSchedule, getEnterpriseSchedule } from '@/api/business/schedule'
-import { listEmployeeConfig, updateSchedulable, saveRestDates, getRestDates } from '@/api/business/employeeConfig'
-import { getLeaveCalendar, getRestCalendar } from '@/api/business/leave'
+import { listEmployeeConfig, updateSchedulable, saveRestDates, getAllRestDatesAll, getAllRestDatesBatch } from '@/api/business/employeeConfig'
+import { getLeaveCalendar, listAllLeaveType } from '@/api/business/leave'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
 
@@ -382,7 +446,7 @@ function getCurrentUserIds() {
   return Array.from(ids)
 }
 
-/** 批量加载所有员工的某月休息日，结果存入 restDateMap */
+/** 批量加载所有员工的某月休息日（含轮休/请假/自定义/法定假日，带类型），结果存入 restDateMap */
 async function loadRestDateMap() {
   const userIds = getCurrentUserIds()
   if (!userIds.length) {
@@ -390,15 +454,16 @@ async function loadRestDateMap() {
     return
   }
   try {
-    const res = await getRestCalendar({
-      yearMonth: queryParams.yearMonth,
-      userIds: userIds.join(',')
-    })
-    // 后端返回数组格式 [{userId, restDates}]，转换为 {userId: [dates]} map
+    // 使用批量API获取所有休息日，带类型信息
+    const res = await getAllRestDatesBatch(userIds, queryParams.yearMonth)
     const arr = res.data || []
     const map = {}
     arr.forEach(item => {
-      map[item.userId] = item.restDates || []
+      const userMap = {}
+      ;(item.dates || []).forEach(d => {
+        userMap[d.date] = d
+      })
+      map[item.userId] = userMap
     })
     restDateMap.value = map
   } catch (e) {
@@ -441,7 +506,8 @@ function getDisplayDatesWithStatus(item) {
     return scheduleDates.map(date => ({ date, label: formatDay(date), type: 'schedule' }))
   }
 
-  const restDates = restDateMap.value[userId] || []
+  const restMap = restDateMap.value[userId] || {}
+  const restDates = Object.keys(restMap)
   const leaves = leaveDateMap.value[userId] || []
   const leaveDates = leaves.map(l => l.date)
 
@@ -450,8 +516,8 @@ function getDisplayDatesWithStatus(item) {
   const allDates = Array.from(allDatesSet).sort()
 
   return allDates.map(date => {
-    if (restDates.includes(date)) {
-      return { date, label: '休息', type: 'rest' }
+    if (restMap[date]) {
+      return { date, label: restMap[date].typeName || '休息', type: 'rest' }
     }
     const leave = leaves.find(l => l.date === date)
     if (leave) {
@@ -714,9 +780,34 @@ const employeeConfigList = ref([])
 const configLoading = ref(false)
 const configRefreshing = ref(false)
 const showConfigFilter = ref(false)
-const showRestDateCalendar = ref(false)
+const showRestDateConfig = ref(false)
+const showRestCalendar = ref(false)
 const currentConfigUser = ref({})
-const tempRestDates = ref([])
+const restSaving = ref(false)
+
+// 休假类型列表（取自休假管理）
+const leaveTypes = ref([])
+// 当前选择的休假类型
+const selectedTypeId = ref(null)
+const selectedTypeName = ref('')
+// 所有休息日数据（含轮休/请假/自定义/法定假日），用于日历标注
+const allRestDateMap = ref({})
+const allRestTypeList = ref([])
+// 自定义休息日 map: {dateStr: {date, typeId, typeName}}
+const customDateMap = ref({})
+// 日历日期范围
+const calendarMinDate = ref(Number(new Date(new Date().setFullYear(new Date().getFullYear() - 2))))
+const calendarMaxDate = ref(Number(new Date(new Date().setFullYear(new Date().getFullYear() + 1))))
+
+// 已选自定义休息日列表（排序后展示）
+const customDateList = computed(() => {
+  return Object.values(customDateMap.value).sort((a, b) => a.date.localeCompare(b.date))
+})
+
+// 日历默认选中日期（已有自定义休息日）
+const calendarDefaultDates = computed(() => {
+  return Object.keys(customDateMap.value).sort()
+})
 
 const configQueryParams = reactive({
   pageNum: 1,
@@ -764,21 +855,89 @@ async function handleSchedulableChange(row) {
   }
 }
 
-function openRestDateConfig(row) {
+/** 打开休息日配置弹窗，加载休假类型和所有休息日数据（全量，支持跨月查看和回显） */
+async function openRestDateConfig(row) {
   currentConfigUser.value = row
-  tempRestDates.value = []
-  // 加载已有休息日期后打开日历
-  getRestDates(row.userId).then(response => {
-    const dates = response.data || []
-    tempRestDates.value = dates
-    showRestDateCalendar.value = true
-  }).catch(() => {
-    showRestDateCalendar.value = true
-  })
+  selectedTypeId.value = null
+  selectedTypeName.value = ''
+  allRestDateMap.value = {}
+  allRestTypeList.value = []
+  customDateMap.value = {}
+  showRestDateConfig.value = true
+
+  try {
+    // 并行加载休假类型列表和全部休息日数据（不限月份，2年前~1年后）
+    const [typeRes, allRes] = await Promise.all([
+      listAllLeaveType(),
+      getAllRestDatesAll(row.userId)
+    ])
+    leaveTypes.value = (typeRes.data || []).filter(t => t.status === '0' || t.status === 0 || t.status === undefined)
+
+    const allData = allRes.data || {}
+    const dates = allData.dates || []
+    const map = {}
+    dates.forEach(item => {
+      map[item.date] = item
+    })
+    allRestDateMap.value = map
+    allRestTypeList.value = allData.typeList || []
+
+    // 提取已有自定义休息日（type === 'custom'），初始化 customDateMap
+    const customMap = {}
+    dates.forEach(item => {
+      if (item.type === 'custom') {
+        customMap[item.date] = {
+          date: item.date,
+          typeId: item.typeId ?? null,
+          typeName: item.typeName || ''
+        }
+      }
+    })
+    customDateMap.value = customMap
+  } catch (e) {
+    console.error('加载休息日数据失败:', e)
+  }
 }
 
-async function onRestDateConfirm(e) {
-  // u-calendar confirm returns selected dates array
+/** 选择休假类型 */
+function onTypeSelect(typeId, typeName) {
+  selectedTypeId.value = typeId
+  selectedTypeName.value = typeName
+}
+
+/** 打开日历选择器 */
+function openCalendarPicker() {
+  showRestCalendar.value = true
+}
+
+/** 日历日期格式化，标注各类已有休息日 */
+function restDateFormatter(day) {
+  const dateObj = day.date instanceof Date ? day.date : new Date(day.date)
+  const y = dateObj.getFullYear()
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const d = String(dateObj.getDate()).padStart(2, '0')
+  const dateStr = `${y}-${m}-${d}`
+
+  const restInfo = allRestDateMap.value[dateStr]
+  if (restInfo) {
+    // 自定义休息日 → 不加 bottomInfo（由 defaultDate 选中状态显示）
+    if (restInfo.type === 'custom') {
+      // 由 defaultDate 控制选中
+    } else if (restInfo.type === 'weekly') {
+      day.bottomInfo = '轮休'
+    } else if (restInfo.type === 'plan') {
+      day.bottomInfo = restInfo.typeName || '方案休息'
+    } else if (restInfo.type === 'leave') {
+      day.bottomInfo = restInfo.typeName || '请假'
+    } else if (restInfo.type === 'holiday') {
+      day.bottomInfo = restInfo.typeName || '假日'
+    }
+  }
+  return day
+}
+
+/** 日历确认选择，将新增日期关联当前休假类型 */
+function onCalendarConfirm(e) {
   const items = Array.isArray(e) ? e : (e ? [e] : [])
   const selectedDates = items.map(d => {
     if (typeof d === 'string') return d
@@ -791,14 +950,65 @@ async function onRestDateConfirm(e) {
     return String(d)
   })
 
-  // Save rest dates directly
+  const selectedSet = new Set(selectedDates)
+  const existingMap = { ...customDateMap.value }
+
+  // 新增的日期关联当前休假类型
+  selectedDates.forEach(date => {
+    if (!existingMap[date]) {
+      existingMap[date] = {
+        date,
+        typeId: selectedTypeId.value || null,
+        typeName: selectedTypeName.value || ''
+      }
+    }
+    // 已存在的日期保留原类型
+  })
+
+  // 移除取消选择的日期
+  Object.keys(existingMap).forEach(date => {
+    if (!selectedSet.has(date)) {
+      delete existingMap[date]
+    }
+  })
+
+  customDateMap.value = existingMap
+  showRestCalendar.value = false
+}
+
+/** 移除单个自定义休息日 */
+function removeCustomDate(date) {
+  const newMap = { ...customDateMap.value }
+  delete newMap[date]
+  customDateMap.value = newMap
+}
+
+/** 保存休息日配置 */
+async function saveRestDateConfig() {
+  // 验证：每个日期必须有类型
+  const restDates = Object.values(customDateMap.value)
+  if (restDates.length > 0) {
+    const noType = restDates.find(item => !item.typeId)
+    if (noType) {
+      uni.showToast({ title: '日期 ' + noType.date + ' 未选择类型', icon: 'none' })
+      return
+    }
+  }
+  restSaving.value = true
   try {
-    await saveRestDates(currentConfigUser.value.userId, selectedDates)
+    const submitData = restDates.map(item => ({
+      date: item.date,
+      typeId: item.typeId,
+      typeName: item.typeName
+    }))
+    await saveRestDates(currentConfigUser.value.userId, submitData)
     uni.showToast({ title: '保存成功', icon: 'success' })
-    showRestDateCalendar.value = false
+    showRestDateConfig.value = false
     queryConfig()
   } catch (err) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
+    uni.showToast({ title: err.message || '保存失败', icon: 'none' })
+  } finally {
+    restSaving.value = false
   }
 }
 
@@ -903,8 +1113,15 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
   flex-shrink: 0;
 
   &.more { background: #E8F0FE; color: #3D6DF7; }
-  &.rest { background: #FFF1F0; color: #F53F3F; }
+  &.rest { background: #E8F0FE; color: #3D6DF7; }
   &.leave { background: #FFF7E8; color: #FF7D00; }
+}
+
+.rest-type-empty {
+  font-size: 24rpx;
+  color: #C9CDD4;
+  padding: 16rpx 0;
+  white-space: nowrap;
 }
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20rpx; padding-top: 16rpx; }
@@ -937,4 +1154,44 @@ page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
 .schedulable-yes { font-size: 24rpx; color: #00B42A; font-weight: 500; }
 .schedulable-no { font-size: 24rpx; color: #F53F3F; font-weight: 500; }
 .rest-dates-wrap { display: flex; flex-wrap: wrap; gap: 8rpx; }
+
+/* 休息日配置弹窗样式 */
+.rest-config-popup { padding: 30rpx; }
+.rest-config-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
+.rest-config-title { font-size: 32rpx; font-weight: 600; color: #1D2129; }
+.rest-config-body { max-height: 800rpx; overflow-y: auto; }
+.rest-config-user { display: flex; align-items: center; gap: 8rpx; margin-bottom: 24rpx; }
+.rest-config-label { font-size: 26rpx; color: #86909C; }
+.rest-config-name { font-size: 28rpx; font-weight: 600; color: #1D2129; }
+
+.rest-type-section { margin-bottom: 24rpx; }
+.rest-type-label { display: flex; align-items: center; gap: 8rpx; font-size: 26rpx; color: #4E5969; margin-bottom: 16rpx; font-weight: 500; }
+.rest-type-scroll { white-space: nowrap; }
+.rest-type-tags { display: inline-flex; gap: 12rpx; padding: 4rpx 0; }
+.rest-type-tag { display: inline-flex; align-items: center; justify-content: center; padding: 12rpx 28rpx; background: #F5F7FA; border-radius: 8rpx; font-size: 26rpx; color: #4E5969; border: 2rpx solid transparent; white-space: nowrap;
+  &.active { background: #E8F0FE; color: #3D6DF7; border-color: #3D6DF7; font-weight: 500; }
+}
+
+.rest-legend { display: flex; flex-wrap: wrap; gap: 16rpx; padding: 16rpx 20rpx; background: #F7F8FA; border-radius: 12rpx; margin-bottom: 24rpx; }
+.rest-legend-item { display: flex; align-items: center; gap: 8rpx; }
+.rest-legend-dot { width: 16rpx; height: 16rpx; border-radius: 50%; }
+.rest-legend-text { font-size: 22rpx; color: #4E5969; }
+
+.rest-selected-section { margin-bottom: 24rpx; }
+.rest-selected-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.rest-selected-title { font-size: 26rpx; color: #4E5969; font-weight: 500; }
+.rest-add-btn { display: flex; align-items: center; gap: 6rpx; padding: 10rpx 24rpx; background: #3D6DF7; border-radius: 28rpx;
+  text { font-size: 24rpx; color: #fff; }
+}
+.rest-selected-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12rpx; padding: 60rpx 0; background: #F7F8FA; border-radius: 12rpx; }
+.rest-empty-text { font-size: 26rpx; color: #C9CDD4; }
+.rest-selected-list { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.rest-selected-chip { display: flex; align-items: center; gap: 8rpx; padding: 10rpx 16rpx; background: #E8F0FE; border-radius: 8rpx; }
+.chip-date { font-size: 24rpx; color: #1D2129; font-weight: 500; }
+.chip-type { font-size: 20rpx; color: #3D6DF7; background: #fff; padding: 2rpx 10rpx; border-radius: 4rpx; }
+.chip-remove { display: flex; align-items: center; padding: 4rpx; }
+
+.rest-config-footer { display: flex; gap: 20rpx; margin-top: 24rpx; padding-top: 24rpx; border-top: 1rpx solid #E5E6EB;
+  .u-button { flex: 1; }
+}
 </style>

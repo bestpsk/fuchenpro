@@ -5,9 +5,107 @@ namespace app\service;
 use app\model\BizSalesOrder;
 use app\model\BizOrderItem;
 use app\model\BizOperationRecord;
+use app\model\BizStockPrepare;
+use app\model\BizInventory;
 
 class HomeStatsService
 {
+    /**
+     * 获取待办事项统计
+     *
+     * @param mixed $loginUser 当前登录用户
+     * @return array 待办事项数组
+     */
+    public static function getTodoItems($loginUser)
+    {
+        $userIds = DataScopeService::getVisibleUserIds($loginUser);
+
+        // 待确认订单数（order_status=0 且为开单/还款类型）
+        $pendingOrderCount = BizSalesOrder::where('order_status', '0')
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->count();
+
+        // 待出库备货数（status=0 待出库 或 status=1 部分出库）
+        $pendingPrepareCount = BizStockPrepare::whereIn('status', ['0', '1'])
+            ->count();
+
+        // 库存预警数（库存数量 <= 预警数量 且 预警数量 > 0）
+        $inventoryWarnCount = BizInventory::where('warn_qty', '>', 0)
+            ->whereColumn('quantity', '<=', 'warn_qty')
+            ->count();
+
+        return [
+            ['key' => 'pendingOrder', 'label' => '待确认订单', 'count' => $pendingOrderCount, 'path' => '/business/order'],
+            ['key' => 'pendingPrepare', 'label' => '待出库备货', 'count' => $pendingPrepareCount, 'path' => '/business/stockPrepare'],
+            ['key' => 'inventoryWarn', 'label' => '库存预警', 'count' => $inventoryWarnCount, 'path' => '/wms/inventory'],
+        ];
+    }
+
+    /**
+     * 获取近N天销售趋势数据
+     *
+     * @param mixed $loginUser 当前登录用户
+     * @param int $days 天数（默认7天）
+     * @return array ['dates' => ['2026-07-01', ...], 'amounts' => [1234.56, ...], 'orderCounts' => [12, ...]]
+     */
+    public static function getSalesTrend($loginUser, $days = 7, $startDate = null, $endDate = null)
+    {
+        $userIds = DataScopeService::getVisibleUserIds($loginUser);
+
+        // 计算日期范围
+        if ($startDate && $endDate) {
+            $start = $startDate . ' 00:00:00';
+            $end = $endDate . ' 23:59:59';
+        } else {
+            $endDate = date('Y-m-d');
+            $startDate = date('Y-m-d', strtotime("-" . ($days - 1) . " days"));
+            $start = $startDate . ' 00:00:00';
+            $end = $endDate . ' 23:59:59';
+        }
+
+        // 查询每天的销售金额和订单数
+        $dailyStats = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->selectRaw('DATE(create_time) as stat_date, SUM(deal_amount) as total_amount, COUNT(*) as order_count')
+            ->groupBy('stat_date')
+            ->pluck('total_amount', 'stat_date')
+            ->toArray();
+
+        $dailyCounts = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+            ->whereIn('source_type', ['0', '2'])
+            ->whereIn('creator_user_id', $userIds)
+            ->where('create_time', '>=', $start)
+            ->where('create_time', '<=', $end)
+            ->selectRaw('DATE(create_time) as stat_date, COUNT(*) as order_count')
+            ->groupBy('stat_date')
+            ->pluck('order_count', 'stat_date')
+            ->toArray();
+
+        // 填充所有日期（包括没有数据的日期）
+        $dates = [];
+        $amounts = [];
+        $orderCounts = [];
+        $startTs = strtotime($startDate);
+        $endTs = strtotime($endDate);
+        $dayCount = (int) (($endTs - $startTs) / 86400);
+        for ($i = 0; $i <= $dayCount; $i++) {
+            $date = date('Y-m-d', strtotime($startDate . " +{$i} days"));
+            $dates[] = $date;
+            $amounts[] = isset($dailyStats[$date]) ? round(floatval($dailyStats[$date]), 2) : 0;
+            $orderCounts[] = isset($dailyCounts[$date]) ? intval($dailyCounts[$date]) : 0;
+        }
+
+        return [
+            'dates' => $dates,
+            'amounts' => $amounts,
+            'orderCounts' => $orderCounts,
+        ];
+    }
+
     public static function getTodayStats($loginUser, $startDate = null, $endDate = null)
     {
         $userIds = DataScopeService::getVisibleUserIds($loginUser);
@@ -63,71 +161,46 @@ class HomeStatsService
         $start = $startDate . ' 00:00:00';
         $end = $endDate . ' 23:59:59';
 
-        $dealCustomers = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
+        // 合并4次 BizSalesOrder 查询为1次聚合查询（原为 dealCustomers/dealAmount/paidAmount/owedAmount 各一次）
+        $orderStats = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
             ->whereIn('source_type', ['0', '2'])
             ->whereIn('creator_user_id', $userIds)
             ->where('create_time', '>=', $start)
             ->where('create_time', '<=', $end)
-            ->distinct()->count('customer_id');
+            ->selectRaw('COUNT(DISTINCT customer_id) as deal_customers, COALESCE(SUM(deal_amount), 0) as deal_amount, COALESCE(SUM(paid_amount), 0) as paid_amount, COALESCE(SUM(owed_amount), 0) as owed_amount')
+            ->first();
 
-        $dealAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $start)
-            ->where('create_time', '<=', $end)
-            ->sum('deal_amount');
+        $dealCustomers = $orderStats->deal_customers ?? 0;
+        $dealAmount = floatval($orderStats->deal_amount ?? 0);
+        $paidAmount = floatval($orderStats->paid_amount ?? 0);
+        $owedAmount = floatval($orderStats->owed_amount ?? 0);
 
-        $paidAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $start)
-            ->where('create_time', '<=', $end)
-            ->sum('paid_amount');
-
-        $owedAmount = BizSalesOrder::whereIn('order_status', ['1', '2', '3'])
-            ->whereIn('source_type', ['0', '2'])
-            ->whereIn('creator_user_id', $userIds)
-            ->where('create_time', '>=', $start)
-            ->where('create_time', '<=', $end)
-            ->sum('owed_amount');
-
-        $cashAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
+        // 合并3次 BizOrderItem JOIN 查询为1次分组聚合查询（原为 cashAmount/cardAmount/giftCount 各一次）
+        $paymentStats = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
             ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
             ->whereIn('biz_sales_order.source_type', ['0', '2'])
             ->whereIn('biz_sales_order.creator_user_id', $userIds)
             ->where('biz_sales_order.create_time', '>=', $start)
             ->where('biz_sales_order.create_time', '<=', $end)
-            ->where('biz_order_item.payment_method', 'cash')
-            ->sum('biz_order_item.deal_amount');
+            ->whereIn('biz_order_item.payment_method', ['cash', 'card', 'gift'])
+            ->selectRaw('biz_order_item.payment_method, COALESCE(SUM(biz_order_item.deal_amount), 0) as total_amount, COUNT(*) as item_count')
+            ->groupBy('biz_order_item.payment_method')
+            ->get()
+            ->keyBy('payment_method');
 
-        $cardAmount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->where('biz_sales_order.create_time', '>=', $start)
-            ->where('biz_sales_order.create_time', '<=', $end)
-            ->where('biz_order_item.payment_method', 'card')
-            ->sum('biz_order_item.deal_amount');
+        $cashAmount = floatval($paymentStats->get('cash')->total_amount ?? 0);
+        $cardAmount = floatval($paymentStats->get('card')->total_amount ?? 0);
+        $giftCount = intval($paymentStats->get('gift')->item_count ?? 0);
 
-        $giftCount = BizOrderItem::join('biz_sales_order', 'biz_order_item.order_id', '=', 'biz_sales_order.order_id')
-            ->whereIn('biz_sales_order.order_status', ['1', '2', '3'])
-            ->whereIn('biz_sales_order.source_type', ['0', '2'])
-            ->whereIn('biz_sales_order.creator_user_id', $userIds)
-            ->where('biz_sales_order.create_time', '>=', $start)
-            ->where('biz_sales_order.create_time', '<=', $end)
-            ->where('biz_order_item.payment_method', 'gift')
-            ->count();
-
-        $operationCustomers = BizOperationRecord::whereIn('operator_user_id', $userIds)
+        // 合并2次 BizOperationRecord 查询为1次聚合查询（原为 operationCustomers/operationAmount 各一次）
+        $operationStats = BizOperationRecord::whereIn('operator_user_id', $userIds)
             ->where('operation_date', '>=', $startDate)
             ->where('operation_date', '<=', $endDate)
-            ->distinct()->count('customer_id');
+            ->selectRaw('COUNT(DISTINCT customer_id) as operation_customers, COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total_amount')
+            ->first();
 
-        $operationAmount = BizOperationRecord::whereIn('operator_user_id', $userIds)
-            ->where('operation_date', '>=', $startDate)
-            ->where('operation_date', '<=', $endDate)
-            ->selectRaw('COALESCE(SUM(consume_amount), 0) + COALESCE(SUM(trial_price), 0) as total')
-            ->value('total');
+        $operationCustomers = $operationStats->operation_customers ?? 0;
+        $operationAmount = floatval($operationStats->total_amount ?? 0);
 
         return [
             'dealCustomerCount' => $dealCustomers,

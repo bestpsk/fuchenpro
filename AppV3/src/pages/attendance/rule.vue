@@ -1194,7 +1194,7 @@ page {
 }
 
 .btn-confirm {
-  background: linear-gradient(180deg, #5B8FF9 0%, #3D6DF7 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 100%);
   color: #fff;
 }
 </style>

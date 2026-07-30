@@ -16,6 +16,21 @@ export function getEnterpriseStats(params) {
   })
 }
 
+export function getTodoItems() {
+  return request({
+    url: '/home/todo-items',
+    method: 'get'
+  })
+}
+
+export function getSalesTrend(params) {
+  return request({
+    url: '/home/sales-trend',
+    method: 'get',
+    params
+  })
+}
+
 export function listArchive(params) {
   return request({
     url: '/business/archive/list',

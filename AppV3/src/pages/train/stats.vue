@@ -139,12 +139,14 @@
       </view>
     </u-popup>
 
-    <u-datetime-picker
-      :show="showDatePickerItem"
-      mode="date"
-      @confirm="onDatePicked"
-      @cancel="showDatePickerItem = false"
-    />
+    <view class="picker-placeholder">
+      <u-datetime-picker
+        :show="showDatePickerItem"
+        mode="date"
+        @confirm="onDatePicked"
+        @cancel="showDatePickerItem = false"
+      />
+    </view>
   </view>
 </template>
 
@@ -250,6 +252,7 @@ function confirmDate() {
 }
 
 function getList() {
+  if (loading.value) return
   loading.value = true
   const params = { ...queryParams }
   if (dateRange[0]) params.startDate = dateRange[0]
@@ -264,29 +267,28 @@ function getList() {
   }).catch(() => {
     loading.value = false
     refreshing.value = false
+    loadStatus.value = 'error'
   })
-  getStudyStatsSummary(params).then(res => {
-    if (res.code === 200) summary.value = res.data
-  })
-}
-
-function getSummary() {
-  const params = { ...queryParams }
-  if (dateRange[0]) params.startDate = dateRange[0]
-  if (dateRange[1]) params.endDate = dateRange[1]
-  getStudyStatsSummary(params).then(res => {
-    if (res.code === 200) summary.value = res.data
-  })
-}
-
-function loadMore() {
-  if (loadStatus.value !== 'nomore') {
-    queryParams.pageNum++
-    getList()
+  // 仅首页时获取汇总数据，避免分页时的多余请求
+  if (params.pageNum === 1) {
+    getStudyStatsSummary(params).then(res => {
+      if (res.code === 200) summary.value = res.data
+    })
   }
 }
 
+function loadMore() {
+  if (loading.value || loadStatus.value === 'nomore') return
+  loadStatus.value = 'loading'
+  queryParams.pageNum++
+  getList()
+}
+
 function onPullDownRefresh() {
+  if (loading.value) {
+    refreshing.value = false
+    return
+  }
   refreshing.value = true
   queryParams.pageNum = 1
   getList()
@@ -295,7 +297,6 @@ function onPullDownRefresh() {
 function handleQuery() {
   queryParams.pageNum = 1
   getList()
-  getSummary()
 }
 
 function handleReset() {
@@ -416,6 +417,12 @@ onShow(() => {
 .list-scroll {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+.picker-placeholder {
+  position: fixed;
+  height: 0;
   overflow: hidden;
 }
 

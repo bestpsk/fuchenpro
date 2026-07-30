@@ -95,7 +95,9 @@ class BizTrainMaterialController
         $params = convert_to_snake_case($request->all());
         $params['page_size'] = 10000;
         $service = new BizTrainMaterialService();
-        $result = $service->selectMaterialList($params);
+        $userId = $request->loginUser->user->user_id ?? 0;
+        $isAdmin = method_exists($request->loginUser->user, 'isAdmin') ? $request->loginUser->user->isAdmin() : false;
+        $result = $service->selectMaterialList($params, $isAdmin ? null : $userId);
         $excelUtil = new ExcelUtil(BizTrainMaterial::class);
         return $excelUtil->exportExcel($result->items(), '培训材料数据');
     }

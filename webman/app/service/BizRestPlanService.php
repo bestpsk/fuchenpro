@@ -3,15 +3,14 @@
 namespace app\service;
 
 use app\model\BizRestPlan;
-use app\model\BizRestPlanEmployee;
-use app\model\BizRestPlanDate;
 use app\model\SysUser;
 use app\model\SysDept;
 use support\Db;
 
 /**
- * 休息日方案服务层
- * 一个方案关联多员工，支持按周配置或按日期配置
+ * 休息日方案服务层（仅按周模板）
+ * 一个方案关联多员工（通过 user_ids 字段存储），按 monday~sunday 配置每周休息日
+ * 按日期休息日统一由 BizRestDayService 管理（biz_rest_day 表）
  */
 class BizRestPlanService
 {
@@ -24,9 +23,6 @@ class BizRestPlanService
 
         if (!empty($params['plan_name'])) {
             $query->where('plan_name', 'like', '%' . $params['plan_name'] . '%');
-        }
-        if (isset($params['config_type']) && $params['config_type'] !== '') {
-            $query->where('config_type', $params['config_type']);
         }
         if (isset($params['status']) && $params['status'] !== '') {
             $query->where('status', $params['status']);
@@ -41,67 +37,50 @@ class BizRestPlanService
         $pageSize = intval($params['page_size'] ?? 10);
         $page = $query->paginate($pageSize, ['*'], 'page', $pageNum);
 
-        // 附加员工数和员工简要信息
-        $planIds = $page->pluck('plan_id')->toArray();
-        if (!empty($planIds)) {
-            $employeeCounts = BizRestPlanEmployee::whereIn('plan_id', $planIds)
-                ->selectRaw('plan_id, COUNT(*) AS cnt')
-                ->groupBy('plan_id')
-                ->pluck('cnt', 'plan_id')
-                ->toArray();
-
-            $employeeNames = BizRestPlanEmployee::whereIn('plan_id', $planIds)
-                ->select(['plan_id', 'user_name'])
-                ->get()
-                ->groupBy('plan_id')
-                ->map(function ($items) {
-                    return $items->pluck('user_name')->take(5)->implode('、');
-                })
-                ->toArray();
-
-            foreach ($page->items() as $plan) {
-                $plan->employee_count = $employeeCounts[$plan->plan_id] ?? 0;
-                $plan->employee_names = $employeeNames[$plan->plan_id] ?? '';
-                $plan->config_type_label = $plan->config_type === '0' ? '按周配置' : '按日期配置';
-            }
+        // 附加员工数和员工简要信息（从 user_ids 字段读取）
+        foreach ($page->items() as $plan) {
+            $userIds = $this->parseUserIds($plan->user_ids);
+            $userNames = $this->parseUserNames($plan->user_names);
+            $plan->employee_count = count($userIds);
+            $plan->employee_names = implode('、', array_slice($userNames, 0, 5));
+            $plan->user_ids_arr = $userIds;
+            $plan->user_names_arr = $userNames;
         }
 
         return $page;
     }
 
     /**
-     * 方案详情（含关联员工和日期）
+     * 方案详情（含关联员工）
      */
     public function selectById($planId)
     {
         $plan = BizRestPlan::find($planId);
         if (!$plan) return null;
 
-        $plan->employees = BizRestPlanEmployee::where('plan_id', $planId)
-            ->get()
-            ->toArray();
-
-        if ($plan->config_type === '1') {
-            $plan->dates = BizRestPlanDate::where('plan_id', $planId)
-                ->orderBy('rest_date')
-                ->get()
-                ->toArray();
-        } else {
-            $plan->dates = [];
+        // 从 user_ids 字段读取关联员工
+        $userIds = $this->parseUserIds($plan->user_ids);
+        $userNames = $this->parseUserNames($plan->user_names);
+        $employees = [];
+        foreach ($userIds as $idx => $uid) {
+            $employees[] = [
+                'user_id' => $uid,
+                'user_name' => $userNames[$idx] ?? '',
+            ];
         }
+        $plan->employees = $employees;
+        $plan->user_ids_arr = $userIds;
 
         return $plan;
     }
 
     /**
-     * 新建方案（含批量关联员工）
+     * 新建方案（按周模板）
      */
     public function insert($data)
     {
         $now = date('Y-m-d H:i:s');
         $userIds = $data['user_ids'] ?? [];
-        $dates = $data['dates'] ?? [];
-        $reason = $data['reason'] ?? '';
 
         if (empty($userIds)) {
             throw new \Exception('请选择员工');
@@ -109,45 +88,36 @@ class BizRestPlanService
         if (empty($data['plan_name'])) {
             throw new \Exception('请填写方案名称');
         }
-        if ($data['config_type'] === '1' && empty($dates)) {
-            throw new \Exception('按日期配置时请选择休息日期');
-        }
 
-        Db::beginTransaction();
-        try {
-            // 创建方案主表
-            $plan = BizRestPlan::create([
-                'plan_name' => $data['plan_name'],
-                'config_type' => $data['config_type'] ?? '0',
-                'monday' => $data['monday'] ?? '0',
-                'tuesday' => $data['tuesday'] ?? '0',
-                'wednesday' => $data['wednesday'] ?? '0',
-                'thursday' => $data['thursday'] ?? '0',
-                'friday' => $data['friday'] ?? '0',
-                'saturday' => $data['saturday'] ?? '1',
-                'sunday' => $data['sunday'] ?? '1',
-                'effective_date' => $data['effective_date'] ?? date('Y-m-d'),
-                'status' => $data['status'] ?? '0',
-                'create_by' => $data['create_by'] ?? '',
-                'create_time' => $now,
-                'update_by' => $data['update_by'] ?? '',
-                'update_time' => $now,
-            ]);
+        // 验证：检查员工是否已有生效的重叠方案
+        $effectiveDate = $data['effective_date'] ?? date('Y-m-d');
+        $this->checkOverlappingPlans($userIds, $effectiveDate);
 
-            // 批量关联员工
-            $this->syncEmployees($plan->plan_id, $userIds);
+        // 获取员工姓名
+        $userNames = $this->getUserNames($userIds);
+        $userIdsStr = implode(',', $userIds);
+        $userNamesStr = implode(',', $userNames);
 
-            // 按日期模式：保存日期
-            if ($data['config_type'] === '1') {
-                $this->syncDates($plan->plan_id, $dates, $reason);
-            }
+        $plan = BizRestPlan::create([
+            'plan_name' => $data['plan_name'],
+            'monday' => $data['monday'] ?? '0',
+            'tuesday' => $data['tuesday'] ?? '0',
+            'wednesday' => $data['wednesday'] ?? '0',
+            'thursday' => $data['thursday'] ?? '0',
+            'friday' => $data['friday'] ?? '0',
+            'saturday' => $data['saturday'] ?? '1',
+            'sunday' => $data['sunday'] ?? '1',
+            'effective_date' => $data['effective_date'] ?? date('Y-m-d'),
+            'user_ids' => $userIdsStr,
+            'user_names' => $userNamesStr,
+            'status' => $data['status'] ?? '0',
+            'create_by' => $data['create_by'] ?? '',
+            'create_time' => $now,
+            'update_by' => $data['update_by'] ?? '',
+            'update_time' => $now,
+        ]);
 
-            Db::commit();
-            return $plan->plan_id;
-        } catch (\Exception $e) {
-            Db::rollBack();
-            throw $e;
-        }
+        return $plan->plan_id;
     }
 
     /**
@@ -163,56 +133,41 @@ class BizRestPlanService
 
         $now = date('Y-m-d H:i:s');
         $userIds = $data['user_ids'] ?? [];
-        $dates = $data['dates'] ?? [];
-        $reason = $data['reason'] ?? '';
 
         if (empty($userIds)) {
             throw new \Exception('请选择员工');
         }
-        if ($data['config_type'] === '1' && empty($dates)) {
-            throw new \Exception('按日期配置时请选择休息日期');
+
+        // 验证：检查员工是否已有生效的重叠方案（排除自身）
+        $effectiveDate = $data['effective_date'] ?? $plan->effective_date;
+        $this->checkOverlappingPlans($userIds, $effectiveDate, $planId);
+
+        // 获取员工姓名
+        $userNames = $this->getUserNames($userIds);
+
+        $updateData = [
+            'plan_name' => $data['plan_name'] ?? $plan->plan_name,
+            'effective_date' => $data['effective_date'] ?? $plan->effective_date,
+            'user_ids' => implode(',', $userIds),
+            'user_names' => implode(',', $userNames),
+            'status' => $data['status'] ?? $plan->status,
+            'update_by' => $data['update_by'] ?? '',
+            'update_time' => $now,
+        ];
+
+        // 周配置字段
+        foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day) {
+            if (isset($data[$day])) {
+                $updateData[$day] = $data[$day];
+            }
         }
 
-        Db::beginTransaction();
-        try {
-            $updateData = [
-                'plan_name' => $data['plan_name'] ?? $plan->plan_name,
-                'config_type' => $data['config_type'] ?? $plan->config_type,
-                'effective_date' => $data['effective_date'] ?? $plan->effective_date,
-                'status' => $data['status'] ?? $plan->status,
-                'update_by' => $data['update_by'] ?? '',
-                'update_time' => $now,
-            ];
-
-            // 周配置字段
-            foreach (['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day) {
-                if (isset($data[$day])) {
-                    $updateData[$day] = $data[$day];
-                }
-            }
-
-            $plan->fill($updateData)->save();
-
-            // 重新同步员工
-            $this->syncEmployees($planId, $userIds, true);
-
-            // 按日期模式：重新同步日期
-            if (($data['config_type'] ?? $plan->config_type) === '1') {
-                $this->syncDates($planId, $dates, $reason, true);
-            } else {
-                BizRestPlanDate::where('plan_id', $planId)->delete();
-            }
-
-            Db::commit();
-            return true;
-        } catch (\Exception $e) {
-            Db::rollBack();
-            throw $e;
-        }
+        $plan->fill($updateData)->save();
+        return true;
     }
 
     /**
-     * 删除方案（级联删除关联）
+     * 删除方案（级联删除 biz_rest_day 中 source='plan' 的记录）
      */
     public function deleteByIds($planIds)
     {
@@ -221,69 +176,82 @@ class BizRestPlanService
         Db::beginTransaction();
         try {
             $count = BizRestPlan::whereIn('plan_id', $planIds)->delete();
-            BizRestPlanEmployee::whereIn('plan_id', $planIds)->delete();
-            BizRestPlanDate::whereIn('plan_id', $planIds)->delete();
+            // 删除 biz_rest_day 中关联的按日期休息日
+            \app\model\BizRestDay::whereIn('source_id', $planIds)->where('source_type', 'plan')->delete();
             Db::commit();
             return $count;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Db::rollBack();
             throw $e;
         }
     }
 
     /**
-     * 同步员工关联
+     * 检查员工是否已有生效的重叠休息方案
+     * @param array $userIds 员工ID列表
+     * @param string $effectiveDate 新方案生效日期
+     * @param int|null $excludePlanId 排除的方案ID（更新时排除自身）
+     * @throws \Exception 如有重叠则抛出异常
      */
-    protected function syncEmployees($planId, $userIds, $clearExisting = false)
+    protected function checkOverlappingPlans($userIds, $effectiveDate, $excludePlanId = null)
     {
-        if ($clearExisting) {
-            BizRestPlanEmployee::where('plan_id', $planId)->delete();
+        // 查询所有生效方案（status='0' 且 effective_date <= 新方案生效日）
+        $query = BizRestPlan::where('status', '0')
+            ->where('effective_date', '<=', $effectiveDate);
+        if ($excludePlanId) {
+            $query->where('plan_id', '!=', $excludePlanId);
+        }
+        $existingPlans = $query->get(['plan_id', 'plan_name', 'user_ids', 'user_names']);
+
+        // 检查每个员工是否已在其他方案中
+        $conflictUsers = [];
+        foreach ($existingPlans as $plan) {
+            $planUserIds = $this->parseUserIds($plan->user_ids);
+            $planUserNames = $this->parseUserNames($plan->user_names);
+            foreach ($planUserIds as $idx => $uid) {
+                if (in_array($uid, $userIds)) {
+                    $name = $planUserNames[$idx] ?? '';
+                    $conflictUsers[] = $name . '(已存在于方案"' . $plan->plan_name . '")';
+                }
+            }
         }
 
-        if (empty($userIds)) return;
-
-        // 批量查询用户和部门信息
-        $users = SysUser::whereIn('user_id', $userIds)->get()->keyBy('user_id');
-        $deptIds = $users->pluck('dept_id')->filter()->unique()->toArray();
-        $depts = !empty($deptIds)
-            ? SysDept::whereIn('dept_id', $deptIds)->pluck('dept_name', 'dept_id')->toArray()
-            : [];
-
-        $rows = [];
-        $now = date('Y-m-d H:i:s');
-        foreach ($userIds as $userId) {
-            $user = $users->get($userId);
-            $deptId = $user->dept_id ?? null;
-            $rows[] = [
-                'plan_id' => $planId,
-                'user_id' => $userId,
-                'user_name' => $user ? ($user->nick_name ?? $user->user_name) : '',
-                'dept_id' => $deptId,
-                'dept_name' => $deptId ? ($depts[$deptId] ?? '') : '',
-            ];
+        if (!empty($conflictUsers)) {
+            throw new \Exception('以下员工已有生效的休息方案：' . implode('、', array_unique($conflictUsers)));
         }
-        BizRestPlanEmployee::insert($rows);
     }
 
     /**
-     * 同步日期关联
+     * 解析逗号分隔的 user_ids 字段
      */
-    protected function syncDates($planId, $dates, $reason, $clearExisting = false)
+    protected function parseUserIds($userIdsStr)
     {
-        if ($clearExisting) {
-            BizRestPlanDate::where('plan_id', $planId)->delete();
-        }
-        if (empty($dates)) return;
+        if (empty($userIdsStr)) return [];
+        return array_filter(array_map('intval', explode(',', $userIdsStr)), fn($v) => $v > 0);
+    }
 
-        $rows = [];
-        foreach ($dates as $date) {
-            $rows[] = [
-                'plan_id' => $planId,
-                'rest_date' => $date,
-                'reason' => $reason,
-            ];
+    /**
+     * 解析逗号分隔的 user_names 字段
+     */
+    protected function parseUserNames($userNamesStr)
+    {
+        if (empty($userNamesStr)) return [];
+        return array_filter(explode(',', $userNamesStr), fn($v) => $v !== '');
+    }
+
+    /**
+     * 批量查询员工姓名
+     */
+    protected function getUserNames($userIds)
+    {
+        if (empty($userIds)) return [];
+        $users = SysUser::whereIn('user_id', $userIds)->get()->keyBy('user_id');
+        $names = [];
+        foreach ($userIds as $uid) {
+            $user = $users->get($uid);
+            $names[] = $user ? ($user->nick_name ?? $user->user_name) : '';
         }
-        BizRestPlanDate::insert($rows);
+        return $names;
     }
 
     /**
@@ -318,7 +286,8 @@ class BizRestPlanService
     }
 
     /**
-     * 检查某员工某天是否休息日
+     * 检查某员工某天是否休息日（按周模板判断）
+     * 注意：仅判断按周方案，custom/leave 类型的休息日请查 biz_rest_day
      * @param int $userId
      * @param string $date Y-m-d格式
      * @return bool
@@ -339,36 +308,23 @@ class BizRestPlanService
             return $weekday >= 6;
         }
 
-        if ($plan->config_type === '0') {
-            // 按周配置
-            return $plan->$field === '1';
-        } else {
-            // 按日期配置：检查 biz_rest_plan_date
-            return BizRestPlanDate::where('plan_id', $plan->plan_id)
-                ->where('rest_date', $date)
-                ->exists();
-        }
+        return $plan->$field === '1';
     }
 
     /**
-     * 获取员工某天有效的休息方案
+     * 获取员工某天有效的休息方案（通过 FIND_IN_SET 查询 user_ids 字段）
      */
     public function getUserEffectivePlan($userId, $date)
     {
-        $planId = BizRestPlanEmployee::where('user_id', $userId)
-            ->pluck('plan_id')
-            ->toArray();
-        if (empty($planId)) return null;
-
-        return BizRestPlan::whereIn('plan_id', $planId)
-            ->where('status', '0')
+        return BizRestPlan::where('status', '0')
             ->where('effective_date', '<=', $date)
+            ->whereRaw('FIND_IN_SET(?, user_ids)', [$userId])
             ->orderBy('effective_date', 'desc')
             ->first();
     }
 
     /**
-     * 批量获取员工某月的休息日列表
+     * 批量获取员工某月的休息日列表（按周模板）
      * @param array $userIds
      * @param string $yearMonth 如 2026-07
      * @param bool $returnDefaultRest 是否对未配置方案的员工返回默认周末休息
@@ -390,12 +346,18 @@ class BizRestPlanService
             4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'
         ];
 
-        // 一次性查询所有员工的方案
-        $planIds = BizRestPlanEmployee::whereIn('user_id', $userIds)
-            ->pluck('plan_id')
-            ->unique()
-            ->toArray();
-        if (empty($planIds)) {
+        // 查询所有包含目标员工的按周方案（通过 FIND_IN_SET 匹配 user_ids 字段）
+        $plans = BizRestPlan::where('status', '0')
+            ->where('effective_date', '<=', $endDate)
+            ->where(function ($q) use ($userIds) {
+                foreach ($userIds as $uid) {
+                    $q->orWhereRaw('FIND_IN_SET(?, user_ids)', [$uid]);
+                }
+            })
+            ->orderBy('effective_date', 'desc')
+            ->get();
+
+        if ($plans->isEmpty()) {
             // 无方案：根据 $returnDefaultRest 决定是否返回默认周末休息
             foreach ($userIds as $userId) {
                 $restDates = [];
@@ -407,39 +369,23 @@ class BizRestPlanService
                         }
                     }
                 }
-                // 返回数组格式，避免 PHP 整数 key 在 JSON 序列化时被重新索引
                 $result[] = ['userId' => $userId, 'restDates' => $restDates];
             }
             return $result;
         }
 
-        $plans = BizRestPlan::whereIn('plan_id', $planIds)
-            ->where('status', '0')
-            ->where('effective_date', '<=', $endDate)
-            ->orderBy('effective_date', 'desc')
-            ->get()
-            ->keyBy('plan_id');
-
-        // 员工-方案映射（合并所有有效方案，避免只显示最新方案）
+        // 构建员工-方案映射（通过 user_ids 字段）
         $userPlansMap = [];
-        $employeeRows = BizRestPlanEmployee::whereIn('user_id', $userIds)->get();
         foreach ($userIds as $userId) {
-            $userPlanIds = $employeeRows->where('user_id', $userId)->pluck('plan_id')->toArray();
             $effectivePlans = [];
-            foreach ($userPlanIds as $pid) {
-                $plan = $plans->get($pid);
-                if ($plan) {
+            foreach ($plans as $plan) {
+                $planUserIds = $this->parseUserIds($plan->user_ids);
+                if (in_array($userId, $planUserIds)) {
                     $effectivePlans[] = $plan;
                 }
             }
             $userPlansMap[$userId] = $effectivePlans;
         }
-
-        // 批量查询日期配置
-        $allDatePlans = BizRestPlanDate::whereIn('plan_id', $planIds)
-            ->whereBetween('rest_date', [$startDate, $endDate])
-            ->get()
-            ->groupBy('plan_id');
 
         foreach ($userIds as $userId) {
             $restDates = [];
@@ -455,30 +401,91 @@ class BizRestPlanService
                     }
                 }
             } else {
-                // 合并所有有效方案的休息日
+                // 合并所有有效方案的按周休息日
                 foreach ($userPlans as $plan) {
-                    if ($plan->config_type === '0') {
-                        // 按周配置：合并
-                        for ($day = 1; $day <= $daysInMonth; $day++) {
-                            $dateStr = sprintf('%s-%02d', $yearMonth, $day);
-                            $weekday = date('N', strtotime($dateStr));
-                            $field = $dayMap[$weekday] ?? 'sunday';
-                            if ($plan->$field === '1' && !in_array($dateStr, $restDates)) {
-                                $restDates[] = $dateStr;
-                            }
-                        }
-                    } else {
-                        // 按日期配置：合并
-                        $planDates = $allDatePlans->get($plan->plan_id, collect());
-                        foreach ($planDates as $row) {
-                            if (!in_array($row->rest_date, $restDates)) {
-                                $restDates[] = $row->rest_date;
-                            }
+                    for ($day = 1; $day <= $daysInMonth; $day++) {
+                        $dateStr = sprintf('%s-%02d', $yearMonth, $day);
+                        $weekday = date('N', strtotime($dateStr));
+                        $field = $dayMap[$weekday] ?? 'sunday';
+                        if ($plan->$field === '1' && !in_array($dateStr, $restDates)) {
+                            $restDates[] = $dateStr;
                         }
                     }
                 }
             }
             // 返回数组格式，避免 PHP 整数 key 在 JSON 序列化时被重新索引
+            $result[] = ['userId' => $userId, 'restDates' => $restDates];
+        }
+
+        return $result;
+    }
+
+    /**
+     * 按日期范围获取员工的按周模板休息日（供配置弹窗跨月查看）
+     * 逻辑与 getRestDatesByMonth 一致，只是迭代范围从单月扩展到 [$startDate, $endDate]
+     */
+    public function getRestDatesByRange($userIds, $startDate, $endDate, $returnDefaultRest = false)
+    {
+        if (empty($userIds)) return [];
+
+        $result = [];
+
+        $dayMap = [
+            1 => 'monday', 2 => 'tuesday', 3 => 'wednesday',
+            4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'
+        ];
+
+        // 查询所有包含目标员工的按周方案（effective_date <= endDate）
+        $plans = BizRestPlan::where('status', '0')
+            ->where('effective_date', '<=', $endDate)
+            ->where(function ($q) use ($userIds) {
+                foreach ($userIds as $uid) {
+                    $q->orWhereRaw('FIND_IN_SET(?, user_ids)', [$uid]);
+                }
+            })
+            ->orderBy('effective_date', 'desc')
+            ->get();
+
+        // 构建员工-方案映射
+        $userPlansMap = [];
+        foreach ($userIds as $userId) {
+            $effectivePlans = [];
+            foreach ($plans as $plan) {
+                $planUserIds = $this->parseUserIds($plan->user_ids);
+                if (in_array($userId, $planUserIds)) {
+                    $effectivePlans[] = $plan;
+                }
+            }
+            $userPlansMap[$userId] = $effectivePlans;
+        }
+
+        // 迭代日期范围内的每一天
+        $startTs = strtotime($startDate);
+        $endTs = strtotime($endDate);
+
+        foreach ($userIds as $userId) {
+            $restDates = [];
+            $userPlans = $userPlansMap[$userId] ?? [];
+            if (empty($userPlans)) {
+                if ($returnDefaultRest) {
+                    for ($ts = $startTs; $ts <= $endTs; $ts += 86400) {
+                        if (date('N', $ts) >= 6) {
+                            $restDates[] = date('Y-m-d', $ts);
+                        }
+                    }
+                }
+            } else {
+                foreach ($userPlans as $plan) {
+                    for ($ts = $startTs; $ts <= $endTs; $ts += 86400) {
+                        $dateStr = date('Y-m-d', $ts);
+                        $weekday = date('N', $ts);
+                        $field = $dayMap[$weekday] ?? 'sunday';
+                        if ($plan->$field === '1' && !in_array($dateStr, $restDates)) {
+                            $restDates[] = $dateStr;
+                        }
+                    }
+                }
+            }
             $result[] = ['userId' => $userId, 'restDates' => $restDates];
         }
 

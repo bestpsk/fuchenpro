@@ -14,6 +14,9 @@ Route::get('/common/download', [app\controller\CommonController::class, 'downloa
 
 Route::get('/home/stats', [app\controller\AppHomeController::class, 'stats']);
 Route::get('/home/enterprise-stats', [app\controller\AppHomeController::class, 'enterpriseStats']);
+Route::get('/home/todo-items', [app\controller\AppHomeController::class, 'todoItems']);
+Route::get('/home/sales-trend', [app\controller\AppHomeController::class, 'salesTrend']);
+Route::get('/home/statsOverview', [app\controller\AppHomeController::class, 'statsOverview']);
 
 Route::get('/system/user/list', [app\controller\system\SysUserController::class, 'list']);
 Route::post('/system/user/export', [app\controller\system\SysUserController::class, 'export']);
@@ -148,11 +151,13 @@ Route::put('/monitor/job/run', [app\controller\monitor\SysJobController::class, 
 Route::post('/monitor/job', [app\controller\monitor\SysJobController::class, 'add']);
 Route::put('/monitor/job', [app\controller\monitor\SysJobController::class, 'edit']);
 Route::delete('/monitor/job', [app\controller\monitor\SysJobController::class, 'remove']);
+Route::post('/monitor/job/export', [app\controller\monitor\SysJobController::class, 'export']);
 Route::get('/monitor/job/{jobId}', [app\controller\monitor\SysJobController::class, 'getInfo']);
 
 Route::get('/monitor/jobLog/list', [app\controller\monitor\SysJobLogController::class, 'list']);
 Route::delete('/monitor/jobLog/clean', [app\controller\monitor\SysJobLogController::class, 'clean']);
 Route::delete('/monitor/jobLog', [app\controller\monitor\SysJobLogController::class, 'remove']);
+Route::post('/monitor/jobLog/export', [app\controller\monitor\SysJobLogController::class, 'export']);
 
 Route::get('/monitor/server', [app\controller\monitor\ServerController::class, 'getInfo']);
 Route::get('/monitor/data', [app\controller\monitor\DataController::class, 'getInfo']);
@@ -280,6 +285,11 @@ Route::get('/business/employeeConfig/search', [app\controller\business\BizEmploy
 Route::post('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'add']);
 Route::put('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'edit']);
 Route::put('/business/employeeConfig/updateSchedulable', [app\controller\business\BizEmployeeConfigController::class, 'updateSchedulable']);
+Route::post('/business/employeeConfig/saveRestDates', [app\controller\business\BizEmployeeConfigController::class, 'saveRestDates']);
+Route::get('/business/employeeConfig/getRestDates', [app\controller\business\BizEmployeeConfigController::class, 'getRestDates']);
+Route::get('/business/employeeConfig/getAllRestDates', [app\controller\business\BizEmployeeConfigController::class, 'getAllRestDates']);
+Route::get('/business/employeeConfig/getAllRestDatesAll', [app\controller\business\BizEmployeeConfigController::class, 'getAllRestDatesAll']);
+Route::get('/business/employeeConfig/getAllRestDatesBatch', [app\controller\business\BizEmployeeConfigController::class, 'getAllRestDatesBatch']);
 Route::delete('/business/employeeConfig', [app\controller\business\BizEmployeeConfigController::class, 'remove']);
 Route::get('/business/employeeConfig/{configId}', [app\controller\business\BizEmployeeConfigController::class, 'getInfo']);
 
@@ -436,6 +446,39 @@ Route::post('/statistics/performance/exportDept', [app\controller\statistics\Per
 Route::post('/statistics/performance/exportUser', [app\controller\statistics\PerformanceStatsController::class, 'exportUserPerformance']);
 Route::post('/statistics/performance/exportEnterprise', [app\controller\statistics\PerformanceStatsController::class, 'exportEnterprisePerformance']);
 Route::post('/statistics/performance/exportStore', [app\controller\statistics\PerformanceStatsController::class, 'exportStorePerformance']);
+
+Route::get('/statistics/wms/inventorySummary', [app\controller\statistics\WmsStatsController::class, 'inventorySummary']);
+Route::get('/statistics/wms/slowMoving', [app\controller\statistics\WmsStatsController::class, 'slowMoving']);
+Route::get('/statistics/wms/inventoryWarning', [app\controller\statistics\WmsStatsController::class, 'inventoryWarning']);
+Route::get('/statistics/wms/turnover', [app\controller\statistics\WmsStatsController::class, 'turnover']);
+Route::post('/statistics/wms/exportSlowMoving', [app\controller\statistics\WmsStatsController::class, 'exportSlowMoving']);
+Route::post('/statistics/wms/exportWarning', [app\controller\statistics\WmsStatsController::class, 'exportWarning']);
+
+Route::get('/statistics/prepare/amountStats', [app\controller\statistics\StockPrepareStatsController::class, 'amountStats']);
+Route::get('/statistics/prepare/planExecution', [app\controller\statistics\StockPrepareStatsController::class, 'planExecution']);
+Route::get('/statistics/prepare/shipmentRate', [app\controller\statistics\StockPrepareStatsController::class, 'shipmentRate']);
+Route::post('/statistics/prepare/exportPlanExecution', [app\controller\statistics\StockPrepareStatsController::class, 'exportPlanExecution']);
+
+// 客户统计
+Route::get('/statistics/customer/newTrend', [app\controller\statistics\CustomerStatsController::class, 'newCustomerTrend']);
+Route::get('/statistics/customer/valueDistribution', [app\controller\statistics\CustomerStatsController::class, 'valueDistribution']);
+Route::get('/statistics/customer/listByLevel', [app\controller\statistics\CustomerStatsController::class, 'customerListByLevel']);
+Route::get('/statistics/customer/churnWarning', [app\controller\statistics\CustomerStatsController::class, 'churnWarning']);
+Route::get('/statistics/customer/orderFrequency', [app\controller\statistics\CustomerStatsController::class, 'orderFrequency']);
+Route::post('/statistics/customer/exportChurn', [app\controller\statistics\CustomerStatsController::class, 'exportChurn']);
+
+// 财务统计
+Route::get('/statistics/finance/receivable', [app\controller\statistics\FinanceStatsController::class, 'receivableStats']);
+Route::get('/statistics/finance/aging', [app\controller\statistics\FinanceStatsController::class, 'agingAnalysis']);
+Route::get('/statistics/finance/paymentMethod', [app\controller\statistics\FinanceStatsController::class, 'paymentMethod']);
+Route::get('/statistics/finance/collectionRate', [app\controller\statistics\FinanceStatsController::class, 'collectionRate']);
+Route::post('/statistics/finance/exportReceivable', [app\controller\statistics\FinanceStatsController::class, 'exportReceivable']);
+
+// 货品统计
+Route::get('/statistics/product/salesRanking', [app\controller\statistics\ProductStatsController::class, 'salesRanking']);
+Route::get('/statistics/product/cancelRate', [app\controller\statistics\ProductStatsController::class, 'cancelRate']);
+Route::get('/statistics/product/profit', [app\controller\statistics\ProductStatsController::class, 'profitAnalysis']);
+Route::post('/statistics/product/exportRanking', [app\controller\statistics\ProductStatsController::class, 'exportRanking']);
 
 // =============================================
 // 财务管理模块路由

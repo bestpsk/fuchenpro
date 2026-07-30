@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-hasPermi="['train:studyLog:list']">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
       <el-form-item label="用户姓名" prop="userName">
         <el-input v-model="queryParams.userName" placeholder="请输入用户姓名" clearable style="width: 160px" @keyup.enter="handleQuery" />

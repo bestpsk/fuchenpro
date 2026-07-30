@@ -87,8 +87,12 @@ class BizStoreService
                 $data['enterprise_name'] = $enterprise->enterprise_name;
             }
         }
-        $updateData = array_intersect_key($data, array_flip((new BizStore())->getFillable()));
-        return BizStore::where('store_id', $data['store_id'])->update($updateData);
+        $store = BizStore::find($data['store_id']);
+        if (!$store) {
+            throw new \Exception('门店不存在');
+        }
+        $store->fill($data)->save();
+        return true;
     }
 
     public function selectStoreForSearch($keyword, $enterpriseId = null, $params = [])

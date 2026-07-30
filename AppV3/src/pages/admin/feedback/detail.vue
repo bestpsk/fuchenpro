@@ -1,6 +1,10 @@
 <template>
   <view class="detail-container">
-    <view v-if="detail" class="detail-content">
+    <view v-if="loading" class="loading-wrap">
+      <u-icon name="loading" size="24" color="#3D6DF7"></u-icon>
+      <text class="loading-text">加载中...</text>
+    </view>
+    <view v-else-if="detail" class="detail-content">
       <view class="detail-card">
         <view class="card-header-row">
           <text class="detail-title">{{ detail.title }}</text>
@@ -41,7 +45,7 @@
       </view>
     </view>
 
-    <u-empty v-else-if="!loading" mode="data" text="反馈不存在" :marginTop="100"></u-empty>
+    <u-empty v-else mode="data" text="反馈不存在" :marginTop="100"></u-empty>
 
     <view v-if="detail" class="bottom-actions">
       <view v-if="checkPermi('admin:feedback:handle')" class="action-btn reply" @click="goReply">
@@ -150,6 +154,9 @@ onMounted(() => {
 <style lang="scss" scoped>
 page { background-color: #F5F7FA; }
 .detail-container { padding: 24rpx; padding-bottom: 140rpx; }
+
+.loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 200rpx; gap: 16rpx; }
+.loading-text { font-size: 28rpx; color: #86909C; }
 
 .detail-card { background: #fff; border-radius: 16rpx; padding: 28rpx 32rpx; margin-bottom: 20rpx; }
 .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; padding-bottom: 20rpx; border-bottom: 1rpx solid #F2F3F5; }

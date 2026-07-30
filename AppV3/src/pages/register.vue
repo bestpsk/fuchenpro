@@ -140,7 +140,7 @@ async function doRegister() {
 
 <style lang="scss" scoped>
 page {
-  background: linear-gradient(180deg, #E8F0FE 0%, #FFFFFF 40%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #3D6DF7 0%, #5B8FF9 30%, #FFFFFF 70%, #FFFFFF 100%);
   min-height: 100vh;
 }
 

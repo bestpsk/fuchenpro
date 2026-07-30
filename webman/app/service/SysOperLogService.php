@@ -61,10 +61,10 @@ class SysOperLogService
         return SysOperLog::whereIn('oper_id', $operIds)->delete();
     }
 
-    // 清空操作日志
+    // 清空操作日志（使用delete代替truncate，保留自增ID便于审计追溯）
 
     public function cleanOperLog()
     {
-        return SysOperLog::truncate();
+        return SysOperLog::query()->delete();
     }
 }

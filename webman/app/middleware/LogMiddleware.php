@@ -98,10 +98,12 @@ class LogMiddleware implements MiddlewareInterface
             '/system/banner' => '轮播图管理',
             '/monitor/online' => '在线用户',
             '/monitor/job' => '定时任务',
+            '/monitor/jobLog' => '任务日志',
             '/monitor/logininfor' => '登录日志',
             '/monitor/operlog' => '操作日志',
             '/monitor/cache' => '缓存监控',
             '/monitor/server' => '服务监控',
+            '/monitor/data' => '数据监控',
             '/tool/gen' => '代码生成',
             '/business/enterprise' => '企业管理',
             '/business/store' => '门店管理',
@@ -130,6 +132,7 @@ class LogMiddleware implements MiddlewareInterface
             '/wms/report' => '进销存报表',
             '/hr/salary' => '薪资管理',
             '/admin/feedback' => '反馈管理',
+            '/admin/about' => '关于我们',
         ];
 
         foreach ($titles as $prefix => $title) {

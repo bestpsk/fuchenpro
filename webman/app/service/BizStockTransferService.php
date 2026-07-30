@@ -77,19 +77,15 @@ class BizStockTransferService
         return $transfer;
     }
 
-    // 生成调拨单编号：DB + 日期 + 3位序号
+    // 生成调拨单编号：DB + 日期 + 3位序号（Redis incr + 数据库兜底）
     public function generateTransferNo()
     {
-        $prefix = 'DB' . date('Ymd');
-        $last = BizStockTransfer::where('transfer_no', 'like', $prefix . '%')
-            ->orderBy('transfer_id', 'desc')
-            ->first();
-        $seq = 1;
-        if ($last) {
-            $lastSeq = intval(substr($last->transfer_no, -3));
-            $seq = $lastSeq + 1;
-        }
-        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        return BizWmsHelper::generateDocNo(
+            'DB' . date('Ymd'),
+            'transfer_no:' . date('Ymd'),
+            BizStockTransfer::class,
+            'transfer_no'
+        );
     }
 
     // 新增调拨单，生成调拨编号并创建明细
@@ -106,16 +102,7 @@ class BizStockTransferService
         $data['status'] = '0';
         $totalQuantity = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-
+            BizWmsHelper::convertUnitQuantity($item);
             $totalQuantity += intval($item['quantity'] ?? 0);
         }
         unset($item);
@@ -151,22 +138,16 @@ class BizStockTransferService
         $data['update_time'] = date('Y-m-d H:i:s');
         $totalQuantity = 0;
         foreach ($items as &$item) {
-            $unitType = $item['unit_type'] ?? '1';
-            $packQty = intval($item['pack_qty'] ?? 1);
-
-            if ($unitType === '1' && $packQty > 1) {
-                $item['original_quantity'] = intval($item['quantity']);
-                $item['quantity'] = intval($item['quantity']) * $packQty;
-            } else {
-                $item['original_quantity'] = intval($item['quantity']);
-            }
-
+            BizWmsHelper::convertUnitQuantity($item);
             $totalQuantity += intval($item['quantity'] ?? 0);
         }
         unset($item);
         $data['total_quantity'] = $totalQuantity;
-        Db::transaction(function () use ($transferId, $data, $items) {
-            BizStockTransfer::where('transfer_id', $transferId)->update($data);
+        // 按 fillable 过滤，移除 login_user 等非数据库字段，避免触发 SQL 错误
+        $fillable = (new BizStockTransfer())->getFillable();
+        $filteredData = array_intersect_key($data, array_flip($fillable));
+        Db::transaction(function () use ($transferId, $filteredData, $items) {
+            BizStockTransfer::where('transfer_id', $transferId)->update($filteredData);
             BizStockTransferItem::where('transfer_id', $transferId)->delete();
             foreach ($items as $item) {
                 $item['transfer_id'] = $transferId;
@@ -232,6 +213,27 @@ class BizStockTransferService
                             'update_time' => date('Y-m-d H:i:s'),
                         ]);
 
+                    // 按FIFO原则扣减源仓库批次库存（与出库逻辑一致）
+                    $batches = \app\model\BizStockInItem::where('product_id', $productId)
+                        ->where('warehouse_id', $fromWarehouseId)
+                        ->whereRaw('quantity > shipped_quantity')
+                        ->orderBy('expiry_date', 'asc')
+                        ->orderBy('item_id', 'asc')
+                        ->lockForUpdate()
+                        ->get();
+                    $remainingToShip = $quantity;
+                    foreach ($batches as $batch) {
+                        if ($remainingToShip <= 0) break;
+                        $batchRemaining = $batch->quantity - $batch->shipped_quantity;
+                        $shipFromBatch = min($batchRemaining, $remainingToShip);
+                        $batch->shipped_quantity += $shipFromBatch;
+                        $batch->save();
+                        $remainingToShip -= $shipFromBatch;
+                    }
+                    if ($remainingToShip > 0) {
+                        \support\Log::warning("调拨批次库存不足，产品ID:{$productId}，源仓库ID:{$fromWarehouseId}，缺口:{$remainingToShip}");
+                    }
+
                     // 目标仓库增加：查找或创建库存记录
                     $toInventory = BizInventory::where('product_id', $productId)
                         ->where('warehouse_id', $toWarehouseId)
@@ -252,6 +254,10 @@ class BizStockTransferService
                             'last_stock_in_time' => date('Y-m-d H:i:s'),
                             'update_time' => date('Y-m-d H:i:s'),
                         ]);
+
+                    // 更新源仓库和目标仓库的最早有效期
+                    BizWmsHelper::updateEarliestExpiry($productId, $fromWarehouseId);
+                    BizWmsHelper::updateEarliestExpiry($productId, $toWarehouseId);
                 }
 
                 // 更新调拨单状态为已确认
@@ -260,7 +266,7 @@ class BizStockTransferService
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '调拨确认成功'];
@@ -321,6 +327,27 @@ class BizStockTransferService
                         ->increment('quantity', $quantity, [
                             'update_time' => date('Y-m-d H:i:s'),
                         ]);
+
+                    // 按LIFO原则回退源仓库批次shipped_quantity（与取消出库逻辑一致）
+                    $batches = \app\model\BizStockInItem::where('product_id', $productId)
+                        ->where('warehouse_id', $fromWarehouseId)
+                        ->whereRaw('shipped_quantity > 0')
+                        ->orderBy('expiry_date', 'desc')
+                        ->orderBy('item_id', 'desc')
+                        ->lockForUpdate()
+                        ->get();
+                    $remainingToRestore = $quantity;
+                    foreach ($batches as $batch) {
+                        if ($remainingToRestore <= 0) break;
+                        $canRestore = min($batch->shipped_quantity, $remainingToRestore);
+                        $batch->shipped_quantity -= $canRestore;
+                        $batch->save();
+                        $remainingToRestore -= $canRestore;
+                    }
+
+                    // 更新源仓库和目标仓库的最早有效期
+                    BizWmsHelper::updateEarliestExpiry($productId, $fromWarehouseId);
+                    BizWmsHelper::updateEarliestExpiry($productId, $toWarehouseId);
                 }
 
                 // 更新调拨单状态为待确认
@@ -329,7 +356,7 @@ class BizStockTransferService
                     'update_time' => date('Y-m-d H:i:s'),
                 ]);
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '已取消确认'];

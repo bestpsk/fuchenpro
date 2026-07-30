@@ -3,6 +3,7 @@
 namespace app\service;
 
 use app\model\BizEmployeeConfig;
+use app\model\BizRestDay;
 use app\service\DataScopeService;
 use support\Db;
 
@@ -24,7 +25,7 @@ class BizEmployeeConfigService
             ->where('su.status', '0')
             ->select(
                 'su.user_id', 'su.user_name', 'su.nick_name', 'su.phonenumber',
-                'ec.config_id', 'ec.is_schedulable', 'ec.status as config_status',
+                'ec.config_id', 'ec.is_schedulable', 'ec.rest_dates', 'ec.status as config_status',
                 'p.post_id', 'p.post_name',
                 'd.dept_id', 'd.dept_name'
             );
@@ -51,12 +52,31 @@ class BizEmployeeConfigService
         $pageSize = intval($params['page_size'] ?? 10);
         $result = $query->orderBy('su.user_id', 'desc')->paginate($pageSize, ['*'], 'page', $pageNum);
 
+        // 批量查询当前页所有员工的自定义休息日（从 biz_rest_day 查询，避免 N+1）
+        $userIds = array_map(fn($item) => $item->user_id, $result->items());
+        $restDateMap = [];
+        if (!empty($userIds)) {
+            $restRows = BizRestDay::whereIn('user_id', $userIds)
+                ->where('source_type', 'custom')
+                ->orderBy('rest_date')
+                ->get(['user_id', 'rest_date', 'type_id', 'type_name']);
+            foreach ($restRows as $row) {
+                $restDateMap[$row->user_id][] = [
+                    'date' => $row->rest_date,
+                    'typeId' => $row->type_id,
+                    'typeName' => $row->type_name ?? '自定义'
+                ];
+            }
+        }
+
         foreach ($result->items() as $item) {
             // 仅当 is_schedulable 字段为 NULL 或空字符串时才兜底为 '1'，不能使用 empty() 因为 empty('0') 为 true
             if ($item->is_schedulable === null || $item->is_schedulable === '') {
                 $item->is_schedulable = '1';
             }
             $item->user_name = $item->nick_name ?: $item->user_name;
+            $item->restDates = $restDateMap[$item->user_id] ?? [];
+            unset($item->rest_dates);
         }
 
         return $result;
@@ -87,7 +107,12 @@ class BizEmployeeConfigService
     public function updateConfig($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizEmployeeConfig::where('config_id', $data['config_id'])->update($data);
+        $config = BizEmployeeConfig::find($data['config_id']);
+        if (!$config) {
+            throw new \Exception('员工配置不存在');
+        }
+        $config->fill($data)->save();
+        return true;
     }
 
     public function updateSchedulable($userId, $isSchedulable)
@@ -153,5 +178,76 @@ class BizEmployeeConfigService
         }
 
         return $query->orderBy('su.user_id', 'desc')->limit(50)->get();
+    }
+
+    /**
+     * 保存员工休息日期（委托 BizRestDayService）
+     * 接收对象数组 [{date, typeId, typeName}] 或旧格式字符串数组 ["2026-07-01"]
+     */
+    public function saveRestDates($userId, $restDates)
+    {
+        // 确保 biz_employee_config 记录存在（保存排班开关等配置）
+        $config = BizEmployeeConfig::where('user_id', $userId)->first();
+        if (!$config) {
+            $user = Db::table('sys_user')->where('user_id', $userId)->first();
+            if (!$user) return false;
+            $postInfo = Db::table('sys_user_post as up')
+                ->join('sys_post as p', 'up.post_id', '=', 'p.post_id')
+                ->where('up.user_id', $userId)->first();
+            $deptInfo = Db::table('sys_dept')->where('dept_id', $user->dept_id)->first();
+            BizEmployeeConfig::create([
+                'user_id' => $userId,
+                'user_name' => $user->nick_name ?: $user->user_name,
+                'post_id' => $postInfo ? $postInfo->post_id : null,
+                'post_name' => $postInfo ? $postInfo->post_name : null,
+                'dept_id' => $user->dept_id,
+                'dept_name' => $deptInfo ? $deptInfo->dept_name : null,
+                'is_schedulable' => '1',
+                'rest_dates' => null,
+                'status' => '0',
+                'create_time' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        $service = new BizRestDayService();
+        return $service->saveCustomRestDates($userId, $restDates);
+    }
+
+    /**
+     * 获取员工自定义休息日期（从 biz_rest_day 查询 source='custom'）
+     */
+    public function getRestDates($userId)
+    {
+        $service = new BizRestDayService();
+        return $service->getCustomRestDates($userId);
+    }
+
+    /**
+     * 获取员工某月所有休息相关日期（委托 BizRestDayService）
+     * 配置弹窗用：不返回默认周末休息（returnDefaultRest=false）
+     */
+    public function getAllRestDates($userId, $yearMonth)
+    {
+        $service = new BizRestDayService();
+        return $service->getAllRestDates($userId, $yearMonth, false);
+    }
+
+    /**
+     * 获取员工全部休息日（不限月份，2年前~1年后，委托 BizRestDayService）
+     * 配置弹窗跨月查看和已存日期回显用
+     */
+    public function getAllRestDatesAll($userId)
+    {
+        $service = new BizRestDayService();
+        return $service->getAllRestDatesAll($userId, false);
+    }
+
+    /**
+     * 批量获取多员工某月所有休息日期（委托 BizRestDayService）
+     */
+    public function getAllRestDatesBatch($userIds, $yearMonth)
+    {
+        $service = new BizRestDayService();
+        return $service->getRestDatesBatch($userIds, $yearMonth);
     }
 }

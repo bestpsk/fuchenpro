@@ -80,8 +80,12 @@ class BizCardItemService
             }
             $products = $data['products'] ?? null;
             unset($data['products']);
-            $updateData = array_intersect_key($data, array_flip((new BizCardItem())->getFillable()));
-            $result = BizCardItem::where('card_item_id', $data['card_item_id'])->update($updateData);
+            $cardItem = BizCardItem::find($data['card_item_id']);
+            if (!$cardItem) {
+                throw new \Exception('卡项不存在');
+            }
+            $cardItem->fill($data)->save();
+            $result = true;
             if ($products !== null) {
                 $this->syncProducts($data['card_item_id'], $products);
             }

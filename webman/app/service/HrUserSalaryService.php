@@ -5,6 +5,7 @@ namespace app\service;
 use app\model\HrSalaryType;
 use app\model\HrUserSalary;
 use app\model\HrSalaryTier;
+use support\Db;
 
 /**
  * 薪资管理服务层，处理用户薪资的增删改查和薪资层级配置
@@ -40,48 +41,53 @@ class HrUserSalaryService
 
     public function insertUserSalary($data)
     {
-        $data['create_time'] = date('Y-m-d H:i:s');
-        $tierConfig = $data['tier_config'] ?? null;
-        $tiers = $data['tiers'] ?? [];
-        unset($data['tier_config'], $data['tiers']);
-        
-        $salary = HrUserSalary::create($data);
-        
-        if (!empty($tierConfig)) {
-            $salary->tier_config = $tierConfig;
-            $salary->save();
-        }
-        
-        if (!empty($tiers)) {
-            $this->saveTiers($salary->salary_id, $tiers);
-        }
-        
-        return $salary;
+        return Db::transaction(function () use ($data) {
+            $data['create_time'] = date('Y-m-d H:i:s');
+            $tierConfig = $data['tier_config'] ?? null;
+            $tiers = $data['tiers'] ?? [];
+            unset($data['tier_config'], $data['tiers']);
+
+            $salary = HrUserSalary::create($data);
+
+            if (!empty($tierConfig)) {
+                $salary->tier_config = $tierConfig;
+                $salary->save();
+            }
+
+            if (!empty($tiers)) {
+                $this->saveTiers($salary->salary_id, $tiers);
+            }
+
+            return $salary;
+        });
     }
 
     public function updateUserSalary($data)
     {
-        $data['update_time'] = date('Y-m-d H:i:s');
-        $tierConfig = $data['tier_config'] ?? null;
-        $tiers = $data['tiers'] ?? [];
-        unset($data['tier_config'], $data['tiers']);
-        
-        $result = HrUserSalary::where('salary_id', $data['salary_id'])->update($data);
-        
-        if ($tierConfig !== null) {
+        return Db::transaction(function () use ($data) {
             $salary = HrUserSalary::find($data['salary_id']);
-            if ($salary) {
+            if (!$salary) {
+                return false;
+            }
+            $data['update_time'] = date('Y-m-d H:i:s');
+            $tierConfig = $data['tier_config'] ?? null;
+            $tiers = $data['tiers'] ?? [];
+            unset($data['tier_config'], $data['tiers'], $data['salary_id']);
+
+            $salary->fill($data)->save();
+
+            if ($tierConfig !== null) {
                 $salary->tier_config = $tierConfig;
                 $salary->save();
             }
-        }
-        
-        if (!empty($tiers)) {
-            HrSalaryTier::where('salary_id', $data['salary_id'])->delete();
-            $this->saveTiers($data['salary_id'], $tiers);
-        }
-        
-        return $result;
+
+            if (!empty($tiers)) {
+                HrSalaryTier::where('salary_id', $salary->salary_id)->delete();
+                $this->saveTiers($salary->salary_id, $tiers);
+            }
+
+            return true;
+        });
     }
 
     public function deleteUserSalaryByIds($salaryIds)

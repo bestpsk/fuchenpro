@@ -49,18 +49,24 @@ class BizAttendanceRuleService
     public function updateRule($data)
     {
         $data['update_time'] = date('Y-m-d H:i:s');
-        return BizAttendanceRule::where('rule_id', $data['rule_id'])->update($data);
+        $rule = BizAttendanceRule::find($data['rule_id']);
+        if (!$rule) {
+            throw new \Exception('考勤规则不存在');
+        }
+        $rule->fill($data)->save();
+        return true;
     }
 
     // 批量删除考勤规则
 
     public function deleteRuleByIds($ruleIds)
     {
+        if (empty($ruleIds)) return 0;
+        // 检查是否有考勤配置引用了待删除的规则
+        $referencedCount = \app\model\BizAttendanceConfig::whereIn('rule_id', $ruleIds)->count();
+        if ($referencedCount > 0) {
+            throw new \Exception('该规则已被考勤配置引用，请先解除关联后再删除');
+        }
         return BizAttendanceRule::whereIn('rule_id', $ruleIds)->delete();
-    }
-
-    public function getActiveRule()
-    {
-        return BizAttendanceRule::where('status', '0')->first();
     }
 }

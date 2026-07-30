@@ -160,7 +160,7 @@ async function pwdLogin() {
 
 <style lang="scss" scoped>
 page {
-  background: linear-gradient(180deg, #E8F0FE 0%, #FFFFFF 40%, #FFFFFF 100%);
+  background: linear-gradient(180deg, #E8F0FE 0%, #F5F8FF 30%, #FFFFFF 60%, #FFFFFF 100%);
   min-height: 100vh;
 }
 
@@ -178,36 +178,37 @@ page {
 /* 顶部装饰圆形 */
 .top-decoration {
   position: absolute;
-  top: -60rpx;
+  top: -80rpx;
   left: 0;
   right: 0;
-  height: 300rpx;
+  height: 360rpx;
   pointer-events: none;
   
   .decoration-circle {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(61, 109, 247, 0.15), rgba(91, 143, 249, 0.08));
+    background: linear-gradient(135deg, rgba(61, 109, 247, 0.10), rgba(91, 143, 249, 0.05));
+    filter: blur(10rpx);
   }
   
   .circle-1 {
-    width: 200rpx;
-    height: 200rpx;
-    top: 40rpx;
-    left: -40rpx;
+    width: 240rpx;
+    height: 240rpx;
+    top: 60rpx;
+    left: -60rpx;
   }
   
   .circle-2 {
-    width: 160rpx;
-    height: 160rpx;
-    top: 80rpx;
-    right: 60rpx;
+    width: 200rpx;
+    height: 200rpx;
+    top: 120rpx;
+    right: 40rpx;
   }
   
   .circle-3 {
-    width: 100rpx;
-    height: 100rpx;
-    top: 20rpx;
+    width: 140rpx;
+    height: 140rpx;
+    top: 40rpx;
     left: 50%;
     transform: translateX(-50%);
   }
@@ -228,11 +229,12 @@ page {
     font-weight: 700;
     color: #3D6DF7;
     letter-spacing: 4rpx;
+    text-shadow: 0 2rpx 8rpx rgba(61, 109, 247, 0.12);
   }
   
   .subtitle {
     font-size: 26rpx;
-    color: #86909C;
+    color: #6B7B94;
     margin-top: 12rpx;
   }
 }
@@ -240,9 +242,9 @@ page {
 /* 表单区域 */
 .login-form-content {
   background: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 40rpx 24rpx;
-  box-shadow: 0 4rpx 24rpx rgba(61, 109, 247, 0.12);
+  border-radius: 32rpx;
+  padding: 48rpx 32rpx;
+  box-shadow: 0 8rpx 32rpx rgba(61, 109, 247, 0.08);
   margin-bottom: 32rpx;
   box-sizing: border-box;
   width: 100%;
@@ -260,17 +262,17 @@ page {
     background: #F7F8FA;
     border: 2rpx solid #E5E6EB;
     height: 96rpx;
-    border-radius: 24rpx;
+    border-radius: 20rpx;
     display: flex;
     align-items: center;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
     box-sizing: border-box;
     width: 100%;
     
     &:focus-within {
       border-color: #3D6DF7;
-      background: #E8F0FE;
-      box-shadow: 0 2rpx 8rpx rgba(61, 109, 247, 0.15);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 2rpx rgba(61, 109, 247, 0.12);
     }
     
     .input {
@@ -325,8 +327,8 @@ page {
     letter-spacing: 8rpx;
     
     &:active {
-      opacity: 0.9;
-      transform: scale(0.98);
+      opacity: 0.95;
+      transform: scale(0.985);
     }
   }
   
@@ -339,10 +341,8 @@ page {
 
 /* 底部区域 */
 .bottom-section {
-  position: absolute;
-  bottom: 40rpx;
-  left: 0;
-  right: 0;
+  margin-top: auto;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
   text-align: center;
 
   .xieyi {
@@ -365,8 +365,8 @@ page {
     justify-content: center;
 
     .brand-en {
-      font-size: 22rpx;
-      color: #C9CDD4;
+      font-size: 20rpx;
+      color: #D4D6DC;
       letter-spacing: 8rpx;
       font-weight: 400;
     }

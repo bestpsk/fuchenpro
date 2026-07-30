@@ -476,7 +476,7 @@ class BizStockPrepareService
                         $details[] = ['order_id' => $order->order_id, 'order_no' => $order->order_no, 'status' => 'skipped', 'msg' => '无卡项'];
                     }
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $failedCount += count($groupOrders);
                 foreach ($groupOrders as $order) {
                     $details[] = ['order_id' => $order->order_id, 'status' => 'failed', 'msg' => $e->getMessage()];
@@ -742,7 +742,6 @@ class BizStockPrepareService
                     'amount' => $amount,
                     'remark' => null,
                 ];
-                \support\Log::info("createStockOutFromPrepare: prepare_item_id={$prepareItem->item_id}, product={$prepareItem->product_name}, plan_item_id=" . ($prepareItem->plan_item_id ?? 'NULL') . ", quantity={$pi['quantity']}");
             }
 
             $stockOut = BizStockOut::create([
@@ -975,7 +974,7 @@ class BizStockPrepareService
                     'update_by' => $loginUser ? ($loginUser->user->user_name ?? '') : '',
                 ]);
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'msg' => $e->getMessage()];
         }
         return ['success' => true, 'msg' => '取消成功'];

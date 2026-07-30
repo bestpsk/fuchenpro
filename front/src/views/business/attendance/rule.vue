@@ -195,7 +195,18 @@ const data = reactive({
   rules: {
     ruleName: [{ required: true, message: "规则名称不能为空", trigger: "blur" }],
     clockType: [{ required: true, message: "请选择打卡类型", trigger: "change" }],
-    workMode: [{ required: true, message: "请选择工作模式", trigger: "change" }]
+    workMode: [{ required: true, message: "请选择工作模式", trigger: "change" }],
+    workStartTime: [{ required: true, message: "请选择上班时间", trigger: "change" }],
+    workEndTime: [
+      { required: true, message: "请选择下班时间", trigger: "change" },
+      { validator: (rule, value, callback) => {
+          if (value && data.form.workStartTime && value <= data.form.workStartTime) {
+            callback(new Error('下班时间必须晚于上班时间'))
+          } else {
+            callback()
+          }
+        }, trigger: "change" }
+    ]
   }
 })
 

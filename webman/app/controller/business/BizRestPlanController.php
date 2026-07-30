@@ -4,6 +4,7 @@ namespace app\controller\business;
 
 use support\Request;
 use app\service\BizRestPlanService;
+use app\service\BizRestDayService;
 use app\service\BizHolidayService;
 use app\service\PermissionService;
 use app\common\AjaxResult;
@@ -54,6 +55,9 @@ class BizRestPlanController
      */
     public function getInfo(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:leave:rest:query')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $planId = intval(end($parts));
         $service = new BizRestPlanService();
@@ -76,7 +80,7 @@ class BizRestPlanController
             $service = new BizRestPlanService();
             $planId = $service->insert($data);
             return AjaxResult::success($planId);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -95,7 +99,7 @@ class BizRestPlanController
             $service = new BizRestPlanService();
             $result = $service->update($data);
             return AjaxResult::toAjax($result ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -120,7 +124,7 @@ class BizRestPlanController
             $service = new BizRestPlanService();
             $count = $service->deleteByIds($planIds);
             return AjaxResult::toAjax($count ? 1 : 0);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error($e->getMessage());
         }
     }
@@ -143,6 +147,9 @@ class BizRestPlanController
      */
     public function deptUsers(Request $request)
     {
+        if (PermissionService::lacksPermi($request->loginUser, 'business:leave:rest:list')) {
+            return json(['code' => 403, 'msg' => '没有操作权限']);
+        }
         $parts = explode('/', $request->path());
         $deptId = intval(end($parts));
         if (!$deptId) return AjaxResult::error('请选择部门');
@@ -163,25 +170,17 @@ class BizRestPlanController
             return AjaxResult::error('用户未登录');
         }
         $yearMonth = $request->input('yearMonth', date('Y-m'));
-        // 校验 yearMonth 格式
         if (!preg_match('/^\d{4}-\d{2}$/', $yearMonth)) {
             return AjaxResult::error('yearMonth 参数格式应为 YYYY-MM');
         }
 
         try {
-            $service = new BizRestPlanService();
-            // 传 true：保留默认周末休息逻辑，用于"我的考勤记录"页面显示当前用户的休息日标记
-            $restResult = $service->getRestDatesByMonth([$userId], $yearMonth, true);
-            $myRestDates = [];
-            foreach ($restResult as $item) {
-                if (isset($item['userId']) && $item['userId'] == $userId) {
-                    $myRestDates = $item['restDates'] ?? [];
-                    break;
-                }
-            }
+            // 通过统一休息日服务获取所有类型休息日（custom + plan + leave + 按周 + 法定假日）
+            $restDayService = new BizRestDayService();
+            $restData = $restDayService->getAllRestDates($userId, $yearMonth, true);
+            $myRestDates = array_column($restData['dates'] ?? [], 'date');
 
             // 查询本月法定假期
-            $holidayService = new BizHolidayService();
             $startDate = $yearMonth . '-01';
             $endDate = date('Y-m-t', strtotime($startDate));
             $holidays = \app\model\BizHoliday::where('status', '0')
@@ -234,153 +233,10 @@ class BizRestPlanController
             return AjaxResult::error('yearMonth 参数格式应为 YYYY-MM');
         }
 
-        $startDate = $yearMonth . '-01';
-        $endDate = date('Y-m-t', strtotime($startDate));
-        $daysInMonth = date('t', strtotime($startDate));
-
         try {
-            $restPlanService = new BizRestPlanService();
-
-            // 1. 获取每周固定休息日和指定休息日
-            $userPlan = $restPlanService->getUserEffectivePlan($userId, $startDate);
-            $weeklyDates = [];
-            $specifiedDates = [];
-            $dayMap = [1 => 'monday', 2 => 'tuesday', 3 => 'wednesday', 4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'];
-
-            if ($userPlan) {
-                if ($userPlan->config_type === '0') {
-                    for ($day = 1; $day <= $daysInMonth; $day++) {
-                        $dateStr = sprintf('%s-%02d', $yearMonth, $day);
-                        $weekday = date('N', strtotime($dateStr));
-                        $field = $dayMap[$weekday] ?? 'sunday';
-                        if ($userPlan->$field === '1') {
-                            $weeklyDates[] = $dateStr;
-                        }
-                    }
-                } else {
-                    $specifiedDates = \app\model\BizRestPlanDate::where('plan_id', $userPlan->plan_id)
-                        ->whereBetween('rest_date', [$startDate, $endDate])
-                        ->pluck('rest_date')
-                        ->toArray();
-                }
-            } else {
-                // 无方案：默认周六日休息
-                for ($day = 1; $day <= $daysInMonth; $day++) {
-                    $dateStr = sprintf('%s-%02d', $yearMonth, $day);
-                    if (date('N', strtotime($dateStr)) >= 6) {
-                        $weeklyDates[] = $dateStr;
-                    }
-                }
-            }
-
-            // 2. 获取请假通过的假期
-            $leaves = \app\model\BizLeave::where('user_id', $userId)
-                ->where('status', '1')
-                ->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function ($q2) use ($startDate, $endDate) {
-                          $q2->where('start_date', '<=', $startDate)
-                             ->where('end_date', '>=', $endDate);
-                      });
-                })
-                ->with('leaveType')
-                ->get();
-            $leaveDates = [];
-            $leaveTypeMap = [];
-            foreach ($leaves as $leave) {
-                $start = max(strtotime($leave->start_date), strtotime($startDate));
-                $end = min(strtotime($leave->end_date), strtotime($endDate));
-                for ($date = $start; $date <= $end; $date += 86400) {
-                    $dateStr = date('Y-m-d', $date);
-                    $leaveDates[] = $dateStr;
-                    $leaveTypeMap[$dateStr] = $leave->leaveType->type_name ?? '请假';
-                }
-            }
-
-            // 3. 获取法定假期
-            $holidays = \app\model\BizHoliday::where('status', '0')
-                ->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('start_date', [$startDate, $endDate])
-                      ->orWhereBetween('end_date', [$startDate, $endDate])
-                      ->orWhere(function ($q2) use ($startDate, $endDate) {
-                          $q2->where('start_date', '<=', $startDate)
-                             ->where('end_date', '>=', $endDate);
-                      });
-                })
-                ->get();
-            $holidayDates = [];
-            $holidayNameMap = [];
-            foreach ($holidays as $holiday) {
-                $start = max(strtotime($holiday->start_date), strtotime($startDate));
-                $end = min(strtotime($holiday->end_date), strtotime($endDate));
-                for ($date = $start; $date <= $end; $date += 86400) {
-                    $dateStr = date('Y-m-d', $date);
-                    $holidayDates[] = $dateStr;
-                    $holidayNameMap[$dateStr] = $holiday->holiday_name;
-                }
-            }
-
-            // 4. 合并所有休息日（带类型），优先级：法定假期 > 请假 > 指定休息 > 每周休息
-            $allDates = [];
-            foreach ($weeklyDates as $date) {
-                $allDates[$date] = [
-                    'date' => $date,
-                    'type' => 'weekly',
-                    'typeName' => '每周休息',
-                    'color' => '#3D6DF7'
-                ];
-            }
-            foreach ($specifiedDates as $date) {
-                $allDates[$date] = [
-                    'date' => $date,
-                    'type' => 'specified',
-                    'typeName' => '指定休息',
-                    'color' => '#00B42A'
-                ];
-            }
-            foreach ($leaveDates as $date) {
-                if (!isset($allDates[$date])) {
-                    $allDates[$date] = [
-                        'date' => $date,
-                        'type' => 'leave',
-                        'typeName' => $leaveTypeMap[$date] ?? '请假',
-                        'color' => '#FF9900'
-                    ];
-                }
-            }
-            foreach ($holidayDates as $date) {
-                $allDates[$date] = [
-                    'date' => $date,
-                    'type' => 'holiday',
-                    'typeName' => $holidayNameMap[$date] ?? '法定假期',
-                    'color' => '#F53F3F'
-                ];
-            }
-
-            ksort($allDates);
-            $allDates = array_values($allDates);
-
-            // 类型汇总
-            $typeCount = [];
-            foreach ($allDates as $item) {
-                $type = $item['type'];
-                if (!isset($typeCount[$type])) {
-                    $typeCount[$type] = [
-                        'type' => $type,
-                        'name' => $item['typeName'],
-                        'color' => $item['color'],
-                        'count' => 0
-                    ];
-                }
-                $typeCount[$type]['count']++;
-            }
-
-            return AjaxResult::success([
-                'dates' => $allDates,
-                'typeList' => array_values($typeCount),
-                'yearMonth' => $yearMonth
-            ]);
+            // 通过统一休息日服务获取所有类型休息日（custom + plan + leave + 按周 + 法定假日）
+            $restDayService = new BizRestDayService();
+            return AjaxResult::success($restDayService->getAllRestDates($userId, $yearMonth, true));
         } catch (\Throwable $e) {
             return AjaxResult::success([
                 'dates' => [],

@@ -261,6 +261,7 @@
  * 分页加载、下拉刷新、跳转详情
  */
 import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { listStockPrepare, cancelPrepare, deleteStockPrepare } from '@/api/business/stockPrepare'
 import { listEnterprise } from '@/api/business/enterprise'
 import { listStore } from '@/api/business/store'
@@ -572,6 +573,10 @@ onMounted(() => {
     loadEnterpriseOptions()
     getList(true)
   }
+})
+
+onShow(() => {
+  getList(true)
 })
 </script>
 

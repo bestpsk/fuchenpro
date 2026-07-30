@@ -64,7 +64,7 @@
                icon="Delete"
                :disabled="multiple"
                @click="handleDelete"
-               v-hasPermi="['monitor:job:remove']"
+               v-hasPermi="['monitor:jobLog:remove']"
             >删除</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -73,7 +73,7 @@
                plain
                icon="Delete"
                @click="handleClean"
-               v-hasPermi="['monitor:job:remove']"
+               v-hasPermi="['monitor:jobLog:remove']"
             >清空</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -82,7 +82,7 @@
                plain
                icon="Download"
                @click="handleExport"
-               v-hasPermi="['monitor:job:export']"
+               v-hasPermi="['monitor:jobLog:export']"
             >导出</el-button>
          </el-col>
          <el-col :span="1.5">
@@ -119,7 +119,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
             <template #default="scope">
-               <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['monitor:job:query']">详细</el-button>
+               <el-button link type="primary" icon="View" @click="handleView(scope.row)" v-hasPermi="['monitor:jobLog:list']">详细</el-button>
             </template>
          </el-table-column>
       </el-table>

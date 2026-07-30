@@ -318,7 +318,7 @@ async function loadData() {
     // status: '0'=正常, '1'=迟到, '2'=早退, '3'=迟到+早退, '4'=缺勤
     // 迟到+早退(status '3')同时计入迟到和早退
     // 注意：休息日/假期当天无打卡记录不算缺勤，下方统计仅针对已有记录
-    const computedStats = { normal: 0, late: 0, early: 0, absent: 0 }
+    const computedStats = { normal: 0, late: 0, early: 0, late_and_early: 0, absent: 0 }
     for (const item of rows) {
       const status = String(item.attendanceStatus)
       if (status === '0') {

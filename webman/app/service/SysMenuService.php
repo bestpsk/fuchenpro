@@ -86,7 +86,7 @@ class SysMenuService
         return SysMenu::where('menu_id', $data['menu_id'])->update($data);
     }
 
-    // 删除菜单，校验是否存在子菜单或角色关联
+    // 删除菜单，校验是否存在子菜单，同时清理角色关联
 
     public function deleteMenuById($menuId)
     {
@@ -94,6 +94,7 @@ class SysMenuService
         if ($hasChildren) {
             return false;
         }
+        \app\model\SysRoleMenu::where('menu_id', $menuId)->delete();
         return SysMenu::where('menu_id', $menuId)->delete();
     }
 

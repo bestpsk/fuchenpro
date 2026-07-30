@@ -77,30 +77,38 @@
             </view>
           </view>
           <view class="card-actions">
-            <view
-              v-if="checkPermi('train:material:query')"
-              class="action-btn download"
-              @click.stop="handleDownload(item)"
-            >
-              <u-icon name="download" size="14" color="#00B42A"></u-icon>
-              <text>下载</text>
+            <!-- 在线学习模式：只显示预览学习按钮 -->
+            <view v-if="pageMode === 'study'" class="action-btn study" @click.stop="goStudy(item)">
+              <u-icon name="eye" size="14" color="#3D6DF7"></u-icon>
+              <text>预览学习</text>
             </view>
-            <view
-              v-if="checkPermi('train:material:edit')"
-              class="action-btn edit"
-              @click.stop="goEdit(item)"
-            >
-              <u-icon name="edit-pen" size="14" color="#3D6DF7"></u-icon>
-              <text>修改</text>
-            </view>
-            <view
-              v-if="checkPermi('train:material:remove')"
-              class="action-btn delete"
-              @click.stop="handleDelete(item)"
-            >
-              <u-icon name="trash" size="14" color="#F53F3F"></u-icon>
-              <text>删除</text>
-            </view>
+            <!-- 学习材料管理模式：显示下载、修改、删除按钮 -->
+            <template v-else>
+              <view
+                v-if="checkPermi('train:material:query')"
+                class="action-btn download"
+                @click.stop="handleDownload(item)"
+              >
+                <u-icon name="download" size="14" color="#00B42A"></u-icon>
+                <text>下载</text>
+              </view>
+              <view
+                v-if="checkPermi('train:material:edit')"
+                class="action-btn edit"
+                @click.stop="goEdit(item)"
+              >
+                <u-icon name="edit-pen" size="14" color="#3D6DF7"></u-icon>
+                <text>修改</text>
+              </view>
+              <view
+                v-if="checkPermi('train:material:remove')"
+                class="action-btn delete"
+                @click.stop="handleDelete(item)"
+              >
+                <u-icon name="trash" size="14" color="#F53F3F"></u-icon>
+                <text>删除</text>
+              </view>
+            </template>
           </view>
         </view>
       </view>
@@ -121,7 +129,7 @@
       />
     </scroll-view>
 
-    <view v-if="checkPermi('train:material:add')" class="fab-btn" @click="goAdd">
+    <view v-if="checkPermi('train:material:add') && pageMode !== 'study'" class="fab-btn" @click="goAdd">
       <u-icon name="plus" size="28" color="#fff"></u-icon>
     </view>
   </view>
@@ -133,10 +141,11 @@
  * @description 展示可学习的培训材料，支持分类切换、关键词搜索、分页加载
  */
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { listMaterial, delMaterial } from '@/api/train/material'
 import { getDicts } from '@/api/system/dictData'
 import { checkPermi } from '@/utils/permission'
+import { getToken } from '@/utils/auth'
 import config from '@/config'
 
 const BASE_URL = config.baseUrl || ''
@@ -145,12 +154,17 @@ const materialList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
+const pageMode = ref('material')  // 'material' 学习材料管理模式 | 'study' 在线学习模式
 
 const categoryOptions = ref([])
 const fileTypeOptions = ref([])
 
 let searchTimer = null
 onUnmounted(() => { clearTimeout(searchTimer) })
+
+onLoad((options) => {
+  pageMode.value = options.mode || 'material'
+})
 
 const queryParams = reactive({
   pageNum: 1,
@@ -216,6 +230,10 @@ function loadMore() {
 }
 
 function onPullDownRefresh() {
+  if (loading.value) {
+    refreshing.value = false
+    return
+  }
   refreshing.value = true
   getList(true)
 }
@@ -249,7 +267,7 @@ function handleDownload(item) {
     uni.showToast({ title: '该材料暂无可下载的文件', icon: 'none' })
     return
   }
-  const token = uni.getStorageSync('token')
+  const token = getToken()
   if (!token) {
     uni.showToast({ title: '请先登录', icon: 'none' })
     return
@@ -597,6 +615,11 @@ page {
   &.download {
     color: #00B42A;
     background: #E8FFEA;
+  }
+
+  &.study {
+    color: #3D6DF7;
+    background: #E8F0FE;
   }
 
   &.delete {

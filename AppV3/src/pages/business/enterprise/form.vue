@@ -89,7 +89,7 @@
         </view>
       </view>
 
-      <view class="form-field" @click="mode !== 'view' && (showStartDatePicker = true)">
+      <view class="form-field" @click="mode !== 'view' && openStartDatePicker()">
         <view class="field-input-box">
           <u-icon name="calendar" size="18" color="#86909C"></u-icon>
           <input class="field-input" :value="form.cooperationStartDate" placeholder="开始合作日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
@@ -97,7 +97,7 @@
         </view>
       </view>
 
-      <view class="form-field" @click="mode !== 'view' && (showEndDatePicker = true)">
+      <view class="form-field" @click="mode !== 'view' && openEndDatePicker()">
         <view class="field-input-box">
           <u-icon name="calendar" size="18" color="#86909C"></u-icon>
           <input class="field-input" :value="form.cooperationEndDate" placeholder="结束合作日期" placeholder-class="field-placeholder" disabled :disabledColor="'#fff'" />
@@ -182,7 +182,7 @@
     <u-datetime-picker
       :show="showStartDatePicker"
       mode="date"
-      :value="form.cooperationStartDate ? new Date(form.cooperationStartDate).getTime() : Date.now()"
+      v-model="startDatePickerModel"
       @confirm="onStartDateConfirm"
       @cancel="showStartDatePicker = false"
       @close="showStartDatePicker = false"
@@ -191,7 +191,7 @@
     <u-datetime-picker
       :show="showEndDatePicker"
       mode="date"
-      :value="form.cooperationEndDate ? new Date(form.cooperationEndDate).getTime() : Date.now()"
+      v-model="endDatePickerModel"
       @confirm="onEndDateConfirm"
       @cancel="showEndDatePicker = false"
       @close="showEndDatePicker = false"
@@ -301,6 +301,19 @@ const levelColumns = ref([
   { label: 'D级', value: '4' }
 ])
 
+const startDatePickerModel = ref(Date.now())
+const endDatePickerModel = ref(Date.now())
+
+function openStartDatePicker() {
+  startDatePickerModel.value = form.cooperationStartDate ? new Date(form.cooperationStartDate).getTime() : Date.now()
+  showStartDatePicker.value = true
+}
+
+function openEndDatePicker() {
+  endDatePickerModel.value = form.cooperationEndDate ? new Date(form.cooperationEndDate).getTime() : Date.now()
+  showEndDatePicker.value = true
+}
+
 const selectedUsersText = computed(() => {
   if (selectedUsers.value.length === 0) return ''
   const names = selectedUsers.value.map(u => u.userName)
@@ -368,7 +381,7 @@ function chooseContractFile() {
           if (uploadRes.code === 200) {
             contractFileList.value.push({
               name: uploadRes.originalFilename || uploadRes.newFileName,
-              url: uploadRes.fileName,
+              url: uploadRes.url || uploadRes.fileName,
               tempUrl: path
             })
             form.contractFiles = contractFileList.value.map(f => f.url).join(',')
@@ -383,10 +396,13 @@ function chooseContractFile() {
 
 function getFilePreviewUrl(file) {
   if (file.tempUrl) return file.tempUrl
-  const ext = (file.url || '').split('.').pop().toLowerCase()
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
-  if (imageExts.includes(ext)) return config.baseUrl + file.url
-  return ''
+  if (!file.url) return ''
+  // 已经是完整 URL（以 http 开头）
+  if (/^https?:\/\//.test(file.url)) return file.url
+  // 本地相对路径，拼接完整访问路径
+  const baseUrl = config.baseUrl.replace(/\/$/, '')
+  const filePath = file.url.startsWith('/profile/upload/') ? file.url : '/profile/upload/' + file.url
+  return baseUrl + filePath
 }
 
 function removeContractFile(idx) {
@@ -395,7 +411,8 @@ function removeContractFile(idx) {
 }
 
 function previewContractFile(file) {
-  const url = config.baseUrl + file.url
+  const url = getFilePreviewUrl(file)
+  if (!url) return
   // #ifdef H5
   window.open(url, '_blank')
   // #endif
@@ -430,8 +447,8 @@ async function loadDetail() {
       serverUserName: data.serverUserName || '',
       contractStatus: String(data.contractStatus ?? '0'),
       contractFiles: data.contractFiles || '',
-      cooperationStartDate: data.cooperationStartDate || '',
-      cooperationEndDate: data.cooperationEndDate || '',
+      cooperationStartDate: isValidDate(data.cooperationStartDate) ? data.cooperationStartDate : '',
+      cooperationEndDate: isValidDate(data.cooperationEndDate) ? data.cooperationEndDate : '',
       status: String(data.status ?? '0'),
       remark: data.remark || ''
     })
@@ -470,8 +487,23 @@ function getLevelName(value) {
   return item ? item.label : ''
 }
 
-function formatDate(timestamp) {
-  const d = new Date(timestamp)
+function isValidDate(str) {
+  if (!str || str === '0000-00-00') return false
+  const d = new Date(str)
+  return !isNaN(d.getTime())
+}
+
+function formatDate(value) {
+  if (!value) return ''
+  let d
+  if (value instanceof Date) {
+    d = value
+  } else if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    d = new Date(Number(value))
+  } else {
+    d = new Date(value)
+  }
+  if (isNaN(d.getTime())) return ''
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')

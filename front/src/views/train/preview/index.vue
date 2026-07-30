@@ -44,7 +44,7 @@
 </template>
 
 <script setup name="TrainPreview">
-import { ref, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueOfficePdf from '@vue-office/pdf'
 import VueOfficeDocx from '@vue-office/docx'
@@ -211,8 +211,8 @@ async function loadTextContent(cacheKey) {
   }
 }
 
-function goBack() {
-  handleEndStudy()
+async function goBack() {
+  await handleEndStudy()
   router.back()
 }
 
@@ -242,13 +242,60 @@ async function handleEndStudy() {
   }
 }
 
+// beforeunload 事件处理：关闭浏览器标签页时通过 sendBeacon 发送结束学习请求
+function onBeforeUnload() {
+  if (hasEnded || !sessionId.value) return
+  hasEnded = true
+  stopTimer()
+  if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+    const BEACON_URL = baseUrl + '/train/studyLog/end'
+    const payload = JSON.stringify({
+      sessionId: sessionId.value,
+      validDuration: elapsedSeconds.value
+    })
+    try { navigator.sendBeacon(BEACON_URL, payload) } catch (e) {}
+  }
+}
+
+// visibilitychange 事件处理：切换标签页时暂停/恢复计时器
+function onVisibilityChange() {
+  if (document.hidden) {
+    stopTimer()
+  } else {
+    if (!hasEnded && sessionId.value && !elapsedTimer) {
+      startTimer()
+    }
+  }
+}
+
 onMounted(() => {
   loadMaterial()
+  window.addEventListener('beforeunload', onBeforeUnload)
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+// 监听路由参数变化（组件复用时 onMounted 不触发，需手动监听）
+watch(() => route.query.materialId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    // 重置状态
+    material.value = null
+    arrayBuffer.value = null
+    textContent.value = ''
+    fileUrl.value = ''
+    sessionId.value = ''
+    hasEnded = false
+    elapsedSeconds.value = 0
+    loading.value = true
+    stopTimer()
+    loadMaterial()
+  }
 })
 
 // 兜底：组件卸载时结束学习
 onBeforeUnmount(() => {
   handleEndStudy()
+  window.removeEventListener('beforeunload', onBeforeUnload)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 

@@ -72,7 +72,7 @@ class DatabaseBackupController
         if (PermissionService::lacksPermi($request->loginUser, 'system:backup:download')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $backupId = $request->post('backupId');
+        $backupId = intval($request->post('backupId', 0));
         if (!$backupId) {
             return AjaxResult::error('请指定备份记录');
         }

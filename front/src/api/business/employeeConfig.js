@@ -66,3 +66,48 @@ export function searchEmployee(keyword) {
     params: { keyword }
   })
 }
+
+/** 保存员工休息日期 */
+export function saveRestDates(userId, restDates) {
+  return request({
+    url: '/business/employeeConfig/saveRestDates',
+    method: 'post',
+    data: { userId, restDates }
+  })
+}
+
+/** 获取员工休息日期 */
+export function getRestDates(userId) {
+  return request({
+    url: '/business/employeeConfig/getRestDates',
+    method: 'get',
+    params: { userId }
+  })
+}
+
+/** 获取员工某月所有休息相关日期（含轮休、请假、自定义、法定假日），带类型信息 */
+export function getAllRestDates(userId, yearMonth) {
+  return request({
+    url: '/business/employeeConfig/getAllRestDates',
+    method: 'get',
+    params: { userId, yearMonth }
+  })
+}
+
+/** 获取员工全部休息日（不限月份，2年前~1年后），供配置弹窗跨月查看和回显已存日期 */
+export function getAllRestDatesAll(userId) {
+  return request({
+    url: '/business/employeeConfig/getAllRestDatesAll',
+    method: 'get',
+    params: { userId }
+  })
+}
+
+/** 批量获取多员工某月所有休息日期（带类型信息，供行程格子批量显示） */
+export function getAllRestDatesBatch(userIds, yearMonth) {
+  return request({
+    url: '/business/employeeConfig/getAllRestDatesBatch',
+    method: 'get',
+    params: { userIds: Array.isArray(userIds) ? userIds.join(',') : userIds, yearMonth }
+  })
+}

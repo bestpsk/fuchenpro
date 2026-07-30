@@ -31,7 +31,7 @@
       </view>
 
       <view class="form-row">
-        <view class="form-field half" @click="mode !== 'view' && (showDatePicker = true)">
+        <view class="form-field half" @click="mode !== 'view' && openDatePicker()">
           <view class="field-label">合作起始日期</view>
           <view class="field-input-box picker-field">
             <input class="field-input" :value="form.cooperationStartDate" placeholder="请选择日期" placeholder-class="field-placeholder" disabled :disabledColor="'transparent'" />
@@ -66,7 +66,7 @@
       </view>
     </view>
 
-    <u-datetime-picker :show="showDatePicker" mode="date" @confirm="onDateConfirm" @cancel="showDatePicker = false" @close="showDatePicker = false"></u-datetime-picker>
+    <u-datetime-picker :show="showDatePicker" mode="date" v-model="datePickerModel" @confirm="onDateConfirm" @cancel="showDatePicker = false" @close="showDatePicker = false"></u-datetime-picker>
 
     <view class="form-actions" v-if="mode !== 'view'">
       <u-button type="info" plain text="取消" @click="goBack"></u-button>
@@ -87,6 +87,12 @@ const submitting = ref(false)
 const mode = ref('add')
 const supplierId = ref(null)
 const showDatePicker = ref(false)
+const datePickerModel = ref(Date.now())
+
+function openDatePicker() {
+  datePickerModel.value = form.cooperationStartDate ? new Date(form.cooperationStartDate).getTime() : Date.now()
+  showDatePicker.value = true
+}
 
 const form = reactive({
   supplierId: undefined,
@@ -122,7 +128,8 @@ async function loadDetail() {
 }
 
 function onDateConfirm(e) {
-  const date = new Date(e.value)
+  const timestamp = Number(e.value) || e.value
+  const date = new Date(timestamp)
   form.cooperationStartDate = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0')
   showDatePicker.value = false
 }

@@ -47,8 +47,8 @@
                         <el-switch v-model="appMenuForm.visible" :active-value="1" :inactive-value="0" />
                      </el-form-item>
                      <el-form-item>
-                        <el-button type="primary" @click="submitForm">{{ appMenuForm.appMenuId ? '修改' : '新增' }}</el-button>
-                        <el-button v-if="appMenuForm.appMenuId" type="danger" @click="handleDelete">删除配置</el-button>
+                        <el-button type="primary" @click="submitForm" v-hasPermi="[appMenuForm.appMenuId ? 'system:appMenu:edit' : 'system:appMenu:add']">{{ appMenuForm.appMenuId ? '修改' : '新增' }}</el-button>
+                        <el-button v-if="appMenuForm.appMenuId" type="danger" @click="handleDelete" v-hasPermi="['system:appMenu:remove']">删除配置</el-button>
                         <el-button @click="resetForm">重置</el-button>
                      </el-form-item>
                   </el-form>

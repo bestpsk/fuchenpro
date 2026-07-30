@@ -8,7 +8,7 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="list-scroll" :style="{ height: scrollHeight + 'px' }" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
+    <scroll-view scroll-y class="list-scroll" @scrolltolower="loadMore" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onPullDownRefresh">
       <view v-if="aboutList.length > 0" class="card-list">
         <view v-for="item in aboutList" :key="item.aboutId" class="about-card" @click="goDetail(item)">
           <view class="card-top">
@@ -25,6 +25,10 @@
             </view>
           </view>
         </view>
+      </view>
+      <view v-else-if="loading" class="loading-wrap">
+        <u-icon name="loading" size="24" color="#3D6DF7"></u-icon>
+        <text class="loading-text">加载中...</text>
       </view>
       <u-empty v-else-if="!loading" mode="data" text="暂无企业小报" :marginTop="100"></u-empty>
       <u-loadmore :status="loadStatus" :loading-text="'加载中...'" :loadmore-text="'上拉加载更多'" :nomore-text="'没有更多了'" :marginTop="20" />
@@ -44,7 +48,6 @@ const aboutList = ref([])
 const loading = ref(false)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
-const scrollHeight = ref(600)
 
 const queryParams = reactive({ pageNum: 1, pageSize: 10, aboutTitle: '' })
 
@@ -103,24 +106,25 @@ function formatTime(time) {
   return time.substring(0, 10)
 }
 
-function calcScrollHeight() {
-  const systemInfo = uni.getSystemInfoSync()
-  scrollHeight.value = systemInfo.windowHeight - 60
-}
-
+const isFirstShow = ref(true)
 onMounted(() => {
-  calcScrollHeight()
   getList(true)
 })
 
 onShow(() => {
+  // 首次进入页面 onShow 会紧随 onMounted 触发，此时列表已由 onMounted 加载，跳过避免重复请求；
+  // 后续从详情页返回时刷新列表
+  if (isFirstShow.value) {
+    isFirstShow.value = false
+    return
+  }
   getList(true)
 })
 </script>
 
 <style lang="scss" scoped>
-page { background-color: #F5F7FA; }
-.about-container { display: flex; flex-direction: column; min-height: 100vh; }
+page { background-color: #F5F7FA; height: 100%; overflow: hidden; }
+.about-container { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
 .top-bar { background: #fff; padding: 20rpx 30rpx; border-bottom: 1rpx solid #F2F3F5; flex-shrink: 0; }
 .search-wrap {
@@ -140,8 +144,11 @@ page { background-color: #F5F7FA; }
   line-height: 36rpx;
 }
 
-.list-scroll { padding: 20rpx 30rpx; flex: 1; box-sizing: border-box; }
+.list-scroll { padding: 20rpx 30rpx; flex: 1; box-sizing: border-box; overflow: hidden; min-height: 0; }
 .card-list { display: flex; flex-direction: column; gap: 20rpx; }
+
+.loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 200rpx; gap: 16rpx; }
+.loading-text { font-size: 28rpx; color: #86909C; }
 
 .about-card {
   background: #fff; border-radius: 16rpx; padding: 24rpx;

@@ -4,8 +4,8 @@
     <div class="tree-sidebar-content">
       <div class="content-inner">
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-          <el-form-item label="用户名称" prop="userName">
-            <el-input v-model="queryParams.userName" placeholder="请输入用户名称" clearable style="width: 240px" @keyup.enter="handleQuery" />
+          <el-form-item label="登录名称" prop="userName">
+            <el-input v-model="queryParams.userName" placeholder="请输入登录名称" clearable style="width: 240px" @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="手机号码" prop="phonenumber">
             <el-input v-model="queryParams.phonenumber" placeholder="请输入手机号码" clearable style="width: 240px" @keyup.enter="handleQuery" />
@@ -46,7 +46,7 @@
         <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns.userId.visible" />
-          <el-table-column label="用户名称" align="center" key="userName" v-if="columns.userName.visible" :show-overflow-tooltip="true">
+          <el-table-column label="登录名称" align="center" key="userName" v-if="columns.userName.visible" :show-overflow-tooltip="true">
             <template #default="scope">
               <a class="link-type" style="cursor:pointer" @click="handleViewData(scope.row)">{{ scope.row.userName }}</a>
             </template>
@@ -194,13 +194,13 @@
         </el-row>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="用户名称" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30" />
+            <el-form-item label="登录名称" prop="userName">
+              <el-input v-model="form.userName" placeholder="请输入登录名称" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="用户密码" prop="password" :rules="pwdValidator">
-              <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password />
+            <el-form-item label="登录密码" prop="password" :rules="pwdValidator">
+              <el-input v-model="form.password" placeholder="请输入登录密码" type="password" maxlength="20" show-password />
             </el-form-item>
           </el-col>
         </el-row>
@@ -297,7 +297,7 @@ const activeTab = ref("basic")
 // 列显隐信息
 const columns = ref({
   userId: { label: '用户编号', visible: true },
-  userName: { label: '用户名称', visible: true },
+  userName: { label: '登录名称', visible: true },
   nickName: { label: '用户姓名', visible: true },
   deptName: { label: '部门', visible: true },
   phonenumber: { label: '手机号码', visible: true },
@@ -316,7 +316,7 @@ const data = reactive({
     deptId: undefined
   },
   rules: {
-    userName: [{ required: true, message: "用户名称不能为空", trigger: "blur" }, { min: 2, max: 20, message: "用户名称长度必须介于 2 和 20 之间", trigger: "blur" }],
+    userName: [{ required: true, message: "登录名称不能为空", trigger: "blur" }, { min: 2, max: 20, message: "登录名称长度必须介于 2 和 20 之间", trigger: "blur" }],
     nickName: [{ required: true, message: "用户姓名不能为空", trigger: "blur" }],
     email: [{ type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] }],
     phonenumber: [{ pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/, message: "请输入正确的手机号码", trigger: "blur" }]

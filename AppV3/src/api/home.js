@@ -30,3 +30,14 @@ export function getBannerList() {
     method: 'get'
   })
 }
+
+/**
+ * 获取经营概览（4项核心指标：应收账款、流失预警、库存预警、销售排行TOP3）
+ * @returns {Promise<object>} 经营概览数据
+ */
+export function getStatsOverview() {
+  return request({
+    url: '/home/statsOverview',
+    method: 'get'
+  })
+}
