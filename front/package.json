@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "5.2.4",
+    "pdfjs-dist": "^3.1.81",
     "sass-embedded": "1.97.2",
     "unplugin-auto-import": "0.18.6",
     "unplugin-vue-setup-extend-plus": "1.0.1",

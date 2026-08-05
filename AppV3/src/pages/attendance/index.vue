@@ -462,6 +462,10 @@ function handleLocationSuccess(lat, lng) {
 async function ipGeolocation() {
   try {
     const key = AMAP_WEB_SERVICE_KEY.value
+    if (!key) {
+      console.warn('高德Key未配置，IP定位不可用')
+      return false
+    }
     const url = `https://restapi.amap.com/v3/ip?key=${key}`
     const res = await new Promise((resolve, reject) => {
       uni.request({ url, method: 'GET', timeout: 5000, success: resolve, fail: reject })
@@ -511,7 +515,7 @@ function doGetLocation() {
   locationTimer = setTimeout(() => {
     console.warn('定位超时，使用降级方案')
     fallbackGetLocation()
-  }, 5000)
+  }, 10000)
 
   uni.getLocation({
     type: 'gcj02',
@@ -534,21 +538,32 @@ function doGetLocation() {
  * 不支持则尝试IP定位，全部失败则标记定位失败
  */
 async function fallbackGetLocation() {
+  let geoSuccess = false
+
   if (typeof navigator !== 'undefined' && navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
-        handleLocationSuccess(lat, lng)
-      },
-      (error) => {
-        console.warn('navigator.geolocation 失败:', error.message)
-        showLocationError(error)
-      },
-      { timeout: 8000, enableHighAccuracy: false, maximumAge: 60000 }
-    )
-  } else {
-    console.warn('浏览器不支持 geolocation，尝试IP定位')
+    try {
+      geoSuccess = await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude
+            const lng = position.coords.longitude
+            handleLocationSuccess(lat, lng)
+            resolve(true)
+          },
+          (error) => {
+            console.warn('navigator.geolocation 失败:', error.message)
+            resolve(false)
+          },
+          { timeout: 10000, enableHighAccuracy: false, maximumAge: 60000 }
+        )
+      })
+    } catch (e) {
+      console.warn('navigator.geolocation 异常:', e)
+    }
+  }
+
+  if (!geoSuccess) {
+    console.warn('浏览器定位失败或不可用，尝试IP定位')
     const ipSuccess = await ipGeolocation()
     if (!ipSuccess) {
       locationLoading.value = false
@@ -803,7 +818,7 @@ function handleClockClick() {
   handleClock()
 }
 
-onMounted(() => {
+onMounted(async () => {
   updateDateTime()
   timer = setInterval(updateDateTime, 1000)
 
@@ -811,7 +826,7 @@ onMounted(() => {
     pageReady.value = true
   }, 100)
 
-  loadAmapConfig()
+  await loadAmapConfig()
   loadUserRule()
   loadAttendanceConfig()
   getLocation()

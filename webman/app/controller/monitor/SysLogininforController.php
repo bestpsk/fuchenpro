@@ -23,7 +23,8 @@ class SysLogininforController
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
         $service = new SysLogininforService();
-        $result = $service->selectLogininforList($request->all());
+        $params = convert_to_snake_case($request->all());
+        $result = $service->selectLogininforList($params);
         return TableDataInfo::result($result->items(), $result->total());
     }
 
@@ -70,8 +71,8 @@ class SysLogininforController
         if (PermissionService::lacksPermi($request->loginUser, 'monitor:logininfor:export')) {
             return json(['code' => 403, 'msg' => '没有操作权限']);
         }
-        $params = $request->all();
-        $params['pageSize'] = 5000;
+        $params = convert_to_snake_case($request->all());
+        $params['page_size'] = 5000;
         $service = new SysLogininforService();
         $result = $service->selectLogininforList($params);
         $list = $result->items();

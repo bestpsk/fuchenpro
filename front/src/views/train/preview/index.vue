@@ -19,7 +19,7 @@
 
       <!-- PDF / PPT（PPT 已服务端转 PDF） -->
       <div v-else-if="(material?.fileType === '2' || material?.fileType === '3') && arrayBuffer" class="pdf-view">
-        <VueOfficePdf :src="arrayBuffer" class="office-component" />
+        <VueOfficePdf :src="arrayBuffer" :staticFileUrl="pdfStaticUrl" class="office-component" />
       </div>
 
       <!-- Word -->
@@ -72,6 +72,8 @@ let elapsedTimer = null
 let hasEnded = false
 
 const baseUrl = import.meta.env.VITE_APP_BASE_API
+// pdfjs 静态资源本地路径（cmaps 已本地化到 public/pdfjs/cmaps，避免依赖 unpkg CDN 国内访问失败导致中文方块）
+const pdfStaticUrl = '/pdfjs/'
 
 function getFileTypeName(value) {
   const map = { '1': '图片', '2': 'PDF', '3': 'PPT', '4': 'Word', '5': '文本', '6': 'Excel' }
@@ -362,6 +364,13 @@ onBeforeUnmount(() => {
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 中文字体回退：@vue-office/docx 只应用 ascii 字体，需兜底确保中文用系统字体渲染，避免方块乱码 */
+.word-view :deep(.docx-wrapper),
+.word-view :deep(.docx-wrapper *) {
+  font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB",
+               "SimSun", "宋体", Calibri, Arial, sans-serif !important;
 }
 
 .office-component {
