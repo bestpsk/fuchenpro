@@ -85,7 +85,7 @@ class GenController
             }
             $service->importGenTable($tableNames);
             return AjaxResult::success('创建成功');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('创建失败：' . $e->getMessage());
         }
     }

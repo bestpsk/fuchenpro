@@ -219,7 +219,8 @@ class SysMenuService
             if ($this->isExternalLink($path)) {
                 $routeName = 'Menu' . $menu['menu_id'];
             } else {
-                $routeName = ucfirst($path);
+                // 兜底：path 首字母大写 + menu_id 确保全局唯一，避免与首页路由 name='Index' 等前端硬编码路由冲突
+                $routeName = ucfirst($path) . $menu['menu_id'];
             }
         }
         return $routeName;

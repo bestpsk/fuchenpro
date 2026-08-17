@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { getGroupedMenus } from '@/api/system/appMenu'
 
 const CACHE_KEY = 'app_menu_config'
-const CACHE_VERSION = 15
+const CACHE_VERSION = 18
 const CLICK_COUNTS_KEY = 'app_menu_click_counts'
 
 export const useMenuStore = defineStore('menu', {

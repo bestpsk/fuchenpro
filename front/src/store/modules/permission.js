@@ -72,7 +72,6 @@ const usePermissionStore = defineStore(
             // 过滤前端定义的动态路由（基于角色/权限）
             const asyncRoutes = filterDynamicRoutes(dynamicRoutes)
             asyncRoutes.forEach(route => { router.addRoute(route) })
-            router.addRoute({ path: "/:pathMatch(.*)*", component: () => import('@/views/error/404'), hidden: true })
             this.setRoutes(rewriteRoutes)
             this.setSidebarRouters(constantRoutes.concat(sidebarRoutes))
             this.setDefaultRoutes(sidebarRoutes)

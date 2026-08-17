@@ -61,6 +61,9 @@ class PptToPdfService
     {
         $soffice = $this->getSofficePath();
 
+        // 转换前预检 LibreOffice 是否可正常启动（避免 bootstrap.ini 损坏等问题）
+        $this->checkLibreOfficeHealth($soffice);
+
         // 指定 LibreOffice 用户配置目录（固定路径，确保字体缓存可写且一致）
         $userInstallation = 'file:///tmp/libreoffice_user';
 
@@ -126,5 +129,35 @@ class PptToPdfService
             }
         }
         throw new \Exception('未找到 LibreOffice，请在 .env 配置 LIBREOFFICE_PATH');
+    }
+
+    /**
+     * 检查 LibreOffice 是否可正常启动（避免 bootstrap.ini 损坏等问题）
+     *
+     * @param string $soffice soffice 可执行文件路径
+     * @throws \Exception
+     */
+    private function checkLibreOfficeHealth(string $soffice): void
+    {
+        $cmd = escapeshellarg($soffice) . ' --headless --version';
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+        $proc = proc_open($cmd, $descriptors, $pipes);
+        if (!is_resource($proc)) {
+            throw new \Exception('LibreOffice 健康检查失败：无法启动进程');
+        }
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[2]);
+        $code = proc_close($proc);
+        if ($code !== 0 || stripos($stdout, 'LibreOffice') === false) {
+            error_log('[PPT->PDF] LibreOffice 健康检查失败 code=' . $code . ' stderr: ' . $stderr . ' stdout: ' . $stdout);
+            throw new \Exception('LibreOffice 健康检查失败：' . trim($stderr . ' ' . $stdout));
+        }
     }
 }

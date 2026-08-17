@@ -19,7 +19,7 @@ class IpService
             if (isset($data['status']) && $data['status'] === 'success') {
                 return ($data['country'] ?? '') . ' ' . ($data['regionName'] ?? '') . ' ' . ($data['city'] ?? '');
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         }
         return '未知';
     }

@@ -112,6 +112,25 @@ export async function setCachedFile(key, materialId, arrayBuffer) {
 }
 
 /**
+ * 删除指定缓存项（用于缓存数据损坏时清除）
+ * @param {string} key - 缓存键
+ */
+export async function clearCachedFile(key) {
+  try {
+    const db = await openDB()
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite')
+      const store = tx.objectStore(STORE_NAME)
+      store.delete(key)
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => resolve()
+    })
+  } catch (e) {
+    console.warn('[materialCache] clearCachedFile error:', e)
+  }
+}
+
+/**
  * 构造缓存键
  * @param {string|number} materialId
  * @param {string} updateTime

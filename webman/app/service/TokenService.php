@@ -63,7 +63,7 @@ class TokenService
             }
             $loginUserArr = json_decode($data, true);
             return LoginUser::fromArray($loginUserArr);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return null;
         }
     }
@@ -118,7 +118,7 @@ class TokenService
         try {
             $decoded = JWT::decode($token, new Key($this->secret, Constants::JWT_ALGO));
             return $decoded->{Constants::LOGIN_USER_KEY} ?? null;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return null;
         }
     }

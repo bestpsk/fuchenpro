@@ -51,6 +51,8 @@ class SysUserService
         }
 
         $query->where('del_flag', '0');
+        // 排除管理员账号（user_id=1），管理员不需要出现在用户列表和业务选择下拉中
+        $query->where('user_id', '!=', 1);
 
         if (!empty($params['login_user'])) {
             $query = DataScopeService::applyDataScope($query, $params['login_user'], 'sys_user', 'sys_user');
@@ -275,7 +277,7 @@ class SysUserService
                     $failureNum++;
                     $failureMsg .= "<br/>{$failureNum}、账号 {$userName} 已存在";
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $failureNum++;
                 $failureMsg .= "<br/>{$failureNum}、账号 " . ($user['user_name'] ?? '未知') . " 导入失败：" . $e->getMessage();
             }

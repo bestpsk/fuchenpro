@@ -25,11 +25,13 @@ class AuthMiddleware implements MiddlewareInterface
         '/captchaImage',
         '/logout',
         '/train/studyLog/end',  // 学习结束接口，会话ID本身即为凭证，支持 sendBeacon 无 Token 调用
+        '/business/visit/public/submit',  // 满意度回访H5提交，token凭证，企业负责人免登录填写
     ];
 
     // 不需要认证的路径前缀（动态路径参数场景，如会话ID即凭证的文件流接口）
     protected $whitelistPrefix = [
         '/train/studyLog/file/',  // DRM文件流接口，会话ID本身即为临时凭证
+        '/business/visit/public/form/',  // 满意度回访H5表单获取，token凭证
     ];
 
     // /profile/upload/ 路径下允许匿名访问的图片扩展名（<img>标签无法携带Authorization头）

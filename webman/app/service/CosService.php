@@ -68,7 +68,7 @@ class CosService
                 'Body' => fopen($localPath, 'rb'),
             ]);
             return $this->getUrl($cosPath);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS上传失败: ' . $e->getMessage());
             return null;
         }
@@ -88,7 +88,7 @@ class CosService
                 'Body' => $content,
             ]);
             return $this->getUrl($cosPath);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS上传失败: ' . $e->getMessage());
             return null;
         }
@@ -119,7 +119,7 @@ class CosService
             }
 
             return $this->getUrl($cosPath);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS上传失败: ' . $e->getMessage());
             return null;
         }
@@ -138,7 +138,7 @@ class CosService
                 'Key' => $cosPath,
             ]);
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS删除失败: ' . $e->getMessage());
             return false;
         }
@@ -203,7 +203,7 @@ class CosService
                 'SaveAs' => $localPath,
             ]);
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS下载到文件失败: ' . $e->getMessage());
             return false;
         }
@@ -222,7 +222,7 @@ class CosService
                 'Key' => $cosPath,
             ]);
             return (string)$result['Body'];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \support\Log::error('COS下载失败: ' . $e->getMessage());
             return null;
         }

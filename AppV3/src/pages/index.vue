@@ -15,6 +15,8 @@
 
       <StatisticsCard :data="combinedStats" @refresh="loadHomeData" />
 
+      <GoalProgressCard ref="goalCardRef" />
+
       <OrderList :list="orderList" />
 
       <view class="bottom-spacer"></view>
@@ -32,6 +34,7 @@ import { onShow } from '@dcloudio/uni-app'
 import HeaderNav from '@/components/home/HeaderNav.vue'
 import NoticeBar from '@/components/home/NoticeBar.vue'
 import StatisticsCard from '@/components/home/StatisticsCard.vue'
+import GoalProgressCard from '@/components/home/GoalProgressCard.vue'
 import OrderList from '@/components/home/OrderList.vue'
 import { listSalesOrder } from '@/api/business/salesOrder'
 import { listArchive } from '@/api/business/archive'
@@ -43,6 +46,7 @@ const combinedStats = ref([])
 const orderList = ref([])
 const headerNavRef = ref(null)
 const noticeBarRef = ref(null)
+const goalCardRef = ref(null)
 const isFirstShow = ref(true)
 
 const userStore = useUserStore()
@@ -68,28 +72,13 @@ async function loadHomeData() {
     const dealCustomer = stats.dealCustomerCount || {}
     const dealAmount = stats.dealAmount || {}
     const paidAmount = stats.paidAmount || {}
-    const owedAmount = stats.owedAmount || {}
-    const cashAmount = stats.cashAmount || {}
-    const cardAmount = stats.cardAmount || {}
-    const giftCount = stats.giftCount || {}
-    const operationCustomer = stats.operationCustomerCount || {}
-    const operationAmount = stats.operationAmount || {}
 
+    // 数据概览精简为 3 项核心指标（成交客数/成交金额/实付金额），更多指标点击"更多"按钮查看
     combinedStats.value = [
       { label: '成交客数', todayValue: String(dealCustomer.today || 0), monthValue: String(dealCustomer.month || 0) },
       { label: '成交金额', todayValue: formatAmount(dealAmount.today || 0), monthValue: formatAmount(dealAmount.month || 0) },
-      { label: '实付金额', todayValue: formatAmount(paidAmount.today || 0), monthValue: formatAmount(paidAmount.month || 0) },
-      { label: '欠款金额', todayValue: formatAmount(owedAmount.today || 0), monthValue: formatAmount(owedAmount.month || 0) },
-      { label: '现金', todayValue: formatAmount(cashAmount.today || 0), monthValue: formatAmount(cashAmount.month || 0) },
-      { label: '耗卡', todayValue: formatAmount(cardAmount.today || 0), monthValue: formatAmount(cardAmount.month || 0) },
-      { label: '赠送', todayValue: String(giftCount.today || 0), monthValue: String(giftCount.month || 0) },
-      { label: '操作客数', todayValue: String(operationCustomer.today || 0), monthValue: String(operationCustomer.month || 0) },
-      { label: '操作金额', todayValue: formatAmount(operationAmount.today || 0), monthValue: formatAmount(operationAmount.month || 0) }
-    ].filter(item => {
-      const today = String(item.todayValue).replace(/[¥,]/g, '')
-      const month = String(item.monthValue).replace(/[¥,]/g, '')
-      return parseFloat(today) !== 0 || parseFloat(month) !== 0
-    })
+      { label: '实付金额', todayValue: formatAmount(paidAmount.today || 0), monthValue: formatAmount(paidAmount.month || 0) }
+    ]
 
     const archiveRes = await listArchive({
       operatorUserId: userStore.getId,
@@ -120,14 +109,19 @@ async function loadHomeData() {
   }
 }
 
-/** 下拉刷新处理，延迟800ms后重新加载数据并停止刷新动画 */
-function onPullDownRefresh() {
+/** 下拉刷新处理：并行刷新统计、目标进度、未读消息、通知栏 */
+async function onPullDownRefresh() {
   isRefreshing.value = true
-  loadHomeData().finally(() => {
+  try {
+    await Promise.allSettled([
+      loadHomeData(),
+      goalCardRef.value?.refresh(),
+      headerNavRef.value?.loadUnreadCount(),
+      noticeBarRef.value?.loadNotices()
+    ])
+  } finally {
     isRefreshing.value = false
-  })
-  headerNavRef.value?.loadUnreadCount()
-  noticeBarRef.value?.loadNotices()
+  }
 }
 
 /** 根据来源类型编码返回中文标签（0-开单/1-操作/2-还款/3-手动） */
@@ -136,9 +130,10 @@ function getSourceTypeLabel(type) {
   return map[type] || (type || '未知')
 }
 
+/** 金额格式化：¥ 前缀 + 千分位整数 */
 function formatAmount(value) {
   const num = Number(value) || 0
-  return '¥' + Math.round(num)
+  return '¥' + Math.round(num).toLocaleString('zh-CN')
 }
 </script>
 

@@ -223,7 +223,7 @@ class SysLoginController
                 'login_source' => $source,
                 'login_time' => date('Y-m-d H:i:s'),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         }
     }
 }

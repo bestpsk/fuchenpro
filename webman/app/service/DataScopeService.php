@@ -186,4 +186,48 @@ class DataScopeService
         }
         return $role->role_id ?? 0;
     }
+
+    /**
+     * 获取当前用户可见的所有部门ID列表
+     * 基于 data_scope：1全部 2自定义 3本部门 4本部门及以下 5仅本人(返回空)
+     */
+    public static function getVisibleDeptIds($loginUser)
+    {
+        if ($loginUser->isAdmin()) {
+            return SysDept::pluck('dept_id')->toArray();
+        }
+
+        $roles = $loginUser->user ? $loginUser->user->roles : [];
+        if (empty($roles)) {
+            return [];
+        }
+
+        $allDeptIds = [];
+        foreach ($roles as $role) {
+            $dataScope = self::getRoleDataScope($role);
+            $roleId = self::getRoleId($role);
+
+            switch ($dataScope) {
+                case '1':
+                    return SysDept::pluck('dept_id')->toArray();
+                case '2':
+                    $deptIds = SysRoleDept::where('role_id', $roleId)->pluck('dept_id')->toArray();
+                    $allDeptIds = array_merge($allDeptIds, $deptIds);
+                    break;
+                case '3':
+                    $allDeptIds[] = $loginUser->deptId;
+                    break;
+                case '4':
+                    $deptIds = SysDept::where('dept_id', $loginUser->deptId)
+                        ->orWhereRaw("FIND_IN_SET(?, ancestors)", [$loginUser->deptId])
+                        ->pluck('dept_id')->toArray();
+                    $allDeptIds = array_merge($allDeptIds, $deptIds);
+                    break;
+                case '5':
+                default:
+                    break;
+            }
+        }
+        return array_unique($allDeptIds);
+    }
 }

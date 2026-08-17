@@ -100,7 +100,7 @@ class SysDictTypeService
                 $redis->set($cacheKey, json_encode($data));
             }
             return $data;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $data = SysDictData::where('dict_type', $dictType)->where('status', '0')->orderBy('dict_sort', 'asc')->get()->toArray();
             return $data;
         }
@@ -119,7 +119,7 @@ class SysDictTypeService
             foreach ($keys as $key) {
                 $redis->del($key);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
         }
     }
 

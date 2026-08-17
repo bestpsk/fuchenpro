@@ -14,9 +14,7 @@ class BizCardItemController
 {
     public function list(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:list')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
-        }
+        // 卡项为公共数据，查询不设权限（销售开单等业务需调用）
         $service = new BizCardItemService();
         $params = convert_to_snake_case($request->all());
         $params['login_user'] = $request->loginUser;
@@ -26,9 +24,7 @@ class BizCardItemController
 
     public function getInfo(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:query')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
-        }
+        // 卡项为公共数据，查询不设权限
         $parts = explode('/', $request->path());
         $cardItemId = intval(end($parts));
         $service = new BizCardItemService();
@@ -39,9 +35,7 @@ class BizCardItemController
 
     public function search(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:cardItem:list')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
-        }
+        // 卡项为公共数据，搜索不设权限（销售开单需搜索卡项）
         $keyword = $request->input('keyword', '');
         $params = ['login_user' => $request->loginUser];
         $service = new BizCardItemService();

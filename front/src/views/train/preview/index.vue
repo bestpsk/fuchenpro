@@ -19,7 +19,15 @@
 
       <!-- PDF / PPT（PPT 已服务端转 PDF） -->
       <div v-else-if="(material?.fileType === '2' || material?.fileType === '3') && arrayBuffer" class="pdf-view">
-        <VueOfficePdf :src="arrayBuffer" :staticFileUrl="pdfStaticUrl" class="office-component" />
+        <VueOfficePdf v-if="!pdfError" :src="arrayBuffer" :staticFileUrl="pdfStaticUrl" class="office-component" @error="handlePdfError" />
+        <div v-else class="pdf-error-fallback">
+          <el-empty description="文档预览失败，可能是文档格式复杂或文件损坏">
+            <div style="display: flex; gap: 8px;">
+              <el-button type="primary" icon="Refresh" @click="retryLoad">重新加载</el-button>
+              <el-button icon="Download" @click="downloadOriginal">下载原文件</el-button>
+            </div>
+          </el-empty>
+        </div>
       </div>
 
       <!-- Word -->
@@ -44,7 +52,7 @@
 </template>
 
 <script setup name="TrainPreview">
-import { ref, onMounted, onBeforeUnmount, watch, getCurrentInstance } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, getCurrentInstance, onErrorCaptured } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VueOfficePdf from '@vue-office/pdf'
 import VueOfficeDocx from '@vue-office/docx'
@@ -53,7 +61,7 @@ import '@vue-office/docx/lib/index.css'
 import '@vue-office/excel/lib/index.css'
 import { getStudyMaterial, startStudy, endStudy } from '@/api/train/study'
 import { getToken } from '@/utils/auth'
-import { getCachedFile, setCachedFile, buildCacheKey } from '@/utils/materialCache'
+import { getCachedFile, setCachedFile, clearCachedFile, buildCacheKey } from '@/utils/materialCache'
 
 const { proxy } = getCurrentInstance()
 const route = useRoute()
@@ -74,6 +82,20 @@ let hasEnded = false
 const baseUrl = import.meta.env.VITE_APP_BASE_API
 // pdfjs 静态资源本地路径（cmaps 已本地化到 public/pdfjs/cmaps，避免依赖 unpkg CDN 国内访问失败导致中文方块）
 const pdfStaticUrl = '/pdfjs/'
+
+// PDF 渲染错误状态
+const pdfError = ref(false)
+
+/**
+ * 校验 ArrayBuffer 是否为有效 PDF（检查 %PDF 魔数）
+ * PDF 文件以 "%PDF-" 开头（ASCII: 25 50 44 46 2D）
+ */
+function isPdfArrayBuffer(buf) {
+  if (!buf || buf.byteLength < 5) return false
+  const bytes = new Uint8Array(buf.byteLength >= 5 ? buf.slice(0, 5) : buf)
+  const magic = String.fromCharCode.apply(null, bytes)
+  return magic === '%PDF-'
+}
 
 function getFileTypeName(value) {
   const map = { '1': '图片', '2': 'PDF', '3': 'PPT', '4': 'Word', '5': '文本', '6': 'Excel' }
@@ -153,8 +175,19 @@ async function loadArrayBuffer(cacheKey) {
   if (cacheKey) {
     const cached = await getCachedFile(cacheKey)
     if (cached && cached.arrayBuffer) {
-      arrayBuffer.value = cached.arrayBuffer
-      return
+      // 校验缓存数据是否为有效 PDF/PPT（仅对 fileType 2/3 校验，防止损坏数据反复导致组件崩溃）
+      if (material.value?.fileType === '2' || material.value?.fileType === '3') {
+        if (!isPdfArrayBuffer(cached.arrayBuffer)) {
+          console.warn('[preview] 缓存数据非有效 PDF，清除损坏缓存:', cacheKey)
+          await clearCachedFile(cacheKey)
+        } else {
+          arrayBuffer.value = cached.arrayBuffer
+          return
+        }
+      } else {
+        arrayBuffer.value = cached.arrayBuffer
+        return
+      }
     }
   }
   try {
@@ -164,7 +197,14 @@ async function loadArrayBuffer(cacheKey) {
     if (!response.ok) {
       throw new Error('HTTP ' + response.status)
     }
-    arrayBuffer.value = await response.arrayBuffer()
+    const buf = await response.arrayBuffer()
+    // 校验响应是否为有效 PDF（PPT 已服务端转 PDF，fileType 2/3 均应为 PDF）
+    if (material.value?.fileType === '2' || material.value?.fileType === '3') {
+      if (!isPdfArrayBuffer(buf)) {
+        throw new Error('服务端返回的数据不是有效 PDF（可能是 PPT 转换失败）')
+      }
+    }
+    arrayBuffer.value = buf
     // 写入缓存
     if (cacheKey && arrayBuffer.value) {
       await setCachedFile(cacheKey, route.query.materialId, arrayBuffer.value)
@@ -174,7 +214,14 @@ async function loadArrayBuffer(cacheKey) {
     // 兜底：不带鉴权重试（本地存储通常无需鉴权）
     try {
       const response = await fetch(fileUrl.value)
-      arrayBuffer.value = await response.arrayBuffer()
+      const buf = await response.arrayBuffer()
+      // 兜底响应同样需要校验
+      if (material.value?.fileType === '2' || material.value?.fileType === '3') {
+        if (!isPdfArrayBuffer(buf)) {
+          throw new Error('服务端兜底返回的数据不是有效 PDF')
+        }
+      }
+      arrayBuffer.value = buf
       if (cacheKey && arrayBuffer.value) {
         await setCachedFile(cacheKey, route.query.materialId, arrayBuffer.value)
       }
@@ -244,18 +291,29 @@ async function handleEndStudy() {
   }
 }
 
-// beforeunload 事件处理：关闭浏览器标签页时通过 sendBeacon 发送结束学习请求
+// beforeunload 事件处理：关闭浏览器标签页时发送结束学习请求
 function onBeforeUnload() {
   if (hasEnded || !sessionId.value) return
   hasEnded = true
   stopTimer()
-  if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-    const BEACON_URL = baseUrl + '/train/studyLog/end'
-    const payload = JSON.stringify({
-      sessionId: sessionId.value,
-      validDuration: elapsedSeconds.value
-    })
-    try { navigator.sendBeacon(BEACON_URL, payload) } catch (e) {}
+  const BEACON_URL = baseUrl + '/train/studyLog/end'
+  const payload = JSON.stringify({
+    sessionId: sessionId.value,
+    validDuration: elapsedSeconds.value
+  })
+  // 优先 fetch keepalive（比 sendBeacon 更可靠，支持 application/json，避免 net::ERR_ABORTED）
+  try {
+    fetch(BEACON_URL, {
+      method: 'POST',
+      body: payload,
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' }
+    }).catch(() => {})
+  } catch (e) {
+    // 降级 sendBeacon
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      try { navigator.sendBeacon(BEACON_URL, payload) } catch (e2) {}
+    }
   }
 }
 
@@ -267,6 +325,52 @@ function onVisibilityChange() {
     if (!hasEnded && sessionId.value && !elapsedTimer) {
       startTimer()
     }
+  }
+}
+
+// PDF 渲染错误处理
+function handlePdfError(err) {
+  console.error('[preview] VueOfficePdf 渲染错误:', err)
+  pdfError.value = true
+}
+
+// 组件级错误捕获（错误边界）：防止 VueOfficePdf 崩溃导致整个路由组件白屏
+onErrorCaptured((err, instance, info) => {
+  console.error('[preview] 组件错误捕获:', err, info)
+  // 仅在 PDF/PPT 类型时触发 fallback
+  if (material.value?.fileType === '2' || material.value?.fileType === '3') {
+    pdfError.value = true
+  }
+  return false  // 阻止错误继续向上传播
+})
+
+// 下载原文件（使用 DRM 文件流接口）
+function downloadOriginal() {
+  if (!fileUrl.value) return
+  const a = document.createElement('a')
+  a.href = fileUrl.value
+  a.download = material.value?.title || 'document'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+// 重新加载：清除损坏缓存 + 重置错误状态 + 重新加载
+async function retryLoad() {
+  pdfError.value = false
+  arrayBuffer.value = null
+  loading.value = true
+  // 清除可能损坏的缓存
+  const cacheKey = buildCacheKey(route.query.materialId, material.value?.updateTime)
+  await clearCachedFile(cacheKey)
+  try {
+    await loadArrayBuffer(cacheKey)
+  } catch (e) {
+    console.error('[preview] 重新加载失败:', e)
+    proxy.$modal.msgError('重新加载失败: ' + (e.message || '未知错误'))
+    pdfError.value = true
+  } finally {
+    loading.value = false
   }
 }
 
@@ -286,6 +390,7 @@ watch(() => route.query.materialId, (newId, oldId) => {
     fileUrl.value = ''
     sessionId.value = ''
     hasEnded = false
+    pdfError.value = false  // 重置错误状态
     elapsedSeconds.value = 0
     loading.value = true
     stopTimer()
@@ -393,5 +498,16 @@ onBeforeUnmount(() => {
   line-height: 1.6;
   color: #303133;
   margin: 0;
+}
+
+.pdf-error-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 </style>

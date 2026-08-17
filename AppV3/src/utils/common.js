@@ -62,3 +62,21 @@ export function tansParams(params) {
   }
   return result
 }
+
+/**
+ * 复制文本到剪贴板（H5/App/小程序通用，兼容 HTTP 非安全上下文）
+ * H5端 uni.setClipboardData 底层走 document.execCommand('copy')，不依赖 navigator.clipboard
+ * @param {string} data - 待复制的文本
+ * @param {string} [successMsg='已复制'] - 复制成功的提示文字
+ */
+export function copyToClipboard(data, successMsg = '已复制') {
+  uni.setClipboardData({
+    data,
+    success: () => {
+      uni.showToast({ title: successMsg, icon: 'success' })
+    },
+    fail: () => {
+      toast('复制失败')
+    }
+  })
+}

@@ -15,8 +15,15 @@ webman/public/profile/upload/
 
 # 运行时备份与临时文件
 webman/runtimebackup/
-1.txt
 docs/
+
+# 通用临时文件
+*.bak
+*.old
+*.tmp
+*.orig
+*.swp
+*~
 
 # 环境配置（含敏感信息，禁止提交）
 webman/.env

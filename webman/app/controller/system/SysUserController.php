@@ -68,7 +68,7 @@ class SysUserController
         try {
             $message = $service->importUser($userList, $updateSupport, $operName);
             return AjaxResult::success($message);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return AjaxResult::error('操作失败，请稍后重试');
         }
     }

@@ -29,9 +29,7 @@ class BizCustomerPackageController
     // 根据套餐ID获取套餐详情
     public function getInfo(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'business:package:list')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
-        }
+        // 客户套餐为公共数据，查询不设权限（对齐 list/getByCustomer 方法）
         $parts = explode('/', $request->path());
         $packageId = intval(end($parts));
         $service = new BizCustomerPackageService();

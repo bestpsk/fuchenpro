@@ -8,7 +8,7 @@ import { getToken } from '@/utils/auth'
 // 登录页路径，未登录时重定向到此页
 const loginPage = '/pages/login'
 // 免登录白名单，这些页面无需Token即可访问
-const whiteList = ['/pages/login', '/pages/register', '/pages/common/webview/index']
+const whiteList = ['/pages/login', '/pages/register', '/pages/common/webview/index', '/pages/visit/fill']
 
 /**
  * 检查目标URL是否在白名单中，忽略URL中的查询参数

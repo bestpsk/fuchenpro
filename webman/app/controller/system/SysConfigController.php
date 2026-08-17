@@ -41,12 +41,11 @@ class SysConfigController
         return AjaxResult::success($config);
     }
 
-    // 根据参数键名查询参数值
+    // 根据参数键名查询参数值（公共接口，登录即可访问）
+    // 用于销售配置、地图Key、考勤配置等业务参数的读取，不需要 system:config:list 权限
+    // 敏感配置（密码/密钥）不存于 sys_config 表，不存在通过此接口泄露的风险
     public function getConfigKey(Request $request)
     {
-        if (PermissionService::lacksPermi($request->loginUser, 'system:config:list')) {
-            return json(['code' => 403, 'msg' => '没有操作权限']);
-        }
         $parts = explode('/', $request->path());
         $configKey = end($parts);
         $service = new SysConfigService();

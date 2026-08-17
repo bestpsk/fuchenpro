@@ -268,6 +268,33 @@ Route::delete('/business/plan', [app\controller\business\BizPlanController::clas
 Route::get('/business/plan/{planId}', [app\controller\business\BizPlanController::class, 'getInfo']);
 Route::post('/business/plan/export', [app\controller\business\BizPlanController::class, 'export']);
 
+// =============================================
+// 满意度回访模块路由
+// 注意：静态路由(public/*、templateList、template/*、list、generateLink、stats、export)
+// 必须定义在变量路由 /business/visit/{visitId} 之前，避免被遮蔽
+// =============================================
+
+// 公共接口（免认证，token凭证，企业负责人H5填写用）
+Route::get('/business/visit/public/form/{token}', [app\controller\business\BizVisitController::class, 'getPublicForm']);
+Route::post('/business/visit/public/submit', [app\controller\business\BizVisitController::class, 'submitPublicForm']);
+
+// 回访问卷模板管理
+Route::get('/business/visit/templateList', [app\controller\business\BizVisitController::class, 'templateList']);
+Route::post('/business/visit/template', [app\controller\business\BizVisitController::class, 'addTemplate']);
+Route::put('/business/visit/template', [app\controller\business\BizVisitController::class, 'editTemplate']);
+Route::delete('/business/visit/template', [app\controller\business\BizVisitController::class, 'removeTemplate']);
+Route::get('/business/visit/template/{templateId}', [app\controller\business\BizVisitController::class, 'getTemplateInfo']);
+
+// 回访任务管理
+Route::get('/business/visit/list', [app\controller\business\BizVisitController::class, 'list']);
+Route::post('/business/visit/generateLink', [app\controller\business\BizVisitController::class, 'generateLink']);
+Route::post('/business/visit/stats', [app\controller\business\BizVisitController::class, 'stats']);
+Route::post('/business/visit/export', [app\controller\business\BizVisitController::class, 'export']);
+Route::post('/business/visit', [app\controller\business\BizVisitController::class, 'add']);
+Route::put('/business/visit', [app\controller\business\BizVisitController::class, 'edit']);
+Route::delete('/business/visit', [app\controller\business\BizVisitController::class, 'remove']);
+Route::get('/business/visit/{visitId}', [app\controller\business\BizVisitController::class, 'getInfo']);
+
 Route::get('/business/schedule/list', [app\controller\business\BizScheduleController::class, 'list']);
 Route::get('/business/schedule/calendar', [app\controller\business\BizScheduleController::class, 'calendar']);
 Route::get('/business/schedule/dates', [app\controller\business\BizScheduleController::class, 'dates']);
@@ -586,6 +613,26 @@ Route::get('/business/leave/holiday/{holidayId}', [app\controller\business\BizHo
 Route::get('/business/attendance/stats', [app\controller\business\BizAttendanceStatsController::class, 'list']);
 Route::get('/business/attendance/stats/calendar', [app\controller\business\BizAttendanceStatsController::class, 'calendar']);
 Route::post('/business/attendance/stats/export', [app\controller\business\BizAttendanceStatsController::class, 'export']);
+
+// 目标管理（独立顶级模块，权限标识 goal:*）
+// 注意：静态路由必须定义在变量路由 /goal/{goalId} 之前，否则会被遮蔽
+Route::get('/goal/list', [app\controller\goal\GoalController::class, 'list']);
+Route::post('/goal', [app\controller\goal\GoalController::class, 'add']);
+Route::put('/goal', [app\controller\goal\GoalController::class, 'edit']);
+Route::delete('/goal', [app\controller\goal\GoalController::class, 'remove']);
+Route::get('/goal/progress', [app\controller\goal\GoalController::class, 'getProgress']);
+Route::get('/goal/ranking', [app\controller\goal\GoalController::class, 'getRanking']);
+Route::get('/goal/dailyView', [app\controller\goal\GoalController::class, 'getDailyView']);
+Route::post('/goal/adjust', [app\controller\goal\GoalController::class, 'adjust']);
+Route::post('/goal/split', [app\controller\goal\GoalController::class, 'split']);
+Route::get('/goal/splitChildren', [app\controller\goal\GoalController::class, 'splitChildren']);
+Route::post('/goal/generateDaily', [app\controller\goal\GoalController::class, 'generateDaily']);
+Route::get('/goal/myGoals', [app\controller\goal\GoalController::class, 'myGoals']);
+Route::get('/goal/teamGoals', [app\controller\goal\GoalController::class, 'teamGoals']);
+Route::get('/goal/adjustLog', [app\controller\goal\GoalController::class, 'adjustLog']);
+Route::get('/goal/dailyDetail', [app\controller\goal\GoalController::class, 'dailyDetail']);
+Route::get('/goal/export', [app\controller\goal\GoalController::class, 'export']);
+Route::get('/goal/{goalId}', [app\controller\goal\GoalController::class, 'getInfo']);
 
 Route::any('/{path:.+}', function ($request, $path) {
     return json(['code' => 404, 'msg' => '接口不存在']);

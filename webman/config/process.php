@@ -50,6 +50,11 @@ return [
         'handler' => app\process\AttendanceAutoGenerator::class,
         'count' => 1,
     ],
+    // Goal daily generation and warning detection
+    'goalDailyGenerator' => [
+        'handler' => app\process\GoalDailyGenerator::class,
+        'count' => 1,
+    ],
     // File update detection and automatic reload
     'monitor' => [
         'handler' => app\process\Monitor::class,
